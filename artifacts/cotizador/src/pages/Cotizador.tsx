@@ -110,7 +110,6 @@ export default function CotizadorPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar onReload={fetchAll} />
-
       <main className="flex-1 overflow-x-hidden">
         <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -136,9 +135,7 @@ export default function CotizadorPage() {
             </div>
           ) : error ? (
             <div className="bg-white rounded-2xl shadow-md p-6 border-l-4 border-red-500">
-              <div className="font-medium text-red-700">
-                Error cargando datos
-              </div>
+              <div className="font-medium text-red-700">Error cargando datos</div>
               <div className="text-sm text-slate-700 mt-1">{error}</div>
               <button
                 onClick={fetchAll}
@@ -149,7 +146,6 @@ export default function CotizadorPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6">
-              {/* Main column */}
               <div className="space-y-6 min-w-0">
                 <ClientForm cliente={cliente} onChange={setCliente} />
                 <TravelParams cliente={cliente} onChange={setCliente} />
@@ -167,14 +163,11 @@ export default function CotizadorPage() {
                   cliente={cliente}
                   servicios={servicios}
                   incluirDescriptivos={incluirDescriptivos}
-                  onToggleDescriptivos={() =>
-                    setIncluirDescriptivos((v) => !v)
-                  }
+                  onToggleDescriptivos={() => setIncluirDescriptivos((v) => !v)}
                 />
                 <Guardadas refresh={savedKey} onLoad={handleLoadGuardada} />
               </div>
 
-              {/* Right rail */}
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
                 <TotalesPanel
                   result={result}

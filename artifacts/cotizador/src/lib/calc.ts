@@ -18,6 +18,18 @@ function tieredPrice(
   return p610 || p25;
 }
 
+export function diffNoches(start: string, end: string): number {
+  if (!start || !end) return 0;
+  const a = new Date(`${start}T00:00:00`).getTime();
+  const b = new Date(`${end}T00:00:00`).getTime();
+  const diff = Math.round((b - a) / (1000 * 60 * 60 * 24));
+  return Math.max(0, diff);
+}
+
+export function fmt(n: number): string {
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
 export function calcularLocal(
   servicios: ServicioSeleccionado[],
   acomodaciones: Acomodacion[],
