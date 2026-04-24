@@ -1,4 +1,4 @@
-export type Acomodacion = "SGL" | "DBL" | "TPL";
+export type Acomodacion = "SGL" | "DBL" | "TPL" | "CHD";
 
 export interface Hotel {
   id: string;
@@ -36,7 +36,7 @@ export interface ServicioSeleccionado {
   id: string;
   tipo: "hotel" | "tour" | "traslado";
   nombre: string;
-  precios: { p1?: number; p2_5?: number; p6_10?: number; chd?: number; SGL?: number; DBL?: number; TPL?: number };
+  precios: { p1?: number; p2_5?: number; p6_10?: number; chd?: number; SGL?: number; DBL?: number; TPL?: number; CHD?: number };
   manual?: boolean;
 }
 

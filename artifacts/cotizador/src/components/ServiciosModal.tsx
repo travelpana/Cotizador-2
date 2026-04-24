@@ -135,13 +135,14 @@ export default function ServiciosModal({
                       SGL: h.precios.SGL,
                       DBL: h.precios.DBL,
                       TPL: h.precios.TPL,
+                      CHD: h.precios.CHD,
                       chd: h.precios.CHD,
                     },
                   })
                 }
                 title={h.nombre}
                 subtitle={`${h.estrellas} · ${h.ubicacion} · ${h.tipoHabitacion}`}
-                pricing={`SGL $${h.precios.SGL} · DBL $${h.precios.DBL} · TPL $${h.precios.TPL}`}
+                pricing={`SGL $${h.precios.SGL} · DBL $${h.precios.DBL} · TPL $${h.precios.TPL} · CHD $${h.precios.CHD}`}
               />
             );
           })}
@@ -313,7 +314,7 @@ function ManualForm({
         tipo,
         nombre,
         manual: true,
-        precios: { SGL: precioSGL, DBL: precioDBL, TPL: precioTPL, chd },
+        precios: { SGL: precioSGL, DBL: precioDBL, TPL: precioTPL, CHD: chd },
       });
     } else {
       onAdd({
@@ -321,7 +322,7 @@ function ManualForm({
         tipo,
         nombre,
         manual: true,
-        precios: { p1: precio, p2_5: precio, p6_10: precio, chd },
+        precios: { p1: precio, p2_5: precio, p6_10: precio, chd: chd, CHD: chd },
       });
     }
     setNombre("");
@@ -364,7 +365,7 @@ function ManualForm({
         </div>
         {tipo === "hotel" ? (
           <>
-            <div className="grid grid-cols-3 gap-2 md:col-span-2">
+            <div className="grid grid-cols-4 gap-2 md:col-span-2">
               <div>
                 <Lbl>SGL</Lbl>
                 <input
@@ -389,6 +390,15 @@ function ManualForm({
                   type="number"
                   value={precioTPL}
                   onChange={(e) => setPrecioTPL(Number(e.target.value) || 0)}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <Lbl>CHD</Lbl>
+                <input
+                  type="number"
+                  value={chd}
+                  onChange={(e) => setChd(Number(e.target.value) || 0)}
                   className={inputCls}
                 />
               </div>

@@ -163,11 +163,13 @@ function ServicioCard({
               const p1 = servicio.precios.p1 ?? 0;
               const p25 = servicio.precios.p2_5 ?? 0;
               const p610 = servicio.precios.p6_10 ?? 0;
+              const chd = servicio.precios.chd ?? servicio.precios.CHD ?? 0;
               return (
                 <>
                   <PriceLine label="1 pax" value={`${fmt(p1)} p/p`} />
                   <PriceLine label="2-5 pax" value={`${fmt(p25)} p/p`} />
                   <PriceLine label="6-10 pax" value={`${fmt(p610)} p/p`} />
+                  <PriceLine label="CHD" value={`${fmt(chd)} p/n`} />
                 </>
               );
             })()}
@@ -224,15 +226,15 @@ function EditModal({
             Tarifas
           </div>
           {servicio.tipo === "hotel" ? (
-            <div className="grid grid-cols-3 gap-3">
-              {(["SGL", "DBL", "TPL"] as const).map((a) => (
+            <div className="grid grid-cols-2 gap-3">
+              {(["SGL", "DBL", "TPL", "CHD"] as const).map((a) => (
                 <div key={a}>
                   <label className="block text-xs font-medium text-slate-600 mb-1">
                     {a}
                   </label>
                   <input
                     type="number"
-                    value={precios[a] ?? 0}
+                    value={(precios as any)[a] ?? 0}
                     onChange={(e) =>
                       setPrecios({
                         ...precios,
@@ -293,11 +295,11 @@ function EditModal({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Niño
+                  CHD
                 </label>
                 <input
                   type="number"
-                  value={precios.chd ?? 0}
+                  value={precios.chd ?? precios.CHD ?? 0}
                   onChange={(e) =>
                     setPrecios({ ...precios, chd: Number(e.target.value) || 0 })
                   }

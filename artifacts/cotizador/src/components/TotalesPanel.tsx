@@ -22,12 +22,8 @@ export default function TotalesPanel({
       <div className="p-5 border-b border-slate-100">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">
-              Resumen
-            </h3>
-            <p className="text-xs text-slate-500">
-              Cálculo en tiempo real
-            </p>
+            <h3 className="text-base font-semibold text-slate-900">Resumen</h3>
+            <p className="text-xs text-slate-500">Cálculo en tiempo real</p>
           </div>
           <Calculator className="w-5 h-5 text-primary" />
         </div>
@@ -107,9 +103,7 @@ export default function TotalesPanel({
                 <div className="text-xs font-semibold text-slate-900 leading-tight mb-1.5">
                   {sv.nombre}
                 </div>
-                <div className="text-[11px] text-slate-500 mb-2">
-                  {sv.detalle}
-                </div>
+                <div className="text-[11px] text-slate-500 mb-2">{sv.detalle}</div>
                 <div className="space-y-1">
                   {acomodaciones.map((a) => (
                     <div

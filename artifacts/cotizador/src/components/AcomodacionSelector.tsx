@@ -11,12 +11,12 @@ const PILLS: { value: Acomodacion; label: string; full: string }[] = [
   { value: "SGL", label: "SGL", full: "Sencilla" },
   { value: "DBL", label: "DBL", full: "Doble" },
   { value: "TPL", label: "TPL", full: "Triple" },
+  { value: "CHD", label: "CHD", full: "Niño" },
 ];
 
 export default function AcomodacionSelector({ selected, onChange }: Props) {
   const toggle = (a: Acomodacion) => {
     if (selected.includes(a)) {
-      // Don't allow zero accommodations
       if (selected.length === 1) return;
       onChange(selected.filter((x) => x !== a));
     } else {
@@ -52,7 +52,9 @@ export default function AcomodacionSelector({ selected, onChange }: Props) {
                   </span>
                 )}
                 {p.label}
-                <span className={`text-xs font-normal ${active ? "text-primary-foreground/80" : "text-slate-400"}`}>
+                <span
+                  className={`text-xs font-normal ${active ? "text-primary-foreground/80" : "text-slate-400"}`}
+                >
                   · {p.full}
                 </span>
               </span>
