@@ -120,7 +120,6 @@ export default function CotizadorPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar onReload={fetchAll} />
-
       <main className="flex-1 overflow-x-hidden">
         <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -128,9 +127,7 @@ export default function CotizadorPage() {
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 Cotizador de Viajes
               </h1>
-              <p className="text-xs text-muted-foreground">
-                Multi-acomodación · cálculo en tiempo real desde tarifario Excel
-              </p>
+              <p className="text-xs text-muted-foreground">Multi-acomodación </p>
             </div>
             <div className="text-xs text-muted-foreground hidden md:block">
               {hoteles.length} hoteles · {tours.length} tours · {traslados.length} traslados
@@ -220,7 +217,6 @@ export default function CotizadorPage() {
           RGE Style Travel · Cotizador 2026
         </footer>
       </main>
-
       <ServiciosModal
         open={serviciosOpen}
         onClose={() => setServiciosOpen(false)}
@@ -231,7 +227,6 @@ export default function CotizadorPage() {
         onChange={setServicios}
         initialTab={modalTab}
       />
-
       <VistaPreviaModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
