@@ -42,6 +42,11 @@ export default function ExportButtons({
   const [emailDest, setEmailDest] = useState("");
   const [waCopied, setWaCopied] = useState(false);
 
+  const acoms = result.acomodaciones;
+  const primary = acoms[0];
+  const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
+  const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");
+
   const buildText = () => {
     const lines: string[] = [];
     lines.push(`*Cotización RGE Style Travel*`);
@@ -51,18 +56,35 @@ export default function ExportButtons({
     lines.push(
       `Pasajeros: ${cliente.pasajeros}${cliente.ninos ? ` + ${cliente.ninos} niños` : ""} · ${cliente.noches} noches`,
     );
-    lines.push("");
-    lines.push(`*Servicios:*`);
-    for (const s of result.servicios) {
-      lines.push(`• ${s.nombre} (${s.detalle})`);
-      for (const a of result.acomodaciones) {
-        lines.push(`   ${a}: ${fmt(s.totalesPorAcomodacion[a])}`);
+    if (hoteles.length) {
+      lines.push("");
+      lines.push(`*Alojamiento:*`);
+      for (const s of hoteles) {
+        const meta = [s.ubicacion, s.estrellas].filter(Boolean).join(" · ");
+        lines.push(`• ${s.nombre}${meta ? ` (${meta})` : ""}`);
+        if (s.fechaInicio || s.fechaFin)
+          lines.push(`   ${s.fechaInicio || ""} → ${s.fechaFin || ""} · ${s.noches ?? ""} noches`);
+        for (const a of acoms) {
+          lines.push(`   ${a}: ${fmt(s.totalesPorAcomodacion[a])}`);
+        }
+      }
+    }
+    if (adicionales.length) {
+      lines.push("");
+      lines.push(`*Servicios adicionales:*`);
+      for (const s of adicionales) {
+        lines.push(`• [${s.tipo.toUpperCase()}] ${s.codigo} · ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}`);
+        lines.push(`   Total: ${fmt(s.totalesPorAcomodacion[primary])}`);
       }
     }
     lines.push("");
-    lines.push(`*Totales por acomodación:*`);
-    for (const a of result.acomodaciones) {
-      lines.push(`${a}: ${fmt(result.totalesPorAcomodacion[a])}`);
+    lines.push(`*Resumen de costos (${primary}):*`);
+    lines.push(`Alojamiento: ${fmt(result.subtotalesPorTipo.hotel[primary])}`);
+    lines.push(`Traslados:   ${fmt(result.subtotalesPorTipo.traslado[primary])}`);
+    lines.push(`Tours:       ${fmt(result.subtotalesPorTipo.tour[primary])}`);
+    lines.push("");
+    for (const a of acoms) {
+      lines.push(`*GRAN TOTAL ${a}:* ${fmt(result.totalesPorAcomodacion[a])}`);
     }
     if (incluirItinerario) {
       const it = buildItinerario(cliente, servicios);
@@ -70,7 +92,9 @@ export default function ExportButtons({
         lines.push("");
         lines.push(`*Itinerario:*`);
         for (const d of it) {
-          lines.push(`Día ${d.dia}${d.fecha ? ` (${d.fecha})` : ""}: ${d.actividad}`);
+          lines.push(
+            `Día ${d.dia}${d.fecha ? ` (${d.fecha})` : ""}: ${d.actividad}`,
+          );
         }
       }
     }
@@ -81,71 +105,145 @@ export default function ExportButtons({
     const it = incluirItinerario ? buildItinerario(cliente, servicios) : [];
     return `<!doctype html><html><head><meta charset="utf-8"><title>Cotización ${cliente.nombre || ""}</title>
 <style>
-  body{font-family:Inter,system-ui,sans-serif;color:#0f172a;max-width:780px;margin:24px auto;padding:0 24px;line-height:1.45}
-  h1{margin:0 0 4px 0;font-size:22px}
-  h2{margin:24px 0 8px;font-size:16px;border-bottom:2px solid #38bdf8;padding-bottom:4px}
-  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
-  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #e2e8f0}
-  th{background:#f1f5f9;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-  .totales{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-  .total-card{flex:1;min-width:140px;border:2px solid #38bdf8;border-radius:12px;padding:12px}
-  .total-card .label{font-size:11px;color:#64748b;text-transform:uppercase}
-  .total-card .val{font-size:22px;font-weight:700}
-  .meta{color:#64748b;font-size:13px}
-  .brand{color:#38bdf8;font-weight:700}
+  body{font-family:Inter,system-ui,sans-serif;color:#0f172a;max-width:920px;margin:24px auto;padding:0 32px;line-height:1.45}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2563eb;padding-bottom:16px;margin-bottom:24px}
+  h1{margin:0;font-size:26px;font-weight:700}
+  .brand{color:#2563eb}
+  .meta{font-size:13px;color:#475569;margin-top:4px}
+  .right{text-align:right;font-size:13px}
+  h2{margin:28px 0 10px;font-size:13px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em}
+  .grid{display:grid;grid-template-columns:1fr 260px;gap:32px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead tr{border-bottom:2px solid #cbd5e1}
+  th{text-align:left;padding:8px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#475569;font-weight:600}
+  td{padding:10px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+  td.r,th.r{text-align:right}
+  td.c,th.c{text-align:center}
+  .code{font-size:10px;color:#2563eb;font-weight:700;text-transform:uppercase}
+  .meta-line{font-size:11px;color:#64748b;margin-top:2px}
+  .notas{font-size:11px;color:#64748b;font-style:italic;margin-top:2px}
+  .summary{border:2px solid #dbeafe;background:#f8fafc;border-radius:16px;padding:20px}
+  .summary .label{font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+  .sub{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+  .totals-block{border-top:2px solid #bfdbfe;margin-top:16px;padding-top:14px}
+  .total-line{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
+  .total-line .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;font-weight:700}
+  .total-line .val{font-size:15px;font-weight:700;color:#334155}
+  .total-line.primary .val{font-size:26px;color:#2563eb}
+  .typeTag{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#475569;font-weight:700}
 </style></head><body>
-<h1>Cotización <span class="brand">RGE Style Travel</span></h1>
-<div class="meta">${cliente.nombre ? `Cliente: <b>${cliente.nombre}</b> · ` : ""}${cliente.fechaInicio ? `Fechas: ${cliente.fechaInicio} → ${cliente.fechaFin} · ` : ""}${cliente.pasajeros} pax${cliente.ninos ? ` + ${cliente.ninos} niños` : ""} · ${cliente.noches} noches</div>
-
-<h2>Servicios</h2>
-<table>
-  <thead><tr><th>Servicio</th><th>Detalle</th>${result.acomodaciones.map((a) => `<th>${a}</th>`).join("")}</tr></thead>
-  <tbody>
-    ${result.servicios
-      .map(
-        (s) => `<tr>
-      <td><b>${s.nombre}</b></td>
-      <td>${s.detalle}</td>
-      ${result.acomodaciones.map((a) => `<td>${fmt(s.totalesPorAcomodacion[a])}</td>`).join("")}
-    </tr>`,
-      )
-      .join("")}
-    <tr style="background:#f8fafc;font-weight:700">
-      <td colspan="2">TOTAL</td>
-      ${result.acomodaciones.map((a) => `<td>${fmt(result.totalesPorAcomodacion[a])}</td>`).join("")}
-    </tr>
-  </tbody>
-</table>
-
-<h2>Totales por acomodación</h2>
-<div class="totales">
-${result.acomodaciones
-  .map(
-    (a) => `<div class="total-card"><div class="label">${a}</div><div class="val">${fmt(result.totalesPorAcomodacion[a])}</div></div>`,
-  )
-  .join("")}
+<div class="header">
+  <div>
+    <h1>Cotización <span class="brand">de Viaje</span></h1>
+    <div class="meta">RGE Style Travel · ${new Date().toLocaleDateString("es-ES")}</div>
+  </div>
+  <div class="right">
+    ${cliente.nombre ? `<div><span style="color:#64748b">Cliente:</span> <strong>${cliente.nombre}</strong></div>` : ""}
+    <div class="meta">${cliente.pasajeros} pax${cliente.ninos ? ` + ${cliente.ninos} niños` : ""} · ${cliente.noches} noches</div>
+    ${cliente.fechaInicio ? `<div class="meta">${cliente.fechaInicio} → ${cliente.fechaFin}</div>` : ""}
+  </div>
 </div>
 
-${
-  incluirItinerario && it.length > 0
-    ? `<h2>Itinerario</h2>
-<table>
-  <thead><tr><th>Día</th><th>Fecha</th><th>Actividad</th><th>Hotel</th></tr></thead>
-  <tbody>
-    ${it
-      .map(
-        (d) => `<tr>
-      <td>${d.dia}</td>
-      <td>${d.fecha || "—"}</td>
-      <td><b>${d.actividad}</b>${incluirDescriptivos && d.descripcion ? `<br><span style="color:#64748b;font-size:12px">${d.descripcion}</span>` : ""}</td>
-      <td>${d.hotel}</td>
-    </tr>`,
-      )
-      .join("")}
-  </tbody>
-</table>`
-    : ""
-}
+<div class="grid">
+  <div>
+    ${
+      hoteles.length
+        ? `<h2>Alojamiento</h2>
+    <table>
+      <thead><tr>
+        <th>Hotel</th><th>Check-in</th><th>Check-out</th><th class="c">Noches</th>
+        ${acoms.map((a) => `<th class="r">${a}</th>`).join("")}
+      </tr></thead>
+      <tbody>
+        ${hoteles
+          .map(
+            (s) => `<tr>
+          <td>
+            <div style="font-weight:600">${s.nombre}</div>
+            <div class="meta-line">${[s.ubicacion, s.estrellas, s.vigencia].filter(Boolean).join(" · ")}</div>
+            ${s.notas ? `<div class="notas">${s.notas}</div>` : ""}
+          </td>
+          <td>${s.fechaInicio || "—"}</td>
+          <td>${s.fechaFin || "—"}</td>
+          <td class="c">${s.noches ?? "—"}</td>
+          ${acoms.map((a) => `<td class="r"><b>${fmt(s.totalesPorAcomodacion[a])}</b></td>`).join("")}
+        </tr>`,
+          )
+          .join("")}
+      </tbody>
+    </table>`
+        : ""
+    }
+
+    ${
+      adicionales.length
+        ? `<h2>Servicios adicionales</h2>
+    <table>
+      <thead><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th class="r">Total</th></tr></thead>
+      <tbody>
+        ${adicionales
+          .map(
+            (s) => `<tr>
+          <td><span class="typeTag">${s.tipo}</span></td>
+          <td>
+            <div class="code">${s.codigo}</div>
+            <div style="font-weight:600">${s.nombre}</div>
+            ${s.notas ? `<div class="notas">${s.notas}</div>` : ""}
+          </td>
+          <td>${s.fecha || "—"}</td>
+          <td class="r"><b>${fmt(s.totalesPorAcomodacion[primary])}</b></td>
+        </tr>`,
+          )
+          .join("")}
+      </tbody>
+    </table>`
+        : ""
+    }
+
+    ${
+      it.length
+        ? `<h2>Itinerario</h2>
+    <table>
+      <thead><tr><th>Día</th><th>Fecha</th><th>Actividad</th><th>Hotel</th></tr></thead>
+      <tbody>
+        ${it
+          .map(
+            (d) => `<tr>
+          <td><b style="color:#2563eb">${d.dia}</b></td>
+          <td>${d.fecha || "—"}</td>
+          <td>
+            <b>${d.actividad}</b>
+            ${incluirDescriptivos && d.descripcion ? `<div class="notas">${d.descripcion}</div>` : ""}
+          </td>
+          <td>${d.hotel}</td>
+        </tr>`,
+          )
+          .join("")}
+      </tbody>
+    </table>`
+        : ""
+    }
+  </div>
+
+  <aside>
+    <div class="summary">
+      <div class="label">Resumen de costos</div>
+      <div class="sub"><span>Alojamiento</span><b>${fmt(result.subtotalesPorTipo.hotel[primary])}</b></div>
+      <div class="sub"><span>Traslados</span><b>${fmt(result.subtotalesPorTipo.traslado[primary])}</b></div>
+      <div class="sub"><span>Tours</span><b>${fmt(result.subtotalesPorTipo.tour[primary])}</b></div>
+      <div class="totals-block">
+        ${acoms
+          .map(
+            (a) => `<div class="total-line ${a === primary ? "primary" : ""}">
+          <span class="lbl">Total ${a}</span>
+          <span class="val">${fmt(result.totalesPorAcomodacion[a])}</span>
+        </div>`,
+          )
+          .join("")}
+      </div>
+    </div>
+  </aside>
+</div>
 </body></html>`;
   };
 
@@ -155,7 +253,7 @@ ${
       setWaCopied(true);
       setTimeout(() => setWaCopied(false), 2000);
     } catch {
-      // fallback
+      // noop
     }
   };
 
@@ -243,7 +341,7 @@ ${
               value={emailDest}
               onChange={(e) => setEmailDest(e.target.value)}
               placeholder="cliente@correo.com"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
         </div>

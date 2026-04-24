@@ -1,0 +1,826 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  Hotel as HotelIcon,
+  Bus,
+  MapPin,
+  Sparkles,
+  Calendar,
+  Users,
+  Tag,
+  StickyNote,
+  X,
+} from "lucide-react";
+import Modal from "./Modal";
+import type {
+  Hotel,
+  ServicioSeleccionado,
+  Tier,
+  Tour,
+  Traslado,
+} from "@/lib/types";
+import { fmt, pickTier, priceForTier, tierLabel } from "@/lib/calc";
+
+export type ServicioTipo = "hotel" | "tour" | "traslado";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  tipo: ServicioTipo;
+  /** When true, hide catalog and fill manually. */
+  isManual?: boolean;
+  /** Allow user to switch type within the modal (Personalizado flow). */
+  allowTipoSwitch?: boolean;
+  hoteles: Hotel[];
+  tours: Tour[];
+  traslados: Traslado[];
+  /** Existing service when editing. */
+  initial?: ServicioSeleccionado | null;
+  globalPasajeros: number;
+  globalFechaInicio: string;
+  globalFechaFin: string;
+  onSave: (s: ServicioSeleccionado) => void;
+}
+
+interface CatalogItem {
+  id: string;
+  label: string;
+  raw: Hotel | Tour | Traslado;
+}
+
+export default function ServicioFormModal(props: Props) {
+  const {
+    open,
+    onClose,
+    isManual,
+    allowTipoSwitch,
+    hoteles,
+    tours,
+    traslados,
+    initial,
+    globalPasajeros,
+    globalFechaInicio,
+    globalFechaFin,
+    onSave,
+  } = props;
+
+  // Allow tipo to be local state when "Personalizado" or editing
+  const [tipo, setTipo] = useState<ServicioTipo>(props.tipo);
+  const [codigo, setCodigo] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [notas, setNotas] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
+  const [estrellas, setEstrellas] = useState("");
+  const [vigencia, setVigencia] = useState("");
+  // Hotel
+  const [precios, setPrecios] = useState({
+    SGL: 0,
+    DBL: 0,
+    TPL: 0,
+    CHD: 0,
+    p1: 0,
+    p2_5: 0,
+    p6_10: 0,
+    chd: 0,
+  });
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  // Tour/traslado
+  const [usarFecha, setUsarFecha] = useState(false);
+  const [fecha, setFecha] = useState("");
+  const [paxMode, setPaxMode] = useState<"auto" | "manual">("auto");
+  const [paxValue, setPaxValue] = useState<number>(globalPasajeros);
+  const [tarifaOverride, setTarifaOverride] = useState<Tier | "auto">("auto");
+  // Catalog selection
+  const [search, setSearch] = useState("");
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setTipo(props.tipo);
+    setSearch("");
+    if (initial) {
+      // Hydrate from existing service
+      setCodigo(initial.codigo ?? initial.id);
+      setNombre(initial.nombre);
+      setNotas(initial.notas ?? "");
+      setUbicacion(initial.ubicacion ?? "");
+      setEstrellas(initial.estrellas ?? "");
+      setVigencia(initial.vigencia ?? "");
+      setPrecios({
+        SGL: initial.precios.SGL ?? 0,
+        DBL: initial.precios.DBL ?? 0,
+        TPL: initial.precios.TPL ?? 0,
+        CHD: initial.precios.CHD ?? initial.precios.chd ?? 0,
+        p1: initial.precios.p1 ?? 0,
+        p2_5: initial.precios.p2_5 ?? 0,
+        p6_10: initial.precios.p6_10 ?? 0,
+        chd: initial.precios.chd ?? initial.precios.CHD ?? 0,
+      });
+      setFechaInicio(initial.fechaInicio ?? "");
+      setFechaFin(initial.fechaFin ?? "");
+      setUsarFecha(!!initial.usarFecha);
+      setFecha(initial.fecha ?? "");
+      setPaxMode(initial.paxOverride ? "manual" : "auto");
+      setPaxValue(initial.paxOverride ?? globalPasajeros);
+      setTarifaOverride(initial.tarifaOverride ?? "auto");
+      setSelectedCatId(initial.manual ? null : initial.id);
+    } else {
+      // Fresh
+      setCodigo("");
+      setNombre("");
+      setNotas("");
+      setUbicacion("");
+      setEstrellas("");
+      setVigencia("");
+      setPrecios({
+        SGL: 0,
+        DBL: 0,
+        TPL: 0,
+        CHD: 0,
+        p1: 0,
+        p2_5: 0,
+        p6_10: 0,
+        chd: 0,
+      });
+      setFechaInicio(globalFechaInicio);
+      setFechaFin(globalFechaFin);
+      setUsarFecha(false);
+      setFecha(globalFechaInicio);
+      setPaxMode("auto");
+      setPaxValue(globalPasajeros);
+      setTarifaOverride("auto");
+      setSelectedCatId(null);
+    }
+  }, [open, props.tipo, initial, globalPasajeros, globalFechaInicio, globalFechaFin]);
+
+  const catalogItems: CatalogItem[] = useMemo(() => {
+    if (isManual) return [];
+    if (tipo === "hotel")
+      return hoteles.map((h) => ({
+        id: h.id,
+        label: `${h.id} · ${h.nombre}`,
+        raw: h,
+      }));
+    if (tipo === "tour")
+      return tours.map((t) => ({
+        id: t.id,
+        label: `${t.id} · ${t.nombre}`,
+        raw: t,
+      }));
+    return traslados.map((t) => ({
+      id: t.id,
+      label: `${t.id} · ${t.nombre}`,
+      raw: t,
+    }));
+  }, [tipo, hoteles, tours, traslados, isManual]);
+
+  const filteredCatalog = useMemo(() => {
+    if (!search) return catalogItems.slice(0, 80);
+    const q = search.toLowerCase();
+    return catalogItems
+      .filter((c) => c.label.toLowerCase().includes(q))
+      .slice(0, 80);
+  }, [catalogItems, search]);
+
+  const pickFromCatalog = (item: CatalogItem) => {
+    setSelectedCatId(item.id);
+    setCodigo(item.id);
+    setNombre(item.raw.nombre);
+    if (tipo === "hotel") {
+      const h = item.raw as Hotel;
+      setUbicacion(h.ubicacion);
+      setEstrellas(h.estrellas);
+      setVigencia(h.vigencia);
+      setPrecios((p) => ({
+        ...p,
+        SGL: h.precios.SGL,
+        DBL: h.precios.DBL,
+        TPL: h.precios.TPL,
+        CHD: h.precios.CHD,
+        chd: h.precios.CHD,
+      }));
+    } else {
+      const t = item.raw as Tour | Traslado;
+      setPrecios((p) => ({
+        ...p,
+        p1: t.precios.p1,
+        p2_5: t.precios.p2_5,
+        p6_10: t.precios.p6_10,
+        chd: t.precios.chd,
+      }));
+    }
+    setSearch("");
+  };
+
+  const clearCatalog = () => {
+    setSelectedCatId(null);
+    setCodigo("");
+    setNombre("");
+    setUbicacion("");
+    setEstrellas("");
+    setVigencia("");
+    setPrecios({
+      SGL: 0,
+      DBL: 0,
+      TPL: 0,
+      CHD: 0,
+      p1: 0,
+      p2_5: 0,
+      p6_10: 0,
+      chd: 0,
+    });
+  };
+
+  const paxLocal = paxMode === "manual" ? Math.max(1, paxValue) : globalPasajeros;
+  const autoTier = pickTier(paxLocal);
+  const appliedTier: Tier =
+    tarifaOverride === "auto" ? autoTier : (tarifaOverride as Tier);
+  const unitAplicado =
+    tipo === "hotel" ? 0 : priceForTier(precios, appliedTier);
+
+  const canSave = nombre.trim().length > 0;
+
+  const handleSave = () => {
+    if (!canSave) return;
+    const isCatalog = !!selectedCatId && !isManual;
+    const id = isCatalog ? selectedCatId! : initial?.id ?? `MAN-${Date.now()}`;
+    const base: ServicioSeleccionado = {
+      id,
+      codigo: codigo || id,
+      tipo,
+      nombre,
+      notas: notas || undefined,
+      paxOverride: paxMode === "manual" ? paxValue : undefined,
+      manual: !isCatalog,
+      precios:
+        tipo === "hotel"
+          ? {
+              SGL: precios.SGL,
+              DBL: precios.DBL,
+              TPL: precios.TPL,
+              CHD: precios.CHD,
+              chd: precios.CHD,
+            }
+          : {
+              p1: precios.p1,
+              p2_5: precios.p2_5,
+              p6_10: precios.p6_10,
+              chd: precios.chd,
+              CHD: precios.chd,
+            },
+    };
+    if (tipo === "hotel") {
+      base.fechaInicio = fechaInicio || undefined;
+      base.fechaFin = fechaFin || undefined;
+      base.ubicacion = ubicacion || undefined;
+      base.estrellas = estrellas || undefined;
+      base.vigencia = vigencia || undefined;
+    } else {
+      base.usarFecha = usarFecha;
+      if (usarFecha) base.fecha = fecha || undefined;
+      if (tarifaOverride !== "auto")
+        base.tarifaOverride = tarifaOverride as Tier;
+    }
+    onSave(base);
+  };
+
+  const titleByTipo = {
+    hotel: isManual ? "Alojamiento personalizado" : "Agregar alojamiento",
+    tour: isManual ? "Tour personalizado" : "Agregar tour / actividad",
+    traslado: isManual ? "Traslado personalizado" : "Agregar traslado",
+  } as const;
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={initial ? `Editar ${tipo}` : titleByTipo[tipo]}
+      subtitle={
+        isManual
+          ? "Servicio manual sin catálogo"
+          : "Configura los detalles del servicio"
+      }
+      size="xl"
+    >
+      <div className="px-6 py-5 space-y-5">
+        {allowTipoSwitch && (
+          <div>
+            <SectionTitle>Tipo de servicio</SectionTitle>
+            <div className="grid grid-cols-3 gap-2">
+              {(["hotel", "tour", "traslado"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTipo(t)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors flex items-center justify-center gap-2 ${
+                    tipo === t
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {t === "hotel" && <HotelIcon className="w-4 h-4" />}
+                  {t === "tour" && <MapPin className="w-4 h-4" />}
+                  {t === "traslado" && <Bus className="w-4 h-4" />}
+                  {t === "hotel" ? "Hotel" : t === "tour" ? "Tour" : "Traslado"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isManual && (
+          <div>
+            <SectionTitle>
+              <Search className="w-3.5 h-3.5" /> Buscar en catálogo
+            </SectionTitle>
+            {selectedCatId ? (
+              <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-primary">
+                    {selectedCatId}
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 truncate">
+                    {nombre}
+                  </div>
+                </div>
+                <button
+                  onClick={clearCatalog}
+                  className="p-1.5 rounded-md text-slate-500 hover:bg-white"
+                  title="Quitar selección"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`Buscar por código o nombre...`}
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+                <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100 bg-white">
+                  {filteredCatalog.length === 0 ? (
+                    <div className="px-3 py-3 text-sm text-slate-500 text-center">
+                      Sin resultados
+                    </div>
+                  ) : (
+                    filteredCatalog.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => pickFromCatalog(c)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                          {c.id}
+                        </span>
+                        <span className="text-slate-800 truncate">
+                          {c.raw.nombre}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <div>
+          <SectionTitle>
+            <Tag className="w-3.5 h-3.5" /> Detalles del servicio
+          </SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <Label>Código</Label>
+              <input
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                placeholder="RGE-XXXX"
+                className={inputCls}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Nombre</Label>
+              <input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Nombre del servicio"
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <Label>
+              <StickyNote className="w-3 h-3 inline mr-1" />
+              Notas
+            </Label>
+            <textarea
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              placeholder="Detalles, restricciones u observaciones para el cliente..."
+              rows={2}
+              className={`${inputCls} resize-none`}
+            />
+          </div>
+        </div>
+
+        {tipo === "hotel" ? (
+          <HotelFields
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            ubicacion={ubicacion}
+            estrellas={estrellas}
+            vigencia={vigencia}
+            precios={precios}
+            onChange={(patch) => {
+              if (patch.fechaInicio !== undefined)
+                setFechaInicio(patch.fechaInicio);
+              if (patch.fechaFin !== undefined) setFechaFin(patch.fechaFin);
+              if (patch.ubicacion !== undefined) setUbicacion(patch.ubicacion);
+              if (patch.estrellas !== undefined) setEstrellas(patch.estrellas);
+              if (patch.vigencia !== undefined) setVigencia(patch.vigencia);
+              if (patch.precios)
+                setPrecios((p) => ({ ...p, ...patch.precios }));
+            }}
+          />
+        ) : (
+          <TourTrasladoFields
+            usarFecha={usarFecha}
+            fecha={fecha}
+            paxMode={paxMode}
+            paxValue={paxValue}
+            globalPasajeros={globalPasajeros}
+            tarifaOverride={tarifaOverride}
+            autoTier={autoTier}
+            unitAplicado={unitAplicado}
+            precios={{
+              p1: precios.p1,
+              p2_5: precios.p2_5,
+              p6_10: precios.p6_10,
+              chd: precios.chd,
+            }}
+            onUsarFecha={setUsarFecha}
+            onFecha={setFecha}
+            onPaxMode={setPaxMode}
+            onPaxValue={setPaxValue}
+            onTarifaOverride={setTarifaOverride}
+            onPrecios={(p) => setPrecios((prev) => ({ ...prev, ...p }))}
+            isManual={!!isManual}
+          />
+        )}
+      </div>
+
+      <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-white"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={!canSave}
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
+        >
+          <Sparkles className="w-4 h-4" />
+          {initial ? "Guardar cambios" : "Guardar servicio"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function HotelFields({
+  fechaInicio,
+  fechaFin,
+  ubicacion,
+  estrellas,
+  vigencia,
+  precios,
+  onChange,
+}: {
+  fechaInicio: string;
+  fechaFin: string;
+  ubicacion: string;
+  estrellas: string;
+  vigencia: string;
+  precios: { SGL: number; DBL: number; TPL: number; CHD: number };
+  onChange: (
+    patch: Partial<{
+      fechaInicio: string;
+      fechaFin: string;
+      ubicacion: string;
+      estrellas: string;
+      vigencia: string;
+      precios: Partial<{ SGL: number; DBL: number; TPL: number; CHD: number }>;
+    }>,
+  ) => void;
+}) {
+  return (
+    <>
+      <div>
+        <SectionTitle>
+          <Calendar className="w-3.5 h-3.5" /> Estadía
+        </SectionTitle>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label>Check-in</Label>
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => onChange({ fechaInicio: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <Label>Check-out</Label>
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => onChange({ fechaFin: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <Label>Ubicación</Label>
+            <input
+              value={ubicacion}
+              onChange={(e) => onChange({ ubicacion: e.target.value })}
+              placeholder="Ciudad / país"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <Label>Categoría</Label>
+            <input
+              value={estrellas}
+              onChange={(e) => onChange({ estrellas: e.target.value })}
+              placeholder="Ej: 4 estrellas"
+              className={inputCls}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Vigencia</Label>
+            <input
+              value={vigencia}
+              onChange={(e) => onChange({ vigencia: e.target.value })}
+              placeholder="Ej: 01/04 al 30/09"
+              className={inputCls}
+            />
+          </div>
+        </div>
+      </div>
+      <div>
+        <SectionTitle>Precios por acomodación (por noche)</SectionTitle>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {(["SGL", "DBL", "TPL", "CHD"] as const).map((a) => (
+            <div key={a}>
+              <Label>{a}</Label>
+              <input
+                type="number"
+                value={precios[a]}
+                onChange={(e) =>
+                  onChange({ precios: { [a]: Number(e.target.value) || 0 } })
+                }
+                className={inputCls}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TourTrasladoFields({
+  usarFecha,
+  fecha,
+  paxMode,
+  paxValue,
+  globalPasajeros,
+  tarifaOverride,
+  autoTier,
+  unitAplicado,
+  precios,
+  onUsarFecha,
+  onFecha,
+  onPaxMode,
+  onPaxValue,
+  onTarifaOverride,
+  onPrecios,
+  isManual,
+}: {
+  usarFecha: boolean;
+  fecha: string;
+  paxMode: "auto" | "manual";
+  paxValue: number;
+  globalPasajeros: number;
+  tarifaOverride: Tier | "auto";
+  autoTier: Tier;
+  unitAplicado: number;
+  precios: { p1: number; p2_5: number; p6_10: number; chd: number };
+  onUsarFecha: (b: boolean) => void;
+  onFecha: (s: string) => void;
+  onPaxMode: (m: "auto" | "manual") => void;
+  onPaxValue: (n: number) => void;
+  onTarifaOverride: (t: Tier | "auto") => void;
+  onPrecios: (p: Partial<{ p1: number; p2_5: number; p6_10: number; chd: number }>) => void;
+  isManual: boolean;
+}) {
+  return (
+    <>
+      <div>
+        <SectionTitle>
+          <Calendar className="w-3.5 h-3.5" /> Fecha del servicio
+        </SectionTitle>
+        <div className="flex items-start gap-3 mb-3">
+          <ToggleSwitch
+            checked={usarFecha}
+            onChange={() => onUsarFecha(!usarFecha)}
+          />
+          <div>
+            <div className="text-sm font-medium text-slate-900">Usar fecha</div>
+            <div className="text-[11px] text-slate-500">
+              Activa para asignar un día específico al servicio
+            </div>
+          </div>
+        </div>
+        {usarFecha && (
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => onFecha(e.target.value)}
+            className={inputCls}
+          />
+        )}
+      </div>
+
+      <div>
+        <SectionTitle>
+          <Users className="w-3.5 h-3.5" /> Pasajeros para este servicio
+        </SectionTitle>
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={() => onPaxMode("auto")}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border ${
+              paxMode === "auto"
+                ? "bg-slate-900 text-white border-slate-900"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            Auto · {globalPasajeros} pax
+          </button>
+          <button
+            onClick={() => onPaxMode("manual")}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border ${
+              paxMode === "manual"
+                ? "bg-slate-900 text-white border-slate-900"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            Manual
+          </button>
+        </div>
+        {paxMode === "manual" && (
+          <input
+            type="number"
+            min={1}
+            value={paxValue}
+            onChange={(e) => onPaxValue(Math.max(1, Number(e.target.value) || 1))}
+            placeholder="Cantidad de personas"
+            className={inputCls}
+          />
+        )}
+      </div>
+
+      <div>
+        <SectionTitle>
+          <Tag className="w-3.5 h-3.5" /> Tarifa aplicada
+        </SectionTitle>
+        <div className="rounded-xl bg-slate-50 p-4 flex items-center justify-between gap-4 mb-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+              Total por persona
+            </div>
+            <div className="text-2xl font-bold text-slate-900">
+              {fmt(unitAplicado)}{" "}
+              <span className="text-xs text-slate-500 font-normal">p/p</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+              Rango
+            </span>
+            <select
+              value={tarifaOverride}
+              onChange={(e) => onTarifaOverride(e.target.value as Tier | "auto")}
+              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs font-medium bg-white"
+            >
+              <option value="auto">Auto ({tierLabel(autoTier)})</option>
+              <option value="p1">1 pax</option>
+              <option value="p2_5">2-5 pax</option>
+              <option value="p6_10">6-10 pax</option>
+            </select>
+          </div>
+        </div>
+        {isManual && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <Label>1 pax</Label>
+              <input
+                type="number"
+                value={precios.p1}
+                onChange={(e) =>
+                  onPrecios({ p1: Number(e.target.value) || 0 })
+                }
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Label>2-5 pax</Label>
+              <input
+                type="number"
+                value={precios.p2_5}
+                onChange={(e) =>
+                  onPrecios({ p2_5: Number(e.target.value) || 0 })
+                }
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Label>6-10 pax</Label>
+              <input
+                type="number"
+                value={precios.p6_10}
+                onChange={(e) =>
+                  onPrecios({ p6_10: Number(e.target.value) || 0 })
+                }
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Label>Niño</Label>
+              <input
+                type="number"
+                value={precios.chd}
+                onChange={(e) =>
+                  onPrecios({ chd: Number(e.target.value) || 0 })
+                }
+                className={inputCls}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function ToggleSwitch({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      role="switch"
+      aria-checked={checked}
+      className={`relative w-9 h-5 rounded-full mt-0.5 flex-shrink-0 transition-colors ${
+        checked ? "bg-primary" : "bg-slate-300"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+          checked ? "translate-x-4" : ""
+        }`}
+      />
+    </button>
+  );
+}
+
+const inputCls =
+  "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400";
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="block text-[11px] font-semibold text-slate-600 mb-1 uppercase tracking-wide">
+      {children}
+    </label>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+      {children}
+    </h4>
+  );
+}

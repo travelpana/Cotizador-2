@@ -9,10 +9,15 @@ exportación por WhatsApp, Email y PDF (impresión).
 
 ## Artifacts
 
-- `artifacts/cotizador` — Frontend React + Vite + Tailwind. Sirve la UI tipo
-  dashboard con sidebar oscuro, panel principal con cards blancas, selector
-  multi-acomodación, listado de servicios desde Excel, totales por acomodación,
-  itinerario automático y panel de exportación. Sirve en `/`.
+- `artifacts/cotizador` — Frontend React + Vite + Tailwind. UI tipo dashboard
+  con sidebar oscuro, layout 70/30 (servicios izquierda · totales/acciones
+  derecha sticky). Cada servicio se agrega/edita en `ServicioFormModal`
+  (buscador del catálogo con código + nombre, código editable, notas, toggle
+  "Usar fecha", pax Auto/Manual, tarifa aplicada con override de rango). El
+  botón "Vista previa" abre `VistaPreviaModal` con el documento profesional
+  (tabla Alojamiento + tabla Servicios adicionales + caja "Resumen de costos"
+  con GRAN TOTAL azul). Exportación a WhatsApp (copiar al portapapeles), Email
+  (mailto) y PDF (impresión). Sirve en `/`.
 - `artifacts/api-server` — API Express. Lee `TARIFARIO.xlsx` y expone:
   - `GET /api/hoteles` · `GET /api/tours` · `GET /api/traslados` · `GET /api/catalog`
   - `POST /api/reload` — recargar Excel

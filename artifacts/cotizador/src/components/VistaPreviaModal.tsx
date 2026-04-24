@@ -30,169 +30,312 @@ export default function VistaPreviaModal({
     ? buildItinerario(cliente, servicios)
     : [];
 
+  const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
+  const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");
+  const acoms = result.acomodaciones;
+  const primary = acoms[0];
+
   return (
-    <Modal open={open} onClose={onClose} title="Vista previa de cotización" size="xl">
-      <div className="px-8 py-8 bg-white text-slate-900">
-        <div className="border-b-2 border-primary pb-4 mb-6">
-          <h1 className="text-2xl font-bold">
-            Cotización <span className="text-primary">RGE Style Travel</span>
-          </h1>
-          <div className="text-sm text-slate-600 mt-2 flex flex-wrap gap-x-4 gap-y-1">
-            {cliente.nombre && (
-              <span>
-                <span className="text-slate-500">Cliente:</span>{" "}
-                <strong>{cliente.nombre}</strong>
-              </span>
-            )}
-            {cliente.fechaInicio && (
-              <span>
-                <span className="text-slate-500">Fechas:</span>{" "}
-                {cliente.fechaInicio} → {cliente.fechaFin}
-              </span>
-            )}
-            <span>
-              <span className="text-slate-500">Pasajeros:</span>{" "}
-              {cliente.pasajeros}
-              {cliente.ninos ? ` + ${cliente.ninos} niños` : ""}
-            </span>
-            <span>
-              <span className="text-slate-500">Noches:</span> {cliente.noches}
-            </span>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Vista previa de cotización"
+      size="xl"
+    >
+      <div className="bg-white text-slate-900">
+        <div className="px-10 py-8">
+          {/* Header */}
+          <div className="flex items-start justify-between border-b-2 border-blue-600 pb-5 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Cotización <span className="text-blue-600">de Viaje</span>
+              </h1>
+              <div className="text-sm text-slate-500 mt-1">
+                RGE Style Travel · {new Date().toLocaleDateString("es-ES")}
+              </div>
+            </div>
+            <div className="text-right text-sm">
+              {cliente.nombre && (
+                <div>
+                  <span className="text-slate-500">Cliente: </span>
+                  <strong className="text-slate-900">{cliente.nombre}</strong>
+                </div>
+              )}
+              <div className="text-slate-600 mt-1">
+                {cliente.pasajeros} pax
+                {cliente.ninos ? ` + ${cliente.ninos} niños` : ""} ·{" "}
+                {cliente.noches} noches
+              </div>
+              {cliente.fechaInicio && (
+                <div className="text-slate-600">
+                  {cliente.fechaInicio} → {cliente.fechaFin}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 2-col layout: tables left, summary right */}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-8">
+            <div className="space-y-8 min-w-0">
+              {/* Alojamiento */}
+              {hoteles.length > 0 && (
+                <section>
+                  <DocHeading>Alojamiento</DocHeading>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[10px] uppercase tracking-wider text-slate-600 border-b-2 border-slate-300">
+                          <th className="text-left py-2 pr-3 font-semibold">
+                            Hotel
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold w-20">
+                            Check-in
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold w-20">
+                            Check-out
+                          </th>
+                          <th className="text-center py-2 px-2 font-semibold w-12">
+                            Noches
+                          </th>
+                          {acoms.map((a) => (
+                            <th
+                              key={a}
+                              className="text-right py-2 px-2 font-semibold w-20"
+                            >
+                              {a}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hoteles.map((s) => (
+                          <tr
+                            key={`${s.tipo}-${s.id}`}
+                            className="border-b border-slate-100 align-top"
+                          >
+                            <td className="py-3 pr-3">
+                              <div className="font-semibold text-slate-900">
+                                {s.nombre}
+                              </div>
+                              <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                                {[s.ubicacion, s.estrellas, s.vigencia]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </div>
+                              {s.notas && (
+                                <div className="text-[11px] text-slate-500 italic mt-1">
+                                  {s.notas}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-2 text-slate-700 text-xs">
+                              {s.fechaInicio || "—"}
+                            </td>
+                            <td className="py-3 px-2 text-slate-700 text-xs">
+                              {s.fechaFin || "—"}
+                            </td>
+                            <td className="py-3 px-2 text-center text-slate-700">
+                              {s.noches ?? "—"}
+                            </td>
+                            {acoms.map((a) => (
+                              <td
+                                key={a}
+                                className="py-3 px-2 text-right text-slate-900 font-semibold"
+                              >
+                                {fmt(s.totalesPorAcomodacion[a])}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* Servicios adicionales */}
+              {adicionales.length > 0 && (
+                <section>
+                  <DocHeading>Servicios adicionales</DocHeading>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[10px] uppercase tracking-wider text-slate-600 border-b-2 border-slate-300">
+                          <th className="text-left py-2 pr-3 font-semibold w-24">
+                            Tipo
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold">
+                            Descripción
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold w-24">
+                            Fecha
+                          </th>
+                          <th className="text-right py-2 px-2 font-semibold w-24">
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adicionales.map((s) => (
+                          <tr
+                            key={`${s.tipo}-${s.id}`}
+                            className="border-b border-slate-100 align-top"
+                          >
+                            <td className="py-3 pr-3 text-[11px] uppercase tracking-wider text-slate-600 font-bold">
+                              {s.tipo}
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="text-[10px] text-blue-600 font-bold mb-0.5">
+                                {s.codigo}
+                              </div>
+                              <div className="font-semibold text-slate-900">
+                                {s.nombre}
+                              </div>
+                              {s.notas && (
+                                <div className="text-[11px] text-slate-500 italic mt-0.5">
+                                  {s.notas}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-2 text-slate-700 text-xs">
+                              {s.fecha || "—"}
+                            </td>
+                            <td className="py-3 px-2 text-right text-slate-900 font-semibold">
+                              {fmt(s.totalesPorAcomodacion[primary])}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* Itinerario */}
+              {incluirItinerario && itinerario.length > 0 && (
+                <section>
+                  <DocHeading>Itinerario</DocHeading>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[10px] uppercase tracking-wider text-slate-600 border-b-2 border-slate-300">
+                          <th className="text-left py-2 pr-3 font-semibold w-12">
+                            Día
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold w-24">
+                            Fecha
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold">
+                            Actividad
+                          </th>
+                          <th className="text-left py-2 px-2 font-semibold">
+                            Hotel
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itinerario.map((d) => (
+                          <tr
+                            key={d.dia}
+                            className="border-b border-slate-100 align-top"
+                          >
+                            <td className="py-2.5 pr-3 font-bold text-blue-600">
+                              {d.dia}
+                            </td>
+                            <td className="py-2.5 px-2 text-slate-600 text-xs">
+                              {d.fecha || "—"}
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <div className="font-medium">{d.actividad}</div>
+                              {incluirDescriptivos && d.descripcion && (
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                  {d.descripcion}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-2 text-slate-700">
+                              {d.hotel}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Right summary card */}
+            <aside>
+              <div className="rounded-2xl border-2 border-blue-100 bg-slate-50 p-5 sticky top-4">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-blue-600 mb-3">
+                  Resumen de costos
+                </div>
+                <div className="space-y-2 text-sm">
+                  <SubtotalLine
+                    label="Alojamiento"
+                    value={result.subtotalesPorTipo.hotel[primary]}
+                  />
+                  <SubtotalLine
+                    label="Traslados"
+                    value={result.subtotalesPorTipo.traslado[primary]}
+                  />
+                  <SubtotalLine
+                    label="Tours"
+                    value={result.subtotalesPorTipo.tour[primary]}
+                  />
+                </div>
+                <div className="border-t-2 border-blue-200 mt-4 pt-4 space-y-2">
+                  {acoms.map((a) => (
+                    <div key={a} className="flex items-baseline justify-between">
+                      <span className="text-[11px] uppercase tracking-wide font-bold text-slate-500">
+                        Total {a}
+                      </span>
+                      <span
+                        className={`font-bold ${
+                          a === primary ? "text-2xl text-blue-600" : "text-base text-slate-700"
+                        }`}
+                      >
+                        {fmt(result.totalesPorAcomodacion[a])}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 text-[10px] text-slate-500 leading-snug">
+                  Resumen calculado sobre {primary}. Las demás acomodaciones se
+                  muestran como referencia.
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
 
-        <Heading>Servicios</Heading>
-        {result.servicios.length === 0 ? (
-          <p className="text-sm text-slate-500 italic mb-6">
-            No hay servicios seleccionados.
-          </p>
-        ) : (
-          <div className="overflow-x-auto mb-8">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-600">
-                  <th className="text-left py-2 px-3 font-semibold">Servicio</th>
-                  <th className="text-left py-2 px-3 font-semibold">Detalle</th>
-                  {result.acomodaciones.map((a) => (
-                    <th
-                      key={a}
-                      className="text-right py-2 px-3 font-semibold"
-                    >
-                      {a}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {result.servicios.map((s) => (
-                  <tr
-                    key={`${s.tipo}-${s.id}`}
-                    className="border-b border-slate-200"
-                  >
-                    <td className="py-2.5 px-3 font-medium">{s.nombre}</td>
-                    <td className="py-2.5 px-3 text-slate-600 text-xs">
-                      {s.detalle}
-                    </td>
-                    {result.acomodaciones.map((a) => (
-                      <td key={a} className="py-2.5 px-3 text-right">
-                        {fmt(s.totalesPorAcomodacion[a])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                <tr className="bg-slate-50 font-bold">
-                  <td colSpan={2} className="py-3 px-3">
-                    TOTAL
-                  </td>
-                  {result.acomodaciones.map((a) => (
-                    <td key={a} className="py-3 px-3 text-right">
-                      {fmt(result.totalesPorAcomodacion[a])}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <Heading>Totales por acomodación</Heading>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          {result.acomodaciones.map((a) => (
-            <div
-              key={a}
-              className="rounded-xl border-2 border-primary/30 p-4"
-            >
-              <div className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
-                {a}
-              </div>
-              <div className="text-xl font-bold text-slate-900 mt-1">
-                {fmt(result.totalesPorAcomodacion[a])}
-              </div>
-            </div>
-          ))}
+        <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+          >
+            Cerrar
+          </button>
         </div>
-
-        {incluirItinerario && itinerario.length > 0 && (
-          <>
-            <Heading>Itinerario</Heading>
-            <div className="overflow-x-auto mb-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-600">
-                    <th className="text-left py-2 px-3 font-semibold w-16">
-                      Día
-                    </th>
-                    <th className="text-left py-2 px-3 font-semibold w-28">
-                      Fecha
-                    </th>
-                    <th className="text-left py-2 px-3 font-semibold">
-                      Actividad
-                    </th>
-                    <th className="text-left py-2 px-3 font-semibold">Hotel</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itinerario.map((d) => (
-                    <tr key={d.dia} className="border-b border-slate-200">
-                      <td className="py-2.5 px-3 font-bold text-primary">
-                        {d.dia}
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-600 text-xs">
-                        {d.fecha || "—"}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <div className="font-medium">{d.actividad}</div>
-                        {incluirDescriptivos && d.descripcion && (
-                          <div className="text-xs text-slate-500 mt-0.5">
-                            {d.descripcion}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-700">{d.hotel}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
-        >
-          Cerrar
-        </button>
       </div>
     </Modal>
   );
 }
 
-function Heading({ children }: { children: React.ReactNode }) {
+function DocHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-base font-bold text-slate-900 border-b-2 border-primary pb-1.5 mb-3">
+    <h2 className="text-base font-bold text-blue-600 uppercase tracking-wider mb-3">
       {children}
     </h2>
+  );
+}
+
+function SubtotalLine({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-baseline justify-between">
+      <span className="text-slate-700">{label}</span>
+      <span className="font-semibold text-slate-900">{fmt(value)}</span>
+    </div>
   );
 }

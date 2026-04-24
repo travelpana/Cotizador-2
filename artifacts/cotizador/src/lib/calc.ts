@@ -44,6 +44,13 @@ export function fmt(n: number): string {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+const EMPTY_ACOM = (): Record<Acomodacion, number> => ({
+  SGL: 0,
+  DBL: 0,
+  TPL: 0,
+  CHD: 0,
+});
+
 export function calcularLocal(
   servicios: ServicioSeleccionado[],
   acomodaciones: Acomodacion[],
@@ -52,72 +59,82 @@ export function calcularLocal(
   const acoms =
     acomodaciones.length > 0 ? acomodaciones : (["DBL"] as Acomodacion[]);
   const noches = Math.max(0, cliente.noches || 0);
-  const pasajeros = Math.max(1, cliente.pasajeros || 1);
+  const pasajerosGlobal = Math.max(1, cliente.pasajeros || 1);
   const ninos = Math.max(0, cliente.ninos || 0);
 
   const out = [] as CotizacionResult["servicios"];
+  const subtotales = {
+    hotel: EMPTY_ACOM(),
+    tour: EMPTY_ACOM(),
+    traslado: EMPTY_ACOM(),
+  };
 
   for (const s of servicios) {
-    const preciosPorAcom: Record<Acomodacion, number> = {
-      SGL: 0,
-      DBL: 0,
-      TPL: 0,
-      CHD: 0,
-    };
-    const totalesPorAcom: Record<Acomodacion, number> = {
-      SGL: 0,
-      DBL: 0,
-      TPL: 0,
-      CHD: 0,
-    };
+    const preciosPorAcom = EMPTY_ACOM();
+    const totalesPorAcom = EMPTY_ACOM();
+    const paxLocal = Math.max(1, s.paxOverride ?? pasajerosGlobal);
 
     if (s.tipo === "hotel") {
       preciosPorAcom.SGL = s.precios.SGL ?? 0;
       preciosPorAcom.DBL = s.precios.DBL ?? 0;
       preciosPorAcom.TPL = s.precios.TPL ?? 0;
       preciosPorAcom.CHD = s.precios.CHD ?? 0;
+      const hotelNoches =
+        s.fechaInicio && s.fechaFin
+          ? diffNoches(s.fechaInicio, s.fechaFin)
+          : noches;
       for (const a of acoms) {
-        totalesPorAcom[a] = preciosPorAcom[a] * noches * pasajeros;
+        totalesPorAcom[a] = preciosPorAcom[a] * hotelNoches * paxLocal;
+        subtotales.hotel[a] += totalesPorAcom[a];
       }
       out.push({
         id: s.id,
+        codigo: s.codigo ?? s.id,
         tipo: "hotel",
         nombre: s.nombre,
         preciosPorAcomodacion: preciosPorAcom,
         totalesPorAcomodacion: totalesPorAcom,
-        detalle: `${noches} noches × ${pasajeros} pax`,
+        detalle: `${hotelNoches} noches × ${paxLocal} pax`,
+        fechaInicio: s.fechaInicio,
+        fechaFin: s.fechaFin,
+        notas: s.notas,
+        ubicacion: s.ubicacion,
+        estrellas: s.estrellas,
+        vigencia: s.vigencia,
+        noches: hotelNoches,
+        paxAplicados: paxLocal,
       });
     } else {
-      const tier = s.tarifaOverride ?? pickTier(pasajeros);
+      const tier = s.tarifaOverride ?? pickTier(paxLocal);
       const unit = priceForTier(s.precios, tier);
       const chdUnit = s.precios.chd ?? 0;
       preciosPorAcom.SGL = unit;
       preciosPorAcom.DBL = unit;
       preciosPorAcom.TPL = unit;
       preciosPorAcom.CHD = chdUnit;
-      const totalUnit = unit * pasajeros + chdUnit * ninos;
+      const totalUnit = unit * paxLocal + chdUnit * ninos;
       for (const a of acoms) {
         totalesPorAcom[a] = totalUnit;
+        subtotales[s.tipo][a] += totalUnit;
       }
       out.push({
         id: s.id,
+        codigo: s.codigo ?? s.id,
         tipo: s.tipo,
         nombre: s.nombre,
         preciosPorAcomodacion: preciosPorAcom,
         totalesPorAcomodacion: totalesPorAcom,
-        detalle: `${pasajeros} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`,
+        detalle: `${paxLocal} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`,
+        fecha: s.usarFecha ? s.fecha : undefined,
+        notas: s.notas,
         tierAplicado: tier,
         unitAplicado: unit,
+        paxAplicados: paxLocal,
       });
     }
   }
 
-  const totales: Record<Acomodacion, number> = {
-    SGL: 0,
-    DBL: 0,
-    TPL: 0,
-    CHD: 0,
-  };
+  const totales = EMPTY_ACOM();
   for (const sv of out) {
     for (const a of acoms) {
       totales[a] += sv.totalesPorAcomodacion[a];
@@ -127,9 +144,10 @@ export function calcularLocal(
   return {
     servicios: out,
     totalesPorAcomodacion: totales,
+    subtotalesPorTipo: subtotales,
     acomodaciones: acoms,
     noches,
-    pasajeros,
+    pasajeros: pasajerosGlobal,
     ninos,
   };
 }
