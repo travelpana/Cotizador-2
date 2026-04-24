@@ -26,6 +26,13 @@ export function diffNoches(start: string, end: string): number {
   return Math.max(0, diff);
 }
 
+export function addDays(iso: string, days: number): string {
+  if (!iso) return "";
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function fmt(n: number): string {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
