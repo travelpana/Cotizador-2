@@ -2,26 +2,47 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Cotizador de viajes profesional para RGE Style Travel. Lee el tarifario desde
+un archivo Excel (`TARIFARIO.xlsx`) y permite armar cotizaciones con
+**multi-acomodación** (SGL/DBL/TPL en paralelo), itinerario automático, y
+exportación por WhatsApp, Email y PDF (impresión).
+
+## Artifacts
+
+- `artifacts/cotizador` — Frontend React + Vite + Tailwind. Sirve la UI tipo
+  dashboard con sidebar oscuro, panel principal con cards blancas, selector
+  multi-acomodación, listado de servicios desde Excel, totales por acomodación,
+  itinerario automático y panel de exportación. Sirve en `/`.
+- `artifacts/api-server` — API Express. Lee `TARIFARIO.xlsx` y expone:
+  - `GET /api/hoteles` · `GET /api/tours` · `GET /api/traslados` · `GET /api/catalog`
+  - `POST /api/reload` — recargar Excel
+  - `POST /api/cotizacion/calcular` — calcula totales por acomodación
+- `artifacts/mockup-sandbox` — Sandbox de mockups (no usado en este proyecto).
+
+## Excel data model
+
+El archivo `artifacts/api-server/TARIFARIO.xlsx` tiene 5 hojas:
+- **Hotelería**: código, nombre, estrellas, tipo habitación, SGL, DBL, TPL,
+  CHD, desayuno, vigencia. Incluye encabezados de sección por ubicación.
+- **Tours**: código, descripción, horario/días, 1 Pax, 2-5 Pax, 6-10 Pax,
+  niños 4-10, categoría.
+- **Traslados Regulares** y **Traslados Privados**: código, descripción, 1 Pax,
+  2-5 Pax, 6-10 Pax, niños.
+
+Para tours/traslados el precio aplicado depende del número de pasajeros (1, 2-5,
+o 6-10). Para hoteles el precio es por persona por noche según acomodación.
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Monorepo**: pnpm workspaces, TypeScript 5.9
+- **Backend**: Express 5, xlsx, pino
+- **Frontend**: React + Vite, TailwindCSS, wouter, lucide-react
+- **Diseño**: fondo `#0f172a`, primario `#38bdf8`, cards blancas con sombra
 
-## Key Commands
+## Comandos clave
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
-
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+- `pnpm --filter @workspace/api-server run dev` — backend dev
+- `pnpm --filter @workspace/cotizador run dev` — frontend dev
+- `pnpm run typecheck` — typecheck completo
+- Reemplazar el tarifario: copiar nuevo archivo a
+  `artifacts/api-server/TARIFARIO.xlsx` y hacer POST a `/api/reload`.
