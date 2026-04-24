@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Hotel as HotelIcon,
   MapPin,
@@ -23,6 +23,7 @@ interface Props {
   traslados: Traslado[];
   seleccionados: ServicioSeleccionado[];
   onChange: (s: ServicioSeleccionado[]) => void;
+  initialTab?: Tab;
 }
 
 type Tab = "hotel" | "tour" | "traslado" | "manual";
@@ -35,9 +36,17 @@ export default function ServiciosModal({
   traslados,
   seleccionados,
   onChange,
+  initialTab = "hotel",
 }: Props) {
-  const [tab, setTab] = useState<Tab>("hotel");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [q, setQ] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setTab(initialTab);
+      setQ("");
+    }
+  }, [open, initialTab]);
 
   const seleccionadosKeys = new Set(
     seleccionados.map((s) => `${s.tipo}:${s.id}`),
@@ -202,7 +211,6 @@ export default function ServiciosModal({
           <ManualForm
             onAdd={(s) => {
               onChange([...seleccionados, s]);
-              setTab("hotel");
             }}
           />
         )}
@@ -364,46 +372,44 @@ function ManualForm({
           </select>
         </div>
         {tipo === "hotel" ? (
-          <>
-            <div className="grid grid-cols-4 gap-2 md:col-span-2">
-              <div>
-                <Lbl>SGL</Lbl>
-                <input
-                  type="number"
-                  value={precioSGL}
-                  onChange={(e) => setPrecioSGL(Number(e.target.value) || 0)}
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <Lbl>DBL</Lbl>
-                <input
-                  type="number"
-                  value={precioDBL}
-                  onChange={(e) => setPrecioDBL(Number(e.target.value) || 0)}
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <Lbl>TPL</Lbl>
-                <input
-                  type="number"
-                  value={precioTPL}
-                  onChange={(e) => setPrecioTPL(Number(e.target.value) || 0)}
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <Lbl>CHD</Lbl>
-                <input
-                  type="number"
-                  value={chd}
-                  onChange={(e) => setChd(Number(e.target.value) || 0)}
-                  className={inputCls}
-                />
-              </div>
+          <div className="grid grid-cols-4 gap-2 md:col-span-2">
+            <div>
+              <Lbl>SGL</Lbl>
+              <input
+                type="number"
+                value={precioSGL}
+                onChange={(e) => setPrecioSGL(Number(e.target.value) || 0)}
+                className={inputCls}
+              />
             </div>
-          </>
+            <div>
+              <Lbl>DBL</Lbl>
+              <input
+                type="number"
+                value={precioDBL}
+                onChange={(e) => setPrecioDBL(Number(e.target.value) || 0)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Lbl>TPL</Lbl>
+              <input
+                type="number"
+                value={precioTPL}
+                onChange={(e) => setPrecioTPL(Number(e.target.value) || 0)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Lbl>CHD</Lbl>
+              <input
+                type="number"
+                value={chd}
+                onChange={(e) => setChd(Number(e.target.value) || 0)}
+                className={inputCls}
+              />
+            </div>
+          </div>
         ) : (
           <>
             <div>

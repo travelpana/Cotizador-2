@@ -7,12 +7,15 @@ import ServiciosModal from "@/components/ServiciosModal";
 import ServiciosSeleccionados from "@/components/ServiciosSeleccionados";
 import TotalesPanel from "@/components/TotalesPanel";
 import ExportButtons from "@/components/ExportButtons";
+import OpcionesPanel from "@/components/OpcionesPanel";
+import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
 import Guardadas, {
   loadGuardadas,
   saveGuardadas,
   type CotizacionGuardada,
 } from "@/components/Guardadas";
+import type { AddOption } from "@/components/AddServiceMenu";
 import type {
   Acomodacion,
   Cliente,
@@ -34,6 +37,8 @@ const DEFAULT_CLIENTE: Cliente = {
   noches: 4,
 };
 
+type ModalTab = "hotel" | "tour" | "traslado" | "manual";
+
 export default function CotizadorPage() {
   const [hoteles, setHoteles] = useState<Hotel[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
@@ -45,9 +50,12 @@ export default function CotizadorPage() {
   const [acomodaciones, setAcomodaciones] = useState<Acomodacion[]>(["DBL"]);
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
   const [mode, setMode] = useState<"tarifas" | "total">("total");
+  const [incluirItinerario, setIncluirItinerario] = useState(true);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
   const [savedKey, setSavedKey] = useState(0);
   const [serviciosOpen, setServiciosOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<ModalTab>("hotel");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -91,10 +99,7 @@ export default function CotizadorPage() {
   };
 
   const handleClear = () => {
-    if (
-      servicios.length > 0 &&
-      !confirm("¿Limpiar la cotización actual?")
-    )
+    if (servicios.length > 0 && !confirm("¿Limpiar la cotización actual?"))
       return;
     setCliente(DEFAULT_CLIENTE);
     setAcomodaciones(["DBL"]);
@@ -107,9 +112,15 @@ export default function CotizadorPage() {
     setServicios(g.servicios);
   };
 
+  const openAdd = (option: AddOption) => {
+    setModalTab(option);
+    setServiciosOpen(true);
+  };
+
   return (
     <div className="flex min-h-screen">
       <Sidebar onReload={fetchAll} />
+
       <main className="flex-1 overflow-x-hidden">
         <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -135,7 +146,9 @@ export default function CotizadorPage() {
             </div>
           ) : error ? (
             <div className="bg-white rounded-2xl shadow-md p-6 border-l-4 border-red-500">
-              <div className="font-medium text-red-700">Error cargando datos</div>
+              <div className="font-medium text-red-700">
+                Error cargando datos
+              </div>
               <div className="text-sm text-slate-700 mt-1">{error}</div>
               <button
                 onClick={fetchAll}
@@ -145,43 +158,58 @@ export default function CotizadorPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
+              {/* Left column 70% */}
               <div className="space-y-6 min-w-0">
                 <ClientForm cliente={cliente} onChange={setCliente} />
                 <TravelParams cliente={cliente} onChange={setCliente} />
+                <ServiciosSeleccionados
+                  servicios={servicios}
+                  acomodaciones={acomodaciones}
+                  pasajeros={cliente.pasajeros}
+                  onChange={setServicios}
+                  onAdd={openAdd}
+                />
+                {incluirItinerario && (
+                  <Itinerario
+                    cliente={cliente}
+                    servicios={servicios}
+                    incluirDescriptivos={incluirDescriptivos}
+                    onToggleDescriptivos={() =>
+                      setIncluirDescriptivos((v) => !v)
+                    }
+                  />
+                )}
+                <Guardadas refresh={savedKey} onLoad={handleLoadGuardada} />
+              </div>
+
+              {/* Right column 30% sticky */}
+              <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
                 <AcomodacionSelector
                   selected={acomodaciones}
                   onChange={setAcomodaciones}
                 />
-                <ServiciosSeleccionados
-                  servicios={servicios}
-                  acomodaciones={acomodaciones}
-                  onChange={setServicios}
-                  onAdd={() => setServiciosOpen(true)}
-                />
-                <Itinerario
-                  cliente={cliente}
-                  servicios={servicios}
-                  incluirDescriptivos={incluirDescriptivos}
-                  onToggleDescriptivos={() => setIncluirDescriptivos((v) => !v)}
-                />
-                <Guardadas refresh={savedKey} onLoad={handleLoadGuardada} />
-              </div>
-
-              <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
                 <TotalesPanel
                   result={result}
                   cliente={cliente}
                   mode={mode}
                   onModeChange={setMode}
                 />
+                <OpcionesPanel
+                  incluirItinerario={incluirItinerario}
+                  onToggleItinerario={() => setIncluirItinerario((v) => !v)}
+                  incluirDescriptivos={incluirDescriptivos}
+                  onToggleDescriptivos={() => setIncluirDescriptivos((v) => !v)}
+                />
                 <ExportButtons
                   cliente={cliente}
                   servicios={servicios}
                   result={result}
+                  incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   onSave={handleSave}
                   onClear={handleClear}
+                  onPreview={() => setPreviewOpen(true)}
                 />
               </aside>
             </div>
@@ -201,6 +229,17 @@ export default function CotizadorPage() {
         traslados={traslados}
         seleccionados={servicios}
         onChange={setServicios}
+        initialTab={modalTab}
+      />
+
+      <VistaPreviaModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        cliente={cliente}
+        servicios={servicios}
+        result={result}
+        incluirItinerario={incluirItinerario}
+        incluirDescriptivos={incluirDescriptivos}
       />
     </div>
   );

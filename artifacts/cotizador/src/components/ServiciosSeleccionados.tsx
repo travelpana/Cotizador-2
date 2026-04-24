@@ -1,23 +1,35 @@
 import { useState } from "react";
 import { Section } from "./ClientForm";
 import Modal from "./Modal";
+import AddServiceMenu, { type AddOption } from "./AddServiceMenu";
 import type {
   Acomodacion,
   ServicioSeleccionado,
+  Tier,
 } from "@/lib/types";
-import { fmt } from "@/lib/calc";
-import { ListChecks, Pencil, Trash2, Plus, Hotel, MapPin, Bus } from "lucide-react";
+import { fmt, pickTier, priceForTier, tierLabel } from "@/lib/calc";
+import {
+  ListChecks,
+  Pencil,
+  Trash2,
+  Plus,
+  Hotel,
+  MapPin,
+  Bus,
+} from "lucide-react";
 
 interface Props {
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
+  pasajeros: number;
   onChange: (s: ServicioSeleccionado[]) => void;
-  onAdd: () => void;
+  onAdd: (initial: AddOption) => void;
 }
 
 export default function ServiciosSeleccionados({
   servicios,
   acomodaciones,
+  pasajeros,
   onChange,
   onAdd,
 }: Props) {
@@ -44,19 +56,11 @@ export default function ServiciosSeleccionados({
             ? `${servicios.length} ítem${servicios.length !== 1 ? "s" : ""} en la cotización`
             : "Aún no has agregado servicios"
         }
-        action={
-          <button
-            onClick={onAdd}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-          >
-            <Plus className="w-4 h-4" />
-            Agregar servicio
-          </button>
-        }
+        action={<AddServiceMenu onSelect={onAdd} />}
       >
         {servicios.length === 0 ? (
           <button
-            onClick={onAdd}
+            onClick={() => onAdd("hotel")}
             className="w-full py-10 rounded-xl border-2 border-dashed border-slate-200 hover:border-primary hover:bg-primary/5 text-slate-500 hover:text-primary transition-colors text-sm flex flex-col items-center gap-2"
           >
             <Plus className="w-6 h-6" />
@@ -69,8 +73,12 @@ export default function ServiciosSeleccionados({
                 key={`${s.tipo}-${s.id}`}
                 servicio={s}
                 acomodaciones={acomodaciones}
+                pasajeros={pasajeros}
                 onEdit={() => setEditing(s)}
                 onRemove={() => remove(s)}
+                onTierOverride={(tier) =>
+                  update({ ...s, tarifaOverride: tier ?? undefined })
+                }
               />
             ))}
           </div>
@@ -103,17 +111,33 @@ function emojiForTipo(tipo: ServicioSeleccionado["tipo"]) {
   return "🚐";
 }
 
+function labelTipo(t: ServicioSeleccionado["tipo"]) {
+  if (t === "hotel") return "Hotel";
+  if (t === "tour") return "Tour";
+  return "Traslado";
+}
+
 function ServicioCard({
   servicio,
   acomodaciones,
+  pasajeros,
   onEdit,
   onRemove,
+  onTierOverride,
 }: {
   servicio: ServicioSeleccionado;
   acomodaciones: Acomodacion[];
+  pasajeros: number;
   onEdit: () => void;
   onRemove: () => void;
+  onTierOverride: (tier: Tier | null) => void;
 }) {
+  const isHotel = servicio.tipo === "hotel";
+  const autoTier = pickTier(pasajeros);
+  const appliedTier = servicio.tarifaOverride ?? autoTier;
+  const unit = priceForTier(servicio.precios, appliedTier);
+  const isOverridden = !!servicio.tarifaOverride;
+
   return (
     <div className="border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition-colors group bg-white">
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -150,30 +174,60 @@ function ServicioCard({
           </button>
         </div>
       </div>
-      <div className="space-y-1">
-        {servicio.tipo === "hotel"
-          ? acomodaciones.map((a) => (
-              <PriceLine
-                key={a}
-                label={a}
-                value={`${fmt(servicio.precios[a] ?? 0)}/noche`}
-              />
-            ))
-          : (() => {
-              const p1 = servicio.precios.p1 ?? 0;
-              const p25 = servicio.precios.p2_5 ?? 0;
-              const p610 = servicio.precios.p6_10 ?? 0;
-              const chd = servicio.precios.chd ?? servicio.precios.CHD ?? 0;
-              return (
-                <>
-                  <PriceLine label="1 pax" value={`${fmt(p1)} p/p`} />
-                  <PriceLine label="2-5 pax" value={`${fmt(p25)} p/p`} />
-                  <PriceLine label="6-10 pax" value={`${fmt(p610)} p/p`} />
-                  <PriceLine label="CHD" value={`${fmt(chd)} p/n`} />
-                </>
-              );
-            })()}
-      </div>
+
+      {isHotel ? (
+        <div className="space-y-1">
+          {acomodaciones.map((a) => (
+            <PriceLine
+              key={a}
+              label={a}
+              value={`${fmt(servicio.precios[a] ?? 0)}/noche`}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg bg-slate-50 p-3 space-y-2">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+                Tarifa aplicada
+              </div>
+              <div className="text-lg font-bold text-slate-900 leading-tight">
+                {fmt(unit)} <span className="text-xs text-slate-500 font-normal">p/p</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                Rango
+              </div>
+              <div className="text-xs font-medium text-slate-700">
+                {tierLabel(appliedTier)}
+                {isOverridden && (
+                  <span className="ml-1 text-[10px] text-amber-600">manual</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
+            <label className="text-[11px] text-slate-500 font-medium">
+              Override:
+            </label>
+            <select
+              value={servicio.tarifaOverride ?? "auto"}
+              onChange={(e) => {
+                const val = e.target.value;
+                onTierOverride(val === "auto" ? null : (val as Tier));
+              }}
+              className="flex-1 text-xs px-2 py-1 rounded-md border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="auto">Auto ({tierLabel(autoTier)})</option>
+              <option value="p1">1 pax</option>
+              <option value="p2_5">2-5 pax</option>
+              <option value="p6_10">6-10 pax</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -185,12 +239,6 @@ function PriceLine({ label, value }: { label: string; value: string }) {
       <span className="text-slate-900 font-semibold">{value}</span>
     </div>
   );
-}
-
-function labelTipo(t: ServicioSeleccionado["tipo"]) {
-  if (t === "hotel") return "Hotel";
-  if (t === "tour") return "Tour";
-  return "Traslado";
 }
 
 function EditModal({
@@ -234,7 +282,7 @@ function EditModal({
                   </label>
                   <input
                     type="number"
-                    value={(precios as any)[a] ?? 0}
+                    value={(precios as Record<string, number | undefined>)[a] ?? 0}
                     onChange={(e) =>
                       setPrecios({
                         ...precios,
@@ -295,7 +343,7 @@ function EditModal({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
-                  CHD
+                  Niño
                 </label>
                 <input
                   type="number"

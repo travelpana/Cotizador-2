@@ -5,7 +5,7 @@ import {
   Printer,
   Save,
   Trash2,
-  Copy,
+  Eye,
   Check,
 } from "lucide-react";
 import Modal from "./Modal";
@@ -21,24 +21,26 @@ interface Props {
   cliente: Cliente;
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
+  incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   onSave: () => void;
   onClear: () => void;
+  onPreview: () => void;
 }
 
 export default function ExportButtons({
   cliente,
   servicios,
   result,
+  incluirItinerario,
   incluirDescriptivos,
   onSave,
   onClear,
+  onPreview,
 }: Props) {
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
-  const [whatsappNum, setWhatsappNum] = useState("");
   const [emailDest, setEmailDest] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [waCopied, setWaCopied] = useState(false);
 
   const buildText = () => {
     const lines: string[] = [];
@@ -62,11 +64,21 @@ export default function ExportButtons({
     for (const a of result.acomodaciones) {
       lines.push(`${a}: ${fmt(result.totalesPorAcomodacion[a])}`);
     }
+    if (incluirItinerario) {
+      const it = buildItinerario(cliente, servicios);
+      if (it.length > 0) {
+        lines.push("");
+        lines.push(`*Itinerario:*`);
+        for (const d of it) {
+          lines.push(`Día ${d.dia}${d.fecha ? ` (${d.fecha})` : ""}: ${d.actividad}`);
+        }
+      }
+    }
     return lines.join("\n");
   };
 
   const buildHtml = () => {
-    const it = buildItinerario(cliente, servicios);
+    const it = incluirItinerario ? buildItinerario(cliente, servicios) : [];
     return `<!doctype html><html><head><meta charset="utf-8"><title>Cotización ${cliente.nombre || ""}</title>
 <style>
   body{font-family:Inter,system-ui,sans-serif;color:#0f172a;max-width:780px;margin:24px auto;padding:0 24px;line-height:1.45}
@@ -114,7 +126,9 @@ ${result.acomodaciones
   .join("")}
 </div>
 
-<h2>Itinerario</h2>
+${
+  incluirItinerario && it.length > 0
+    ? `<h2>Itinerario</h2>
 <table>
   <thead><tr><th>Día</th><th>Fecha</th><th>Actividad</th><th>Hotel</th></tr></thead>
   <tbody>
@@ -129,18 +143,20 @@ ${result.acomodaciones
       )
       .join("")}
   </tbody>
-</table>
+</table>`
+    : ""
+}
 </body></html>`;
   };
 
-  const sendWhatsapp = () => {
-    const num = whatsappNum.replace(/[^0-9]/g, "");
-    const text = encodeURIComponent(buildText());
-    const url = num
-      ? `https://wa.me/${num}?text=${text}`
-      : `https://wa.me/?text=${text}`;
-    window.open(url, "_blank");
-    setWhatsappOpen(false);
+  const copyWhatsapp = async () => {
+    try {
+      await navigator.clipboard.writeText(buildText());
+      setWaCopied(true);
+      setTimeout(() => setWaCopied(false), 2000);
+    } catch {
+      // fallback
+    }
   };
 
   const sendEmail = () => {
@@ -160,47 +176,46 @@ ${result.acomodaciones
     setTimeout(() => w.print(), 350);
   };
 
-  const handleCopyHtml = async () => {
-    await navigator.clipboard.writeText(buildHtml());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
   return (
     <>
       <div className="bg-white rounded-2xl shadow-md p-5 space-y-2">
         <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">
-          Compartir cotización
+          Acciones
         </div>
         <button
-          onClick={() => setWhatsappOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
+          onClick={onPreview}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
         >
-          <MessageCircle className="w-4 h-4" />
-          Enviar por WhatsApp
+          <Eye className="w-4 h-4" />
+          Vista previa
         </button>
         <button
-          onClick={() => setEmailOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+          onClick={copyWhatsapp}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
         >
-          <Mail className="w-4 h-4" />
-          Enviar por Email
+          {waCopied ? (
+            <>
+              <Check className="w-4 h-4" />
+              ¡Copiado!
+            </>
+          ) : (
+            <>
+              <MessageCircle className="w-4 h-4" />
+              Copiar WhatsApp
+            </>
+          )}
         </button>
         <button
           onClick={handlePdf}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
         >
           <Printer className="w-4 h-4" />
-          Generar PDF
+          Descargar PDF
         </button>
 
         <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5">
-          <IconBtn onClick={handleCopyHtml} title={copied ? "Copiado" : "Copiar HTML"}>
-            {copied ? (
-              <Check className="w-4 h-4 text-emerald-600" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
+          <IconBtn onClick={() => setEmailOpen(true)} title="Email">
+            <Mail className="w-4 h-4" />
           </IconBtn>
           <IconBtn onClick={onSave} title="Guardar">
             <Save className="w-4 h-4" />
@@ -210,46 +225,6 @@ ${result.acomodaciones
           </IconBtn>
         </div>
       </div>
-
-      <Modal
-        open={whatsappOpen}
-        onClose={() => setWhatsappOpen(false)}
-        title="Enviar por WhatsApp"
-        subtitle="Opcional: número del destinatario con código país"
-        size="md"
-      >
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Número (ej: 50760000000)
-            </label>
-            <input
-              value={whatsappNum}
-              onChange={(e) => setWhatsappNum(e.target.value)}
-              placeholder="Déjalo vacío para enviar a tus contactos"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 max-h-40 overflow-y-auto whitespace-pre-wrap font-mono">
-            {buildText()}
-          </div>
-        </div>
-        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
-          <button
-            onClick={() => setWhatsappOpen(false)}
-            className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-white"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={sendWhatsapp}
-            className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 inline-flex items-center gap-2"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Abrir WhatsApp
-          </button>
-        </div>
-      </Modal>
 
       <Modal
         open={emailOpen}

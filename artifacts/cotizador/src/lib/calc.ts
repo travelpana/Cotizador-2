@@ -3,19 +3,26 @@ import type {
   Cliente,
   CotizacionResult,
   ServicioSeleccionado,
+  Tier,
 } from "./types";
 
-function tieredPrice(
+export function pickTier(pasajeros: number): Tier {
+  if (pasajeros <= 1) return "p1";
+  if (pasajeros <= 5) return "p2_5";
+  return "p6_10";
+}
+
+export function tierLabel(t: Tier): string {
+  if (t === "p1") return "1 pax";
+  if (t === "p2_5") return "2-5 pax";
+  return "6-10 pax";
+}
+
+export function priceForTier(
   precios: { p1?: number; p2_5?: number; p6_10?: number },
-  pasajeros: number,
+  tier: Tier,
 ): number {
-  const p1 = precios.p1 ?? 0;
-  const p25 = precios.p2_5 ?? 0;
-  const p610 = precios.p6_10 ?? 0;
-  if (pasajeros <= 1) return p1 || p25;
-  if (pasajeros <= 5) return p25;
-  if (pasajeros <= 10) return p610 || p25;
-  return p610 || p25;
+  return precios[tier] ?? 0;
 }
 
 export function diffNoches(start: string, end: string): number {
@@ -42,7 +49,8 @@ export function calcularLocal(
   acomodaciones: Acomodacion[],
   cliente: Cliente,
 ): CotizacionResult {
-  const acoms = acomodaciones.length > 0 ? acomodaciones : (["DBL"] as Acomodacion[]);
+  const acoms =
+    acomodaciones.length > 0 ? acomodaciones : (["DBL"] as Acomodacion[]);
   const noches = Math.max(0, cliente.noches || 0);
   const pasajeros = Math.max(1, cliente.pasajeros || 1);
   const ninos = Math.max(0, cliente.ninos || 0);
@@ -50,8 +58,18 @@ export function calcularLocal(
   const out = [] as CotizacionResult["servicios"];
 
   for (const s of servicios) {
-    const preciosPorAcom: Record<Acomodacion, number> = { SGL: 0, DBL: 0, TPL: 0, CHD: 0 };
-    const totalesPorAcom: Record<Acomodacion, number> = { SGL: 0, DBL: 0, TPL: 0, CHD: 0 };
+    const preciosPorAcom: Record<Acomodacion, number> = {
+      SGL: 0,
+      DBL: 0,
+      TPL: 0,
+      CHD: 0,
+    };
+    const totalesPorAcom: Record<Acomodacion, number> = {
+      SGL: 0,
+      DBL: 0,
+      TPL: 0,
+      CHD: 0,
+    };
 
     if (s.tipo === "hotel") {
       preciosPorAcom.SGL = s.precios.SGL ?? 0;
@@ -70,14 +88,16 @@ export function calcularLocal(
         detalle: `${noches} noches × ${pasajeros} pax`,
       });
     } else {
-      const unit = tieredPrice(s.precios, pasajeros);
+      const tier = s.tarifaOverride ?? pickTier(pasajeros);
+      const unit = priceForTier(s.precios, tier);
       const chdUnit = s.precios.chd ?? 0;
       preciosPorAcom.SGL = unit;
       preciosPorAcom.DBL = unit;
       preciosPorAcom.TPL = unit;
       preciosPorAcom.CHD = chdUnit;
+      const totalUnit = unit * pasajeros + chdUnit * ninos;
       for (const a of acoms) {
-        totalesPorAcom[a] = unit * pasajeros + chdUnit * ninos;
+        totalesPorAcom[a] = totalUnit;
       }
       out.push({
         id: s.id,
@@ -85,12 +105,19 @@ export function calcularLocal(
         nombre: s.nombre,
         preciosPorAcomodacion: preciosPorAcom,
         totalesPorAcomodacion: totalesPorAcom,
-        detalle: `${pasajeros} pax${ninos ? ` + ${ninos} niños` : ""}`,
+        detalle: `${pasajeros} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`,
+        tierAplicado: tier,
+        unitAplicado: unit,
       });
     }
   }
 
-  const totales: Record<Acomodacion, number> = { SGL: 0, DBL: 0, TPL: 0, CHD: 0 };
+  const totales: Record<Acomodacion, number> = {
+    SGL: 0,
+    DBL: 0,
+    TPL: 0,
+    CHD: 0,
+  };
   for (const sv of out) {
     for (const a of acoms) {
       totales[a] += sv.totalesPorAcomodacion[a];
