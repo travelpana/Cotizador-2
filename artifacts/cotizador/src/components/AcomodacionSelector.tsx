@@ -26,7 +26,6 @@ export default function AcomodacionSelector({ selected, onChange }: Props) {
 
   return (
     <Section
-      step={3}
       icon={<BedDouble className="w-4 h-4" />}
       title="Acomodaciones"
       subtitle="Cotiza una o varias en paralelo"

@@ -75,11 +75,14 @@ export interface ServicioSeleccionado {
 
 export interface Cliente {
   nombre: string;
+  agencia: string;
+  correo: string;
   fechaInicio: string;
   fechaFin: string;
   pasajeros: number;
   ninos: number;
   noches: number;
+  vigencia: string;
 }
 
 export interface ServicioCalculado {

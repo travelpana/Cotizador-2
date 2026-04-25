@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar, { type View } from "@/components/Sidebar";
 import ClientForm from "@/components/ClientForm";
-import TravelParams from "@/components/TravelParams";
 import AcomodacionSelector from "@/components/AcomodacionSelector";
 import ServicioFormModal, {
   type ServicioTipo,
@@ -33,11 +32,14 @@ import { Loader2 } from "lucide-react";
 
 const DEFAULT_CLIENTE: Cliente = {
   nombre: "",
+  agencia: "",
+  correo: "",
   fechaInicio: "",
   fechaFin: "",
   pasajeros: 2,
   ninos: 0,
   noches: 1,
+  vigencia: "",
 };
 
 interface FormState {
@@ -274,7 +276,6 @@ export default function CotizadorPage() {
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
                 <ClientForm cliente={cliente} onChange={setCliente} />
-                <TravelParams cliente={cliente} onChange={setCliente} />
                 <ServiciosSeleccionados
                   servicios={servicios}
                   acomodaciones={acomodaciones}

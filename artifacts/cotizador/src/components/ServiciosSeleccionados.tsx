@@ -55,7 +55,6 @@ export default function ServiciosSeleccionados({
 
   return (
     <Section
-      step={4}
       icon={<ListChecks className="w-4 h-4" />}
       title="Servicios seleccionados"
       subtitle={
