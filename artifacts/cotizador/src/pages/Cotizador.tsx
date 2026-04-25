@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
+import Sidebar, { type View } from "@/components/Sidebar";
 import ClientForm from "@/components/ClientForm";
 import TravelParams from "@/components/TravelParams";
 import AcomodacionSelector from "@/components/AcomodacionSelector";
@@ -7,15 +7,16 @@ import ServicioFormModal, {
   type ServicioTipo,
 } from "@/components/ServicioFormModal";
 import ServiciosSeleccionados from "@/components/ServiciosSeleccionados";
-import TotalesPanel from "@/components/TotalesPanel";
+import ResumenPanel from "@/components/ResumenPanel";
 import ExportButtons from "@/components/ExportButtons";
-import OpcionesPanel from "@/components/OpcionesPanel";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
-import Guardadas, {
+import Seguimiento from "@/components/Seguimiento";
+import {
   loadGuardadas,
   saveGuardadas,
   type CotizacionGuardada,
+  type ModoCotizacion,
 } from "@/components/Guardadas";
 import type { AddOption } from "@/components/AddServiceMenu";
 import type {
@@ -62,15 +63,22 @@ export default function CotizadorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [view, setView] = useState<View>("cotizador");
   const [cliente, setCliente] = useState<Cliente>(DEFAULT_CLIENTE);
   const [acomodaciones, setAcomodaciones] = useState<Acomodacion[]>(["DBL"]);
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
-  const [mode, setMode] = useState<"tarifas" | "total">("total");
-  const [incluirItinerario, setIncluirItinerario] = useState(true);
+  const [modo, setModo] = useState<ModoCotizacion>("tarifas");
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
-  const [savedKey, setSavedKey] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewQuote, setPreviewQuote] = useState<CotizacionGuardada | null>(
+    null,
+  );
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
+
+  const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
+  useEffect(() => {
+    setGuardadas(loadGuardadas());
+  }, []);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -100,6 +108,15 @@ export default function CotizadorPage() {
     [servicios, acomodaciones, cliente],
   );
 
+  const previewResult = useMemo(() => {
+    if (!previewQuote) return result;
+    return calcularLocal(
+      previewQuote.servicios,
+      previewQuote.acomodaciones,
+      previewQuote.cliente,
+    );
+  }, [previewQuote, result]);
+
   const handleSave = () => {
     const item: CotizacionGuardada = {
       id: `${Date.now()}`,
@@ -107,10 +124,11 @@ export default function CotizadorPage() {
       cliente,
       servicios,
       acomodaciones,
+      modoCotizacion: modo,
     };
-    const next = [item, ...loadGuardadas()].slice(0, 30);
+    const next = [item, ...guardadas].slice(0, 30);
     saveGuardadas(next);
-    setSavedKey((k) => k + 1);
+    setGuardadas(next);
   };
 
   const handleClear = () => {
@@ -119,12 +137,7 @@ export default function CotizadorPage() {
     setCliente(DEFAULT_CLIENTE);
     setAcomodaciones(["DBL"]);
     setServicios([]);
-  };
-
-  const handleLoadGuardada = (g: CotizacionGuardada) => {
-    setCliente(g.cliente);
-    setAcomodaciones(g.acomodaciones);
-    setServicios(g.servicios);
+    setModo("tarifas");
   };
 
   const openAdd = (option: AddOption) => {
@@ -171,19 +184,56 @@ export default function CotizadorPage() {
     setForm(CLOSED_FORM);
   };
 
+  // Seguimiento handlers
+  const seguimientoView = (g: CotizacionGuardada) => {
+    setPreviewQuote(g);
+    setPreviewOpen(true);
+  };
+  const seguimientoEdit = (g: CotizacionGuardada) => {
+    setCliente(g.cliente);
+    setAcomodaciones(g.acomodaciones);
+    setServicios(g.servicios);
+    setModo(g.modoCotizacion);
+    setView("cotizador");
+  };
+  const seguimientoDelete = (id: string) => {
+    if (!confirm("¿Eliminar esta cotización?")) return;
+    const next = guardadas.filter((x) => x.id !== id);
+    saveGuardadas(next);
+    setGuardadas(next);
+  };
+
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setPreviewQuote(null);
+  };
+
+  const previewModo: ModoCotizacion = previewQuote?.modoCotizacion ?? modo;
+  const previewCliente = previewQuote?.cliente ?? cliente;
+  const previewServicios = previewQuote?.servicios ?? servicios;
+
   return (
     <div className="flex min-h-screen">
-      <Sidebar onReload={fetchAll} />
+      <Sidebar
+        view={view}
+        onView={setView}
+        seguimientoCount={guardadas.length}
+        onReload={fetchAll}
+      />
 
       <main className="flex-1 overflow-x-hidden">
         <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                Cotizador de Viajes
+                {view === "cotizador"
+                  ? "Cotizador de Viajes"
+                  : "Seguimiento"}
               </h1>
               <p className="text-xs text-muted-foreground">
-                Multi-acomodación · cálculo en tiempo real desde tarifario Excel
+                {view === "cotizador"
+                  ? "Multi-acomodación · cálculo en tiempo real desde tarifario Excel"
+                  : "Cotizaciones guardadas en este equipo"}
               </p>
             </div>
             <div className="text-xs text-muted-foreground hidden md:block">
@@ -212,6 +262,13 @@ export default function CotizadorPage() {
                 Reintentar
               </button>
             </div>
+          ) : view === "seguimiento" ? (
+            <Seguimiento
+              items={guardadas}
+              onView={seguimientoView}
+              onEdit={seguimientoEdit}
+              onDelete={seguimientoDelete}
+            />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
@@ -225,17 +282,14 @@ export default function CotizadorPage() {
                   onAdd={openAdd}
                   onEdit={openEdit}
                 />
-                {incluirItinerario && (
-                  <Itinerario
-                    cliente={cliente}
-                    servicios={servicios}
-                    incluirDescriptivos={incluirDescriptivos}
-                    onToggleDescriptivos={() =>
-                      setIncluirDescriptivos((v) => !v)
-                    }
-                  />
-                )}
-                <Guardadas refresh={savedKey} onLoad={handleLoadGuardada} />
+                <Itinerario
+                  cliente={cliente}
+                  servicios={servicios}
+                  incluirDescriptivos={incluirDescriptivos}
+                  onToggleDescriptivos={() =>
+                    setIncluirDescriptivos((v) => !v)
+                  }
+                />
               </div>
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
@@ -243,27 +297,24 @@ export default function CotizadorPage() {
                   selected={acomodaciones}
                   onChange={setAcomodaciones}
                 />
-                <TotalesPanel
+                <ResumenPanel
                   result={result}
                   cliente={cliente}
-                  mode={mode}
-                  onModeChange={setMode}
-                />
-                <OpcionesPanel
-                  incluirItinerario={incluirItinerario}
-                  onToggleItinerario={() => setIncluirItinerario((v) => !v)}
-                  incluirDescriptivos={incluirDescriptivos}
-                  onToggleDescriptivos={() => setIncluirDescriptivos((v) => !v)}
+                  modo={modo}
+                  onModoChange={setModo}
                 />
                 <ExportButtons
                   cliente={cliente}
                   servicios={servicios}
                   result={result}
-                  incluirItinerario={incluirItinerario}
+                  modo={modo}
                   incluirDescriptivos={incluirDescriptivos}
                   onSave={handleSave}
                   onClear={handleClear}
-                  onPreview={() => setPreviewOpen(true)}
+                  onPreview={() => {
+                    setPreviewQuote(null);
+                    setPreviewOpen(true);
+                  }}
                 />
               </aside>
             </div>
@@ -293,11 +344,11 @@ export default function CotizadorPage() {
 
       <VistaPreviaModal
         open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        cliente={cliente}
-        servicios={servicios}
-        result={result}
-        incluirItinerario={incluirItinerario}
+        onClose={closePreview}
+        cliente={previewCliente}
+        servicios={previewServicios}
+        result={previewResult}
+        modo={previewModo}
         incluirDescriptivos={incluirDescriptivos}
       />
     </div>

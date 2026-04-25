@@ -1,12 +1,22 @@
-import { Plane, FileSpreadsheet, RefreshCw } from "lucide-react";
+import { Plane, FileSpreadsheet, RefreshCw, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 
+export type View = "cotizador" | "seguimiento";
+
 interface Props {
+  view: View;
+  onView: (v: View) => void;
+  seguimientoCount: number;
   onReload?: () => void;
 }
 
-export default function Sidebar({ onReload }: Props) {
+export default function Sidebar({
+  view,
+  onView,
+  seguimientoCount,
+  onReload,
+}: Props) {
   const [reloading, setReloading] = useState(false);
 
   const handleReload = async () => {
@@ -34,13 +44,19 @@ export default function Sidebar({ onReload }: Props) {
       </div>
 
       <nav className="p-4 flex-1 space-y-1">
-        <a
-          href="#cotizador"
-          className="flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          Cotizador
-        </a>
+        <NavItem
+          active={view === "cotizador"}
+          onClick={() => onView("cotizador")}
+          icon={<FileSpreadsheet className="w-4 h-4" />}
+          label="Cotizador"
+        />
+        <NavItem
+          active={view === "seguimiento"}
+          onClick={() => onView("seguimiento")}
+          icon={<ListChecks className="w-4 h-4" />}
+          label="Seguimiento"
+          badge={seguimientoCount}
+        />
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
@@ -57,5 +73,46 @@ export default function Sidebar({ onReload }: Props) {
         </p>
       </div>
     </aside>
+  );
+}
+
+function NavItem({
+  active,
+  onClick,
+  icon,
+  label,
+  badge,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+        active
+          ? "bg-primary/10 text-primary"
+          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+      }`}
+    >
+      <span className="flex items-center gap-3">
+        {icon}
+        {label}
+      </span>
+      {badge !== undefined && badge > 0 && (
+        <span
+          className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            active
+              ? "bg-primary/20 text-primary"
+              : "bg-sidebar-accent text-sidebar-accent-foreground"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }

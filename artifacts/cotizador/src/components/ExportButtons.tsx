@@ -14,6 +14,7 @@ import type {
   CotizacionResult,
   ServicioSeleccionado,
 } from "@/lib/types";
+import type { ModoCotizacion } from "./Guardadas";
 import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 
@@ -21,7 +22,7 @@ interface Props {
   cliente: Cliente;
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
-  incluirItinerario: boolean;
+  modo: ModoCotizacion;
   incluirDescriptivos: boolean;
   onSave: () => void;
   onClear: () => void;
@@ -32,7 +33,7 @@ export default function ExportButtons({
   cliente,
   servicios,
   result,
-  incluirItinerario,
+  modo,
   incluirDescriptivos,
   onSave,
   onClear,
@@ -46,10 +47,16 @@ export default function ExportButtons({
   const primary = acoms[0];
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
   const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");
+  const isCalc = modo === "calculo";
 
   const buildText = () => {
     const lines: string[] = [];
     lines.push(`*Cotización RGE Style Travel*`);
+    lines.push(
+      isCalc
+        ? `_Modo: cálculo total_`
+        : `_Modo: solo tarifas (sin totales)_`,
+    );
     if (cliente.nombre) lines.push(`Cliente: ${cliente.nombre}`);
     if (cliente.fechaInicio)
       lines.push(`Fechas: ${cliente.fechaInicio} → ${cliente.fechaFin}`);
@@ -63,9 +70,17 @@ export default function ExportButtons({
         const meta = [s.ubicacion, s.estrellas].filter(Boolean).join(" · ");
         lines.push(`• ${s.nombre}${meta ? ` (${meta})` : ""}`);
         if (s.fechaInicio || s.fechaFin)
-          lines.push(`   ${s.fechaInicio || ""} → ${s.fechaFin || ""} · ${s.noches ?? ""} noches`);
+          lines.push(
+            `   ${s.fechaInicio || ""} → ${s.fechaFin || ""} · ${s.noches ?? ""} noches`,
+          );
         for (const a of acoms) {
-          lines.push(`   ${a}: ${fmt(s.totalesPorAcomodacion[a])}`);
+          lines.push(
+            `   ${a}: ${
+              isCalc
+                ? fmt(s.totalesPorAcomodacion[a])
+                : `${fmt(s.preciosPorAcomodacion[a])}/noche`
+            }`,
+          );
         }
       }
     }
@@ -73,36 +88,48 @@ export default function ExportButtons({
       lines.push("");
       lines.push(`*Servicios adicionales:*`);
       for (const s of adicionales) {
-        lines.push(`• [${s.tipo.toUpperCase()}] ${s.codigo} · ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}`);
-        lines.push(`   Total: ${fmt(s.totalesPorAcomodacion[primary])}`);
+        lines.push(
+          `• [${s.tipo.toUpperCase()}] ${s.codigo} · ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}`,
+        );
+        lines.push(
+          `   ${
+            isCalc
+              ? `Total: ${fmt(s.totalesPorAcomodacion[primary])}`
+              : `Tarifa: ${fmt(s.unitAplicado ?? 0)} p/p`
+          }`,
+        );
       }
     }
-    lines.push("");
-    lines.push(`*Resumen de costos (${primary}):*`);
-    lines.push(`Alojamiento: ${fmt(result.subtotalesPorTipo.hotel[primary])}`);
-    lines.push(`Traslados:   ${fmt(result.subtotalesPorTipo.traslado[primary])}`);
-    lines.push(`Tours:       ${fmt(result.subtotalesPorTipo.tour[primary])}`);
-    lines.push("");
-    for (const a of acoms) {
-      lines.push(`*GRAN TOTAL ${a}:* ${fmt(result.totalesPorAcomodacion[a])}`);
+    if (isCalc) {
+      lines.push("");
+      lines.push(`*Resumen de costos (${primary}):*`);
+      lines.push(`Alojamiento: ${fmt(result.subtotalesPorTipo.hotel[primary])}`);
+      lines.push(
+        `Traslados:   ${fmt(result.subtotalesPorTipo.traslado[primary])}`,
+      );
+      lines.push(`Tours:       ${fmt(result.subtotalesPorTipo.tour[primary])}`);
+      lines.push("");
+      for (const a of acoms) {
+        lines.push(
+          `*GRAN TOTAL ${a}:* ${fmt(result.totalesPorAcomodacion[a])}`,
+        );
+      }
     }
-    if (incluirItinerario) {
-      const it = buildItinerario(cliente, servicios);
-      if (it.length > 0) {
-        lines.push("");
-        lines.push(`*Itinerario:*`);
-        for (const d of it) {
-          lines.push(
-            `Día ${d.dia}${d.fecha ? ` (${d.fecha})` : ""}: ${d.actividad}`,
-          );
-        }
+    const it = buildItinerario(cliente, servicios);
+    if (it.length > 0) {
+      lines.push("");
+      lines.push(`*Itinerario:*`);
+      for (const d of it) {
+        lines.push(
+          `Día ${d.dia}${d.fecha ? ` (${d.fecha})` : ""}: ${d.actividad}`,
+        );
       }
     }
     return lines.join("\n");
   };
 
   const buildHtml = () => {
-    const it = incluirItinerario ? buildItinerario(cliente, servicios) : [];
+    const it = buildItinerario(cliente, servicios);
     return `<!doctype html><html><head><meta charset="utf-8"><title>Cotización ${cliente.nombre || ""}</title>
 <style>
   body{font-family:Inter,system-ui,sans-serif;color:#0f172a;max-width:920px;margin:24px auto;padding:0 32px;line-height:1.45}
@@ -111,8 +138,11 @@ export default function ExportButtons({
   .brand{color:#2563eb}
   .meta{font-size:13px;color:#475569;margin-top:4px}
   .right{text-align:right;font-size:13px}
+  .modeTag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding:3px 8px;border-radius:4px;margin-top:6px}
+  .modeTag.calc{background:#dbeafe;color:#1d4ed8}
+  .modeTag.tarifas{background:#fef3c7;color:#a16207}
   h2{margin:28px 0 10px;font-size:13px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em}
-  .grid{display:grid;grid-template-columns:1fr 260px;gap:32px}
+  .grid{display:grid;${isCalc ? "grid-template-columns:1fr 260px" : "grid-template-columns:1fr"};gap:32px}
   table{width:100%;border-collapse:collapse;font-size:13px}
   thead tr{border-bottom:2px solid #cbd5e1}
   th{text-align:left;padding:8px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#475569;font-weight:600}
@@ -131,11 +161,14 @@ export default function ExportButtons({
   .total-line .val{font-size:15px;font-weight:700;color:#334155}
   .total-line.primary .val{font-size:26px;color:#2563eb}
   .typeTag{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#475569;font-weight:700}
+  .info{background:#fef3c7;border:1px solid #fde68a;color:#78350f;padding:14px;border-radius:12px;font-size:13px;margin-top:24px}
+  .unitNote{font-size:9px;font-weight:400;color:#94a3b8;text-transform:none;letter-spacing:0;display:block}
 </style></head><body>
 <div class="header">
   <div>
     <h1>Cotización <span class="brand">de Viaje</span></h1>
     <div class="meta">RGE Style Travel · ${new Date().toLocaleDateString("es-ES")}</div>
+    <div class="modeTag ${isCalc ? "calc" : "tarifas"}">${isCalc ? "Modo: cálculo total" : "Modo: solo tarifas"}</div>
   </div>
   <div class="right">
     ${cliente.nombre ? `<div><span style="color:#64748b">Cliente:</span> <strong>${cliente.nombre}</strong></div>` : ""}
@@ -152,7 +185,7 @@ export default function ExportButtons({
     <table>
       <thead><tr>
         <th>Hotel</th><th>Check-in</th><th>Check-out</th><th class="c">Noches</th>
-        ${acoms.map((a) => `<th class="r">${a}</th>`).join("")}
+        ${acoms.map((a) => `<th class="r">${a}${!isCalc ? `<span class="unitNote">/noche</span>` : ""}</th>`).join("")}
       </tr></thead>
       <tbody>
         ${hoteles
@@ -166,7 +199,7 @@ export default function ExportButtons({
           <td>${s.fechaInicio || "—"}</td>
           <td>${s.fechaFin || "—"}</td>
           <td class="c">${s.noches ?? "—"}</td>
-          ${acoms.map((a) => `<td class="r"><b>${fmt(s.totalesPorAcomodacion[a])}</b></td>`).join("")}
+          ${acoms.map((a) => `<td class="r"><b>${isCalc ? fmt(s.totalesPorAcomodacion[a]) : fmt(s.preciosPorAcomodacion[a])}</b></td>`).join("")}
         </tr>`,
           )
           .join("")}
@@ -179,7 +212,7 @@ export default function ExportButtons({
       adicionales.length
         ? `<h2>Servicios adicionales</h2>
     <table>
-      <thead><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th class="r">Total</th></tr></thead>
+      <thead><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th class="r">${isCalc ? "Total" : "Tarifa p/p"}</th></tr></thead>
       <tbody>
         ${adicionales
           .map(
@@ -191,7 +224,7 @@ export default function ExportButtons({
             ${s.notas ? `<div class="notas">${s.notas}</div>` : ""}
           </td>
           <td>${s.fecha || "—"}</td>
-          <td class="r"><b>${fmt(s.totalesPorAcomodacion[primary])}</b></td>
+          <td class="r"><b>${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} p/p`}</b></td>
         </tr>`,
           )
           .join("")}
@@ -223,9 +256,13 @@ export default function ExportButtons({
     </table>`
         : ""
     }
+
+    ${!isCalc ? `<div class="info">Esta cotización se presenta en modo <b>solo tarifas</b>: los precios mostrados son unitarios (por noche / por persona) y no incluyen el cálculo de totales.</div>` : ""}
   </div>
 
-  <aside>
+  ${
+    isCalc
+      ? `<aside>
     <div class="summary">
       <div class="label">Resumen de costos</div>
       <div class="sub"><span>Alojamiento</span><b>${fmt(result.subtotalesPorTipo.hotel[primary])}</b></div>
@@ -242,7 +279,9 @@ export default function ExportButtons({
           .join("")}
       </div>
     </div>
-  </aside>
+  </aside>`
+      : ""
+  }
 </div>
 </body></html>`;
   };

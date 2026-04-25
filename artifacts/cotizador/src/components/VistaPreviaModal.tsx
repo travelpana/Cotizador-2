@@ -4,6 +4,7 @@ import type {
   CotizacionResult,
   ServicioSeleccionado,
 } from "@/lib/types";
+import type { ModoCotizacion } from "./Guardadas";
 import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 
@@ -13,7 +14,7 @@ interface Props {
   cliente: Cliente;
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
-  incluirItinerario: boolean;
+  modo: ModoCotizacion;
   incluirDescriptivos: boolean;
 }
 
@@ -23,17 +24,16 @@ export default function VistaPreviaModal({
   cliente,
   servicios,
   result,
-  incluirItinerario,
+  modo,
   incluirDescriptivos,
 }: Props) {
-  const itinerario = incluirItinerario
-    ? buildItinerario(cliente, servicios)
-    : [];
+  const itinerario = buildItinerario(cliente, servicios);
 
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
   const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");
   const acoms = result.acomodaciones;
   const primary = acoms[0];
+  const isCalc = modo === "calculo";
 
   return (
     <Modal
@@ -52,6 +52,15 @@ export default function VistaPreviaModal({
               </h1>
               <div className="text-sm text-slate-500 mt-1">
                 RGE Style Travel · {new Date().toLocaleDateString("es-ES")}
+              </div>
+              <div
+                className={`inline-block mt-2 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded ${
+                  isCalc
+                    ? "bg-blue-50 text-blue-700"
+                    : "bg-amber-50 text-amber-700"
+                }`}
+              >
+                {isCalc ? "Modo: cálculo total" : "Modo: solo tarifas"}
               </div>
             </div>
             <div className="text-right text-sm">
@@ -74,8 +83,9 @@ export default function VistaPreviaModal({
             </div>
           </div>
 
-          {/* 2-col layout: tables left, summary right */}
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-8">
+          <div
+            className={`grid grid-cols-1 ${isCalc ? "lg:grid-cols-[minmax(0,1fr)_280px]" : ""} gap-8`}
+          >
             <div className="space-y-8 min-w-0">
               {/* Alojamiento */}
               {hoteles.length > 0 && (
@@ -100,9 +110,14 @@ export default function VistaPreviaModal({
                           {acoms.map((a) => (
                             <th
                               key={a}
-                              className="text-right py-2 px-2 font-semibold w-20"
+                              className="text-right py-2 px-2 font-semibold w-24"
                             >
                               {a}
+                              {!isCalc && (
+                                <div className="text-[9px] font-normal text-slate-400 normal-case">
+                                  /noche
+                                </div>
+                              )}
                             </th>
                           ))}
                         </tr>
@@ -142,7 +157,9 @@ export default function VistaPreviaModal({
                                 key={a}
                                 className="py-3 px-2 text-right text-slate-900 font-semibold"
                               >
-                                {fmt(s.totalesPorAcomodacion[a])}
+                                {isCalc
+                                  ? fmt(s.totalesPorAcomodacion[a])
+                                  : fmt(s.preciosPorAcomodacion[a])}
                               </td>
                             ))}
                           </tr>
@@ -170,8 +187,8 @@ export default function VistaPreviaModal({
                           <th className="text-left py-2 px-2 font-semibold w-24">
                             Fecha
                           </th>
-                          <th className="text-right py-2 px-2 font-semibold w-24">
-                            Total
+                          <th className="text-right py-2 px-2 font-semibold w-28">
+                            {isCalc ? "Total" : "Tarifa p/p"}
                           </th>
                         </tr>
                       </thead>
@@ -201,7 +218,9 @@ export default function VistaPreviaModal({
                               {s.fecha || "—"}
                             </td>
                             <td className="py-3 px-2 text-right text-slate-900 font-semibold">
-                              {fmt(s.totalesPorAcomodacion[primary])}
+                              {isCalc
+                                ? fmt(s.totalesPorAcomodacion[primary])
+                                : `${fmt(s.unitAplicado ?? 0)} p/p`}
                             </td>
                           </tr>
                         ))}
@@ -212,7 +231,7 @@ export default function VistaPreviaModal({
               )}
 
               {/* Itinerario */}
-              {incluirItinerario && itinerario.length > 0 && (
+              {itinerario.length > 0 && (
                 <section>
                   <DocHeading>Itinerario</DocHeading>
                   <div className="overflow-x-auto">
@@ -263,50 +282,65 @@ export default function VistaPreviaModal({
                   </div>
                 </section>
               )}
+
+              {!isCalc && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
+                  Esta cotización se presenta en modo <strong>solo tarifas</strong>:
+                  los precios mostrados son unitarios (por noche / por persona) y
+                  no incluyen el cálculo de totales.
+                </div>
+              )}
             </div>
 
-            {/* Right summary card */}
-            <aside>
-              <div className="rounded-2xl border-2 border-blue-100 bg-slate-50 p-5 sticky top-4">
-                <div className="text-[10px] uppercase tracking-wider font-bold text-blue-600 mb-3">
-                  Resumen de costos
-                </div>
-                <div className="space-y-2 text-sm">
-                  <SubtotalLine
-                    label="Alojamiento"
-                    value={result.subtotalesPorTipo.hotel[primary]}
-                  />
-                  <SubtotalLine
-                    label="Traslados"
-                    value={result.subtotalesPorTipo.traslado[primary]}
-                  />
-                  <SubtotalLine
-                    label="Tours"
-                    value={result.subtotalesPorTipo.tour[primary]}
-                  />
-                </div>
-                <div className="border-t-2 border-blue-200 mt-4 pt-4 space-y-2">
-                  {acoms.map((a) => (
-                    <div key={a} className="flex items-baseline justify-between">
-                      <span className="text-[11px] uppercase tracking-wide font-bold text-slate-500">
-                        Total {a}
-                      </span>
-                      <span
-                        className={`font-bold ${
-                          a === primary ? "text-2xl text-blue-600" : "text-base text-slate-700"
-                        }`}
+            {/* Right summary card - only in calculo mode */}
+            {isCalc && (
+              <aside>
+                <div className="rounded-2xl border-2 border-blue-100 bg-slate-50 p-5 sticky top-4">
+                  <div className="text-[10px] uppercase tracking-wider font-bold text-blue-600 mb-3">
+                    Resumen de costos
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <SubtotalLine
+                      label="Alojamiento"
+                      value={result.subtotalesPorTipo.hotel[primary]}
+                    />
+                    <SubtotalLine
+                      label="Traslados"
+                      value={result.subtotalesPorTipo.traslado[primary]}
+                    />
+                    <SubtotalLine
+                      label="Tours"
+                      value={result.subtotalesPorTipo.tour[primary]}
+                    />
+                  </div>
+                  <div className="border-t-2 border-blue-200 mt-4 pt-4 space-y-2">
+                    {acoms.map((a) => (
+                      <div
+                        key={a}
+                        className="flex items-baseline justify-between"
                       >
-                        {fmt(result.totalesPorAcomodacion[a])}
-                      </span>
-                    </div>
-                  ))}
+                        <span className="text-[11px] uppercase tracking-wide font-bold text-slate-500">
+                          Total {a}
+                        </span>
+                        <span
+                          className={`font-bold ${
+                            a === primary
+                              ? "text-2xl text-blue-600"
+                              : "text-base text-slate-700"
+                          }`}
+                        >
+                          {fmt(result.totalesPorAcomodacion[a])}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-[10px] text-slate-500 leading-snug">
+                    Resumen calculado sobre {primary}. Las demás acomodaciones
+                    se muestran como referencia.
+                  </div>
                 </div>
-                <div className="mt-3 text-[10px] text-slate-500 leading-snug">
-                  Resumen calculado sobre {primary}. Las demás acomodaciones se
-                  muestran como referencia.
-                </div>
-              </div>
-            </aside>
+              </aside>
+            )}
           </div>
         </div>
 
