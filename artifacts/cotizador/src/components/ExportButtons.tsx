@@ -331,7 +331,7 @@ export default function ExportButtons({
       </button>
       <button
         onClick={copyWhatsapp}
-        style={{ backgroundColor: "#f7cb17" }}
+        style={{ backgroundColor: "#1a87c5" }}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
       >
         {waCopied ? (
