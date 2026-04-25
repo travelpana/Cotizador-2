@@ -1,5 +1,4 @@
 import { Section } from "./ClientForm";
-import AddServiceMenu, { type AddOption } from "./AddServiceMenu";
 import type {
   Acomodacion,
   ServicioSeleccionado,
@@ -9,18 +8,18 @@ import {
   ListChecks,
   Pencil,
   Trash2,
-  Plus,
   Hotel,
   MapPin,
   Bus,
+  Search,
 } from "lucide-react";
 
 interface Props {
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
   pasajeros: number;
+  highlightedId?: string | null;
   onChange: (s: ServicioSeleccionado[]) => void;
-  onAdd: (initial: AddOption) => void;
   onEdit: (s: ServicioSeleccionado) => void;
 }
 
@@ -40,8 +39,8 @@ export default function ServiciosSeleccionados({
   servicios,
   acomodaciones,
   pasajeros,
+  highlightedId,
   onChange,
-  onAdd,
   onEdit,
 }: Props) {
   const remove = (s: ServicioSeleccionado) => {
@@ -60,18 +59,21 @@ export default function ServiciosSeleccionados({
       subtitle={
         servicios.length
           ? `${servicios.length} ítem${servicios.length !== 1 ? "s" : ""} en la cotización`
-          : "Aún no has agregado servicios"
+          : "Busca un servicio arriba para agregarlo al instante"
       }
-      action={<AddServiceMenu onSelect={onAdd} />}
     >
       {servicios.length === 0 ? (
-        <button
-          onClick={() => onAdd("hotel")}
-          className="w-full py-10 rounded-2xl border-2 border-dashed border-slate-200 hover:border-primary hover:bg-primary/5 text-slate-500 hover:text-primary transition-colors text-sm flex flex-col items-center gap-2"
-        >
-          <Plus className="w-6 h-6" />
-          Agregar primer servicio
-        </button>
+        <div className="rounded-2xl bg-slate-50/70 border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-slate-500 flex flex-col items-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+            <Search className="w-4 h-4" />
+          </div>
+          <div className="font-medium text-slate-700">
+            Aún no has agregado servicios
+          </div>
+          <div className="text-xs text-slate-500">
+            Usa el buscador para encontrar hoteles, traslados o tours.
+          </div>
+        </div>
       ) : (
         <div className="space-y-5">
           {groups.map((g) => (
@@ -86,6 +88,7 @@ export default function ServiciosSeleccionados({
                     servicio={s}
                     acomodaciones={acomodaciones}
                     pasajeros={pasajeros}
+                    highlight={highlightedId === s.id}
                     onEdit={() => onEdit(s)}
                     onRemove={() => remove(s)}
                   />
@@ -117,12 +120,14 @@ function ServicioRow({
   servicio,
   acomodaciones,
   pasajeros,
+  highlight,
   onEdit,
   onRemove,
 }: {
   servicio: ServicioSeleccionado;
   acomodaciones: Acomodacion[];
   pasajeros: number;
+  highlight?: boolean;
   onEdit: () => void;
   onRemove: () => void;
 }) {
@@ -153,7 +158,13 @@ function ServicioRow({
   }
 
   return (
-    <div className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition-colors">
+    <div
+      className={`group flex items-center gap-3 px-4 py-3 transition-colors ${
+        highlight
+          ? "bg-emerald-50 ring-1 ring-emerald-200"
+          : "bg-white hover:bg-slate-50"
+      }`}
+    >
       <div
         className={`w-9 h-9 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center flex-shrink-0`}
       >

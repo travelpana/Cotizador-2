@@ -5,6 +5,7 @@ import ServicioFormModal, {
   type ServicioTipo,
 } from "@/components/ServicioFormModal";
 import ServiciosSeleccionados from "@/components/ServiciosSeleccionados";
+import ServiceSearchBar from "@/components/ServiceSearchBar";
 import ConfiguracionPanel from "@/components/ConfiguracionPanel";
 import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
@@ -17,7 +18,6 @@ import {
   type CotizacionGuardada,
   type ModoCotizacion,
 } from "@/components/Guardadas";
-import type { AddOption } from "@/components/AddServiceMenu";
 import type {
   Acomodacion,
   Cliente,
@@ -77,6 +77,7 @@ export default function CotizadorPage() {
     null,
   );
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
+  const [highlightedServiceId, setHighlightedServiceId] = useState<string | null>(null);
 
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
   useEffect(() => {
@@ -160,24 +161,13 @@ export default function CotizadorPage() {
     setModo("tarifas");
   };
 
-  const openAdd = (option: AddOption) => {
-    if (option === "manual") {
-      setForm({
-        open: true,
-        tipo: "tour",
-        isManual: true,
-        allowSwitch: true,
-        initial: null,
-      });
-    } else {
-      setForm({
-        open: true,
-        tipo: option,
-        isManual: false,
-        allowSwitch: false,
-        initial: null,
-      });
-    }
+  const handleQuickAdd = (s: ServicioSeleccionado) => {
+    setServicios((prev) => [...prev, s]);
+    setHighlightedServiceId(s.id);
+    showToast("Servicio agregado");
+    window.setTimeout(() => {
+      setHighlightedServiceId((curr) => (curr === s.id ? null : curr));
+    }, 1500);
   };
 
   const openEdit = (s: ServicioSeleccionado) => {
@@ -299,12 +289,20 @@ export default function CotizadorPage() {
                   acomodaciones={acomodaciones}
                   onAcomodacionesChange={setAcomodaciones}
                 />
+                <ServiceSearchBar
+                  hoteles={hoteles}
+                  tours={tours}
+                  traslados={traslados}
+                  globalFechaInicio={cliente.fechaInicio}
+                  globalFechaFin={cliente.fechaFin}
+                  onPick={handleQuickAdd}
+                />
                 <ServiciosSeleccionados
                   servicios={servicios}
                   acomodaciones={acomodaciones}
                   pasajeros={cliente.pasajeros}
+                  highlightedId={highlightedServiceId}
                   onChange={setServicios}
-                  onAdd={openAdd}
                   onEdit={openEdit}
                 />
                 {incluirItinerario && (
