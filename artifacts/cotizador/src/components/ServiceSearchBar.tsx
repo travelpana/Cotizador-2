@@ -247,7 +247,11 @@ export default function ServiceSearchBar({
     window.setTimeout(() => {
       setJustAdded((curr) => (curr === key ? null : curr));
     }, 900);
-    inputRef.current?.focus();
+    setQuery("");
+    setDebounced("");
+    setOpen(false);
+    setCatOpen(false);
+    inputRef.current?.blur();
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -324,7 +328,8 @@ export default function ServiceSearchBar({
             onFocus={() => setOpen(true)}
             onKeyDown={handleKey}
             placeholder="Buscar hotel, traslado, tour..."
-            className="w-full h-11 pl-10 pr-10 rounded-xl bg-white border border-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 shadow-sm"
+            className="w-full h-11 pl-10 pr-10 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 shadow-sm"
+            style={{ color: "#1f2937" }}
             data-testid="input-service-search"
           />
           {query && (

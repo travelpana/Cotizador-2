@@ -307,20 +307,28 @@ export default function ServicioFormModal(props: Props) {
     traslado: isManual ? "Traslado personalizado" : "Agregar traslado",
   } as const;
 
+  const editTitleByTipo = {
+    hotel: "Editar alojamiento",
+    tour: "Editar tour / actividad",
+    traslado: "Editar traslado",
+  } as const;
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={initial ? `Editar ${tipo}` : titleByTipo[tipo]}
+      title={initial ? editTitleByTipo[tipo] : titleByTipo[tipo]}
       subtitle={
-        isManual
-          ? "Servicio manual sin catálogo"
-          : "Configura los detalles del servicio"
+        initial
+          ? nombre || "Configura los detalles del servicio"
+          : isManual
+            ? "Servicio manual sin catálogo"
+            : "Configura los detalles del servicio"
       }
       size="xl"
     >
       <div className="px-6 py-5 space-y-5">
-        {allowTipoSwitch && (
+        {allowTipoSwitch && !initial && (
           <div>
             <SectionTitle>Tipo de servicio</SectionTitle>
             <div className="grid grid-cols-3 gap-2">
@@ -344,7 +352,7 @@ export default function ServicioFormModal(props: Props) {
           </div>
         )}
 
-        {!isManual && (
+        {!isManual && !initial && (
           <div>
             <SectionTitle>
               <Search className="w-3.5 h-3.5" /> Buscar en catálogo
