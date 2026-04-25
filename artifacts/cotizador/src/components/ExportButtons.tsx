@@ -23,6 +23,7 @@ interface Props {
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
   modo: ModoCotizacion;
+  incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   onSave: () => void;
   onClear: () => void;
@@ -34,6 +35,7 @@ export default function ExportButtons({
   servicios,
   result,
   modo,
+  incluirItinerario,
   incluirDescriptivos,
   onSave,
   onClear,
@@ -115,7 +117,7 @@ export default function ExportButtons({
         );
       }
     }
-    const it = buildItinerario(cliente, servicios);
+    const it = incluirItinerario ? buildItinerario(cliente, servicios) : [];
     if (it.length > 0) {
       lines.push("");
       lines.push(`*Itinerario:*`);
@@ -129,7 +131,7 @@ export default function ExportButtons({
   };
 
   const buildHtml = () => {
-    const it = buildItinerario(cliente, servicios);
+    const it = incluirItinerario ? buildItinerario(cliente, servicios) : [];
     return `<!doctype html><html><head><meta charset="utf-8"><title>Cotización ${cliente.nombre || ""}</title>
 <style>
   body{font-family:Inter,system-ui,sans-serif;color:#0f172a;max-width:920px;margin:24px auto;padding:0 32px;line-height:1.45}

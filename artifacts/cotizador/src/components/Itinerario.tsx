@@ -1,3 +1,4 @@
+import { Map } from "lucide-react";
 import type { Cliente, ServicioSeleccionado } from "@/lib/types";
 import { addDays } from "@/lib/calc";
 
@@ -6,7 +7,6 @@ interface Props {
   servicios: ServicioSeleccionado[];
   hotelPrincipal?: string;
   incluirDescriptivos: boolean;
-  onToggleDescriptivos: () => void;
 }
 
 export interface ItinerarioDia {
@@ -61,23 +61,21 @@ export default function Itinerario({
   cliente,
   servicios,
   incluirDescriptivos,
-  onToggleDescriptivos,
 }: Props) {
   const itinerario = buildItinerario(cliente, servicios);
 
   return (
     <div className="card-white p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Itinerario</h2>
-        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={incluirDescriptivos}
-            onChange={onToggleDescriptivos}
-            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-          />
-          Incluir descriptivos
-        </label>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <Map className="w-4 h-4" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Itinerario</h2>
+          <p className="text-xs text-slate-500">
+            Vista previa del día a día generado automáticamente
+          </p>
+        </div>
       </div>
 
       {itinerario.length === 0 ? (

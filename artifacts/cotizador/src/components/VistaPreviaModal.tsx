@@ -15,6 +15,7 @@ interface Props {
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
   modo: ModoCotizacion;
+  incluirItinerario: boolean;
   incluirDescriptivos: boolean;
 }
 
@@ -25,9 +26,12 @@ export default function VistaPreviaModal({
   servicios,
   result,
   modo,
+  incluirItinerario,
   incluirDescriptivos,
 }: Props) {
-  const itinerario = buildItinerario(cliente, servicios);
+  const itinerario = incluirItinerario
+    ? buildItinerario(cliente, servicios)
+    : [];
 
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
   const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");

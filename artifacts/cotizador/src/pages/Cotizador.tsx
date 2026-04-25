@@ -7,7 +7,7 @@ import ServicioFormModal, {
   type ServicioTipo,
 } from "@/components/ServicioFormModal";
 import ServiciosSeleccionados from "@/components/ServiciosSeleccionados";
-import ResumenPanel from "@/components/ResumenPanel";
+import ConfiguracionPanel from "@/components/ConfiguracionPanel";
 import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
@@ -68,6 +68,7 @@ export default function CotizadorPage() {
   const [acomodaciones, setAcomodaciones] = useState<Acomodacion[]>(["DBL"]);
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
+  const [incluirItinerario, setIncluirItinerario] = useState(true);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewQuote, setPreviewQuote] = useState<CotizacionGuardada | null>(
@@ -282,14 +283,13 @@ export default function CotizadorPage() {
                   onAdd={openAdd}
                   onEdit={openEdit}
                 />
-                <Itinerario
-                  cliente={cliente}
-                  servicios={servicios}
-                  incluirDescriptivos={incluirDescriptivos}
-                  onToggleDescriptivos={() =>
-                    setIncluirDescriptivos((v) => !v)
-                  }
-                />
+                {incluirItinerario && (
+                  <Itinerario
+                    cliente={cliente}
+                    servicios={servicios}
+                    incluirDescriptivos={incluirDescriptivos}
+                  />
+                )}
               </div>
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
@@ -297,17 +297,22 @@ export default function CotizadorPage() {
                   selected={acomodaciones}
                   onChange={setAcomodaciones}
                 />
-                <ResumenPanel
-                  result={result}
-                  cliente={cliente}
+                <ConfiguracionPanel
                   modo={modo}
                   onModoChange={setModo}
+                  incluirItinerario={incluirItinerario}
+                  onToggleItinerario={() => setIncluirItinerario((v) => !v)}
+                  incluirDescriptivos={incluirDescriptivos}
+                  onToggleDescriptivos={() =>
+                    setIncluirDescriptivos((v) => !v)
+                  }
                 />
                 <ExportButtons
                   cliente={cliente}
                   servicios={servicios}
                   result={result}
                   modo={modo}
+                  incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   onSave={handleSave}
                   onClear={handleClear}
@@ -349,6 +354,7 @@ export default function CotizadorPage() {
         servicios={previewServicios}
         result={previewResult}
         modo={previewModo}
+        incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
       />
     </div>
