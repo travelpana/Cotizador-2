@@ -34,7 +34,8 @@ export default function VistaPreviaModal({
     : [];
 
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
-  const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");
+  const traslados = result.servicios.filter((s) => s.tipo === "traslado");
+  const tours = result.servicios.filter((s) => s.tipo === "tour");
   const acoms = result.acomodaciones;
   const primary = acoms[0];
   const isCalc = modo === "calculo";
@@ -174,69 +175,33 @@ export default function VistaPreviaModal({
                 </section>
               )}
 
-              {/* Servicios adicionales */}
-              {adicionales.length > 0 && (
-                <section>
-                  <DocHeading>Servicios adicionales</DocHeading>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-[10px] uppercase tracking-wider text-slate-600 border-b-2 border-slate-300">
-                          <th className="text-left py-2 pr-3 font-semibold w-24">
-                            Tipo
-                          </th>
-                          <th className="text-left py-2 px-2 font-semibold">
-                            Descripción
-                          </th>
-                          <th className="text-left py-2 px-2 font-semibold w-24">
-                            Fecha
-                          </th>
-                          <th className="text-right py-2 px-2 font-semibold w-28">
-                            {isCalc ? "Total" : "Tarifa p/p"}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {adicionales.map((s) => (
-                          <tr
-                            key={`${s.tipo}-${s.id}`}
-                            className="border-b border-slate-100 align-top"
-                          >
-                            <td className="py-3 pr-3 text-[11px] uppercase tracking-wider text-slate-600 font-bold">
-                              {s.tipo}
-                            </td>
-                            <td className="py-3 px-2">
-                              <div className="text-[10px] text-blue-600 font-bold mb-0.5">
-                                {s.codigo}
-                              </div>
-                              <div className="font-semibold text-slate-900">
-                                {s.nombre}
-                              </div>
-                              {s.notas && (
-                                <div className="text-[11px] text-slate-500 italic mt-0.5">
-                                  {s.notas}
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-3 px-2 text-slate-700 text-xs">
-                              {s.fecha || "—"}
-                            </td>
-                            <td className="py-3 px-2 text-right text-slate-900 font-semibold">
-                              {isCalc
-                                ? fmt(s.totalesPorAcomodacion[primary])
-                                : `${fmt(s.unitAplicado ?? 0)} p/p`}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              {/* Traslados */}
+              {traslados.length > 0 && (
+                <section className="pt-2 border-t border-slate-200">
+                  <DocHeading>Traslados</DocHeading>
+                  <ServicioAdicionalTabla
+                    items={traslados}
+                    isCalc={isCalc}
+                    primary={primary}
+                  />
+                </section>
+              )}
+
+              {/* Tours */}
+              {tours.length > 0 && (
+                <section className="pt-2 border-t border-slate-200">
+                  <DocHeading>Tours</DocHeading>
+                  <ServicioAdicionalTabla
+                    items={tours}
+                    isCalc={isCalc}
+                    primary={primary}
+                  />
                 </section>
               )}
 
               {/* Itinerario */}
               {itinerario.length > 0 && (
-                <section>
+                <section className="pt-2 border-t border-slate-200">
                   <DocHeading>Itinerario</DocHeading>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -250,9 +215,6 @@ export default function VistaPreviaModal({
                           </th>
                           <th className="text-left py-2 px-2 font-semibold">
                             Actividad
-                          </th>
-                          <th className="text-left py-2 px-2 font-semibold">
-                            Hotel
                           </th>
                         </tr>
                       </thead>
@@ -275,9 +237,6 @@ export default function VistaPreviaModal({
                                   {d.descripcion}
                                 </div>
                               )}
-                            </td>
-                            <td className="py-2.5 px-2 text-slate-700">
-                              {d.hotel}
                             </td>
                           </tr>
                         ))}
@@ -363,9 +322,60 @@ export default function VistaPreviaModal({
 
 function DocHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-base font-bold text-blue-600 uppercase tracking-wider mb-3">
+    <h2 className="text-base font-bold text-blue-600 uppercase tracking-wider mb-3 pb-1.5 border-b-2 border-blue-100">
       {children}
     </h2>
+  );
+}
+
+function ServicioAdicionalTabla({
+  items,
+  isCalc,
+  primary,
+}: {
+  items: import("@/lib/types").ServicioCalculado[];
+  isCalc: boolean;
+  primary: import("@/lib/types").Acomodacion;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-[10px] uppercase tracking-wider text-slate-600 border-b-2 border-slate-300">
+            <th className="text-left py-2 pr-3 font-semibold">Descripción</th>
+            <th className="text-left py-2 px-2 font-semibold w-28">Fecha</th>
+            <th className="text-right py-2 px-2 font-semibold w-32">
+              {isCalc ? "Total" : "Tarifa p/p"}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((s) => (
+            <tr
+              key={`${s.tipo}-${s.id}`}
+              className="border-b border-slate-100 align-top"
+            >
+              <td className="py-3 pr-3">
+                <div className="font-semibold text-slate-900">{s.nombre}</div>
+                {s.notas && (
+                  <div className="text-[11px] text-slate-500 italic mt-0.5">
+                    {s.notas}
+                  </div>
+                )}
+              </td>
+              <td className="py-3 px-2 text-slate-700 text-xs">
+                {s.fecha || "—"}
+              </td>
+              <td className="py-3 px-2 text-right text-slate-900 font-semibold">
+                {isCalc
+                  ? fmt(s.totalesPorAcomodacion[primary])
+                  : `${fmt(s.unitAplicado ?? 0)} p/p`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

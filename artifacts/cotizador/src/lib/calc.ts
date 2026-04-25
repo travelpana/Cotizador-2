@@ -106,7 +106,10 @@ export function calcularLocal(
       });
     } else {
       const tier = s.tarifaOverride ?? pickTier(paxLocal);
-      const unit = priceForTier(s.precios, tier);
+      const unit =
+        typeof s.unitOverride === "number"
+          ? s.unitOverride
+          : priceForTier(s.precios, tier);
       const chdUnit = s.precios.chd ?? 0;
       preciosPorAcom.SGL = unit;
       preciosPorAcom.DBL = unit;

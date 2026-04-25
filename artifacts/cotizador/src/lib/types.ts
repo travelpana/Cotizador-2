@@ -51,6 +51,9 @@ export interface ServicioSeleccionado {
   };
   /** Manual override of the tier picked for tours/traslados. */
   tarifaOverride?: Tier;
+  /** Manual override of the unit price (total p/p) for tours/traslados.
+   * When defined, sobrescribe la tarifa automática y NO cambia aunque cambie el rango. */
+  unitOverride?: number;
   /** Override of pax count used when computing this service. */
   paxOverride?: number;
   /** Tour/traslado: whether to display a service date. */

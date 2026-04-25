@@ -92,6 +92,7 @@ export default function ServicioFormModal(props: Props) {
   const [paxMode, setPaxMode] = useState<"auto" | "manual">("auto");
   const [paxValue, setPaxValue] = useState<number>(globalPasajeros);
   const [tarifaOverride, setTarifaOverride] = useState<Tier | "auto">("auto");
+  const [unitOverride, setUnitOverride] = useState<number | null>(null);
   // Catalog selection
   const [search, setSearch] = useState("");
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
@@ -126,6 +127,9 @@ export default function ServicioFormModal(props: Props) {
       setPaxMode(initial.paxOverride ? "manual" : "auto");
       setPaxValue(initial.paxOverride ?? globalPasajeros);
       setTarifaOverride(initial.tarifaOverride ?? "auto");
+      setUnitOverride(
+        typeof initial.unitOverride === "number" ? initial.unitOverride : null,
+      );
       setSelectedCatId(initial.manual ? null : initial.id);
     } else {
       // Fresh
@@ -153,6 +157,7 @@ export default function ServicioFormModal(props: Props) {
       setPaxMode("auto");
       setPaxValue(globalPasajeros);
       setTarifaOverride("auto");
+      setUnitOverride(null);
       setSelectedCatId(null);
     }
   }, [open, props.tipo, initial, globalPasajeros, globalFechaInicio, globalFechaFin]);
@@ -212,6 +217,7 @@ export default function ServicioFormModal(props: Props) {
         p6_10: t.precios.p6_10,
         chd: t.precios.chd,
       }));
+      setUnitOverride(null);
     }
     setSearch("");
   };
@@ -239,8 +245,14 @@ export default function ServicioFormModal(props: Props) {
   const autoTier = pickTier(paxLocal);
   const appliedTier: Tier =
     tarifaOverride === "auto" ? autoTier : (tarifaOverride as Tier);
-  const unitAplicado =
+  const unitAuto =
     tipo === "hotel" ? 0 : priceForTier(precios, appliedTier);
+  const unitAplicado =
+    tipo === "hotel"
+      ? 0
+      : unitOverride !== null
+        ? unitOverride
+        : unitAuto;
 
   const canSave = nombre.trim().length > 0;
 
@@ -284,6 +296,7 @@ export default function ServicioFormModal(props: Props) {
       if (usarFecha) base.fecha = fecha || undefined;
       if (tarifaOverride !== "auto")
         base.tarifaOverride = tarifaOverride as Tier;
+      if (unitOverride !== null) base.unitOverride = unitOverride;
     }
     onSave(base);
   };
@@ -449,6 +462,7 @@ export default function ServicioFormModal(props: Props) {
             tarifaOverride={tarifaOverride}
             autoTier={autoTier}
             unitAplicado={unitAplicado}
+            unitOverride={unitOverride}
             precios={{
               p1: precios.p1,
               p2_5: precios.p2_5,
@@ -460,6 +474,7 @@ export default function ServicioFormModal(props: Props) {
             onPaxMode={setPaxMode}
             onPaxValue={setPaxValue}
             onTarifaOverride={setTarifaOverride}
+            onUnitOverride={setUnitOverride}
             onPrecios={(p) => setPrecios((prev) => ({ ...prev, ...p }))}
             isManual={!!isManual}
           />
@@ -638,12 +653,14 @@ function TourTrasladoFields({
   tarifaOverride,
   autoTier,
   unitAplicado,
+  unitOverride,
   precios,
   onUsarFecha,
   onFecha,
   onPaxMode,
   onPaxValue,
   onTarifaOverride,
+  onUnitOverride,
   onPrecios,
   isManual,
 }: {
@@ -655,12 +672,14 @@ function TourTrasladoFields({
   tarifaOverride: Tier | "auto";
   autoTier: Tier;
   unitAplicado: number;
+  unitOverride: number | null;
   precios: { p1: number; p2_5: number; p6_10: number; chd: number };
   onUsarFecha: (b: boolean) => void;
   onFecha: (s: string) => void;
   onPaxMode: (m: "auto" | "manual") => void;
   onPaxValue: (n: number) => void;
   onTarifaOverride: (t: Tier | "auto") => void;
+  onUnitOverride: (n: number | null) => void;
   onPrecios: (p: Partial<{ p1: number; p2_5: number; p6_10: number; chd: number }>) => void;
   isManual: boolean;
 }) {
@@ -734,14 +753,48 @@ function TourTrasladoFields({
         <SectionTitle>
           <Tag className="w-3.5 h-3.5" /> Tarifa aplicada
         </SectionTitle>
-        <div className="rounded-xl bg-slate-50 p-4 flex items-center justify-between gap-4 mb-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
-              Total por persona
+        <div className="rounded-xl bg-slate-50 p-4 flex flex-wrap items-end justify-between gap-4 mb-3">
+          <div className="flex-1 min-w-[220px]">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+                Total por persona ($ p/p)
+              </span>
+              {unitOverride !== null && (
+                <button
+                  type="button"
+                  onClick={() => onUnitOverride(null)}
+                  className="text-[10px] uppercase tracking-wide text-primary font-semibold hover:underline"
+                  title="Volver al valor automático del tarifario"
+                >
+                  Restablecer
+                </button>
+              )}
             </div>
-            <div className="text-2xl font-bold text-slate-900">
-              {fmt(unitAplicado)}{" "}
-              <span className="text-xs text-slate-500 font-normal">p/p</span>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-base pointer-events-none">
+                $
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={unitAplicado}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    onUnitOverride(0);
+                    return;
+                  }
+                  const v = Number(raw);
+                  onUnitOverride(Number.isFinite(v) ? v : 0);
+                }}
+                className="w-full pl-7 pr-3 py-2.5 rounded-lg border-2 border-primary/40 text-lg font-bold text-slate-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              />
+            </div>
+            <div className="mt-1 text-[10px] text-slate-500">
+              {unitOverride !== null
+                ? "Tarifa editada manualmente · no cambiará al modificar el rango"
+                : `Autocompletado desde el tarifario (${tierLabel(autoTier)})`}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -751,7 +804,8 @@ function TourTrasladoFields({
             <select
               value={tarifaOverride}
               onChange={(e) => onTarifaOverride(e.target.value as Tier | "auto")}
-              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs font-medium bg-white"
+              className="px-3 py-2 rounded-md border border-slate-300 text-xs font-medium bg-white text-slate-900"
+              style={{ color: "#1f2937", backgroundColor: "#ffffff" }}
             >
               <option value="auto">Auto ({tierLabel(autoTier)})</option>
               <option value="p1">1 pax</option>

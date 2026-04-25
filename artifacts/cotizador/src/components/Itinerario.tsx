@@ -90,7 +90,6 @@ export default function Itinerario({
                 <th className="text-left py-2 px-2 w-16">Día</th>
                 <th className="text-left py-2 px-2 w-28">Fecha</th>
                 <th className="text-left py-2 px-2">Actividad</th>
-                <th className="text-left py-2 px-2">Hotel</th>
               </tr>
             </thead>
             <tbody>
@@ -117,7 +116,6 @@ export default function Itinerario({
                       </div>
                     )}
                   </td>
-                  <td className="py-3 px-2 text-slate-700">{d.hotel}</td>
                 </tr>
               ))}
             </tbody>
