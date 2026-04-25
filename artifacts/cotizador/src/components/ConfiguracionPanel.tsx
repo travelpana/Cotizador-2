@@ -1,4 +1,4 @@
-import { Tag, Calculator, Settings2, Map, FileText } from "lucide-react";
+import { Settings2, Map, FileText } from "lucide-react";
 import type { ModoCotizacion } from "./Guardadas";
 
 interface Props {
@@ -32,25 +32,37 @@ export default function ConfiguracionPanel({
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
             Modo
           </div>
-          <div className="flex items-center gap-1 text-xs bg-slate-100 rounded-lg p-1">
-            <ModoBtn
-              active={modo === "tarifas"}
-              onClick={() => onModoChange("tarifas")}
-              icon={<Tag className="w-3.5 h-3.5" />}
-              label="Solo tarifas"
-            />
-            <ModoBtn
-              active={modo === "calculo"}
-              onClick={() => onModoChange("calculo")}
-              icon={<Calculator className="w-3.5 h-3.5" />}
-              label="Calcular total"
-            />
-          </div>
-          <p className="text-[11px] text-slate-500 mt-2 leading-snug">
-            {modo === "tarifas"
-              ? "Mostrar precios unitarios sin calcular subtotales ni total."
-              : "Calcular noches × pasajeros y mostrar gran total."}
-          </p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={modo === "calculo"}
+            onClick={() =>
+              onModoChange(modo === "calculo" ? "tarifas" : "calculo")
+            }
+            className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex flex-col items-start text-left">
+              <span className="text-sm font-semibold text-slate-900">
+                {modo === "calculo" ? "Calcular total" : "Solo tarifas"}
+              </span>
+              <span className="text-[11px] text-slate-500 leading-snug">
+                {modo === "calculo"
+                  ? "Calcular noches × pasajeros y gran total"
+                  : "Sólo precios unitarios, sin totales"}
+              </span>
+            </div>
+            <span
+              className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${
+                modo === "calculo" ? "bg-primary" : "bg-slate-300"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  modo === "calculo" ? "translate-x-4" : ""
+                }`}
+              />
+            </span>
+          </button>
         </section>
 
         <section>
@@ -77,32 +89,6 @@ export default function ConfiguracionPanel({
         </section>
       </div>
     </div>
-  );
-}
-
-function ModoBtn({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md font-medium transition-colors ${
-        active
-          ? "bg-white shadow-sm text-slate-900"
-          : "text-slate-600 hover:text-slate-900"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
   );
 }
 

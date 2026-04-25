@@ -753,23 +753,23 @@ function TourTrasladoFields({
         <SectionTitle>
           <Tag className="w-3.5 h-3.5" /> Tarifa aplicada
         </SectionTitle>
-        <div className="rounded-xl bg-slate-50 p-4 flex flex-wrap items-end justify-between gap-4 mb-3">
-          <div className="flex-1 min-w-[220px]">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
-                Total por persona ($ p/p)
-              </span>
-              {unitOverride !== null && (
-                <button
-                  type="button"
-                  onClick={() => onUnitOverride(null)}
-                  className="text-[10px] uppercase tracking-wide text-primary font-semibold hover:underline"
-                  title="Volver al valor automático del tarifario"
-                >
-                  Restablecer
-                </button>
-              )}
-            </div>
+        <div className="rounded-2xl bg-slate-50 p-4 mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+              Total por persona ($ p/p)
+            </span>
+            {unitOverride !== null && (
+              <button
+                type="button"
+                onClick={() => onUnitOverride(null)}
+                className="text-[10px] uppercase tracking-wide text-primary font-semibold hover:underline"
+                title="Volver al valor automático del tarifario"
+              >
+                Restablecer
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-[7fr_3fr] gap-2 items-stretch">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-base pointer-events-none">
                 $
@@ -788,30 +788,26 @@ function TourTrasladoFields({
                   const v = Number(raw);
                   onUnitOverride(Number.isFinite(v) ? v : 0);
                 }}
-                className="w-full pl-7 pr-3 py-2.5 rounded-lg border-2 border-primary/40 text-lg font-bold text-slate-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-300 text-base font-bold text-slate-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                style={{ color: "#1f2937" }}
               />
             </div>
-            <div className="mt-1 text-[10px] text-slate-500">
-              {unitOverride !== null
-                ? "Tarifa editada manualmente · no cambiará al modificar el rango"
-                : `Autocompletado desde el tarifario (${tierLabel(autoTier)})`}
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <span className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
-              Rango
-            </span>
             <select
               value={tarifaOverride}
               onChange={(e) => onTarifaOverride(e.target.value as Tier | "auto")}
-              className="px-3 py-2 rounded-md border border-slate-300 text-xs font-medium bg-white text-slate-900"
+              className="w-full h-11 px-3 rounded-xl border border-slate-300 text-sm font-medium bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
               style={{ color: "#1f2937", backgroundColor: "#ffffff" }}
             >
-              <option value="auto">Auto ({tierLabel(autoTier)})</option>
+              <option value="auto">Auto · {tierLabel(autoTier)}</option>
               <option value="p1">1 pax</option>
               <option value="p2_5">2-5 pax</option>
               <option value="p6_10">6-10 pax</option>
             </select>
+          </div>
+          <div className="mt-2 text-[10px] text-slate-500">
+            {unitOverride !== null
+              ? "Tarifa editada manualmente · no cambiará al modificar el rango"
+              : `Autocompletado desde el tarifario (${tierLabel(autoTier)})`}
           </div>
         </div>
         {isManual && (

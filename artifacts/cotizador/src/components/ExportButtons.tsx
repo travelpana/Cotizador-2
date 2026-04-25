@@ -8,7 +8,6 @@ import {
   Eye,
   Check,
 } from "lucide-react";
-import Modal from "./Modal";
 import type {
   Cliente,
   CotizacionResult,
@@ -41,9 +40,8 @@ export default function ExportButtons({
   onClear,
   onPreview,
 }: Props) {
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [emailDest, setEmailDest] = useState("");
   const [waCopied, setWaCopied] = useState(false);
+  const [mailCopied, setMailCopied] = useState(false);
 
   const acoms = result.acomodaciones;
   const primary = acoms[0];
@@ -298,13 +296,17 @@ export default function ExportButtons({
     }
   };
 
-  const sendEmail = () => {
-    const subject = encodeURIComponent(
-      `Cotización ${cliente.nombre || ""} - RGE Style Travel`,
-    );
-    const body = encodeURIComponent(buildText());
-    window.location.href = `mailto:${emailDest}?subject=${subject}&body=${body}`;
-    setEmailOpen(false);
+  const copyEmail = async () => {
+    try {
+      const subject = `Cotización ${cliente.nombre || ""} - RGE Style Travel`;
+      const body = buildText();
+      const full = `Asunto: ${subject}\n\n${body}`;
+      await navigator.clipboard.writeText(full);
+      setMailCopied(true);
+      setTimeout(() => setMailCopied(false), 2000);
+    } catch {
+      // noop
+    }
   };
 
   const handlePdf = () => {
@@ -316,93 +318,68 @@ export default function ExportButtons({
   };
 
   return (
-    <>
-      <div className="bg-white rounded-2xl shadow-md p-5 space-y-2">
-        <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">
-          Acciones
-        </div>
-        <button
-          onClick={onPreview}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
-        >
-          <Eye className="w-4 h-4" />
-          Vista previa
-        </button>
-        <button
-          onClick={copyWhatsapp}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
-        >
-          {waCopied ? (
-            <>
-              <Check className="w-4 h-4" />
-              ¡Copiado!
-            </>
-          ) : (
-            <>
-              <MessageCircle className="w-4 h-4" />
-              Copiar WhatsApp
-            </>
-          )}
-        </button>
-        <button
-          onClick={handlePdf}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
-        >
-          <Printer className="w-4 h-4" />
-          Descargar PDF
-        </button>
-
-        <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5">
-          <IconBtn onClick={() => setEmailOpen(true)} title="Email">
-            <Mail className="w-4 h-4" />
-          </IconBtn>
-          <IconBtn onClick={onSave} title="Guardar">
-            <Save className="w-4 h-4" />
-          </IconBtn>
-          <IconBtn onClick={onClear} title="Limpiar" danger>
-            <Trash2 className="w-4 h-4" />
-          </IconBtn>
-        </div>
+    <div className="bg-white rounded-2xl shadow-md p-5 space-y-2">
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">
+        Acciones
       </div>
-
-      <Modal
-        open={emailOpen}
-        onClose={() => setEmailOpen(false)}
-        title="Enviar por Email"
-        subtitle="Se abrirá tu cliente de correo predeterminado"
-        size="md"
+      <button
+        onClick={onPreview}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
       >
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Email destinatario
-            </label>
-            <input
-              type="email"
-              value={emailDest}
-              onChange={(e) => setEmailDest(e.target.value)}
-              placeholder="cliente@correo.com"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-        </div>
-        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
-          <button
-            onClick={() => setEmailOpen(false)}
-            className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-white"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={sendEmail}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 inline-flex items-center gap-2"
-          >
+        <Eye className="w-4 h-4" />
+        Vista previa
+      </button>
+      <button
+        onClick={copyWhatsapp}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
+      >
+        {waCopied ? (
+          <>
+            <Check className="w-4 h-4" />
+            ¡Copiado!
+          </>
+        ) : (
+          <>
+            <MessageCircle className="w-4 h-4" />
+            Copiar WhatsApp
+          </>
+        )}
+      </button>
+      <button
+        onClick={copyEmail}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors"
+      >
+        {mailCopied ? (
+          <>
+            <Check className="w-4 h-4" />
+            ¡Copiado!
+          </>
+        ) : (
+          <>
             <Mail className="w-4 h-4" />
-            Abrir correo
-          </button>
-        </div>
-      </Modal>
-    </>
+            Copiar correo
+          </>
+        )}
+      </button>
+      <button
+        onClick={handlePdf}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+      >
+        <Printer className="w-4 h-4" />
+        Descargar PDF
+      </button>
+
+      <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
+        <IconBtn onClick={onSave} title="Guardar">
+          <Save className="w-4 h-4" />
+          Guardar
+        </IconBtn>
+        <IconBtn onClick={onClear} title="Limpiar" danger>
+          <Trash2 className="w-4 h-4" />
+          Limpiar
+        </IconBtn>
+      </div>
+    </div>
   );
 }
 

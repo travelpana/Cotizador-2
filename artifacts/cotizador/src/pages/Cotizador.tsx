@@ -37,7 +37,7 @@ const DEFAULT_CLIENTE: Cliente = {
   fechaFin: "",
   pasajeros: 2,
   ninos: 0,
-  noches: 4,
+  noches: 1,
 };
 
 interface FormState {
