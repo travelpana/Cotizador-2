@@ -331,7 +331,8 @@ export default function ExportButtons({
       </button>
       <button
         onClick={copyWhatsapp}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
+        style={{ backgroundColor: "#f7cb17" }}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
       >
         {waCopied ? (
           <>
@@ -347,7 +348,8 @@ export default function ExportButtons({
       </button>
       <button
         onClick={copyEmail}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors"
+        style={{ backgroundColor: "#f07e14" }}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
       >
         {mailCopied ? (
           <>
@@ -363,7 +365,8 @@ export default function ExportButtons({
       </button>
       <button
         onClick={handlePdf}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+        style={{ backgroundColor: "#2c4294" }}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110"
       >
         <Printer className="w-4 h-4" />
         Descargar PDF

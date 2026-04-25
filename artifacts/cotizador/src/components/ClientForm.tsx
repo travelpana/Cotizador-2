@@ -125,7 +125,7 @@ export function AlojamientoBar({
   return (
     <section
       className="rounded-2xl shadow-sm px-5 py-4 text-white"
-      style={{ backgroundColor: "#eb7309" }}
+      style={{ backgroundColor: "#2596be" }}
     >
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
         <div className="flex items-center gap-4 flex-wrap">
@@ -166,7 +166,7 @@ export function AlojamientoBar({
                     ? "bg-white shadow-sm"
                     : "bg-white/20 text-white hover:bg-white/30"
                 }`}
-                style={active ? { color: "#eb7309" } : undefined}
+                style={active ? { color: "#2596be" } : undefined}
               >
                 {p}
               </button>
