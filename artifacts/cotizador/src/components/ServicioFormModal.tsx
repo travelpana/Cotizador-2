@@ -350,9 +350,9 @@ export default function ServicioFormModal(props: Props) {
               <Search className="w-3.5 h-3.5" /> Buscar en catálogo
             </SectionTitle>
             {selectedCatId ? (
-              <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[#eb7309]/5 border border-[#eb7309]/30">
                 <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-primary">
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-[#eb7309]">
                     {selectedCatId}
                   </div>
                   <div className="text-sm font-medium text-slate-900 truncate">
@@ -370,34 +370,31 @@ export default function ServicioFormModal(props: Props) {
             ) : (
               <>
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder={`Buscar por código (RGE-1085) o nombre...`}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    placeholder="Buscar servicio..."
+                    className="w-full h-11 pl-10 pr-3 rounded-xl border border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#eb7309]/30 focus:border-[#eb7309] shadow-sm"
                   />
                 </div>
-                <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100 bg-white">
+                <div className="mt-3 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white">
                   {filteredCatalog.length === 0 ? (
-                    <div className="px-3 py-3 text-sm text-slate-500 text-center">
-                      Sin resultados
+                    <div className="px-4 py-6 text-sm text-slate-500 text-center">
+                      No se encontraron servicios
                     </div>
                   ) : (
-                    filteredCatalog.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => pickFromCatalog(c)}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                          {c.id}
-                        </span>
-                        <span className="text-slate-800 truncate">
-                          {c.raw.nombre}
-                        </span>
-                      </button>
-                    ))
+                    <div className="p-1.5 space-y-1">
+                      {filteredCatalog.map((c) => (
+                        <CatalogResultRow
+                          key={c.id}
+                          tipo={tipo}
+                          item={c}
+                          query={search}
+                          onPick={pickFromCatalog}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               </>
@@ -905,5 +902,96 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
       {children}
     </h4>
+  );
+}
+
+function highlight(text: string, query: string) {
+  const q = query.trim();
+  if (!q) return text;
+  const lower = text.toLowerCase();
+  const lq = q.toLowerCase();
+  const idx = lower.indexOf(lq);
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="font-bold text-[#eb7309]">
+        {text.slice(idx, idx + q.length)}
+      </span>
+      {text.slice(idx + q.length)}
+    </>
+  );
+}
+
+function CatalogResultRow({
+  tipo,
+  item,
+  query,
+  onPick,
+}: {
+  tipo: ServicioTipo;
+  item: CatalogItem;
+  query: string;
+  onPick: (item: CatalogItem) => void;
+}) {
+  const Icon =
+    tipo === "hotel" ? HotelIcon : tipo === "tour" ? MapPin : Bus;
+  const iconColors =
+    tipo === "hotel"
+      ? "bg-amber-50 text-amber-600"
+      : tipo === "tour"
+        ? "bg-emerald-50 text-emerald-600"
+        : "bg-sky-50 text-sky-600";
+
+  let rightContent: React.ReactNode = null;
+  let metaLine = "";
+
+  if (tipo === "hotel") {
+    const h = item.raw as Hotel;
+    metaLine = [item.id, h.vigencia].filter(Boolean).join(" · ");
+    const stars = parseInt(h.estrellas) || 0;
+    rightContent = (
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        {stars > 0 && (
+          <div className="text-amber-500 text-xs leading-none">
+            {"★".repeat(Math.min(stars, 5))}
+          </div>
+        )}
+        <div className="text-[11px] text-slate-600 font-medium tabular-nums whitespace-nowrap">
+          DBL: {fmt(h.precios.DBL)} · SGL: {fmt(h.precios.SGL)}
+        </div>
+      </div>
+    );
+  } else {
+    const t = item.raw as Tour | Traslado;
+    metaLine = item.id;
+    rightContent = (
+      <div className="text-[11px] text-slate-600 font-medium tabular-nums whitespace-nowrap flex-shrink-0">
+        2-5: {fmt(t.precios.p2_5)} · 1: {fmt(t.precios.p1)}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(item)}
+      className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-[#f9fafb] transition-colors"
+    >
+      <div
+        className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${iconColors}`}
+      >
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-slate-900 truncate">
+          {highlight(item.raw.nombre, query)}
+        </div>
+        <div className="text-[11px] text-slate-500 truncate mt-0.5">
+          {metaLine}
+        </div>
+      </div>
+      {rightContent}
+    </button>
   );
 }

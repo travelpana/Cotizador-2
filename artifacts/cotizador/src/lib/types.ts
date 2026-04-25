@@ -79,7 +79,7 @@ export interface Cliente {
   whatsapp: string;
   fechaInicio: string;
   fechaFin: string;
-  notas: string;
+  vigencia: string;
   pasajeros: number;
   ninos: number;
   noches: number;

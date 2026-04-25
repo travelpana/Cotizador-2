@@ -63,12 +63,12 @@ export default function ClientForm({ cliente, onChange }: Props) {
             className={inputCls}
           />
         </Field>
-        <Field label="Notas internas">
+        <Field label="Vigencia">
           <input
             type="text"
-            value={cliente.notas}
-            onChange={(e) => update({ notas: e.target.value })}
-            placeholder="Observaciones para el equipo"
+            value={cliente.vigencia}
+            onChange={(e) => update({ vigencia: e.target.value })}
+            placeholder="Ej: Válido hasta 30/09/2026"
             className={inputCls}
           />
         </Field>
@@ -124,28 +124,28 @@ export function AlojamientoBar({
 
   return (
     <section
-      className="rounded-2xl shadow-sm px-5 py-4 text-white bg-[#eb7309]"
-      style={{ backgroundColor: "#2596be" }}
+      className="rounded-2xl shadow-sm px-5 py-4 text-white"
+      style={{ backgroundColor: "#eb7309" }}
     >
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-sm font-bold uppercase tracking-[0.18em]">
             Alojamiento
           </h2>
-          <div className="flex items-center gap-2 text-[11px]">
-            <NumInput
+          <div className="flex items-center gap-2">
+            <InfoBadge
               label="Noches"
               value={cliente.noches}
               onChange={(v) => updateNum({ noches: v })}
               min={0}
             />
-            <NumInput
+            <InfoBadge
               label="Pasajeros"
               value={cliente.pasajeros}
               onChange={(v) => updateNum({ pasajeros: v })}
               min={1}
             />
-            <NumInput
+            <InfoBadge
               label="Niños"
               value={cliente.ninos}
               onChange={(v) => updateNum({ ninos: v })}
@@ -166,7 +166,7 @@ export function AlojamientoBar({
                     ? "bg-white shadow-sm"
                     : "bg-white/20 text-white hover:bg-white/30"
                 }`}
-                style={active ? { color: "#2596be" } : undefined}
+                style={active ? { color: "#eb7309" } : undefined}
               >
                 {p}
               </button>
@@ -178,7 +178,7 @@ export function AlojamientoBar({
   );
 }
 
-function NumInput({
+function InfoBadge({
   label,
   value,
   onChange,
@@ -190,8 +190,8 @@ function NumInput({
   min?: number;
 }) {
   return (
-    <label className="flex items-center gap-1.5 bg-white/15 rounded-full pl-3 pr-1 py-1">
-      <span className="text-[10px] uppercase tracking-wider font-semibold text-white/90">
+    <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-2 text-white">
+      <span className="text-[10px] uppercase tracking-wider font-medium text-white/80">
         {label}
       </span>
       <input
@@ -199,9 +199,10 @@ function NumInput({
         min={min}
         value={value}
         onChange={(e) => onChange(Number(e.target.value) || min)}
-        className="w-12 h-7 px-2 rounded-full bg-white text-slate-900 text-xs font-bold text-center focus:outline-none focus:ring-2 focus:ring-white/60"
+        aria-label={label}
+        className="w-7 bg-transparent border-0 p-0 text-sm font-semibold text-white text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
-    </label>
+    </div>
   );
 }
 

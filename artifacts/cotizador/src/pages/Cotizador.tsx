@@ -35,7 +35,7 @@ const DEFAULT_CLIENTE: Cliente = {
   whatsapp: "",
   fechaInicio: "",
   fechaFin: "",
-  notas: "",
+  vigencia: "",
   pasajeros: 2,
   ninos: 0,
   noches: 1,
