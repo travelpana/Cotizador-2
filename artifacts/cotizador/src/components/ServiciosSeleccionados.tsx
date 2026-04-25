@@ -12,6 +12,7 @@ import {
   MapPin,
   Bus,
   Search,
+  Plus,
 } from "lucide-react";
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
   highlightedId?: string | null;
   onChange: (s: ServicioSeleccionado[]) => void;
   onEdit: (s: ServicioSeleccionado) => void;
+  onAddCustom?: () => void;
 }
 
 const GROUP_ORDER: ServicioSeleccionado["tipo"][] = [
@@ -42,6 +44,7 @@ export default function ServiciosSeleccionados({
   highlightedId,
   onChange,
   onEdit,
+  onAddCustom,
 }: Props) {
   const remove = (s: ServicioSeleccionado) => {
     onChange(servicios.filter((x) => !(x.tipo === s.tipo && x.id === s.id)));
@@ -60,6 +63,18 @@ export default function ServiciosSeleccionados({
         servicios.length
           ? `${servicios.length} ítem${servicios.length !== 1 ? "s" : ""} en la cotización`
           : "Busca un servicio arriba para agregarlo al instante"
+      }
+      action={
+        onAddCustom && (
+          <button
+            type="button"
+            onClick={onAddCustom}
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/15 ring-1 ring-primary/20 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Ítem personalizado
+          </button>
+        )
       }
     >
       {servicios.length === 0 ? (

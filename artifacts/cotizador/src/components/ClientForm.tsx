@@ -19,7 +19,7 @@ export default function ClientForm({ cliente, onChange }: Props) {
   return (
     <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 p-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Field label="Nombre del cliente">
+        <Field label="Nombre">
           <input
             type="text"
             value={cliente.nombre}
@@ -28,21 +28,21 @@ export default function ClientForm({ cliente, onChange }: Props) {
             className={inputCls}
           />
         </Field>
-        <Field label="Correo electrónico">
+        <Field label="Agencia">
           <input
-            type="email"
+            type="text"
             value={cliente.correo}
             onChange={(e) => update({ correo: e.target.value })}
-            placeholder="cliente@correo.com"
+            placeholder="Ej: RGE Style Travel"
             className={inputCls}
           />
         </Field>
-        <Field label="WhatsApp">
+        <Field label="Correo electrónico">
           <input
-            type="tel"
+            type="email"
             value={cliente.whatsapp}
             onChange={(e) => update({ whatsapp: e.target.value })}
-            placeholder="+57 300 000 0000"
+            placeholder="cliente@correo.com"
             className={inputCls}
           />
         </Field>
@@ -65,10 +65,9 @@ export default function ClientForm({ cliente, onChange }: Props) {
         </Field>
         <Field label="Vigencia">
           <input
-            type="text"
+            type="date"
             value={cliente.vigencia}
             onChange={(e) => update({ vigencia: e.target.value })}
-            placeholder="Ej: Válido hasta 30/09/2026"
             className={inputCls}
           />
         </Field>
@@ -125,27 +124,27 @@ export function AlojamientoBar({
   return (
     <section
       className="rounded-2xl shadow-sm px-5 py-4 text-white"
-      style={{ backgroundColor: "#2596be" }}
+      style={{ backgroundColor: "#eb7309" }}
     >
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <h2 className="text-sm font-bold uppercase tracking-[0.18em]">
+        <div className="flex items-center gap-3 flex-wrap min-w-0">
+          <h2 className="text-sm font-bold uppercase tracking-[0.18em] mr-1">
             Alojamiento
           </h2>
-          <div className="flex items-center gap-2">
-            <InfoBadge
+          <div className="flex items-center gap-2 bg-white/15 rounded-xl p-1">
+            <NumberInput
               label="Noches"
               value={cliente.noches}
               onChange={(v) => updateNum({ noches: v })}
               min={0}
             />
-            <InfoBadge
+            <NumberInput
               label="Pasajeros"
               value={cliente.pasajeros}
               onChange={(v) => updateNum({ pasajeros: v })}
               min={1}
             />
-            <InfoBadge
+            <NumberInput
               label="Niños"
               value={cliente.ninos}
               onChange={(v) => updateNum({ ninos: v })}
@@ -153,7 +152,7 @@ export function AlojamientoBar({
             />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {PILLS.map((p) => {
             const active = acomodaciones.includes(p);
             return (
@@ -161,12 +160,13 @@ export function AlojamientoBar({
                 key={p}
                 type="button"
                 onClick={() => togglePill(p)}
-                className={`min-w-[58px] px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all ${
+                className={`min-w-[58px] px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-all ${
                   active
                     ? "bg-white shadow-sm"
-                    : "bg-white/20 text-white hover:bg-white/30"
+                    : "bg-white/15 text-white hover:bg-white/25"
                 }`}
-                style={active ? { color: "#2596be" } : undefined}
+                style={active ? { color: "#eb7309" } : undefined}
+                data-testid={`acomodacion-${p}`}
               >
                 {p}
               </button>
@@ -178,7 +178,7 @@ export function AlojamientoBar({
   );
 }
 
-function InfoBadge({
+function NumberInput({
   label,
   value,
   onChange,
@@ -190,19 +190,27 @@ function InfoBadge({
   min?: number;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-2 text-white">
-      <span className="text-[10px] uppercase tracking-wider font-medium text-white/80">
+    <label className="flex items-center gap-2 bg-white rounded-lg px-2.5 py-1.5 ring-1 ring-white/40 shadow-sm cursor-text">
+      <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 select-none">
         {label}
       </span>
       <input
         type="number"
         min={min}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value) || min)}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") {
+            onChange(min);
+            return;
+          }
+          const n = Number(raw);
+          onChange(Number.isFinite(n) ? Math.max(min, n) : min);
+        }}
         aria-label={label}
-        className="w-7 bg-transparent border-0 p-0 text-sm font-semibold text-white text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-9 bg-transparent border-0 p-0 text-sm font-bold text-slate-900 text-center focus:outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
-    </div>
+    </label>
   );
 }
 

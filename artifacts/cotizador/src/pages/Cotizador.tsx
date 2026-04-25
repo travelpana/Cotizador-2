@@ -6,6 +6,7 @@ import ServicioFormModal, {
 } from "@/components/ServicioFormModal";
 import ServiciosSeleccionados from "@/components/ServiciosSeleccionados";
 import ServiceSearchBar from "@/components/ServiceSearchBar";
+import CustomItemModal from "@/components/CustomItemModal";
 import ConfiguracionPanel from "@/components/ConfiguracionPanel";
 import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
@@ -77,6 +78,7 @@ export default function CotizadorPage() {
     null,
   );
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
+  const [customOpen, setCustomOpen] = useState(false);
   const [highlightedServiceId, setHighlightedServiceId] = useState<string | null>(null);
 
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
@@ -304,6 +306,7 @@ export default function CotizadorPage() {
                   highlightedId={highlightedServiceId}
                   onChange={setServicios}
                   onEdit={openEdit}
+                  onAddCustom={() => setCustomOpen(true)}
                 />
                 {incluirItinerario && (
                   <Itinerario
@@ -349,6 +352,14 @@ export default function CotizadorPage() {
           RGE Style Travel · Cotizador 2026
         </footer>
       </main>
+
+      <CustomItemModal
+        open={customOpen}
+        onClose={() => setCustomOpen(false)}
+        onSave={handleQuickAdd}
+        globalFechaInicio={cliente.fechaInicio}
+        globalFechaFin={cliente.fechaFin}
+      />
 
       <ServicioFormModal
         open={form.open}
