@@ -146,11 +146,6 @@ function Toggle({
           {icon}
           {label}
         </div>
-        {help && (
-          <div className="text-[11px] text-slate-500 leading-snug mt-0.5">
-            {help}
-          </div>
-        )}
       </div>
     </label>
   );
