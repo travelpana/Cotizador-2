@@ -1,4 +1,4 @@
-import { Settings2, Map, FileText } from "lucide-react";
+import { Settings2, Map, FileText, Tag, Calculator, Check } from "lucide-react";
 import type { ModoCotizacion } from "./Guardadas";
 
 interface Props {
@@ -32,55 +32,40 @@ export default function ConfiguracionPanel({
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
             Modo
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={modo === "calculo"}
-            onClick={() =>
-              onModoChange(modo === "calculo" ? "tarifas" : "calculo")
-            }
-            className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
-          >
-            <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-semibold text-slate-900">
-                {modo === "calculo" ? "Calcular total" : "Solo tarifas"}
-              </span>
-              <span className="text-[11px] text-slate-500 leading-snug">
-                {modo === "calculo"
-                  ? "Calcular noches × pasajeros y gran total"
-                  : "Sólo precios unitarios, sin totales"}
-              </span>
-            </div>
-            <span
-              className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${
-                modo === "calculo" ? "bg-primary" : "bg-slate-300"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                  modo === "calculo" ? "translate-x-4" : ""
-                }`}
-              />
-            </span>
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <ModeCard
+              active={modo === "tarifas"}
+              icon={<Tag className="w-4 h-4" />}
+              title="Solo tarifas"
+              description="Solo precios unitarios, sin totales"
+              onClick={() => onModoChange("tarifas")}
+            />
+            <ModeCard
+              active={modo === "calculo"}
+              icon={<Calculator className="w-4 h-4" />}
+              title="Con totales"
+              description="Incluye cálculos y totales"
+              onClick={() => onModoChange("calculo")}
+            />
+          </div>
         </section>
 
         <section>
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
             Opciones
           </div>
-          <div className="space-y-2">
+          <div className="rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
             <Toggle
               checked={incluirItinerario}
               onChange={onToggleItinerario}
-              icon={<Map className="w-3.5 h-3.5 text-slate-400" />}
+              icon={<Map className="w-4 h-4" />}
               label="Incluir itinerario"
               help="Tabla día a día en preview, PDF y WhatsApp"
             />
             <Toggle
               checked={incluirDescriptivos}
               onChange={onToggleDescriptivos}
-              icon={<FileText className="w-3.5 h-3.5 text-slate-400" />}
+              icon={<FileText className="w-4 h-4" />}
               label="Incluir descriptivos"
               help="Texto extra debajo de cada actividad"
               disabled={!incluirItinerario}
@@ -89,6 +74,60 @@ export default function ConfiguracionPanel({
         </section>
       </div>
     </div>
+  );
+}
+
+function ModeCard({
+  active,
+  icon,
+  title,
+  description,
+  onClick,
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={`relative text-left p-3 rounded-xl border-2 transition-all ${
+        active
+          ? "border-primary bg-primary/5 shadow-sm"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+      }`}
+      data-testid={`mode-card-${title.toLowerCase().replace(/\s+/g, "-")}`}
+    >
+      {active && (
+        <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+          <Check className="w-2.5 h-2.5" strokeWidth={3} />
+        </span>
+      )}
+      <div
+        className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 transition-colors ${
+          active
+            ? "bg-primary text-primary-foreground"
+            : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {icon}
+      </div>
+      <div
+        className={`text-sm font-semibold leading-tight ${
+          active ? "text-primary" : "text-slate-900"
+        }`}
+      >
+        {title}
+      </div>
+      <div className="text-[11px] text-slate-500 leading-snug mt-1">
+        {description}
+      </div>
+    </button>
   );
 }
 
@@ -109,30 +148,47 @@ function Toggle({
 }) {
   return (
     <label
-      className={`flex items-start gap-3 ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+      className={`flex items-center gap-3 px-3 py-3 transition-colors ${
+        disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "cursor-pointer hover:bg-slate-50"
+      }`}
     >
+      <div
+        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+          checked && !disabled
+            ? "bg-primary/10 text-primary"
+            : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-slate-900 leading-tight">
+          {label}
+        </div>
+        {help && (
+          <div className="text-[11px] text-slate-500 leading-snug mt-0.5">
+            {help}
+          </div>
+        )}
+      </div>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         onClick={() => !disabled && onChange()}
         disabled={disabled}
-        className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors mt-0.5 ${
+        className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${
           checked ? "bg-primary" : "bg-slate-300"
         } ${disabled ? "cursor-not-allowed" : ""}`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
             checked ? "translate-x-4" : ""
           }`}
         />
       </button>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-900">
-          {icon}
-          {label}
-        </div>
-      </div>
     </label>
   );
 }
