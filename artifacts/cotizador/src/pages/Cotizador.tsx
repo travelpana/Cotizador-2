@@ -13,6 +13,7 @@ import Seguimiento from "@/components/Seguimiento";
 import {
   loadGuardadas,
   saveGuardadas,
+  guardarEnSeguimiento,
   type CotizacionGuardada,
   type ModoCotizacion,
 } from "@/components/Guardadas";
@@ -81,6 +82,23 @@ export default function CotizadorPage() {
   useEffect(() => {
     setGuardadas(loadGuardadas());
   }, []);
+
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleAutoSave = () => {
+    const { saved, items } = guardarEnSeguimiento({
+      cliente,
+      servicios,
+      acomodaciones,
+      modo,
+    });
+    setGuardadas(items);
+    if (saved) showToast("Cotización guardada en seguimiento");
+  };
 
   const fetchAll = async () => {
     setLoading(true);
@@ -322,6 +340,7 @@ export default function CotizadorPage() {
                     setPreviewQuote(null);
                     setPreviewOpen(true);
                   }}
+                  onAutoSave={handleAutoSave}
                 />
               </aside>
             </div>
@@ -359,6 +378,20 @@ export default function CotizadorPage() {
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
       />
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 text-white text-sm shadow-lg ring-1 ring-white/10 animate-in fade-in slide-in-from-bottom-2"
+        >
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: "#2596be" }}
+          />
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

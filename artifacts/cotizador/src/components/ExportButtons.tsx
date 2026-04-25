@@ -27,6 +27,7 @@ interface Props {
   onSave: () => void;
   onClear: () => void;
   onPreview: () => void;
+  onAutoSave?: () => void;
 }
 
 export default function ExportButtons({
@@ -39,6 +40,7 @@ export default function ExportButtons({
   onSave,
   onClear,
   onPreview,
+  onAutoSave,
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
@@ -291,6 +293,7 @@ export default function ExportButtons({
       await navigator.clipboard.writeText(buildText());
       setWaCopied(true);
       setTimeout(() => setWaCopied(false), 2000);
+      onAutoSave?.();
     } catch {
       // noop
     }
@@ -304,6 +307,7 @@ export default function ExportButtons({
       await navigator.clipboard.writeText(full);
       setMailCopied(true);
       setTimeout(() => setMailCopied(false), 2000);
+      onAutoSave?.();
     } catch {
       // noop
     }
@@ -315,6 +319,7 @@ export default function ExportButtons({
     w.document.write(buildHtml());
     w.document.close();
     setTimeout(() => w.print(), 350);
+    onAutoSave?.();
   };
 
   return (
