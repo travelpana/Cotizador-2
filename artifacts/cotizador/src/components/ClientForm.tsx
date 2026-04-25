@@ -124,7 +124,7 @@ export function AlojamientoBar({
 
   return (
     <section
-      className="rounded-2xl shadow-sm px-5 py-4 text-white"
+      className="rounded-2xl shadow-sm px-5 py-4 text-white bg-[#eb7309]"
       style={{ backgroundColor: "#2596be" }}
     >
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
