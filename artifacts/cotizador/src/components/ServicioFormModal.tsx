@@ -72,6 +72,7 @@ export default function ServicioFormModal(props: Props) {
   const [ubicacion, setUbicacion] = useState("");
   const [estrellas, setEstrellas] = useState("");
   const [vigencia, setVigencia] = useState("");
+  const [aplicarVigencia, setAplicarVigencia] = useState(false);
   // Hotel
   const [precios, setPrecios] = useState({
     SGL: 0,
@@ -107,6 +108,7 @@ export default function ServicioFormModal(props: Props) {
       setUbicacion(initial.ubicacion ?? "");
       setEstrellas(initial.estrellas ?? "");
       setVigencia(initial.vigencia ?? "");
+      setAplicarVigencia(!!initial.vigencia);
       setPrecios({
         SGL: initial.precios.SGL ?? 0,
         DBL: initial.precios.DBL ?? 0,
@@ -133,6 +135,7 @@ export default function ServicioFormModal(props: Props) {
       setUbicacion("");
       setEstrellas("");
       setVigencia("");
+      setAplicarVigencia(false);
       setPrecios({
         SGL: 0,
         DBL: 0,
@@ -275,7 +278,7 @@ export default function ServicioFormModal(props: Props) {
       base.fechaFin = fechaFin || undefined;
       base.ubicacion = ubicacion || undefined;
       base.estrellas = estrellas || undefined;
-      base.vigencia = vigencia || undefined;
+      base.vigencia = aplicarVigencia ? vigencia || undefined : undefined;
     } else {
       base.usarFecha = usarFecha;
       if (usarFecha) base.fecha = fecha || undefined;
@@ -354,12 +357,12 @@ export default function ServicioFormModal(props: Props) {
             ) : (
               <>
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder={`Buscar por código o nombre...`}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    placeholder={`Buscar por código (RGE-1085) o nombre...`}
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                 </div>
                 <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100 bg-white">
@@ -413,19 +416,6 @@ export default function ServicioFormModal(props: Props) {
               />
             </div>
           </div>
-          <div className="mt-3">
-            <Label>
-              <StickyNote className="w-3 h-3 inline mr-1" />
-              Notas
-            </Label>
-            <textarea
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Detalles, restricciones u observaciones para el cliente..."
-              rows={2}
-              className={`${inputCls} resize-none`}
-            />
-          </div>
         </div>
 
         {tipo === "hotel" ? (
@@ -435,6 +425,7 @@ export default function ServicioFormModal(props: Props) {
             ubicacion={ubicacion}
             estrellas={estrellas}
             vigencia={vigencia}
+            aplicarVigencia={aplicarVigencia}
             precios={precios}
             onChange={(patch) => {
               if (patch.fechaInicio !== undefined)
@@ -446,6 +437,7 @@ export default function ServicioFormModal(props: Props) {
               if (patch.precios)
                 setPrecios((p) => ({ ...p, ...patch.precios }));
             }}
+            onToggleAplicarVigencia={() => setAplicarVigencia((v) => !v)}
           />
         ) : (
           <TourTrasladoFields
@@ -472,6 +464,19 @@ export default function ServicioFormModal(props: Props) {
             isManual={!!isManual}
           />
         )}
+
+        <div>
+          <SectionTitle>
+            <StickyNote className="w-3.5 h-3.5" /> Notas
+          </SectionTitle>
+          <textarea
+            value={notas}
+            onChange={(e) => setNotas(e.target.value)}
+            placeholder="Detalles, restricciones u observaciones para el cliente..."
+            rows={3}
+            className={`${inputCls} resize-none`}
+          />
+        </div>
       </div>
 
       <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
@@ -500,14 +505,17 @@ function HotelFields({
   ubicacion,
   estrellas,
   vigencia,
+  aplicarVigencia,
   precios,
   onChange,
+  onToggleAplicarVigencia,
 }: {
   fechaInicio: string;
   fechaFin: string;
   ubicacion: string;
   estrellas: string;
   vigencia: string;
+  aplicarVigencia: boolean;
   precios: { SGL: number; DBL: number; TPL: number; CHD: number };
   onChange: (
     patch: Partial<{
@@ -519,6 +527,7 @@ function HotelFields({
       precios: Partial<{ SGL: number; DBL: number; TPL: number; CHD: number }>;
     }>,
   ) => void;
+  onToggleAplicarVigencia: () => void;
 }) {
   return (
     <>
@@ -564,12 +573,36 @@ function HotelFields({
             />
           </div>
           <div className="md:col-span-2">
-            <Label>Vigencia</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Vigencia</Label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span
+                  className={`text-[11px] font-medium transition-colors ${
+                    aplicarVigencia ? "text-primary" : "text-slate-500"
+                  }`}
+                >
+                  Aplicar vigencia
+                </span>
+                <ToggleSwitch
+                  checked={aplicarVigencia}
+                  onChange={onToggleAplicarVigencia}
+                />
+              </label>
+            </div>
             <input
               value={vigencia}
               onChange={(e) => onChange({ vigencia: e.target.value })}
-              placeholder="Ej: 01/04 al 30/09"
-              className={inputCls}
+              placeholder={
+                aplicarVigencia
+                  ? "Ej: 01/04 al 30/09"
+                  : "Activa el toggle para aplicar una vigencia"
+              }
+              disabled={!aplicarVigencia}
+              className={`${inputCls} transition-all ${
+                !aplicarVigencia
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200"
+                  : ""
+              }`}
             />
           </div>
         </div>
