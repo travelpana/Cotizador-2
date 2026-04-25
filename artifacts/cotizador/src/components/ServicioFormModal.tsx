@@ -13,12 +13,14 @@ import {
 } from "lucide-react";
 import Modal from "./Modal";
 import type {
+  EntradaTipo,
   Hotel,
   ServicioSeleccionado,
   Tier,
   Tour,
   Traslado,
 } from "@/lib/types";
+import { Ticket } from "lucide-react";
 import { fmt, pickTier, priceForTier, tierLabel } from "@/lib/calc";
 
 export type ServicioTipo = "hotel" | "tour" | "traslado";
@@ -93,6 +95,11 @@ export default function ServicioFormModal(props: Props) {
   const [paxValue, setPaxValue] = useState<number>(globalPasajeros);
   const [tarifaOverride, setTarifaOverride] = useState<Tier | "auto">("auto");
   const [unitOverride, setUnitOverride] = useState<number | null>(null);
+  // Tour entradas adicionales
+  const [entradaActiva, setEntradaActiva] = useState(false);
+  const [entradaTipo, setEntradaTipoState] = useState<EntradaTipo>("museo");
+  const [entradaPrecio, setEntradaPrecio] = useState<number>(0);
+  const [entradaNotas, setEntradaNotas] = useState("");
   // Catalog selection
   const [search, setSearch] = useState("");
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
@@ -130,6 +137,10 @@ export default function ServicioFormModal(props: Props) {
       setUnitOverride(
         typeof initial.unitOverride === "number" ? initial.unitOverride : null,
       );
+      setEntradaActiva(!!initial.entrada && initial.entrada.precio >= 0 && initial.tipo === "tour");
+      setEntradaTipoState(initial.entrada?.tipo ?? "museo");
+      setEntradaPrecio(initial.entrada?.precio ?? 0);
+      setEntradaNotas(initial.entrada?.notas ?? "");
       setSelectedCatId(initial.manual ? null : initial.id);
     } else {
       // Fresh
@@ -158,6 +169,10 @@ export default function ServicioFormModal(props: Props) {
       setPaxValue(globalPasajeros);
       setTarifaOverride("auto");
       setUnitOverride(null);
+      setEntradaActiva(false);
+      setEntradaTipoState("museo");
+      setEntradaPrecio(0);
+      setEntradaNotas("");
       setSelectedCatId(null);
     }
   }, [open, props.tipo, initial, globalPasajeros, globalFechaInicio, globalFechaFin]);
@@ -297,6 +312,13 @@ export default function ServicioFormModal(props: Props) {
       if (tarifaOverride !== "auto")
         base.tarifaOverride = tarifaOverride as Tier;
       if (unitOverride !== null) base.unitOverride = unitOverride;
+    }
+    if (tipo === "tour" && entradaActiva && entradaPrecio > 0) {
+      base.entrada = {
+        tipo: entradaTipo,
+        precio: entradaPrecio,
+        notas: entradaNotas.trim() || undefined,
+      };
     }
     onSave(base);
   };
@@ -482,6 +504,19 @@ export default function ServicioFormModal(props: Props) {
             onUnitOverride={setUnitOverride}
             onPrecios={(p) => setPrecios((prev) => ({ ...prev, ...p }))}
             isManual={!!isManual}
+          />
+        )}
+
+        {tipo === "tour" && (
+          <EntradaSection
+            activa={entradaActiva}
+            tipo={entradaTipo}
+            precio={entradaPrecio}
+            notas={entradaNotas}
+            onActiva={setEntradaActiva}
+            onTipo={setEntradaTipoState}
+            onPrecio={setEntradaPrecio}
+            onNotas={setEntradaNotas}
           />
         )}
 
@@ -865,6 +900,103 @@ function TourTrasladoFields({
         )}
       </div>
     </>
+  );
+}
+
+const ENTRADA_OPTIONS: { value: EntradaTipo; label: string }[] = [
+  { value: "canal_panama", label: "Canal de Panamá" },
+  { value: "museo", label: "Museo" },
+  { value: "sitio_historico", label: "Sitio histórico" },
+  { value: "otro", label: "Otro" },
+];
+
+function EntradaSection({
+  activa,
+  tipo,
+  precio,
+  notas,
+  onActiva,
+  onTipo,
+  onPrecio,
+  onNotas,
+}: {
+  activa: boolean;
+  tipo: EntradaTipo;
+  precio: number;
+  notas: string;
+  onActiva: (v: boolean) => void;
+  onTipo: (v: EntradaTipo) => void;
+  onPrecio: (v: number) => void;
+  onNotas: (v: string) => void;
+}) {
+  return (
+    <div>
+      <SectionTitle>
+        <Ticket className="w-3.5 h-3.5" /> Entradas adicionales
+      </SectionTitle>
+      <div className="flex items-start gap-2.5 mb-3">
+        <ToggleSwitch checked={activa} onChange={() => onActiva(!activa)} />
+        <div>
+          <div className="text-sm font-medium text-slate-900">
+            Incluir entrada
+          </div>
+          <div className="text-[11px] text-slate-500">
+            Suma una entrada (museo, canal, etc.) cobrada por persona
+          </div>
+        </div>
+      </div>
+      {activa && (
+        <div className="rounded-2xl bg-slate-50 p-4 space-y-3">
+          <div className="grid grid-cols-[7fr_3fr] gap-2">
+            <select
+              value={tipo}
+              onChange={(e) => onTipo(e.target.value as EntradaTipo)}
+              className="w-full h-11 px-3 rounded-xl border border-slate-300 text-sm font-medium bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              style={{ color: "#1f2937", backgroundColor: "#ffffff" }}
+            >
+              {ENTRADA_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-base pointer-events-none">
+                $
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={precio}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    onPrecio(0);
+                    return;
+                  }
+                  const v = Number(raw);
+                  onPrecio(Number.isFinite(v) ? v : 0);
+                }}
+                placeholder="0"
+                className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-300 text-base font-bold text-slate-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                style={{ color: "#1f2937" }}
+              />
+            </div>
+          </div>
+          <input
+            type="text"
+            value={notas}
+            onChange={(e) => onNotas(e.target.value)}
+            placeholder="Nota corta (opcional)"
+            className={inputCls}
+          />
+          <div className="text-[10px] text-slate-500">
+            Se mostrará por separado como "Entrada adicional: ${precio || 0} por persona"
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

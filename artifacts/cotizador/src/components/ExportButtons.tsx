@@ -14,7 +14,7 @@ import type {
   ServicioSeleccionado,
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
-import { fmt } from "@/lib/calc";
+import { fmt, entradaTipoLabel } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 
 interface Props {
@@ -93,6 +93,11 @@ export default function ExportButtons({
         lines.push(
           `• [${s.tipo.toUpperCase()}] ${s.codigo} · ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}`,
         );
+        if (s.tipo === "tour" && s.entrada && s.entrada.precio > 0) {
+          lines.push(
+            `   Entrada adicional (${entradaTipoLabel(s.entrada.tipo)}): ${fmt(s.entrada.precio)} por persona${s.entrada.notas ? ` · ${s.entrada.notas}` : ""}`,
+          );
+        }
         lines.push(
           `   ${
             isCalc
@@ -223,6 +228,11 @@ export default function ExportButtons({
           <td>
             <div class="code">${s.codigo}</div>
             <div style="font-weight:600">${s.nombre}</div>
+            ${
+              s.tipo === "tour" && s.entrada && s.entrada.precio > 0
+                ? `<div class="notas" style="color:#047857;font-style:normal;font-weight:500">Entrada adicional (${entradaTipoLabel(s.entrada.tipo)}): ${fmt(s.entrada.precio)} por persona${s.entrada.notas ? ` · ${s.entrada.notas}` : ""}</div>`
+                : ""
+            }
             ${s.notas ? `<div class="notas">${s.notas}</div>` : ""}
           </td>
           <td>${s.fecha || "—"}</td>

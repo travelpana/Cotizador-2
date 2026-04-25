@@ -33,12 +33,26 @@ export interface Traslado {
   precios: { p1: number; p2_5: number; p6_10: number; chd: number };
 }
 
+export type EntradaTipo =
+  | "canal_panama"
+  | "museo"
+  | "sitio_historico"
+  | "otro";
+
+export interface EntradaAdicional {
+  tipo: EntradaTipo;
+  precio: number;
+  notas?: string;
+}
+
 export interface ServicioSeleccionado {
   id: string;
   /** External code shown in the document, defaults to id. */
   codigo?: string;
   tipo: "hotel" | "tour" | "traslado";
   nombre: string;
+  /** Tour-only: optional add-on entry (museum, site, etc.) priced per person. */
+  entrada?: EntradaAdicional;
   precios: {
     p1?: number;
     p2_5?: number;
@@ -105,6 +119,8 @@ export interface ServicioCalculado {
   /** For tours/traslados: which tier was applied. */
   tierAplicado?: Tier;
   unitAplicado?: number;
+  /** Tour-only: copy of the add-on entry, surfaced for display. */
+  entrada?: EntradaAdicional;
 }
 
 export interface CotizacionResult {

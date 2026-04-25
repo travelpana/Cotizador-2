@@ -5,7 +5,7 @@ import type {
   ServicioSeleccionado,
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
-import { fmt } from "@/lib/calc";
+import { fmt, entradaTipoLabel } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 
 interface Props {
@@ -357,6 +357,12 @@ function ServicioAdicionalTabla({
             >
               <td className="py-3 pr-3">
                 <div className="font-semibold text-slate-900">{s.nombre}</div>
+                {s.tipo === "tour" && s.entrada && s.entrada.precio > 0 && (
+                  <div className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                    Entrada adicional ({entradaTipoLabel(s.entrada.tipo)}): {fmt(s.entrada.precio)} por persona
+                    {s.entrada.notas ? ` · ${s.entrada.notas}` : ""}
+                  </div>
+                )}
                 {s.notas && (
                   <div className="text-[11px] text-slate-500 italic mt-0.5">
                     {s.notas}

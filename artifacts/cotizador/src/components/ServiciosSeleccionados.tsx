@@ -194,6 +194,11 @@ function ServicioRow({
             {descripcion}
           </div>
         )}
+        {servicio.tipo === "tour" && servicio.entrada && servicio.entrada.precio > 0 && (
+          <div className="text-[11px] text-emerald-700 font-medium mt-0.5 truncate">
+            + Entrada adicional: {fmt(servicio.entrada.precio)} por persona
+          </div>
+        )}
       </div>
       <div className="text-right flex-shrink-0">
         <div className="text-sm font-bold text-slate-900 tabular-nums">

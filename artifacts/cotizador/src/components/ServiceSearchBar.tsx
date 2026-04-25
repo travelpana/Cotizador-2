@@ -16,7 +16,7 @@ import type {
 } from "@/lib/types";
 import { fmt } from "@/lib/calc";
 
-type Categoria = "todos" | "hotel" | "traslado" | "tour";
+type Categoria = "todos" | "hotel" | "traslado" | "tour" | "vuelo";
 
 interface Props {
   hoteles: Hotel[];
@@ -42,6 +42,7 @@ const CATEGORIAS: { value: Categoria; label: string }[] = [
   { value: "hotel", label: "Hotelería" },
   { value: "traslado", label: "Traslados" },
   { value: "tour", label: "Tours" },
+  { value: "vuelo", label: "Vuelos" },
 ];
 
 export default function ServiceSearchBar({
