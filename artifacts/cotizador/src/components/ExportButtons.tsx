@@ -293,7 +293,6 @@ export default function ExportButtons({
       await navigator.clipboard.writeText(buildText());
       setWaCopied(true);
       setTimeout(() => setWaCopied(false), 2000);
-      onAutoSave?.();
     } catch {
       // noop
     }
