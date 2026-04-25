@@ -17,6 +17,7 @@ import {
   saveGuardadas,
   guardarEnSeguimiento,
   type CotizacionGuardada,
+  type EstadoCotizacion,
   type ModoCotizacion,
 } from "@/components/Guardadas";
 import type {
@@ -214,6 +215,13 @@ export default function CotizadorPage() {
     saveGuardadas(next);
     setGuardadas(next);
   };
+  const seguimientoUpdateEstado = (id: string, estado: EstadoCotizacion) => {
+    const next = guardadas.map((g) =>
+      g.id === id ? { ...g, estado } : g,
+    );
+    saveGuardadas(next);
+    setGuardadas(next);
+  };
 
   const closePreview = () => {
     setPreviewOpen(false);
@@ -280,6 +288,7 @@ export default function CotizadorPage() {
               onView={seguimientoView}
               onEdit={seguimientoEdit}
               onDelete={seguimientoDelete}
+              onUpdateEstado={seguimientoUpdateEstado}
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">

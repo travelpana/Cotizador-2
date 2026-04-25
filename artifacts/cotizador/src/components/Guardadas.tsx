@@ -1,6 +1,11 @@
 import type { Acomodacion, Cliente, ServicioSeleccionado } from "@/lib/types";
 
 export type ModoCotizacion = "tarifas" | "calculo";
+export type EstadoCotizacion =
+  | "pendiente"
+  | "enviado"
+  | "confirmado"
+  | "cancelado";
 
 export interface CotizacionGuardada {
   id: string;
@@ -9,6 +14,7 @@ export interface CotizacionGuardada {
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
   modoCotizacion: ModoCotizacion;
+  estado?: EstadoCotizacion;
 }
 
 const STORAGE_KEY = "cotizador.guardadas";
