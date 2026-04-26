@@ -83,7 +83,7 @@ export default function CustomItemModal({
   const isVuelo = tipo === "vuelo";
 
   const vueloNombre = useMemo(
-    () => `[Vuelo] ${origen} - ${destino}`,
+    () => `${origen} - ${destino}`,
     [origen, destino],
   );
 
