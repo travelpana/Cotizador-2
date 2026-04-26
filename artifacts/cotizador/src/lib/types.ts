@@ -88,6 +88,7 @@ export interface ServicioSeleccionado {
   ubicacion?: string;
   estrellas?: string;
   vigencia?: string;
+  tipoHabitacion?: string;
   manual?: boolean;
 }
 
@@ -120,6 +121,7 @@ export interface ServicioCalculado {
   ubicacion?: string;
   estrellas?: string;
   vigencia?: string;
+  tipoHabitacion?: string;
   noches?: number;
   paxAplicados?: number;
   /** For tours/traslados: which tier was applied. */

@@ -13,11 +13,16 @@ exportación por WhatsApp, Email y PDF (impresión).
   con sidebar oscuro, layout 70/30 (servicios izquierda · totales/acciones
   derecha sticky). Cada servicio se agrega/edita en `ServicioFormModal`
   (buscador del catálogo con código + nombre, código editable, notas, toggle
-  "Usar fecha", pax Auto/Manual, tarifa aplicada con override de rango). El
-  botón "Vista previa" abre `VistaPreviaModal` con el documento profesional
-  (tabla Alojamiento + tabla Servicios adicionales + caja "Resumen de costos"
-  con GRAN TOTAL azul). Exportación a WhatsApp (copiar al portapapeles), Email
-  (mailto) y PDF (impresión). Sirve en `/`.
+  "Usar fecha", pax Auto/Manual, tarifa aplicada con override de rango,
+  campo "Tipo Habitación" para hoteles). El botón "Vista previa" abre
+  `VistaPreviaModal` que renderiza un iframe con el HTML compartido
+  generado por `src/lib/propuesta.ts` (`buildPropuestaHtml`). Layout
+  "PROPUESTA DE SERVICIOS": header con logo Style Travel + pill azul,
+  dos columnas info, divisor naranja, pills azules
+  (ALOJAMIENTO/TRASLADOS/TOUR Y EXPERIENCIAS), pill naranja
+  (ITINERARIO SUGERIDO), notas verdes para "Entrada adicional".
+  Exportación a WhatsApp (copiar al portapapeles), Email
+  (mailto, mismo HTML) y PDF (impresión, mismo HTML). Sirve en `/`.
 - `artifacts/api-server` — API Express. Lee `TARIFARIO.xlsx` y expone:
   - `GET /api/hoteles` · `GET /api/tours` · `GET /api/traslados` · `GET /api/catalog`
   - `POST /api/reload` — recargar Excel

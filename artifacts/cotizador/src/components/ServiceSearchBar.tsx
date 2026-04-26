@@ -205,6 +205,7 @@ export default function ServiceSearchBar({
         ubicacion: h.ubicacion,
         estrellas: h.estrellas,
         vigencia: h.vigencia,
+        tipoHabitacion: h.tipoHabitacion,
         fechaInicio: globalFechaInicio || undefined,
         fechaFin: globalFechaFin || undefined,
       };

@@ -75,6 +75,7 @@ export default function ServicioFormModal(props: Props) {
   const [estrellas, setEstrellas] = useState("");
   const [vigencia, setVigencia] = useState("");
   const [aplicarVigencia, setAplicarVigencia] = useState(false);
+  const [tipoHabitacion, setTipoHabitacion] = useState("");
   // Hotel
   const [precios, setPrecios] = useState({
     SGL: 0,
@@ -117,6 +118,7 @@ export default function ServicioFormModal(props: Props) {
       setEstrellas(initial.estrellas ?? "");
       setVigencia(initial.vigencia ?? "");
       setAplicarVigencia(!!initial.vigencia);
+      setTipoHabitacion(initial.tipoHabitacion ?? "");
       setPrecios({
         SGL: initial.precios.SGL ?? 0,
         DBL: initial.precios.DBL ?? 0,
@@ -174,6 +176,7 @@ export default function ServicioFormModal(props: Props) {
       setEntradaPrecio(0);
       setEntradaNotas("");
       setSelectedCatId(null);
+      setTipoHabitacion("");
     }
   }, [open, props.tipo, initial, globalPasajeros, globalFechaInicio, globalFechaFin]);
 
@@ -215,6 +218,7 @@ export default function ServicioFormModal(props: Props) {
       setUbicacion(h.ubicacion);
       setEstrellas(h.estrellas);
       setVigencia(h.vigencia);
+      setTipoHabitacion(h.tipoHabitacion || "");
       setPrecios((p) => ({
         ...p,
         SGL: h.precios.SGL,
@@ -306,6 +310,7 @@ export default function ServicioFormModal(props: Props) {
       base.ubicacion = ubicacion || undefined;
       base.estrellas = estrellas || undefined;
       base.vigencia = aplicarVigencia ? vigencia || undefined : undefined;
+      base.tipoHabitacion = tipoHabitacion || undefined;
     } else {
       base.usarFecha = usarFecha;
       if (usarFecha) base.fecha = fecha || undefined;
