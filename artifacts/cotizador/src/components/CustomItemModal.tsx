@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Plus, Sparkles } from "lucide-react";
 import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
 
-type CustomTipo = "hotel" | "traslado" | "tour" | "otro";
+type CustomTipo = "hotel" | "traslado" | "tour" | "vuelo";
 
 interface Props {
   open: boolean;
@@ -13,10 +13,10 @@ interface Props {
 }
 
 const TIPO_OPTIONS: { value: CustomTipo; label: string }[] = [
-  { value: "hotel", label: "Alojamiento" },
+  { value: "hotel", label: "Hotelería" },
   { value: "traslado", label: "Traslado" },
   { value: "tour", label: "Tours" },
-  { value: "otro", label: "Otro" },
+  { value: "vuelo", label: "Vuelos" },
 ];
 
 const ALL_ACOM: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
@@ -28,7 +28,7 @@ export default function CustomItemModal({
   globalFechaInicio,
   globalFechaFin,
 }: Props) {
-  const [tipo, setTipo] = useState<CustomTipo>("otro");
+  const [tipo, setTipo] = useState<CustomTipo>("tour");
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState<string>("");
   const [notas, setNotas] = useState("");
@@ -36,7 +36,7 @@ export default function CustomItemModal({
 
   useEffect(() => {
     if (open) {
-      setTipo("otro");
+      setTipo("tour");
       setNombre("");
       setPrecio("");
       setNotas("");
@@ -57,14 +57,18 @@ export default function CustomItemModal({
     const baseId = `MAN-${Date.now()}`;
 
     const internalTipo: ServicioSeleccionado["tipo"] =
-      tipo === "hotel" ? "hotel" : tipo === "traslado" ? "traslado" : "tour";
+      tipo === "hotel"
+        ? "hotel"
+        : tipo === "tour"
+          ? "tour"
+          : "traslado";
 
     const precios: ServicioSeleccionado["precios"] =
       tipo === "hotel"
         ? Object.fromEntries(ALL_ACOM.map((a) => [a, value]))
         : { p1: value, p2_5: value, p6_10: value, chd: value };
 
-    const displayName = tipo === "otro" ? `[Otro] ${trimmed}` : trimmed;
+    const displayName = tipo === "vuelo" ? `[Vuelo] ${trimmed}` : trimmed;
 
     const servicio: ServicioSeleccionado = {
       id: baseId,
