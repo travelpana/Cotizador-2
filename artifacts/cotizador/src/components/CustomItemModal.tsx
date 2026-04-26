@@ -10,6 +10,8 @@ interface Props {
   onSave: (s: ServicioSeleccionado) => void;
   globalFechaInicio?: string;
   globalFechaFin?: string;
+  /** Global niños count from Alojamiento — gates the precio niño field. */
+  globalNinos?: number;
   /** When provided, the modal opens in edit mode pre-filled with this service. */
   initial?: ServicioSeleccionado | null;
 }
@@ -31,17 +33,21 @@ export default function CustomItemModal({
   onSave,
   globalFechaInicio,
   globalFechaFin,
+  globalNinos = 0,
   initial,
 }: Props) {
   const isEdit = !!initial;
   const [tipo, setTipo] = useState<CustomTipo>("tour");
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState<string>("");
+  const [precioNino, setPrecioNino] = useState<string>("");
   const [notas, setNotas] = useState("");
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
   const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
   const nombreRef = useRef<HTMLInputElement>(null);
+
+  const ninosEnabled = globalNinos > 0;
 
   useEffect(() => {
     if (open) {
@@ -66,6 +72,12 @@ export default function CustomItemModal({
               initial.precios.DBL ??
               0;
         setPrecio(initPrecio ? String(initPrecio) : "");
+        const initChd = initial.precios.chd;
+        setPrecioNino(
+          typeof initChd === "number" && initChd !== initPrecio && initChd > 0
+            ? String(initChd)
+            : "",
+        );
         setNotas(initial.notas ?? "");
         setOrigen(initial.origen ?? CIUDADES_VUELO[0]);
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
@@ -75,6 +87,7 @@ export default function CustomItemModal({
         setTipo("tour");
         setNombre("");
         setPrecio("");
+        setPrecioNino("");
         setNotas("");
         setOrigen(CIUDADES_VUELO[0]);
         setDestino(CIUDADES_VUELO[1]);
@@ -83,6 +96,12 @@ export default function CustomItemModal({
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
   }, [open, initial]);
+
+  useEffect(() => {
+    if (!ninosEnabled && precioNino !== "") {
+      setPrecioNino("");
+    }
+  }, [ninosEnabled, precioNino]);
 
   const isVuelo = tipo === "vuelo";
 
@@ -113,6 +132,8 @@ export default function CustomItemModal({
     }
 
     const value = Number(precio) || 0;
+    const ninoRaw = precioNino.trim();
+    const chdValue = ninosEnabled && ninoRaw !== "" ? Number(ninoRaw) || 0 : value;
     const baseId = initial?.id ?? `MAN-${Date.now()}`;
 
     const internalTipo: ServicioSeleccionado["tipo"] =
@@ -127,7 +148,7 @@ export default function CustomItemModal({
     const precios: ServicioSeleccionado["precios"] =
       tipo === "hotel"
         ? Object.fromEntries(ALL_ACOM.map((a) => [a, value]))
-        : { p1: value, p2_5: value, p6_10: value, chd: value };
+        : { p1: value, p2_5: value, p6_10: value, chd: chdValue };
 
     const servicio: ServicioSeleccionado = {
       id: baseId,
@@ -301,27 +322,61 @@ export default function CustomItemModal({
             </div>
           )}
 
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Precio (USD)
-            </label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
-              placeholder="0.00"
-              className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
-            />
-            <p className="text-[11px] text-slate-500 mt-1">
-              {tipo === "hotel"
-                ? "Se aplicará el mismo valor a todas las acomodaciones"
-                : isVuelo
-                  ? "Precio por persona del vuelo (puedes editarlo más tarde)"
-                  : "Precio por persona, igual para todos los rangos"}
-            </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
+                Precio (USD)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                placeholder="0.00"
+                className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+              />
+            </div>
+            {tipo !== "hotel" && (
+              <div>
+                <label
+                  className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
+                    ninosEnabled ? "text-slate-500" : "text-slate-300"
+                  }`}
+                >
+                  Precio niño (USD)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={precioNino}
+                  onChange={(e) => setPrecioNino(e.target.value)}
+                  placeholder="0.00"
+                  disabled={!ninosEnabled}
+                  title={
+                    ninosEnabled ? undefined : "Disponible cuando se agregan niños"
+                  }
+                  className={`w-full h-10 px-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
+                    ninosEnabled
+                      ? "border-slate-200 text-slate-900"
+                      : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
+                  }`}
+                />
+              </div>
+            )}
           </div>
+          <p className="text-[11px] text-slate-500 -mt-2">
+            {tipo === "hotel"
+              ? "Se aplicará el mismo valor a todas las acomodaciones"
+              : isVuelo
+                ? ninosEnabled
+                  ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                  : "Precio por persona del vuelo (puedes editarlo más tarde)"
+                : ninosEnabled
+                  ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                  : "Precio por persona, igual para todos los rangos"}
+          </p>
 
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">

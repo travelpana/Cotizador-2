@@ -386,6 +386,7 @@ export default function CotizadorPage() {
         }}
         globalFechaInicio={cliente.fechaInicio}
         globalFechaFin={cliente.fechaFin}
+        globalNinos={cliente.ninos}
         initial={customEditing}
       />
 
