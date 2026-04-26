@@ -196,6 +196,7 @@ function NumberInput({
       </span>
       <input
         type="number"
+        inputMode="numeric"
         min={min}
         value={value}
         onChange={(e) => {
@@ -205,7 +206,19 @@ function NumberInput({
             return;
           }
           const n = Number(raw);
-          onChange(Number.isFinite(n) ? Math.max(min, n) : min);
+          if (!Number.isFinite(n)) {
+            onChange(min);
+            return;
+          }
+          const intVal = Math.trunc(n);
+          onChange(Math.max(min, intVal));
+        }}
+        onFocus={(e) => e.target.select()}
+        onClick={(e) => (e.target as HTMLInputElement).select()}
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+            e.preventDefault();
+          }
         }}
         aria-label={label}
         className="w-9 bg-transparent border-0 p-0 text-sm font-bold text-slate-900 text-center focus:outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
