@@ -6,6 +6,7 @@ import type {
   ServicioSeleccionado,
 } from "./types";
 import { fmt, entradaTipoLabel } from "./calc";
+import { formatTrasladoNombre } from "./utils";
 import { buildItinerario, type ItinerarioDia } from "@/components/Itinerario";
 import type { ModoCotizacion } from "@/components/Guardadas";
 
@@ -259,9 +260,11 @@ function adicionalesTable(
             }</div>`
           : "";
 
+      const displayName =
+        s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
       return `<tr>
         <td>
-          <div class="cell-title">${escape(s.nombre)}</div>
+          <div class="cell-title">${escape(displayName)}</div>
           ${entradaNote}
           ${s.notas ? `<div class="cell-note">${escape(s.notas)}</div>` : ""}
         </td>

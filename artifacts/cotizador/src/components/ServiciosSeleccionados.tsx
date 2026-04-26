@@ -4,6 +4,7 @@ import type {
   ServicioSeleccionado,
 } from "@/lib/types";
 import { fmt, pickTier, priceForTier } from "@/lib/calc";
+import { formatTrasladoNombre } from "@/lib/utils";
 import {
   ListChecks,
   Pencil,
@@ -198,7 +199,9 @@ function ServicioRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-slate-900 truncate">
-          {servicio.nombre}
+          {servicio.tipo === "traslado"
+            ? formatTrasladoNombre(servicio.nombre)
+            : servicio.nombre}
         </div>
         {servicio.manual && (
           <div className="mt-0.5">
