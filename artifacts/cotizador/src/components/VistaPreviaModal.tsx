@@ -35,6 +35,7 @@ export default function VistaPreviaModal({
 
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
   const traslados = result.servicios.filter((s) => s.tipo === "traslado");
+  const vuelos = result.servicios.filter((s) => s.tipo === "vuelo");
   const tours = result.servicios.filter((s) => s.tipo === "tour");
   const acoms = result.acomodaciones;
   const primary = acoms[0];
@@ -187,6 +188,18 @@ export default function VistaPreviaModal({
                 </section>
               )}
 
+              {/* Vuelos */}
+              {vuelos.length > 0 && (
+                <section className="pt-2 border-t border-slate-200">
+                  <DocHeading>Vuelos</DocHeading>
+                  <ServicioAdicionalTabla
+                    items={vuelos}
+                    isCalc={isCalc}
+                    primary={primary}
+                  />
+                </section>
+              )}
+
               {/* Tours */}
               {tours.length > 0 && (
                 <section className="pt-2 border-t border-slate-200">
@@ -270,6 +283,10 @@ export default function VistaPreviaModal({
                     <SubtotalLine
                       label="Traslados"
                       value={result.subtotalesPorTipo.traslado[primary]}
+                    />
+                    <SubtotalLine
+                      label="Vuelos"
+                      value={result.subtotalesPorTipo.vuelo[primary]}
                     />
                     <SubtotalLine
                       label="Tours"

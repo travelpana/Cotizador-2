@@ -80,6 +80,7 @@ export function calcularLocal(
     hotel: EMPTY_ACOM(),
     tour: EMPTY_ACOM(),
     traslado: EMPTY_ACOM(),
+    vuelo: EMPTY_ACOM(),
   };
 
   for (const s of servicios) {
@@ -138,14 +139,20 @@ export function calcularLocal(
         totalesPorAcom[a] = totalUnit;
         subtotales[s.tipo][a] += totalUnit;
       }
+      const detalle =
+        s.tipo === "vuelo"
+          ? `${paxLocal} pax${ninos ? ` + ${ninos} niños` : ""}`
+          : `${paxLocal} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`;
       out.push({
         id: s.id,
         codigo: s.codigo ?? s.id,
         tipo: s.tipo,
         nombre: s.nombre,
+        origen: s.tipo === "vuelo" ? s.origen : undefined,
+        destino: s.tipo === "vuelo" ? s.destino : undefined,
         preciosPorAcomodacion: preciosPorAcom,
         totalesPorAcomodacion: totalesPorAcom,
-        detalle: `${paxLocal} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`,
+        detalle,
         fecha: s.usarFecha ? s.fecha : undefined,
         notas: s.notas,
         tierAplicado: tier,

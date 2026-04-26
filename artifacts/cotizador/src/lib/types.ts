@@ -49,8 +49,12 @@ export interface ServicioSeleccionado {
   id: string;
   /** External code shown in the document, defaults to id. */
   codigo?: string;
-  tipo: "hotel" | "tour" | "traslado";
+  tipo: "hotel" | "tour" | "traslado" | "vuelo";
   nombre: string;
+  /** Vuelo-only: airport / city of origin. */
+  origen?: string;
+  /** Vuelo-only: airport / city of destination. */
+  destino?: string;
   /** Tour-only: optional add-on entry (museum, site, etc.) priced per person. */
   entrada?: EntradaAdicional;
   precios: {
@@ -101,8 +105,10 @@ export interface Cliente {
 
 export interface ServicioCalculado {
   id: string;
-  tipo: "hotel" | "tour" | "traslado";
+  tipo: "hotel" | "tour" | "traslado" | "vuelo";
   nombre: string;
+  origen?: string;
+  destino?: string;
   codigo?: string;
   preciosPorAcomodacion: Record<Acomodacion, number>;
   totalesPorAcomodacion: Record<Acomodacion, number>;
@@ -130,6 +136,7 @@ export interface CotizacionResult {
     hotel: Record<Acomodacion, number>;
     tour: Record<Acomodacion, number>;
     traslado: Record<Acomodacion, number>;
+    vuelo: Record<Acomodacion, number>;
   };
   acomodaciones: Acomodacion[];
   noches: number;

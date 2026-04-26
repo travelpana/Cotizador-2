@@ -11,6 +11,7 @@ import {
   Hotel,
   MapPin,
   Bus,
+  Plane,
   Search,
   Plus,
 } from "lucide-react";
@@ -28,12 +29,14 @@ interface Props {
 const GROUP_ORDER: ServicioSeleccionado["tipo"][] = [
   "hotel",
   "traslado",
+  "vuelo",
   "tour",
 ];
 
 const GROUP_TITLE: Record<ServicioSeleccionado["tipo"], string> = {
   hotel: "Alojamiento",
   traslado: "Traslados",
+  vuelo: "Vuelos",
   tour: "Tours",
 };
 
@@ -120,6 +123,7 @@ export default function ServiciosSeleccionados({
 function iconForTipo(tipo: ServicioSeleccionado["tipo"]) {
   if (tipo === "hotel") return <Hotel className="w-4 h-4" />;
   if (tipo === "tour") return <MapPin className="w-4 h-4" />;
+  if (tipo === "vuelo") return <Plane className="w-4 h-4" />;
   return <Bus className="w-4 h-4" />;
 }
 
@@ -128,6 +132,8 @@ function tipoColors(tipo: ServicioSeleccionado["tipo"]) {
     return { bg: "bg-amber-50", text: "text-amber-600" };
   if (tipo === "tour")
     return { bg: "bg-emerald-50", text: "text-emerald-600" };
+  if (tipo === "vuelo")
+    return { bg: "bg-indigo-50", text: "text-indigo-600" };
   return { bg: "bg-sky-50", text: "text-sky-600" };
 }
 
@@ -164,11 +170,16 @@ function ServicioRow({
     if (servicio.fechaInicio && servicio.fechaFin)
       parts.push(`${servicio.fechaInicio} → ${servicio.fechaFin}`);
     descripcion = parts.join(" · ");
+  } else if (servicio.tipo === "vuelo") {
+    const parts: string[] = [];
+    if (servicio.origen && servicio.destino)
+      parts.push(`${servicio.origen} → ${servicio.destino}`);
+    if (servicio.usarFecha && servicio.fecha) parts.push(servicio.fecha);
+    descripcion = parts.join(" · ");
   } else {
     const parts: string[] = [];
     if (servicio.usarFecha && servicio.fecha) parts.push(servicio.fecha);
     if (servicio.paxOverride) parts.push(`${servicio.paxOverride} pax`);
-    if (servicio.manual) parts.push("manual");
     descripcion = parts.join(" · ");
   }
 
@@ -189,6 +200,13 @@ function ServicioRow({
         <div className="text-sm font-semibold text-slate-900 truncate">
           {servicio.nombre}
         </div>
+        {servicio.manual && (
+          <div className="mt-0.5">
+            <span className="inline-block text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+              manual
+            </span>
+          </div>
+        )}
         {descripcion && (
           <div className="text-[11px] text-slate-500 truncate mt-0.5">
             {descripcion}

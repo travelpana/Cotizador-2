@@ -114,6 +114,7 @@ export default function ExportButtons({
       lines.push(
         `Traslados:   ${fmt(result.subtotalesPorTipo.traslado[primary])}`,
       );
+      lines.push(`Vuelos:      ${fmt(result.subtotalesPorTipo.vuelo[primary])}`);
       lines.push(`Tours:       ${fmt(result.subtotalesPorTipo.tour[primary])}`);
       lines.push("");
       for (const a of acoms) {
@@ -279,6 +280,7 @@ export default function ExportButtons({
       <div class="label">Resumen de costos</div>
       <div class="sub"><span>Alojamiento</span><b>${fmt(result.subtotalesPorTipo.hotel[primary])}</b></div>
       <div class="sub"><span>Traslados</span><b>${fmt(result.subtotalesPorTipo.traslado[primary])}</b></div>
+      <div class="sub"><span>Vuelos</span><b>${fmt(result.subtotalesPorTipo.vuelo[primary])}</b></div>
       <div class="sub"><span>Tours</span><b>${fmt(result.subtotalesPorTipo.tour[primary])}</b></div>
       <div class="totals-block">
         ${acoms

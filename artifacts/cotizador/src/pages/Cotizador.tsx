@@ -80,6 +80,8 @@ export default function CotizadorPage() {
   );
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
   const [customOpen, setCustomOpen] = useState(false);
+  const [customEditing, setCustomEditing] =
+    useState<ServicioSeleccionado | null>(null);
   const [highlightedServiceId, setHighlightedServiceId] = useState<string | null>(null);
 
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
@@ -165,15 +167,25 @@ export default function CotizadorPage() {
   };
 
   const handleQuickAdd = (s: ServicioSeleccionado) => {
-    setServicios((prev) => [...prev, s]);
+    setServicios((prev) => {
+      const exists = prev.some((x) => x.tipo === s.tipo && x.id === s.id);
+      if (exists)
+        return prev.map((x) => (x.tipo === s.tipo && x.id === s.id ? s : x));
+      return [...prev, s];
+    });
     setHighlightedServiceId(s.id);
-    showToast("Servicio agregado");
+    showToast(customEditing ? "Servicio actualizado" : "Servicio agregado");
     window.setTimeout(() => {
       setHighlightedServiceId((curr) => (curr === s.id ? null : curr));
     }, 1500);
   };
 
   const openEdit = (s: ServicioSeleccionado) => {
+    if (s.tipo === "vuelo") {
+      setCustomEditing(s);
+      setCustomOpen(true);
+      return;
+    }
     setForm({
       open: true,
       tipo: s.tipo,
@@ -364,10 +376,17 @@ export default function CotizadorPage() {
 
       <CustomItemModal
         open={customOpen}
-        onClose={() => setCustomOpen(false)}
-        onSave={handleQuickAdd}
+        onClose={() => {
+          setCustomOpen(false);
+          setCustomEditing(null);
+        }}
+        onSave={(s) => {
+          handleQuickAdd(s);
+          setCustomEditing(null);
+        }}
         globalFechaInicio={cliente.fechaInicio}
         globalFechaFin={cliente.fechaFin}
+        initial={customEditing}
       />
 
       <ServicioFormModal
