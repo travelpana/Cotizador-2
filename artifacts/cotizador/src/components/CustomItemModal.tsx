@@ -40,6 +40,7 @@ export default function CustomItemModal({
   const [notas, setNotas] = useState("");
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
+  const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
   const nombreRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,6 +69,8 @@ export default function CustomItemModal({
         setNotas(initial.notas ?? "");
         setOrigen(initial.origen ?? CIUDADES_VUELO[0]);
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
+        const arrowCount = (initial.nombre.match(/→/g) ?? []).length;
+        setIdaVuelta(initial.tipo === "vuelo" ? arrowCount >= 2 : true);
       } else {
         setTipo("tour");
         setNombre("");
@@ -75,6 +78,7 @@ export default function CustomItemModal({
         setNotas("");
         setOrigen(CIUDADES_VUELO[0]);
         setDestino(CIUDADES_VUELO[1]);
+        setIdaVuelta(true);
       }
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
@@ -83,8 +87,11 @@ export default function CustomItemModal({
   const isVuelo = tipo === "vuelo";
 
   const vueloNombre = useMemo(
-    () => `${origen} - ${destino}`,
-    [origen, destino],
+    () =>
+      idaVuelta
+        ? `${origen} → ${destino} → ${origen}`
+        : `${origen} → ${destino}`,
+    [origen, destino, idaVuelta],
   );
 
   if (!open) return null;
@@ -247,6 +254,27 @@ export default function CustomItemModal({
                 </div>
               </div>
 
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5 cursor-pointer hover:bg-slate-50">
+                <span className="text-sm font-medium text-slate-700">
+                  Ida y vuelta
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={idaVuelta}
+                  onClick={() => setIdaVuelta((v) => !v)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    idaVuelta ? "bg-primary" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      idaVuelta ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </label>
+
               <div className="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 flex items-center gap-2">
                 <Plane className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                 <div className="text-xs text-slate-600">
@@ -275,7 +303,7 @@ export default function CustomItemModal({
 
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Precio (USD){isVuelo ? " — opcional" : ""}
+              Precio (USD)
             </label>
             <input
               type="number"
@@ -297,7 +325,7 @@ export default function CustomItemModal({
 
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Notas (opcional)
+              Notas
             </label>
             <textarea
               value={notas}
