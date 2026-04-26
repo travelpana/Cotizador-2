@@ -18,6 +18,10 @@ export interface PropuestaInput {
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   numeroCotizacion?: string;
+  /** Manual overrides for itinerary activity text, keyed by día number. */
+  actividadesOverride?: Record<number, string>;
+  /** When true, itinerary activity cells are rendered as contenteditable. */
+  editable?: boolean;
 }
 
 export interface PropuestaData {
@@ -41,6 +45,7 @@ export interface PropuestaData {
   result: CotizacionResult;
   cliente: Cliente;
   incluirDescriptivos: boolean;
+  editable: boolean;
 }
 
 const MESES = [
@@ -104,8 +109,13 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const primary = acoms[0];
   const isCalc = modo === "calculo";
 
+  const overrides = input.actividadesOverride ?? {};
   const itinerario = incluirItinerario
-    ? buildItinerario(cliente, servicios)
+    ? buildItinerario(cliente, servicios).map((it) =>
+        overrides[it.dia] !== undefined
+          ? { ...it, actividad: overrides[it.dia] }
+          : it,
+      )
     : [];
 
   const pasajerosLabel = `${cliente.pasajeros} adulto${cliente.pasajeros === 1 ? "" : "s"}${
@@ -144,6 +154,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     result,
     cliente,
     incluirDescriptivos: input.incluirDescriptivos,
+    editable: input.editable === true,
   };
 }
 
@@ -308,13 +319,18 @@ function adicionalesTable(
 
 function itinerarioTable(d: PropuestaData): string {
   if (d.itinerario.length === 0) return "";
+  const editAttrs = (dia: number) =>
+    d.editable
+      ? ` contenteditable="true" data-edit-actividad="${dia}" spellcheck="false" style="${STYLES.cellTitle};outline:none;border-radius:4px;padding:2px 4px;margin:-2px -4px;cursor:text;" title="Click para editar"`
+      : ` style="${STYLES.cellTitle}"`;
+
   const rows = d.itinerario
     .map(
       (it) => `<tr>
         <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;font-weight:bold;color:${COLOR_AZUL};font-size:13px;">${escape(it.dia)}</td>
         <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_LABEL};font-size:11px;white-space:nowrap;">${escape(it.fecha || "—")}</td>
         <td style="${STYLES.td}">
-          <div style="${STYLES.cellTitle}">${escape(it.actividad)}</div>
+          <div${editAttrs(it.dia)}>${escape(it.actividad)}</div>
           ${
             d.incluirDescriptivos && it.descripcion
               ? `<div style="${STYLES.cellNote}">${escape(it.descripcion)}</div>`

@@ -29,6 +29,7 @@ interface Props {
   modo: ModoCotizacion;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
+  actividadesOverride?: Record<number, string>;
   onSave: () => void;
   onClear: () => void;
   onPreview: () => void;
@@ -42,6 +43,7 @@ export default function ExportButtons({
   modo,
   incluirItinerario,
   incluirDescriptivos,
+  actividadesOverride,
   onSave,
   onClear,
   onPreview,
@@ -125,7 +127,14 @@ export default function ExportButtons({
       }
     }
 
-    const it = incluirItinerario ? buildItinerario(cliente, servicios) : [];
+    const overrides = actividadesOverride ?? {};
+    const it = incluirItinerario
+      ? buildItinerario(cliente, servicios).map((d) =>
+          overrides[d.dia] !== undefined
+            ? { ...d, actividad: overrides[d.dia] }
+            : d,
+        )
+      : [];
     if (it.length > 0) {
       lines.push("");
       lines.push(`*ITINERARIO SUGERIDO*`);
@@ -146,6 +155,7 @@ export default function ExportButtons({
       modo,
       incluirItinerario,
       incluirDescriptivos,
+      actividadesOverride,
       numeroCotizacion,
     });
 
@@ -168,12 +178,57 @@ export default function ExportButtons({
 
   const copyEmail = async () => {
     try {
-      await navigator.clipboard.writeText(buildHtml());
-      setMailCopied(true);
-      setTimeout(() => setMailCopied(false), 2000);
-      onAutoSave?.();
-    } catch {
-      // noop
+      const html = buildHtml();
+      const text = buildText();
+
+      let copied = false;
+      const w = window as unknown as {
+        ClipboardItem?: typeof ClipboardItem;
+      };
+      if (
+        w.ClipboardItem &&
+        navigator.clipboard &&
+        "write" in navigator.clipboard
+      ) {
+        try {
+          const item = new w.ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
+          });
+          await navigator.clipboard.write([item]);
+          copied = true;
+        } catch {
+          // fall through to legacy method
+        }
+      }
+
+      if (!copied) {
+        const container = document.createElement("div");
+        container.setAttribute("contenteditable", "true");
+        container.style.position = "fixed";
+        container.style.left = "-10000px";
+        container.style.top = "0";
+        container.style.opacity = "0";
+        container.innerHTML = html;
+        document.body.appendChild(container);
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        document.execCommand("copy");
+        sel?.removeAllRanges();
+        document.body.removeChild(container);
+        copied = true;
+      }
+
+      if (copied) {
+        setMailCopied(true);
+        setTimeout(() => setMailCopied(false), 2000);
+        onAutoSave?.();
+      }
+    } catch (err) {
+      console.error("Copy email failed:", err);
     }
   };
 

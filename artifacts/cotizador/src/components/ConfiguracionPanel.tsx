@@ -66,7 +66,7 @@ export default function ConfiguracionPanel({
               checked={incluirDescriptivos}
               onChange={onToggleDescriptivos}
               icon={<FileText className="w-4 h-4" />}
-              label="Incluir descriptivos"
+              label="Incluir detalles"
               help="Texto extra debajo de cada actividad"
               disabled={!incluirItinerario}
             />

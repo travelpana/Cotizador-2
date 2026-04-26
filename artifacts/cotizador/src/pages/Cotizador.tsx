@@ -72,8 +72,11 @@ export default function CotizadorPage() {
   const [acomodaciones, setAcomodaciones] = useState<Acomodacion[]>(["DBL"]);
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
-  const [incluirItinerario, setIncluirItinerario] = useState(true);
+  const [incluirItinerario, setIncluirItinerario] = useState(false);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
+  const [actividadesOverride, setActividadesOverride] = useState<
+    Record<number, string>
+  >({});
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewQuote, setPreviewQuote] = useState<CotizacionGuardada | null>(
     null,
@@ -356,6 +359,7 @@ export default function CotizadorPage() {
                   modo={modo}
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
+                  actividadesOverride={actividadesOverride}
                   onSave={handleSave}
                   onClear={handleClear}
                   onPreview={() => {
@@ -415,6 +419,8 @@ export default function CotizadorPage() {
         modo={previewModo}
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
+        actividadesOverride={actividadesOverride}
+        onActividadesOverrideChange={setActividadesOverride}
       />
 
       {toast && (
