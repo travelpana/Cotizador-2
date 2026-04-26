@@ -7,7 +7,11 @@ import {
   Trash2,
   Eye,
   Check,
+  Loader2,
 } from "lucide-react";
+import html2pdfImport from "html2pdf.js";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const html2pdf = html2pdfImport as unknown as (...args: any[]) => any;
 import type {
   Cliente,
   CotizacionResult,
@@ -45,6 +49,8 @@ export default function ExportButtons({
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
   const acoms = result.acomodaciones;
   const primary = acoms[0];
@@ -132,7 +138,7 @@ export default function ExportButtons({
     return lines.join("\n");
   };
 
-  const buildHtml = () =>
+  const buildHtml = (numeroCotizacion?: string) =>
     buildPropuestaHtml({
       cliente,
       servicios,
@@ -140,7 +146,15 @@ export default function ExportButtons({
       modo,
       incluirItinerario,
       incluirDescriptivos,
+      numeroCotizacion,
     });
+
+  const sanitizeForFilename = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "")
+      .slice(0, 40) || "Cliente";
 
   const copyWhatsapp = async () => {
     try {
@@ -163,13 +177,86 @@ export default function ExportButtons({
     }
   };
 
-  const handlePdf = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(buildHtml());
-    w.document.close();
-    setTimeout(() => w.print(), 350);
-    onAutoSave?.();
+  const handlePdf = async () => {
+    if (pdfLoading) return;
+    setPdfError(false);
+    setPdfLoading(true);
+
+    const numero = `RGE-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+    const clienteSafe = sanitizeForFilename(cliente.nombre || "");
+    const filename = `Cotizacion-${numero}-${clienteSafe}.pdf`;
+
+    let iframe: HTMLIFrameElement | null = null;
+
+    try {
+      const html = buildHtml(numero);
+
+      iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.left = "-10000px";
+      iframe.style.top = "0";
+      iframe.style.width = "816px";
+      iframe.style.height = "1056px";
+      iframe.style.border = "0";
+      iframe.setAttribute("aria-hidden", "true");
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentDocument;
+      if (!doc) throw new Error("No iframe document");
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      await new Promise<void>((resolve) => {
+        if (doc.readyState === "complete") {
+          resolve();
+        } else {
+          iframe!.onload = () => resolve();
+          setTimeout(() => resolve(), 1500);
+        }
+      });
+
+      const images = Array.from(doc.images);
+      await Promise.all(
+        images.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) return resolve();
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            }),
+        ),
+      );
+
+      const target = doc.body;
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename,
+          image: { type: "jpeg", quality: 0.95 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            windowWidth: 816,
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: ["css", "legacy"] },
+        })
+        .from(target)
+        .save();
+
+      onAutoSave?.();
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      setPdfError(true);
+      setTimeout(() => setPdfError(false), 3000);
+    } finally {
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+      setPdfLoading(false);
+    }
   };
 
   return (
@@ -221,11 +308,26 @@ export default function ExportButtons({
       </button>
       <button
         onClick={handlePdf}
-        style={{ backgroundColor: "#2c4294" }}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110"
+        disabled={pdfLoading}
+        style={{ backgroundColor: pdfError ? "#b91c1c" : "#2c4294" }}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110 disabled:opacity-70 disabled:cursor-wait"
       >
-        <Printer className="w-4 h-4" />
-        Descargar PDF
+        {pdfLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Generando PDF…
+          </>
+        ) : pdfError ? (
+          <>
+            <Printer className="w-4 h-4" />
+            Error al generar PDF
+          </>
+        ) : (
+          <>
+            <Printer className="w-4 h-4" />
+            Descargar PDF
+          </>
+        )}
       </button>
 
       <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
