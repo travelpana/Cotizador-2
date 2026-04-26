@@ -1,6 +1,29 @@
 import { Map } from "lucide-react";
 import type { Cliente, ServicioSeleccionado } from "@/lib/types";
 import { addDays } from "@/lib/calc";
+import { formatTrasladoNombre } from "@/lib/utils";
+
+const ARROW = "→";
+
+/** Format a transfer name showing only the relevant leg for arrival/departure.
+ *  - Round-trip (3+ segments): "A → B → C"
+ *      mode="llegada"  → "A → B"
+ *      mode="salida"   → "B → C"
+ *  - One-way / single leg: returned as-is.
+ */
+function formatTrasladoTramo(
+  name: string,
+  mode: "llegada" | "salida",
+): string {
+  const clean = formatTrasladoNombre(name);
+  const segs = clean
+    .split(ARROW)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (segs.length < 3) return clean;
+  if (mode === "llegada") return `${segs[0]} ${ARROW} ${segs[1]}`;
+  return `${segs[segs.length - 2]} ${ARROW} ${segs[segs.length - 1]}`;
+}
 
 interface Props {
   cliente: Cliente;
@@ -38,13 +61,19 @@ export function buildItinerario(
     let descripcion = "";
 
     if (i === 0) {
-      actividad = `Llegada · ${traslados[0]?.nombre || "Traslado al hotel"}`;
-      descripcion = traslados[0]?.nombre || "";
+      const t = traslados[0];
+      const tramo = t
+        ? `Traslado ${formatTrasladoTramo(t.nombre, "llegada")}`
+        : "Traslado al hotel";
+      actividad = `Llegada · ${tramo}`;
+      descripcion = tramo;
     } else if (i === dias - 1) {
-      actividad = `Salida · ${
-        traslados[traslados.length - 1]?.nombre || "Traslado al aeropuerto"
-      }`;
-      descripcion = traslados[traslados.length - 1]?.nombre || "";
+      const t = traslados[traslados.length - 1];
+      const tramo = t
+        ? `Traslado ${formatTrasladoTramo(t.nombre, "salida")}`
+        : "Traslado al aeropuerto";
+      actividad = `Salida · ${tramo}`;
+      descripcion = tramo;
       hotel = "—";
     } else {
       const tour = tours[tourIdx++];
