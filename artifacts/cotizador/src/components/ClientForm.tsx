@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Acomodacion, Cliente } from "@/lib/types";
 import { diffNoches } from "@/lib/calc";
 
@@ -189,39 +190,40 @@ function NumberInput({
   onChange: (v: number) => void;
   min?: number;
 }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const display = draft ?? String(value);
+
   return (
     <label className="flex items-center gap-2 bg-white rounded-lg px-2.5 py-1.5 ring-1 ring-white/40 shadow-sm cursor-text">
       <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 select-none">
         {label}
       </span>
       <input
-        type="number"
+        type="text"
         inputMode="numeric"
-        min={min}
-        value={value}
+        pattern="[0-9]*"
+        value={display}
+        onFocus={() => setDraft("")}
         onChange={(e) => {
-          const raw = e.target.value;
-          if (raw === "") {
-            onChange(min);
-            return;
-          }
-          const n = Number(raw);
-          if (!Number.isFinite(n)) {
-            onChange(min);
-            return;
-          }
-          const intVal = Math.trunc(n);
-          onChange(Math.max(min, intVal));
+          const raw = e.target.value.replace(/[^0-9]/g, "");
+          setDraft(raw);
+          if (raw === "") return;
+          const n = parseInt(raw, 10);
+          if (Number.isFinite(n)) onChange(Math.max(min, n));
         }}
-        onFocus={(e) => e.target.select()}
-        onClick={(e) => (e.target as HTMLInputElement).select()}
+        onBlur={() => {
+          if (draft === "" || draft === null) {
+            onChange(min);
+          }
+          setDraft(null);
+        }}
         onKeyDown={(e) => {
-          if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
-            e.preventDefault();
+          if (e.key === "Enter") {
+            (e.target as HTMLInputElement).blur();
           }
         }}
         aria-label={label}
-        className="w-9 bg-transparent border-0 p-0 text-sm font-bold text-slate-900 text-center focus:outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-9 bg-transparent border-0 p-0 text-sm font-bold text-slate-900 text-center focus:outline-none tabular-nums"
       />
     </label>
   );
