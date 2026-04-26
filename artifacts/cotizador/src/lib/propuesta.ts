@@ -147,23 +147,38 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   };
 }
 
-const LOGO_SVG = `
-<svg viewBox="0 0 200 70" xmlns="http://www.w3.org/2000/svg" aria-label="Style Travel">
-  <g transform="translate(4 6)">
-    <rect x="0"  y="14" width="14" height="14" fill="#22c55e"/>
-    <rect x="14" y="14" width="14" height="14" fill="#f59e0b"/>
-    <rect x="0"  y="28" width="14" height="14" fill="#e11d48"/>
-    <rect x="14" y="28" width="14" height="14" fill="#2563eb"/>
-    <rect x="9" y="0"  width="10" height="14" fill="#0ea5e9"/>
-    <rect x="9" y="42" width="10" height="14" fill="#1d4ed8"/>
-  </g>
-  <text x="44" y="32" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800"
-    font-size="22" fill="#1e3a8a" letter-spacing="0.5">Style</text>
-  <text x="44" y="54" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700"
-    font-style="italic" font-size="20" fill="#2563eb" letter-spacing="0.3">travel</text>
-</svg>`.trim();
+const LOGO_URL =
+  "https://rgebooking.com/assets/images/logos/style-travel-blue.png";
 
-export const PROPUESTA_LOGO_SVG = LOGO_SVG;
+const LOGO_IMG = `<img src="${LOGO_URL}" alt="Style Travel" style="height:70px; display:block;" crossorigin="anonymous" />`;
+
+export const PROPUESTA_LOGO_SVG = LOGO_IMG;
+
+const COLOR_AZUL = "#2f4ea2";
+const COLOR_NARANJA = "#f97316";
+const COLOR_VERDE = "#16a34a";
+const COLOR_TEXTO = "#1f2937";
+const COLOR_BORDE = "#e5e7eb";
+const COLOR_LABEL = "#6b7280";
+
+const STYLES = {
+  pillBlue: `display:inline-block;background:${COLOR_AZUL};color:#ffffff;padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;`,
+  pillOrange: `display:inline-block;background:${COLOR_NARANJA};color:#ffffff;padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;`,
+  divider: `height:2px;background:${COLOR_NARANJA};border:0;margin:14px 0 22px;`,
+  th: `text-align:left;color:#64748b;font-weight:bold;font-size:10px;letter-spacing:0.6px;padding:10px 8px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
+  thNum: `text-align:right;color:#64748b;font-weight:bold;font-size:10px;letter-spacing:0.6px;padding:10px 8px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
+  thCenter: `text-align:center;color:#64748b;font-weight:bold;font-size:10px;letter-spacing:0.6px;padding:10px 8px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
+  td: `padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_TEXTO};font-size:12px;`,
+  tdNum: `padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_TEXTO};font-size:12px;text-align:right;`,
+  tdCenter: `padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_TEXTO};font-size:12px;text-align:center;`,
+  cellTitle: `font-weight:bold;color:${COLOR_TEXTO};font-size:13px;`,
+  cellSub: `font-size:11px;color:${COLOR_LABEL};margin-top:2px;`,
+  cellNote: `font-size:11px;color:${COLOR_LABEL};font-style:italic;margin-top:4px;`,
+  cellGreen: `font-size:11px;color:${COLOR_VERDE};font-weight:600;margin-top:4px;`,
+  infoLabel: `padding:4px 8px 4px 0;color:${COLOR_LABEL};font-weight:600;font-size:12px;white-space:nowrap;vertical-align:top;`,
+  infoValue: `padding:4px 0;color:${COLOR_TEXTO};font-weight:500;font-size:12px;vertical-align:top;`,
+  block: `margin-bottom:24px;`,
+};
 
 const escape = (s: unknown) =>
   String(s ?? "")
@@ -174,8 +189,8 @@ const escape = (s: unknown) =>
 
 function infoRow(label: string, value: string) {
   return `<tr>
-    <td class="info-label">${escape(label)}:</td>
-    <td class="info-value">${escape(value)}</td>
+    <td style="${STYLES.infoLabel}">${escape(label)}:</td>
+    <td style="${STYLES.infoValue}">${escape(value)}</td>
   </tr>`;
 }
 
@@ -183,7 +198,8 @@ function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
   const acomCols = d.acoms
     .map(
-      (a) => `<th class="num">${escape(a)}<span class="unit">/noche</span></th>`,
+      (a) =>
+        `<th style="${STYLES.thNum}">${escape(a)}<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche p/p</div></th>`,
     )
     .join("");
 
@@ -193,37 +209,37 @@ function alojamientoTable(d: PropuestaData): string {
       const acomVals = d.acoms
         .map(
           (a) =>
-            `<td class="num"><strong>${escape(fmt(h.preciosPorAcomodacion[a]))}</strong></td>`,
+            `<td style="${STYLES.tdNum}"><strong>${escape(fmt(h.preciosPorAcomodacion[a]))}</strong></td>`,
         )
         .join("");
       return `<tr>
-        <td>
-          <div class="cell-title">${escape(h.nombre)}</div>
-          ${meta ? `<div class="cell-sub">${escape(meta)}</div>` : ""}
-          ${h.notas ? `<div class="cell-note">${escape(h.notas)}</div>` : ""}
+        <td style="${STYLES.td}">
+          <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
+          ${meta ? `<div style="${STYLES.cellSub}">${escape(meta)}</div>` : ""}
+          ${h.notas ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>` : ""}
         </td>
-        <td>${escape(h.tipoHabitacion || "Standard")}</td>
-        <td class="center">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>
+        <td style="${STYLES.td}">${escape(h.tipoHabitacion || "Standard")}</td>
+        <td style="${STYLES.tdCenter}">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>
         ${acomVals}
       </tr>`;
     })
     .join("");
 
   return `
-  <section class="block">
-    <div class="pill pill-blue">ALOJAMIENTO</div>
-    <table class="grid">
+  <div style="${STYLES.block}">
+    <div style="${STYLES.pillBlue}">ALOJAMIENTO</div>
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:10px;">
       <thead>
         <tr>
-          <th>HOTEL</th>
-          <th>TIPO HAB.</th>
-          <th class="center">NOCHES</th>
+          <th style="${STYLES.th}">HOTEL · CATEGORÍA</th>
+          <th style="${STYLES.th}">TIPO HAB.</th>
+          <th style="${STYLES.thCenter}">NOCHES</th>
           ${acomCols}
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-  </section>`;
+  </div>`;
 }
 
 function adicionalesTable(
@@ -251,7 +267,7 @@ function adicionalesTable(
 
       const entradaNote =
         s.tipo === "tour" && s.entrada && s.entrada.precio > 0
-          ? `<div class="cell-green">Entrada adicional${
+          ? `<div style="${STYLES.cellGreen}">Entrada adicional${
               s.entrada.tipo
                 ? ` (${escape(entradaTipoLabel(s.entrada.tipo))})`
                 : ""
@@ -263,31 +279,31 @@ function adicionalesTable(
       const displayName =
         s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
       return `<tr>
-        <td>
-          <div class="cell-title">${escape(displayName)}</div>
+        <td style="${STYLES.td}">
+          <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
           ${entradaNote}
-          ${s.notas ? `<div class="cell-note">${escape(s.notas)}</div>` : ""}
+          ${s.notas ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>` : ""}
         </td>
-        <td>${escape(tipo)}</td>
-        <td class="num">${tarifa}</td>
+        <td style="${STYLES.td}">${escape(tipo)}</td>
+        <td style="${STYLES.tdNum}">${tarifa}</td>
       </tr>`;
     })
     .join("");
 
   return `
-  <section class="block">
-    <div class="pill pill-blue">${escape(title)}</div>
-    <table class="grid">
+  <div style="${STYLES.block}">
+    <div style="${STYLES.pillBlue}">${escape(title)}</div>
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:10px;">
       <thead>
         <tr>
-          <th>DESCRIPCIÓN</th>
-          <th>TIPO</th>
-          <th class="num">${d.isCalc ? "TOTAL" : "TARIFA P/P"}</th>
+          <th style="${STYLES.th}">DESCRIPCIÓN</th>
+          <th style="${STYLES.th}">TIPO</th>
+          <th style="${STYLES.thNum}">${d.isCalc ? "TOTAL" : "TARIFA P/P"}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-  </section>`;
+  </div>`;
 }
 
 function itinerarioTable(d: PropuestaData): string {
@@ -295,13 +311,13 @@ function itinerarioTable(d: PropuestaData): string {
   const rows = d.itinerario
     .map(
       (it) => `<tr>
-        <td class="dia">${escape(it.dia)}</td>
-        <td class="fecha">${escape(it.fecha || "—")}</td>
-        <td>
-          <div class="cell-title">${escape(it.actividad)}</div>
+        <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;font-weight:bold;color:${COLOR_AZUL};font-size:13px;">${escape(it.dia)}</td>
+        <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_LABEL};font-size:11px;white-space:nowrap;">${escape(it.fecha || "—")}</td>
+        <td style="${STYLES.td}">
+          <div style="${STYLES.cellTitle}">${escape(it.actividad)}</div>
           ${
             d.incluirDescriptivos && it.descripcion
-              ? `<div class="cell-note">${escape(it.descripcion)}</div>`
+              ? `<div style="${STYLES.cellNote}">${escape(it.descripcion)}</div>`
               : ""
           }
         </td>
@@ -310,209 +326,95 @@ function itinerarioTable(d: PropuestaData): string {
     .join("");
 
   return `
-  <section class="block">
-    <div class="pill pill-orange">ITINERARIO SUGERIDO</div>
-    <table class="grid">
+  <div style="${STYLES.block}">
+    <div style="${STYLES.pillOrange}">ITINERARIO SUGERIDO</div>
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:10px;">
       <thead>
         <tr>
-          <th class="w-narrow">DÍA</th>
-          <th class="w-fecha">FECHA</th>
-          <th>ACTIVIDAD</th>
+          <th style="${STYLES.th};width:50px;">DÍA</th>
+          <th style="${STYLES.th};width:110px;">FECHA</th>
+          <th style="${STYLES.th}">ACTIVIDAD</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-  </section>`;
+  </div>`;
 }
 
 function totalsBlock(d: PropuestaData): string {
   if (!d.isCalc) return "";
-  const lines = d.acoms
-    .map(
-      (a) => `<div class="total-row ${a === d.primary ? "primary" : ""}">
-        <span class="total-lbl">TOTAL ${escape(a)}</span>
-        <span class="total-val">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</span>
-      </div>`,
-    )
+  const rows = d.acoms
+    .map((a) => {
+      const isPrimary = a === d.primary;
+      const valStyle = isPrimary
+        ? `font-weight:bold;color:${COLOR_AZUL};font-size:20px;text-align:right;padding:8px 12px;`
+        : `font-weight:bold;color:#334155;font-size:14px;text-align:right;padding:8px 12px;`;
+      return `<tr>
+        <td style="font-weight:bold;color:#475569;font-size:11px;letter-spacing:0.6px;padding:8px 12px;border-top:1px dashed ${COLOR_BORDE};">TOTAL ${escape(a)}</td>
+        <td style="${valStyle};border-top:1px dashed ${COLOR_BORDE};">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
+      </tr>`;
+    })
     .join("");
 
   return `
-  <section class="block totals">
-    <div class="pill pill-blue">RESUMEN DE COSTOS</div>
-    <div class="totals-card">
-      ${lines}
-    </div>
-  </section>`;
+  <div style="${STYLES.block}">
+    <div style="${STYLES.pillBlue}">RESUMEN DE COSTOS</div>
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border:1px solid ${COLOR_BORDE};border-radius:14px;background:#f8fafc;margin-top:10px;border-collapse:separate;">
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
 }
 
 export const PROPUESTA_CSS = `
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; background: #ffffff; }
   body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #0f172a;
-    background: #ffffff;
+    color: ${COLOR_TEXTO};
     line-height: 1.45;
     font-size: 12px;
-  }
-  .doc {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 36px 44px 56px;
-    background: #ffffff;
-  }
-  /* Header */
-  .doc-head {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    margin-bottom: 22px;
-  }
-  .doc-head .logo { width: 170px; flex-shrink: 0; }
-  .doc-head .title-pill {
-    flex: 1;
-    background: #1e3a8a;
-    color: #ffffff;
-    text-align: center;
-    border-radius: 999px;
-    padding: 16px 28px;
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-  }
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 48px;
-    margin-bottom: 14px;
-  }
-  .info-grid table { width: 100%; border-collapse: collapse; }
-  .info-grid td { padding: 4px 0; vertical-align: top; font-size: 12px; }
-  .info-label { color: #475569; font-weight: 600; width: 44%; white-space: nowrap; }
-  .info-value { color: #0f172a; font-weight: 500; }
-  .divider {
-    height: 2px;
-    background: #f97316;
-    margin: 14px 0 26px;
-    border-radius: 2px;
-  }
-
-  /* Section pills */
-  .pill {
-    display: inline-block;
-    padding: 8px 22px;
-    border-radius: 999px;
-    color: #ffffff;
-    font-weight: 800;
-    font-size: 12px;
-    letter-spacing: 1.2px;
-    margin-bottom: 12px;
-  }
-  .pill-blue { background: #1e3a8a; }
-  .pill-orange { background: #f97316; }
-
-  .block { margin-bottom: 26px; page-break-inside: avoid; }
-
-  /* Tables */
-  table.grid {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  table.grid thead th {
-    text-align: left;
-    color: #64748b;
-    font-weight: 700;
-    font-size: 10px;
-    letter-spacing: 0.8px;
-    padding: 10px 8px;
-    border-bottom: 1px solid #e2e8f0;
-    text-transform: uppercase;
-  }
-  table.grid thead th .unit {
-    display: block;
-    font-weight: 500;
-    color: #94a3b8;
-    text-transform: lowercase;
-    letter-spacing: 0;
-    font-size: 9px;
-    margin-top: 2px;
-  }
-  table.grid tbody td {
-    padding: 14px 8px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
-    color: #0f172a;
-  }
-  table.grid tbody tr:last-child td { border-bottom: none; }
-  table.grid .num { text-align: right; }
-  table.grid .center { text-align: center; }
-  table.grid th.num { text-align: right; }
-  table.grid th.center { text-align: center; }
-
-  .cell-title { font-weight: 600; color: #0f172a; }
-  .cell-sub { font-size: 10.5px; color: #64748b; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .cell-note { font-size: 11px; color: #64748b; font-style: italic; margin-top: 4px; }
-  .cell-green { font-size: 11px; color: #16a34a; font-weight: 600; margin-top: 4px; }
-
-  .dia { font-weight: 800; color: #2563eb; font-size: 13px; }
-  .fecha { color: #64748b; font-size: 11px; white-space: nowrap; }
-  .w-narrow { width: 50px; }
-  .w-fecha { width: 110px; }
-
-  /* Totals */
-  .totals-card {
-    border: 1px solid #dbeafe;
-    border-radius: 14px;
-    padding: 16px 22px;
-    background: #f8fafc;
-  }
-  .total-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 6px 0;
-  }
-  .total-row + .total-row { border-top: 1px dashed #e2e8f0; }
-  .total-lbl { font-weight: 700; color: #475569; font-size: 11px; letter-spacing: 0.6px; }
-  .total-val { font-weight: 700; color: #334155; font-size: 14px; }
-  .total-row.primary .total-val { color: #1e3a8a; font-size: 22px; }
-
-  @media print {
-    body { background: #ffffff; }
-    .doc { padding: 24px 32px; }
   }
 `;
 
 export function buildPropuestaBody(d: PropuestaData): string {
   return `
-  <div class="doc">
-    <div class="doc-head">
-      <div class="logo">${LOGO_SVG}</div>
-      <div class="title-pill">PROPUESTA DE SERVICIOS</div>
-    </div>
+  <div style="width:800px;max-width:800px;margin:0 auto;padding:20px;background:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:12px;line-height:1.45;">
 
-    <div class="info-grid">
-      <table>
-        <tbody>
-          ${infoRow("Fecha de Emisión", d.fechaEmision)}
-          ${infoRow("Destino", d.destino)}
-          ${infoRow("Fecha de Viaje", d.fechaViaje)}
-          ${infoRow("Pasajeros", d.pasajerosLabel)}
-        </tbody>
-      </table>
-      <table>
-        <tbody>
-          ${infoRow("Nº de Cotización", d.numeroCotizacion)}
-          ${infoRow("Válida hasta", d.validaHasta)}
-          ${infoRow("Tipo de Servicio", d.tipoServicio)}
-          ${infoRow("Noche(s)", d.noches)}
-          ${infoRow("Asesor", d.asesor)}
-        </tbody>
-      </table>
-    </div>
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+      <tr>
+        <td style="vertical-align:middle;width:200px;padding-right:16px;">${LOGO_IMG}</td>
+        <td style="vertical-align:middle;text-align:right;">
+          <span style="${STYLES.pillBlue};padding:10px 25px;font-size:14px;">PROPUESTA DE SERVICIOS</span>
+        </td>
+      </tr>
+    </table>
 
-    <div class="divider"></div>
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+      <tr>
+        <td style="vertical-align:top;width:50%;padding-right:24px;">
+          <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+            <tbody>
+              ${infoRow("Fecha de Emisión", d.fechaEmision)}
+              ${infoRow("Destino", d.destino)}
+              ${infoRow("Fecha de Viaje", d.fechaViaje)}
+              ${infoRow("Pasajeros", d.pasajerosLabel)}
+            </tbody>
+          </table>
+        </td>
+        <td style="vertical-align:top;width:50%;padding-left:24px;">
+          <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+            <tbody>
+              ${infoRow("Nº de Cotización", d.numeroCotizacion)}
+              ${infoRow("Válida hasta", d.validaHasta)}
+              ${infoRow("Tipo de Servicio", d.tipoServicio)}
+              ${infoRow("Noche(s)", d.noches)}
+              ${infoRow("Agente", d.asesor)}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <hr style="${STYLES.divider}" />
 
     ${alojamientoTable(d)}
     ${adicionalesTable("TRASLADOS", d.traslados, d)}
