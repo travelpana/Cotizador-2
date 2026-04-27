@@ -398,7 +398,7 @@ export default function ExportButtons({
         onClick={copyEmail}
         style={{ backgroundColor: "#f07e14" }}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
-        title="Copia el HTML del correo (mismo diseño que el PDF) listo para pegar en tu cliente de email"
+        title="Copia el correo (mismo diseño que el PDF) listo para pegar en tu cliente de email"
       >
         {mailCopied ? (
           <>
@@ -408,7 +408,7 @@ export default function ExportButtons({
         ) : (
           <>
             <Mail className="w-4 h-4" />
-            Copiar correo (HTML)
+            Copiar correo
           </>
         )}
       </button>

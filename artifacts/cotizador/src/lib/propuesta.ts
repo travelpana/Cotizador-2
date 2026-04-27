@@ -72,7 +72,7 @@ function fmtFecha(iso: string): string {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
-  return `${String(d).padStart(2, "0")} de ${MESES[m - 1]} ${y}`;
+  return `${d}/${m}/${y}`;
 }
 
 function todayIso(): string {
@@ -357,7 +357,7 @@ function itinerarioTable(d: PropuestaData): string {
     .map(
       (it) => `<tr>
         <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;font-weight:bold;color:${COLOR_AZUL};font-size:13px;">${escape(it.dia)}</td>
-        <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_LABEL};font-size:11px;white-space:nowrap;">${escape(it.fecha || "—")}</td>
+        <td style="padding:12px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_LABEL};font-size:11px;white-space:nowrap;">${escape(it.fecha ? fmtFecha(it.fecha) : "—")}</td>
         <td style="${STYLES.td}">
           <div${editAttrs(it.dia)}>${escape(it.actividad)}</div>
           ${
@@ -407,32 +407,24 @@ function descriptivosBlock(d: PropuestaData): string {
         )
         .join("");
 
-      const incluyeList = t.incluye
-        ? `<div style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border-left:3px solid ${COLOR_VERDE};border-radius:6px;">
-            <div style="font-size:10px;font-weight:bold;color:${COLOR_VERDE};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Incluye</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.incluye)}</div>
-          </div>`
-        : "";
+      const labelPill = (text: string) =>
+        `<span style="display:inline-block;background:#fbbf23;color:#1f2937;padding:4px 12px;border-radius:999px;font-size:10px;font-weight:bold;letter-spacing:0.6px;text-transform:uppercase;">${escape(text)}</span>`;
 
+      const labelBlock = (label: string, content: string) =>
+        `<div style="margin-top:10px;">
+          ${labelPill(label)}
+          <div style="margin-top:6px;font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(content)}</div>
+        </div>`;
+
+      const incluyeList = t.incluye ? labelBlock("Incluye", t.incluye) : "";
       const observaciones = t.observaciones
-        ? `<div style="margin-top:8px;padding:10px 12px;background:#fff7ed;border-left:3px solid ${COLOR_NARANJA};border-radius:6px;">
-            <div style="font-size:10px;font-weight:bold;color:${COLOR_NARANJA};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Observaciones</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.observaciones)}</div>
-          </div>`
+        ? labelBlock("Observaciones", t.observaciones)
         : "";
-
       const recomendaciones = t.recomendaciones
-        ? `<div style="margin-top:8px;padding:10px 12px;background:#eff6ff;border-left:3px solid ${COLOR_AZUL};border-radius:6px;">
-            <div style="font-size:10px;font-weight:bold;color:${COLOR_AZUL};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Recomendaciones</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.recomendaciones)}</div>
-          </div>`
+        ? labelBlock("Recomendaciones", t.recomendaciones)
         : "";
-
       const nota = t.notaImportante
-        ? `<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:6px;">
-            <div style="font-size:10px;font-weight:bold;color:#dc2626;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Nota importante</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.notaImportante)}</div>
-          </div>`
+        ? labelBlock("Nota importante", t.notaImportante)
         : "";
 
       return `<div style="padding:18px 0;border-bottom:1px solid ${COLOR_BORDE};">

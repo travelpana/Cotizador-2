@@ -343,6 +343,8 @@ export default function CotizadorPage() {
                     cliente={cliente}
                     servicios={servicios}
                     incluirDescriptivos={incluirDescriptivos}
+                    actividadesOverride={actividadesOverride}
+                    onActividadesOverrideChange={setActividadesOverride}
                   />
                 )}
               </div>
