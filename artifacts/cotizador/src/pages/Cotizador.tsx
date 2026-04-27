@@ -23,12 +23,14 @@ import {
 import type {
   Acomodacion,
   Cliente,
+  ClienteValidationErrors,
   Descriptivo,
   Hotel,
   ServicioSeleccionado,
   Tour,
   Traslado,
 } from "@/lib/types";
+import { validateCliente } from "@/lib/types";
 import { api } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
 import { Loader2 } from "lucide-react";
@@ -37,6 +39,7 @@ const DEFAULT_CLIENTE: Cliente = {
   nombre: "",
   correo: "",
   whatsapp: "",
+  agente: "",
   fechaInicio: "",
   fechaFin: "",
   vigencia: "",
@@ -71,6 +74,8 @@ export default function CotizadorPage() {
 
   const [view, setView] = useState<View>("cotizador");
   const [cliente, setCliente] = useState<Cliente>(DEFAULT_CLIENTE);
+  const [validationErrors, setValidationErrors] =
+    useState<ClienteValidationErrors>({});
   const [acomodaciones, setAcomodaciones] = useState<Acomodacion[]>(["DBL"]);
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
@@ -96,10 +101,30 @@ export default function CotizadorPage() {
     setGuardadas(loadGuardadas());
   }, []);
 
-  const [toast, setToast] = useState<string | null>(null);
-  const showToast = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2500);
+  const [toast, setToast] = useState<{
+    msg: string;
+    tone: "info" | "error";
+  } | null>(null);
+  const showToast = (msg: string, tone: "info" | "error" = "info") => {
+    setToast({ msg, tone });
+    window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleClienteChange = (next: Cliente) => {
+    setCliente(next);
+    if (Object.keys(validationErrors).length > 0) {
+      const { errors } = validateCliente(next);
+      setValidationErrors(errors);
+    }
+  };
+
+  const validateBeforeAction = (): boolean => {
+    const { ok, errors } = validateCliente(cliente);
+    setValidationErrors(errors);
+    if (!ok) {
+      showToast("Completa los datos obligatorios", "error");
+    }
+    return ok;
   };
 
   const handleAutoSave = () => {
@@ -170,6 +195,7 @@ export default function CotizadorPage() {
     if (servicios.length > 0 && !confirm("¿Limpiar la cotización actual?"))
       return;
     setCliente(DEFAULT_CLIENTE);
+    setValidationErrors({});
     setAcomodaciones(["DBL"]);
     setServicios([]);
     setModo("tarifas");
@@ -224,7 +250,8 @@ export default function CotizadorPage() {
     setPreviewOpen(true);
   };
   const seguimientoEdit = (g: CotizacionGuardada) => {
-    setCliente(g.cliente);
+    setCliente({ ...DEFAULT_CLIENTE, ...g.cliente });
+    setValidationErrors({});
     setAcomodaciones(g.acomodaciones);
     setServicios(g.servicios);
     setModo(g.modoCotizacion);
@@ -314,10 +341,14 @@ export default function CotizadorPage() {
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
-                <ClientForm cliente={cliente} onChange={setCliente} />
+                <ClientForm
+                  cliente={cliente}
+                  onChange={handleClienteChange}
+                  errors={validationErrors}
+                />
                 <AlojamientoBar
                   cliente={cliente}
-                  onClienteChange={setCliente}
+                  onClienteChange={handleClienteChange}
                   acomodaciones={acomodaciones}
                   onAcomodacionesChange={setAcomodaciones}
                 />
@@ -381,6 +412,7 @@ export default function CotizadorPage() {
                     setPreviewOpen(true);
                   }}
                   onAutoSave={handleAutoSave}
+                  validateBeforeAction={validateBeforeAction}
                 />
               </aside>
             </div>
@@ -443,13 +475,20 @@ export default function CotizadorPage() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 text-white text-sm shadow-lg ring-1 ring-white/10 animate-in fade-in slide-in-from-bottom-2"
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm shadow-lg ring-1 animate-in fade-in slide-in-from-bottom-2 ${
+            toast.tone === "error"
+              ? "bg-red-600 ring-red-500/30"
+              : "bg-slate-900 ring-white/10"
+          }`}
         >
           <span
             className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: "#2596be" }}
+            style={{
+              backgroundColor:
+                toast.tone === "error" ? "#fecaca" : "#2596be",
+            }}
           />
-          {toast}
+          {toast.msg}
         </div>
       )}
     </div>

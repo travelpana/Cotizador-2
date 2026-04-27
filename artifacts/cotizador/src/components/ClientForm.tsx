@@ -1,13 +1,19 @@
 import { useState } from "react";
-import type { Acomodacion, Cliente } from "@/lib/types";
+import {
+  AGENTES,
+  type Acomodacion,
+  type Cliente,
+  type ClienteValidationErrors,
+} from "@/lib/types";
 import { diffNoches } from "@/lib/calc";
 
 interface Props {
   cliente: Cliente;
   onChange: (c: Cliente) => void;
+  errors?: ClienteValidationErrors;
 }
 
-export default function ClientForm({ cliente, onChange }: Props) {
+export default function ClientForm({ cliente, onChange, errors }: Props) {
   const update = (patch: Partial<Cliente>) => {
     const next = { ...cliente, ...patch };
     if (patch.fechaInicio || patch.fechaFin) {
@@ -17,43 +23,67 @@ export default function ClientForm({ cliente, onChange }: Props) {
     onChange(next);
   };
 
+  const errCls = (on: boolean | undefined) =>
+    on ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "";
+
   return (
     <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 p-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Field label="Nombre">
+        <Field label="Nombre" required error={errors?.nombre}>
           <input
             type="text"
             value={cliente.nombre}
             onChange={(e) => update({ nombre: e.target.value })}
             placeholder="Ej: Familia Pérez"
-            className={inputCls}
+            className={`${inputCls} ${errCls(errors?.nombre)}`}
+            data-testid="input-nombre"
           />
         </Field>
-        <Field label="Agencia">
+        <Field label="Agencia" required error={errors?.agencia}>
           <input
             type="text"
             value={cliente.correo}
             onChange={(e) => update({ correo: e.target.value })}
             placeholder="Ej: RGE Style Travel"
-            className={inputCls}
+            className={`${inputCls} ${errCls(errors?.agencia)}`}
+            data-testid="input-agencia"
           />
         </Field>
+        <Field label="Agente" required error={errors?.agente}>
+          <select
+            value={cliente.agente}
+            onChange={(e) => update({ agente: e.target.value })}
+            className={`${inputCls} ${errCls(errors?.agente)} ${
+              cliente.agente ? "text-slate-900" : "text-slate-400"
+            }`}
+            data-testid="select-agente"
+          >
+            <option value="">Selecciona un agente…</option>
+            {AGENTES.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </Field>
+
         <Field label="Correo electrónico">
           <input
             type="email"
             value={cliente.whatsapp}
             onChange={(e) => update({ whatsapp: e.target.value })}
-            placeholder="cliente@correo.com"
+            placeholder="cliente@correo.com (opcional)"
             className={inputCls}
+            data-testid="input-correo"
           />
         </Field>
-
-        <Field label="Fecha de llegada">
+        <Field label="Fecha de llegada" required error={errors?.fechaInicio}>
           <input
             type="date"
             value={cliente.fechaInicio}
             onChange={(e) => update({ fechaInicio: e.target.value })}
-            className={inputCls}
+            className={`${inputCls} ${errCls(errors?.fechaInicio)}`}
+            data-testid="input-fecha-llegada"
           />
         </Field>
         <Field label="Fecha de salida">
@@ -83,14 +113,24 @@ const inputCls =
 function Field({
   label,
   children,
+  required,
+  error,
 }: {
   label: string;
   children: React.ReactNode;
+  required?: boolean;
+  error?: boolean;
 }) {
   return (
     <div>
       <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
         {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {error && (
+          <span className="ml-2 text-[10px] font-medium text-red-500 normal-case tracking-normal">
+            requerido
+          </span>
+        )}
       </label>
       {children}
     </div>

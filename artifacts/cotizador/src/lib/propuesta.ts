@@ -37,6 +37,7 @@ export interface PropuestaData {
   tipoServicio: string;
   noches: string;
   agencia: string;
+  agente: string;
   hoteles: ServicioCalculado[];
   traslados: ServicioCalculado[];
   tours: ServicioCalculado[];
@@ -172,6 +173,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     tipoServicio: deriveTipoServicio(result),
     noches: cliente.noches ? `${cliente.noches}` : "—",
     agencia: (cliente.correo || "").trim() || "—",
+    agente: (cliente.agente || "").trim() || "—",
     hoteles,
     traslados,
     tours,
@@ -499,6 +501,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
               ${infoRow("Tipo de Servicio", d.tipoServicio)}
               ${infoRow("Noche(s)", d.noches)}
               ${infoRow("Agencia", d.agencia)}
+              ${infoRow("Agente", d.agente)}
             </tbody>
           </table>
         </td>

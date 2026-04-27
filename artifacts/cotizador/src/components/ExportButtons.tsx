@@ -37,6 +37,8 @@ interface Props {
   onClear: () => void;
   onPreview: () => void;
   onAutoSave?: () => void;
+  /** Returns true when the form is valid; otherwise it should highlight the invalid fields and surface a message. */
+  validateBeforeAction: () => boolean;
 }
 
 export default function ExportButtons({
@@ -53,6 +55,7 @@ export default function ExportButtons({
   onClear,
   onPreview,
   onAutoSave,
+  validateBeforeAction,
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
@@ -69,6 +72,8 @@ export default function ExportButtons({
     const lines: string[] = [];
     lines.push(`*PROPUESTA DE SERVICIOS · RGE Style Travel*`);
     if (cliente.nombre) lines.push(`Cliente: ${cliente.nombre}`);
+    if (cliente.correo) lines.push(`Agencia: ${cliente.correo}`);
+    if (cliente.agente) lines.push(`Agente: ${cliente.agente}`);
     if (cliente.fechaInicio)
       lines.push(`Fecha de viaje: ${cliente.fechaInicio} → ${cliente.fechaFin}`);
     lines.push(
@@ -218,6 +223,7 @@ export default function ExportButtons({
       .slice(0, 40) || "Cliente";
 
   const copyWhatsapp = async () => {
+    if (!validateBeforeAction()) return;
     try {
       await navigator.clipboard.writeText(buildText());
       setWaCopied(true);
@@ -228,6 +234,7 @@ export default function ExportButtons({
   };
 
   const copyEmail = async () => {
+    if (!validateBeforeAction()) return;
     try {
       const html = buildHtml();
       const text = buildText();
@@ -285,6 +292,7 @@ export default function ExportButtons({
 
   const handlePdf = async () => {
     if (pdfLoading) return;
+    if (!validateBeforeAction()) return;
     setPdfError(false);
     setPdfLoading(true);
 
@@ -371,7 +379,10 @@ export default function ExportButtons({
         Acciones
       </div>
       <button
-        onClick={onPreview}
+        onClick={() => {
+          if (!validateBeforeAction()) return;
+          onPreview();
+        }}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
       >
         <Eye className="w-4 h-4" />
@@ -437,7 +448,13 @@ export default function ExportButtons({
       </button>
 
       <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
-        <IconBtn onClick={onSave} title="Guardar">
+        <IconBtn
+          onClick={() => {
+            if (!validateBeforeAction()) return;
+            onSave();
+          }}
+          title="Guardar"
+        >
           <Save className="w-4 h-4" />
           Guardar
         </IconBtn>

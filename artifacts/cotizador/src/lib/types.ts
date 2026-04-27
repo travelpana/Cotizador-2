@@ -104,16 +104,48 @@ export interface Descriptivo {
   horarioExtra?: string;
 }
 
+export const AGENTES = [
+  "Johanna C.",
+  "Melisa A.",
+  "Gabriela S.",
+  "Jonathan C.",
+] as const;
+
+export type Agente = (typeof AGENTES)[number];
+
 export interface Cliente {
   nombre: string;
   correo: string;
   whatsapp: string;
+  agente: string;
   fechaInicio: string;
   fechaFin: string;
   vigencia: string;
   pasajeros: number;
   ninos: number;
   noches: number;
+}
+
+export type ClienteValidationField =
+  | "nombre"
+  | "agencia"
+  | "agente"
+  | "fechaInicio";
+
+export type ClienteValidationErrors = Partial<
+  Record<ClienteValidationField, boolean>
+>;
+
+export function validateCliente(c: Cliente): {
+  ok: boolean;
+  errors: ClienteValidationErrors;
+} {
+  const errors: ClienteValidationErrors = {};
+  if (!c.nombre?.trim()) errors.nombre = true;
+  if (!c.correo?.trim()) errors.agencia = true;
+  if (!c.agente?.trim()) errors.agente = true;
+  if (!c.fechaInicio?.trim()) errors.fechaInicio = true;
+  return { ok: Object.keys(errors).length === 0, errors };
 }
 
 export interface ServicioCalculado {
