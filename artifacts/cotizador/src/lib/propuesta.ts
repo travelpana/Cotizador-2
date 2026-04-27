@@ -25,6 +25,8 @@ export interface PropuestaInput {
   actividadesOverride?: Record<number, string>;
   /** When true, itinerary activity cells are rendered as contenteditable. */
   editable?: boolean;
+  /** Optional intro text rendered at the very top of the body (used for emails). */
+  intro?: string;
 }
 
 export interface PropuestaData {
@@ -52,6 +54,7 @@ export interface PropuestaData {
   incluirDescriptivoCompleto: boolean;
   descriptivosTours: Descriptivo[];
   editable: boolean;
+  intro: string;
 }
 
 const MESES = [
@@ -188,6 +191,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     incluirDescriptivoCompleto,
     descriptivosTours,
     editable: input.editable === true,
+    intro: input.intro?.trim() ? input.intro.trim() : "",
   };
 }
 
@@ -201,6 +205,7 @@ const COLOR_LABEL = "#6b7280";
 const STYLES = {
   pillBlue: `display:inline-block;background:${COLOR_AZUL};color:#ffffff;padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;`,
   pillOrange: `display:inline-block;background:${COLOR_NARANJA};color:#ffffff;padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;`,
+  pillAmber: `display:inline-block;background:#fbbf23;color:#ffffff;padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;`,
   divider: `height:2px;background:${COLOR_NARANJA};border:0;margin:14px 0 22px;`,
   th: `text-align:left;color:#64748b;font-weight:bold;font-size:10px;letter-spacing:0.6px;padding:10px 8px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
   thNum: `text-align:right;color:#64748b;font-weight:bold;font-size:10px;letter-spacing:0.6px;padding:10px 8px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
@@ -434,8 +439,8 @@ function descriptivosBlock(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    <h3 style="margin:0 0 6px;color:#fbbf23;font-size:16px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">DESCRIPTIVOS</h3>
-    <div style="margin-top:6px;">${items}</div>
+    <div style="${STYLES.pillAmber}">DESCRIPTIVOS</div>
+    <div style="margin-top:10px;">${items}</div>
   </div>`;
 }
 
@@ -473,9 +478,25 @@ export const PROPUESTA_CSS = `
   }
 `;
 
+function introBlock(d: PropuestaData): string {
+  if (!d.intro) return "";
+  const paragraphs = d.intro
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 10px;color:${COLOR_TEXTO};font-size:13px;line-height:1.55;">${escape(p).replace(/\n/g, "<br />")}</p>`,
+    )
+    .join("");
+  return `<div style="margin:0 0 16px;">${paragraphs}</div>`;
+}
+
 export function buildPropuestaBody(d: PropuestaData): string {
   return `
   <div style="width:800px;max-width:800px;margin:0 auto;padding:20px;background:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:12px;line-height:1.45;">
+
+    ${introBlock(d)}
 
     <div style="text-align:center;margin-bottom:18px;">
       <span style="${STYLES.pillBlue};padding:10px 25px;font-size:14px;">PROPUESTA DE SERVICIOS</span>

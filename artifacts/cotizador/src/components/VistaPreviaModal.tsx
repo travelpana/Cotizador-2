@@ -24,6 +24,8 @@ interface Props {
   onActividadesOverrideChange: (
     next: Record<number, string>,
   ) => void;
+  /** Stable cotización code shown in the preview header (matches PDF/email/Seguimiento). */
+  numeroCotizacion: string;
 }
 
 export default function VistaPreviaModal({
@@ -39,6 +41,7 @@ export default function VistaPreviaModal({
   descriptivos,
   actividadesOverride,
   onActividadesOverrideChange,
+  numeroCotizacion,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const overrideRef = useRef(actividadesOverride);
@@ -99,6 +102,7 @@ export default function VistaPreviaModal({
       descriptivos: descriptivosEffective,
       actividadesOverride,
       editable: true,
+      numeroCotizacion,
     });
   }, [
     cliente,
@@ -110,6 +114,7 @@ export default function VistaPreviaModal({
     incluirDescriptivoCompleto,
     descriptivosEffective,
     actividadesOverride,
+    numeroCotizacion,
   ]);
 
   const bodyHtml = useMemo(() => buildPropuestaBody(data), [data]);

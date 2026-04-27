@@ -39,7 +39,16 @@ interface Props {
   onAutoSave?: () => void;
   /** Returns true when the form is valid; otherwise it should highlight the invalid fields and surface a message. */
   validateBeforeAction: () => boolean;
+  /**
+   * Returns the cotización number to use for every export (PDF, email, WhatsApp,
+   * preview). The same value is reused across actions so the code shown in the
+   * preview, the PDF header and the Seguimiento table all match.
+   */
+  getNumeroCotizacion: () => string;
 }
+
+const EMAIL_INTRO =
+  "Hola,\n\nUn gusto saludarte. Conforme a lo solicitado, te comparto la cotización de los servicios de su interés:";
 
 export default function ExportButtons({
   cliente,
@@ -56,6 +65,7 @@ export default function ExportButtons({
   onPreview,
   onAutoSave,
   validateBeforeAction,
+  getNumeroCotizacion,
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
@@ -70,14 +80,14 @@ export default function ExportButtons({
 
   const buildText = () => {
     const lines: string[] = [];
-    lines.push(`*PROPUESTA DE SERVICIOS · RGE Style Travel*`);
-    if (cliente.nombre) lines.push(`Cliente: ${cliente.nombre}`);
-    if (cliente.correo) lines.push(`Agencia: ${cliente.correo}`);
-    if (cliente.agente) lines.push(`Agente: ${cliente.agente}`);
-    if (cliente.fechaInicio)
-      lines.push(`Fecha de viaje: ${cliente.fechaInicio} → ${cliente.fechaFin}`);
     lines.push(
-      `Pasajeros: ${cliente.pasajeros}${cliente.ninos ? ` + ${cliente.ninos} niños` : ""} · ${cliente.noches} noche(s)`,
+      "¡Hola! Un gusto saludarte. Aquí tienes el detalle de tu cotización:",
+    );
+    lines.push("");
+    if (cliente.fechaInicio)
+      lines.push(`Fechas: ${cliente.fechaInicio} → ${cliente.fechaFin}`);
+    lines.push(
+      `Pasajeros: ${cliente.pasajeros}${cliente.ninos ? ` + ${cliente.ninos} niños` : ""}`,
     );
     if (hoteles.length) {
       lines.push("");
@@ -201,7 +211,7 @@ export default function ExportButtons({
     return lines.join("\n");
   };
 
-  const buildHtml = (numeroCotizacion?: string) =>
+  const buildHtml = (numeroCotizacion: string, intro?: string) =>
     buildPropuestaHtml({
       cliente,
       servicios,
@@ -213,6 +223,7 @@ export default function ExportButtons({
       descriptivos,
       actividadesOverride,
       numeroCotizacion,
+      intro,
     });
 
   const sanitizeForFilename = (s: string) =>
@@ -236,8 +247,9 @@ export default function ExportButtons({
   const copyEmail = async () => {
     if (!validateBeforeAction()) return;
     try {
-      const html = buildHtml();
-      const text = buildText();
+      const numero = getNumeroCotizacion();
+      const html = buildHtml(numero, EMAIL_INTRO);
+      const text = `${EMAIL_INTRO}\n\n${buildText()}`;
 
       let copied = false;
       const w = window as unknown as {
@@ -296,7 +308,7 @@ export default function ExportButtons({
     setPdfError(false);
     setPdfLoading(true);
 
-    const numero = `RGE-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+    const numero = getNumeroCotizacion();
     const clienteSafe = sanitizeForFilename(cliente.nombre || "");
     const filename = `Cotizacion-${numero}-${clienteSafe}.pdf`;
 

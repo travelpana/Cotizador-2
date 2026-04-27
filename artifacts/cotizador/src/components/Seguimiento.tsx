@@ -7,6 +7,7 @@ import {
   Search,
   ListChecks,
   ChevronDown,
+  Copy,
 } from "lucide-react";
 import type { CotizacionGuardada, EstadoCotizacion } from "./Guardadas";
 import { calcularLocal, fmt } from "@/lib/calc";
@@ -16,6 +17,7 @@ interface Props {
   onView: (g: CotizacionGuardada) => void;
   onEdit: (g: CotizacionGuardada) => void;
   onDelete: (id: string) => void;
+  onDuplicate?: (g: CotizacionGuardada) => void;
   onUpdateEstado?: (id: string, estado: EstadoCotizacion) => void;
 }
 
@@ -74,21 +76,11 @@ export default function Seguimiento({
   onView,
   onEdit,
   onDelete,
+  onDuplicate,
   onUpdateEstado,
 }: Props) {
   const [query, setQuery] = useState("");
   const [estadoFilter, setEstadoFilter] = useState<EstadoFilter>("todos");
-
-  const numeroPorId = useMemo(() => {
-    const sorted = [...items].sort((a, b) =>
-      a.fechaCreacion.localeCompare(b.fechaCreacion),
-    );
-    const map = new Map<string, string>();
-    sorted.forEach((g, i) => {
-      map.set(g.id, `COT-${String(i + 1).padStart(3, "0")}`);
-    });
-    return map;
-  }, [items]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -96,13 +88,12 @@ export default function Seguimiento({
       const estado: EstadoCotizacion = g.estado ?? "pendiente";
       if (estadoFilter !== "todos" && estado !== estadoFilter) return false;
       if (!q) return true;
-      const numero = numeroPorId.get(g.id) ?? "";
-      const haystack = [g.cliente.nombre, g.cliente.correo, numero]
+      const haystack = [g.cliente.nombre, g.cliente.correo, g.numeroCotizacion]
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [items, query, estadoFilter, numeroPorId]);
+  }, [items, query, estadoFilter]);
 
   return (
     <div className="space-y-4">
@@ -194,10 +185,13 @@ export default function Seguimiento({
                   <Row
                     key={g.id}
                     g={g}
-                    numero={numeroPorId.get(g.id) ?? "—"}
+                    numero={g.numeroCotizacion}
                     onView={() => onView(g)}
                     onEdit={() => onEdit(g)}
                     onDelete={() => onDelete(g.id)}
+                    onDuplicate={
+                      onDuplicate ? () => onDuplicate(g) : undefined
+                    }
                     onUpdateEstado={onUpdateEstado}
                   />
                 ))}
@@ -236,6 +230,7 @@ function Row({
   onView,
   onEdit,
   onDelete,
+  onDuplicate,
   onUpdateEstado,
 }: {
   g: CotizacionGuardada;
@@ -243,6 +238,7 @@ function Row({
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
   onUpdateEstado?: (id: string, estado: EstadoCotizacion) => void;
 }) {
   const result = useMemo(
@@ -313,6 +309,15 @@ function Row({
           <IconBtn onClick={onEdit} label="Editar" tone="primary">
             <Pencil className="w-4 h-4" />
           </IconBtn>
+          {onDuplicate && (
+            <IconBtn
+              onClick={onDuplicate}
+              label="Duplicar"
+              tone="amber"
+            >
+              <Copy className="w-4 h-4" />
+            </IconBtn>
+          )}
           {correo ? (
             <a
               href={`mailto:${correo}?subject=${encodeURIComponent(
@@ -348,7 +353,7 @@ function IconBtn({
 }: {
   onClick: () => void;
   label: string;
-  tone: "slate" | "primary" | "red";
+  tone: "slate" | "primary" | "red" | "amber";
   children: React.ReactNode;
 }) {
   const cls =
@@ -356,7 +361,9 @@ function IconBtn({
       ? "text-red-600 hover:bg-red-50"
       : tone === "primary"
         ? "text-primary hover:bg-primary/10"
-        : "text-slate-500 hover:bg-slate-100";
+        : tone === "amber"
+          ? "text-amber-600 hover:bg-amber-50"
+          : "text-slate-500 hover:bg-slate-100";
   return (
     <button
       type="button"

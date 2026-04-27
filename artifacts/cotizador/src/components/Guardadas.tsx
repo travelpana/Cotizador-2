@@ -10,6 +10,7 @@ export type EstadoCotizacion =
 export interface CotizacionGuardada {
   id: string;
   fechaCreacion: string;
+  numeroCotizacion: string;
   cliente: Cliente;
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
@@ -19,15 +20,39 @@ export interface CotizacionGuardada {
 
 const STORAGE_KEY = "cotizador.guardadas";
 
+export function generateNumeroCotizacion(): string {
+  const code = Date.now().toString(36).slice(-6).toUpperCase();
+  return `RGE-${code}`;
+}
+
+function deriveNumeroFromId(id: string): string {
+  const n = parseInt(id, 10);
+  if (Number.isFinite(n) && n > 0) {
+    const code = n.toString(36).slice(-6).toUpperCase().padStart(6, "0");
+    return `RGE-${code}`;
+  }
+  return generateNumeroCotizacion();
+}
+
 export function loadGuardadas(): CotizacionGuardada[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const items = JSON.parse(raw) as CotizacionGuardada[];
-    // backwards-compat: legacy quotes default to "calculo"
+    const items = JSON.parse(raw) as Array<
+      Partial<CotizacionGuardada> & {
+        id: string;
+        fechaCreacion: string;
+        cliente: Cliente;
+        servicios: ServicioSeleccionado[];
+        acomodaciones: Acomodacion[];
+      }
+    >;
     return items.map((g) => ({
       ...g,
       modoCotizacion: g.modoCotizacion ?? "calculo",
+      // backwards-compat: legacy quotes (created before the RGE-XXXXXX scheme)
+      // get a deterministic code derived from their id so it stays stable.
+      numeroCotizacion: g.numeroCotizacion || deriveNumeroFromId(g.id),
     }));
   } catch {
     return [];
@@ -43,6 +68,8 @@ export interface GuardarEnSeguimientoInput {
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
   modo: ModoCotizacion;
+  /** When provided, the saved entry will use this code so it matches the one shown in the preview/PDF/email. */
+  numeroCotizacion?: string;
 }
 
 export interface GuardarEnSeguimientoResult {
@@ -68,6 +95,7 @@ export function guardarEnSeguimiento(
   const nueva: CotizacionGuardada = {
     id: `${Date.now()}`,
     fechaCreacion: new Date().toISOString(),
+    numeroCotizacion: input.numeroCotizacion || generateNumeroCotizacion(),
     cliente: input.cliente,
     servicios: input.servicios,
     acomodaciones: input.acomodaciones,
@@ -76,4 +104,26 @@ export function guardarEnSeguimiento(
   const next = [nueva, ...items].slice(0, 50);
   saveGuardadas(next);
   return { saved: true, items: next };
+}
+
+/**
+ * Returns a fresh copy of the cotización ready to be inserted as a new entry.
+ * Keeps every detail (cliente, agente, agencia, servicios, fechas, pax, etc.)
+ * but assigns a brand new id, fechaCreacion and numeroCotizacion, and resets
+ * the estado so the duplicate starts as "pendiente".
+ */
+export function duplicarCotizacion(
+  orig: CotizacionGuardada,
+): CotizacionGuardada {
+  return {
+    ...orig,
+    id: `${Date.now()}`,
+    fechaCreacion: new Date().toISOString(),
+    numeroCotizacion: generateNumeroCotizacion(),
+    estado: "pendiente",
+    // deep clone the mutable nested arrays/objects so future edits don't bleed back
+    cliente: { ...orig.cliente },
+    servicios: orig.servicios.map((s) => ({ ...s })),
+    acomodaciones: [...orig.acomodaciones],
+  };
 }

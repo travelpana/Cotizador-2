@@ -16,6 +16,8 @@ import {
   loadGuardadas,
   saveGuardadas,
   guardarEnSeguimiento,
+  generateNumeroCotizacion,
+  duplicarCotizacion,
   type CotizacionGuardada,
   type EstadoCotizacion,
   type ModoCotizacion,
@@ -90,6 +92,10 @@ export default function CotizadorPage() {
   const [previewQuote, setPreviewQuote] = useState<CotizacionGuardada | null>(
     null,
   );
+  // Stable cotización code for the current draft. Generated lazily on first
+  // export/preview/save and reused across PDF, email, WhatsApp and Seguimiento
+  // so all surfaces show the same code (e.g. RGE-HF9ZMW).
+  const [currentNumero, setCurrentNumero] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
   const [customOpen, setCustomOpen] = useState(false);
   const [customEditing, setCustomEditing] =
@@ -127,12 +133,21 @@ export default function CotizadorPage() {
     return ok;
   };
 
+  const getOrCreateNumero = (): string => {
+    if (currentNumero) return currentNumero;
+    const fresh = generateNumeroCotizacion();
+    setCurrentNumero(fresh);
+    return fresh;
+  };
+
   const handleAutoSave = () => {
+    const numero = getOrCreateNumero();
     const { saved, items } = guardarEnSeguimiento({
       cliente,
       servicios,
       acomodaciones,
       modo,
+      numeroCotizacion: numero,
     });
     setGuardadas(items);
     if (saved) showToast("Cotización guardada en seguimiento");
@@ -178,9 +193,11 @@ export default function CotizadorPage() {
   }, [previewQuote, result]);
 
   const handleSave = () => {
+    const numero = getOrCreateNumero();
     const item: CotizacionGuardada = {
       id: `${Date.now()}`,
       fechaCreacion: new Date().toISOString(),
+      numeroCotizacion: numero,
       cliente,
       servicios,
       acomodaciones,
@@ -189,6 +206,7 @@ export default function CotizadorPage() {
     const next = [item, ...guardadas].slice(0, 30);
     saveGuardadas(next);
     setGuardadas(next);
+    showToast(`Cotización ${numero} guardada`);
   };
 
   const handleClear = () => {
@@ -199,6 +217,7 @@ export default function CotizadorPage() {
     setAcomodaciones(["DBL"]);
     setServicios([]);
     setModo("tarifas");
+    setCurrentNumero(null);
   };
 
   const handleQuickAdd = (s: ServicioSeleccionado) => {
@@ -255,6 +274,7 @@ export default function CotizadorPage() {
     setAcomodaciones(g.acomodaciones);
     setServicios(g.servicios);
     setModo(g.modoCotizacion);
+    setCurrentNumero(g.numeroCotizacion);
     setView("cotizador");
   };
   const seguimientoDelete = (id: string) => {
@@ -262,6 +282,13 @@ export default function CotizadorPage() {
     const next = guardadas.filter((x) => x.id !== id);
     saveGuardadas(next);
     setGuardadas(next);
+  };
+  const seguimientoDuplicate = (g: CotizacionGuardada) => {
+    const copia = duplicarCotizacion(g);
+    const next = [copia, ...guardadas].slice(0, 50);
+    saveGuardadas(next);
+    setGuardadas(next);
+    showToast(`Cotización duplicada como ${copia.numeroCotizacion}`);
   };
   const seguimientoUpdateEstado = (id: string, estado: EstadoCotizacion) => {
     const next = guardadas.map((g) =>
@@ -279,6 +306,8 @@ export default function CotizadorPage() {
   const previewModo: ModoCotizacion = previewQuote?.modoCotizacion ?? modo;
   const previewCliente = previewQuote?.cliente ?? cliente;
   const previewServicios = previewQuote?.servicios ?? servicios;
+  const previewNumero =
+    previewQuote?.numeroCotizacion ?? currentNumero ?? "";
 
   return (
     <div className="flex min-h-screen">
@@ -336,6 +365,7 @@ export default function CotizadorPage() {
               onView={seguimientoView}
               onEdit={seguimientoEdit}
               onDelete={seguimientoDelete}
+              onDuplicate={seguimientoDuplicate}
               onUpdateEstado={seguimientoUpdateEstado}
             />
           ) : (
@@ -408,11 +438,13 @@ export default function CotizadorPage() {
                   onSave={handleSave}
                   onClear={handleClear}
                   onPreview={() => {
+                    getOrCreateNumero();
                     setPreviewQuote(null);
                     setPreviewOpen(true);
                   }}
                   onAutoSave={handleAutoSave}
                   validateBeforeAction={validateBeforeAction}
+                  getNumeroCotizacion={getOrCreateNumero}
                 />
               </aside>
             </div>
@@ -469,6 +501,7 @@ export default function CotizadorPage() {
         descriptivos={descriptivos}
         actividadesOverride={actividadesOverride}
         onActividadesOverrideChange={setActividadesOverride}
+        numeroCotizacion={previewNumero}
       />
 
       {toast && (
