@@ -117,11 +117,18 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const incluirDescriptivoCompleto = input.incluirDescriptivoCompleto === true;
   const descriptivosTours: Descriptivo[] = [];
   if (incluirDescriptivoCompleto && input.descriptivos?.length) {
+    const norm = (s: string) => s.trim().toUpperCase();
+    const byCode = new Map<string, Descriptivo>();
+    for (const d of input.descriptivos) {
+      if (d?.codigo) byCode.set(norm(d.codigo), d);
+    }
     const seen = new Set<string>();
     for (const t of tours) {
-      const code = t.codigo || t.id;
-      if (!code || seen.has(code)) continue;
-      const d = input.descriptivos.find((x) => x.codigo === code);
+      const raw = t.codigo || t.id;
+      if (!raw) continue;
+      const code = norm(raw);
+      if (seen.has(code)) continue;
+      const d = byCode.get(code);
       if (d) {
         seen.add(code);
         descriptivosTours.push(d);

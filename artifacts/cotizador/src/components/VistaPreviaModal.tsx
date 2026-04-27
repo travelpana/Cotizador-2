@@ -7,7 +7,7 @@ import type {
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
 import { buildPropuestaBody, buildPropuestaData } from "@/lib/propuesta";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
   open: boolean;
@@ -46,21 +46,49 @@ export default function VistaPreviaModal({
   const onChangeRef = useRef(onActividadesOverrideChange);
   onChangeRef.current = onActividadesOverrideChange;
 
-  const data = useMemo(
-    () =>
-      buildPropuestaData({
-        cliente,
-        servicios,
-        result,
-        modo,
-        incluirItinerario,
-        incluirDescriptivos,
-        incluirDescriptivoCompleto,
-        descriptivos,
-        actividadesOverride,
-        editable: true,
-      }),
-    [
+  const [descriptivosFallback, setDescriptivosFallback] = useState<
+    Descriptivo[]
+  >([]);
+
+  useEffect(() => {
+    if (descriptivos.length > 0) return;
+    let cancelled = false;
+    fetch("/api/descriptivos")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: Descriptivo[]) => {
+        if (cancelled) return;
+        console.log("[Preview] Descriptivos cargados (fallback):", data.length);
+        setDescriptivosFallback(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.warn("[Preview] No pude cargar /api/descriptivos:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [descriptivos.length]);
+
+  const descriptivosEffective =
+    descriptivos.length > 0 ? descriptivos : descriptivosFallback;
+
+  const data = useMemo(() => {
+    if (incluirDescriptivoCompleto) {
+      const tourCodes = servicios
+        .filter((s) => s.tipo === "tour")
+        .map((s) => (s.codigo || s.id || "").trim().toUpperCase())
+        .filter(Boolean);
+      const haveCodes = new Set(
+        descriptivosEffective.map((d) => d.codigo.trim().toUpperCase()),
+      );
+      console.log("[Preview] Buscando tours:", tourCodes);
+      console.log(
+        "[Preview] Descriptivos disponibles:",
+        descriptivosEffective.length,
+        "matches:",
+        tourCodes.filter((c) => haveCodes.has(c)),
+      );
+    }
+    return buildPropuestaData({
       cliente,
       servicios,
       result,
@@ -68,10 +96,21 @@ export default function VistaPreviaModal({
       incluirItinerario,
       incluirDescriptivos,
       incluirDescriptivoCompleto,
-      descriptivos,
+      descriptivos: descriptivosEffective,
       actividadesOverride,
-    ],
-  );
+      editable: true,
+    });
+  }, [
+    cliente,
+    servicios,
+    result,
+    modo,
+    incluirItinerario,
+    incluirDescriptivos,
+    incluirDescriptivoCompleto,
+    descriptivosEffective,
+    actividadesOverride,
+  ]);
 
   const bodyHtml = useMemo(() => buildPropuestaBody(data), [data]);
 
