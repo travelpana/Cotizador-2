@@ -1,4 +1,12 @@
-import { Settings2, Map, FileText, Tag, Calculator, Check } from "lucide-react";
+import {
+  Settings2,
+  Map,
+  FileText,
+  BookOpen,
+  Tag,
+  Calculator,
+  Check,
+} from "lucide-react";
 import type { ModoCotizacion } from "./Guardadas";
 
 interface Props {
@@ -8,6 +16,8 @@ interface Props {
   onToggleItinerario: () => void;
   incluirDescriptivos: boolean;
   onToggleDescriptivos: () => void;
+  incluirDescriptivoCompleto: boolean;
+  onToggleDescriptivoCompleto: () => void;
 }
 
 export default function ConfiguracionPanel({
@@ -17,6 +27,8 @@ export default function ConfiguracionPanel({
   onToggleItinerario,
   incluirDescriptivos,
   onToggleDescriptivos,
+  incluirDescriptivoCompleto,
+  onToggleDescriptivoCompleto,
 }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -69,6 +81,13 @@ export default function ConfiguracionPanel({
               label="Incluir detalles"
               help="Texto extra debajo de cada actividad"
               disabled={!incluirItinerario}
+            />
+            <Toggle
+              checked={incluirDescriptivoCompleto}
+              onChange={onToggleDescriptivoCompleto}
+              icon={<BookOpen className="w-4 h-4" />}
+              label="Incluir descriptivo"
+              help="Sección con descripción completa de cada tour seleccionado"
             />
           </div>
         </section>

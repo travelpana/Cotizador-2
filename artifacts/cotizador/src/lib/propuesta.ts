@@ -2,6 +2,7 @@ import type {
   Acomodacion,
   Cliente,
   CotizacionResult,
+  Descriptivo,
   ServicioCalculado,
   ServicioSeleccionado,
 } from "./types";
@@ -17,6 +18,8 @@ export interface PropuestaInput {
   modo: ModoCotizacion;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
+  incluirDescriptivoCompleto?: boolean;
+  descriptivos?: Descriptivo[];
   numeroCotizacion?: string;
   /** Manual overrides for itinerary activity text, keyed by día number. */
   actividadesOverride?: Record<number, string>;
@@ -45,6 +48,8 @@ export interface PropuestaData {
   result: CotizacionResult;
   cliente: Cliente;
   incluirDescriptivos: boolean;
+  incluirDescriptivoCompleto: boolean;
+  descriptivosTours: Descriptivo[];
   editable: boolean;
 }
 
@@ -109,6 +114,21 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const primary = acoms[0];
   const isCalc = modo === "calculo";
 
+  const incluirDescriptivoCompleto = input.incluirDescriptivoCompleto === true;
+  const descriptivosTours: Descriptivo[] = [];
+  if (incluirDescriptivoCompleto && input.descriptivos?.length) {
+    const seen = new Set<string>();
+    for (const t of tours) {
+      const code = t.codigo || t.id;
+      if (!code || seen.has(code)) continue;
+      const d = input.descriptivos.find((x) => x.codigo === code);
+      if (d) {
+        seen.add(code);
+        descriptivosTours.push(d);
+      }
+    }
+  }
+
   const overrides = input.actividadesOverride ?? {};
   const itinerario = incluirItinerario
     ? buildItinerario(cliente, servicios).map((it) =>
@@ -154,6 +174,8 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     result,
     cliente,
     incluirDescriptivos: input.incluirDescriptivos,
+    incluirDescriptivoCompleto,
+    descriptivosTours,
     editable: input.editable === true,
   };
 }
@@ -357,6 +379,74 @@ function itinerarioTable(d: PropuestaData): string {
   </div>`;
 }
 
+function descriptivosBlock(d: PropuestaData): string {
+  if (!d.incluirDescriptivoCompleto || d.descriptivosTours.length === 0) {
+    return "";
+  }
+
+  const items = d.descriptivosTours
+    .map((t) => {
+      const infoBits: string[] = [];
+      if (t.info) infoBits.push(t.info);
+      if (t.horarioExtra) infoBits.push(t.horarioExtra);
+      const infoLine = infoBits.length
+        ? `<div style="font-size:11px;color:${COLOR_LABEL};margin:4px 0 10px;">${escape(infoBits.join(" · "))}</div>`
+        : "";
+
+      const parrafos = (t.parrafos ?? [])
+        .map(
+          (p) =>
+            `<p style="margin:0 0 8px;color:${COLOR_TEXTO};font-size:12px;line-height:1.5;">${escape(p)}</p>`,
+        )
+        .join("");
+
+      const incluyeList = t.incluye
+        ? `<div style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border-left:3px solid ${COLOR_VERDE};border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:${COLOR_VERDE};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Incluye</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.incluye)}</div>
+          </div>`
+        : "";
+
+      const observaciones = t.observaciones
+        ? `<div style="margin-top:8px;padding:10px 12px;background:#fff7ed;border-left:3px solid ${COLOR_NARANJA};border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:${COLOR_NARANJA};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Observaciones</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.observaciones)}</div>
+          </div>`
+        : "";
+
+      const recomendaciones = t.recomendaciones
+        ? `<div style="margin-top:8px;padding:10px 12px;background:#eff6ff;border-left:3px solid ${COLOR_AZUL};border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:${COLOR_AZUL};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Recomendaciones</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.recomendaciones)}</div>
+          </div>`
+        : "";
+
+      const nota = t.notaImportante
+        ? `<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:#dc2626;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Nota importante</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.notaImportante)}</div>
+          </div>`
+        : "";
+
+      return `<div style="padding:18px 0;border-bottom:1px solid ${COLOR_BORDE};">
+        <div style="font-weight:bold;color:${COLOR_AZUL};font-size:14px;line-height:1.3;">${escape(t.titulo)}</div>
+        ${infoLine}
+        ${parrafos}
+        ${incluyeList}
+        ${observaciones}
+        ${recomendaciones}
+        ${nota}
+      </div>`;
+    })
+    .join("");
+
+  return `
+  <div style="${STYLES.block}">
+    <div style="${STYLES.pillBlue}">DESCRIPTIVOS</div>
+    <div style="margin-top:6px;">${items}</div>
+  </div>`;
+}
+
 function totalsBlock(d: PropuestaData): string {
   if (!d.isCalc) return "";
   const rows = d.acoms
@@ -437,6 +527,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
     ${adicionalesTable("TOUR Y EXPERIENCIAS", d.tours, d)}
     ${adicionalesTable("VUELOS", d.vuelos, d)}
     ${itinerarioTable(d)}
+    ${descriptivosBlock(d)}
     ${totalsBlock(d)}
   </div>`;
 }

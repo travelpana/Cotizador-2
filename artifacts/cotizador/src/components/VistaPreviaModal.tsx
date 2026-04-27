@@ -2,6 +2,7 @@ import Modal from "./Modal";
 import type {
   Cliente,
   CotizacionResult,
+  Descriptivo,
   ServicioSeleccionado,
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
@@ -17,6 +18,8 @@ interface Props {
   modo: ModoCotizacion;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
+  incluirDescriptivoCompleto: boolean;
+  descriptivos: Descriptivo[];
   actividadesOverride: Record<number, string>;
   onActividadesOverrideChange: (
     next: Record<number, string>,
@@ -32,6 +35,8 @@ export default function VistaPreviaModal({
   modo,
   incluirItinerario,
   incluirDescriptivos,
+  incluirDescriptivoCompleto,
+  descriptivos,
   actividadesOverride,
   onActividadesOverrideChange,
 }: Props) {
@@ -50,6 +55,8 @@ export default function VistaPreviaModal({
         modo,
         incluirItinerario,
         incluirDescriptivos,
+        incluirDescriptivoCompleto,
+        descriptivos,
         actividadesOverride,
         editable: true,
       }),
@@ -60,6 +67,8 @@ export default function VistaPreviaModal({
       modo,
       incluirItinerario,
       incluirDescriptivos,
+      incluirDescriptivoCompleto,
+      descriptivos,
       actividadesOverride,
     ],
   );

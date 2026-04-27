@@ -92,6 +92,18 @@ export interface ServicioSeleccionado {
   manual?: boolean;
 }
 
+export interface Descriptivo {
+  codigo: string;
+  titulo: string;
+  info?: string;
+  parrafos?: string[];
+  incluye?: string;
+  observaciones?: string;
+  notaImportante?: string;
+  recomendaciones?: string;
+  horarioExtra?: string;
+}
+
 export interface Cliente {
   nombre: string;
   correo: string;

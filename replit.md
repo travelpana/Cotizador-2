@@ -23,8 +23,19 @@ exportación por WhatsApp, Email y PDF (impresión).
   (ITINERARIO SUGERIDO), notas verdes para "Entrada adicional".
   Exportación a WhatsApp (copiar al portapapeles), Email
   (mailto, mismo HTML) y PDF (impresión, mismo HTML). Sirve en `/`.
+  En `ConfiguracionPanel` hay 3 toggles: "Incluir itinerario",
+  "Incluir detalles" (texto corto bajo cada actividad del itinerario,
+  campo `incluirDescriptivos`) e "Incluir descriptivo" (sección
+  completa "DESCRIPTIVOS" después del itinerario con título, info,
+  párrafos, Incluye, Observaciones, Recomendaciones y Nota importante;
+  campo `incluirDescriptivoCompleto`). Los descriptivos se cargan
+  automáticamente al seleccionar tours por código RGE; el código
+  nunca se muestra en exportes.
 - `artifacts/api-server` — API Express. Lee `TARIFARIO.xlsx` y expone:
   - `GET /api/hoteles` · `GET /api/tours` · `GET /api/traslados` · `GET /api/catalog`
+  - `GET /api/descriptivos` · `GET /api/descriptivos/:codigo` — descriptivos
+    detallados por tour (servidos desde `src/lib/descriptivos.ts`,
+    auto-generado de `attached_assets/DESCRIPTIVOS_*.docx`).
   - `POST /api/reload` — recargar Excel
   - `POST /api/cotizacion/calcular` — calcula totales por acomodación
 - `artifacts/mockup-sandbox` — Sandbox de mockups (no usado en este proyecto).

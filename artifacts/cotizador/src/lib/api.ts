@@ -1,4 +1,4 @@
-import type { Hotel, Tour, Traslado, CotizacionResult, ServicioSeleccionado, Acomodacion } from "./types";
+import type { Hotel, Tour, Traslado, CotizacionResult, ServicioSeleccionado, Acomodacion, Descriptivo } from "./types";
 
 const API_BASE = "/api";
 
@@ -22,6 +22,7 @@ export const api = {
   hoteles: () => get<Hotel[]>("/hoteles"),
   tours: () => get<Tour[]>("/tours"),
   traslados: () => get<Traslado[]>("/traslados"),
+  descriptivos: () => get<Descriptivo[]>("/descriptivos"),
   reload: () => post<{ ok: boolean }>("/reload", {}),
   calcular: (input: {
     servicios: { id: string; tipo: ServicioSeleccionado["tipo"] }[];

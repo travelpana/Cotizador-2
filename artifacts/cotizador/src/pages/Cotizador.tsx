@@ -23,6 +23,7 @@ import {
 import type {
   Acomodacion,
   Cliente,
+  Descriptivo,
   Hotel,
   ServicioSeleccionado,
   Tour,
@@ -64,6 +65,7 @@ export default function CotizadorPage() {
   const [hoteles, setHoteles] = useState<Hotel[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
   const [traslados, setTraslados] = useState<Traslado[]>([]);
+  const [descriptivos, setDescriptivos] = useState<Descriptivo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +76,8 @@ export default function CotizadorPage() {
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
   const [incluirItinerario, setIncluirItinerario] = useState(false);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
+  const [incluirDescriptivoCompleto, setIncluirDescriptivoCompleto] =
+    useState(false);
   const [actividadesOverride, setActividadesOverride] = useState<
     Record<number, string>
   >({});
@@ -113,14 +117,16 @@ export default function CotizadorPage() {
     setLoading(true);
     setError(null);
     try {
-      const [h, t, tr] = await Promise.all([
+      const [h, t, tr, ds] = await Promise.all([
         api.hoteles(),
         api.tours(),
         api.traslados(),
+        api.descriptivos().catch(() => [] as Descriptivo[]),
       ]);
       setHoteles(h);
       setTours(t);
       setTraslados(tr);
+      setDescriptivos(ds);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -351,6 +357,10 @@ export default function CotizadorPage() {
                   onToggleDescriptivos={() =>
                     setIncluirDescriptivos((v) => !v)
                   }
+                  incluirDescriptivoCompleto={incluirDescriptivoCompleto}
+                  onToggleDescriptivoCompleto={() =>
+                    setIncluirDescriptivoCompleto((v) => !v)
+                  }
                 />
                 <ExportButtons
                   cliente={cliente}
@@ -359,6 +369,8 @@ export default function CotizadorPage() {
                   modo={modo}
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
+                  incluirDescriptivoCompleto={incluirDescriptivoCompleto}
+                  descriptivos={descriptivos}
                   actividadesOverride={actividadesOverride}
                   onSave={handleSave}
                   onClear={handleClear}
@@ -419,6 +431,8 @@ export default function CotizadorPage() {
         modo={previewModo}
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
+        incluirDescriptivoCompleto={incluirDescriptivoCompleto}
+        descriptivos={descriptivos}
         actividadesOverride={actividadesOverride}
         onActividadesOverrideChange={setActividadesOverride}
       />

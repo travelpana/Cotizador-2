@@ -15,6 +15,7 @@ const html2pdf = html2pdfImport as unknown as (...args: any[]) => any;
 import type {
   Cliente,
   CotizacionResult,
+  Descriptivo,
   ServicioSeleccionado,
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
@@ -29,6 +30,8 @@ interface Props {
   modo: ModoCotizacion;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
+  incluirDescriptivoCompleto: boolean;
+  descriptivos: Descriptivo[];
   actividadesOverride?: Record<number, string>;
   onSave: () => void;
   onClear: () => void;
@@ -43,6 +46,8 @@ export default function ExportButtons({
   modo,
   incluirItinerario,
   incluirDescriptivos,
+  incluirDescriptivoCompleto,
+  descriptivos,
   actividadesOverride,
   onSave,
   onClear,
@@ -144,6 +149,50 @@ export default function ExportButtons({
         );
       }
     }
+
+    if (incluirDescriptivoCompleto && descriptivos.length) {
+      const seen = new Set<string>();
+      const tourDescs: Descriptivo[] = [];
+      for (const t of tours) {
+        const code = t.codigo || t.id;
+        if (!code || seen.has(code)) continue;
+        const d = descriptivos.find((x) => x.codigo === code);
+        if (d) {
+          seen.add(code);
+          tourDescs.push(d);
+        }
+      }
+      if (tourDescs.length) {
+        lines.push("");
+        lines.push(`*DESCRIPTIVOS*`);
+        for (const t of tourDescs) {
+          lines.push("");
+          lines.push(`*${t.titulo}*`);
+          const infoBits: string[] = [];
+          if (t.info) infoBits.push(t.info);
+          if (t.horarioExtra) infoBits.push(t.horarioExtra);
+          if (infoBits.length) lines.push(`_${infoBits.join(" · ")}_`);
+          for (const p of t.parrafos ?? []) lines.push(p);
+          if (t.incluye) {
+            lines.push("");
+            lines.push(`*Incluye:* ${t.incluye}`);
+          }
+          if (t.observaciones) {
+            lines.push("");
+            lines.push(`*Observaciones:* ${t.observaciones}`);
+          }
+          if (t.recomendaciones) {
+            lines.push("");
+            lines.push(`*Recomendaciones:* ${t.recomendaciones}`);
+          }
+          if (t.notaImportante) {
+            lines.push("");
+            lines.push(`*Nota importante:* ${t.notaImportante}`);
+          }
+        }
+      }
+    }
+
     return lines.join("\n");
   };
 
@@ -155,6 +204,8 @@ export default function ExportButtons({
       modo,
       incluirItinerario,
       incluirDescriptivos,
+      incluirDescriptivoCompleto,
+      descriptivos,
       actividadesOverride,
       numeroCotizacion,
     });
