@@ -48,15 +48,13 @@ export default function ConfiguracionPanel({
             <ModeCard
               active={modo === "tarifas"}
               icon={<Tag className="w-4 h-4" />}
-              title="Solo tarifas"
-              description="Solo precios unitarios, sin totales"
+              title="Tarifas"
               onClick={() => onModoChange("tarifas")}
             />
             <ModeCard
               active={modo === "calculo"}
               icon={<Calculator className="w-4 h-4" />}
-              title="Con totales"
-              description="Incluye cálculos y totales"
+              title="Totales"
               onClick={() => onModoChange("calculo")}
             />
           </div>
@@ -100,13 +98,11 @@ function ModeCard({
   active,
   icon,
   title,
-  description,
   onClick,
 }: {
   active: boolean;
   icon: React.ReactNode;
   title: string;
-  description: string;
   onClick: () => void;
 }) {
   return (
@@ -115,7 +111,7 @@ function ModeCard({
       role="radio"
       aria-checked={active}
       onClick={onClick}
-      className={`relative text-left p-3 rounded-xl border-2 transition-all ${
+      className={`relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
         active
           ? "border-primary bg-primary/5 shadow-sm"
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -128,7 +124,7 @@ function ModeCard({
         </span>
       )}
       <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 transition-colors ${
+        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
           active
             ? "bg-primary text-primary-foreground"
             : "bg-slate-100 text-slate-500"
@@ -142,9 +138,6 @@ function ModeCard({
         }`}
       >
         {title}
-      </div>
-      <div className="text-[11px] text-slate-500 leading-snug mt-1">
-        {description}
       </div>
     </button>
   );

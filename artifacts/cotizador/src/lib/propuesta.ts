@@ -6,7 +6,7 @@ import type {
   ServicioCalculado,
   ServicioSeleccionado,
 } from "./types";
-import { fmt, entradaTipoLabel } from "./calc";
+import { fmt } from "./calc";
 import { formatTrasladoNombre } from "./utils";
 import { buildItinerario, type ItinerarioDia } from "@/components/Itinerario";
 import type { ModoCotizacion } from "@/components/Guardadas";
@@ -36,7 +36,7 @@ export interface PropuestaData {
   validaHasta: string;
   tipoServicio: string;
   noches: string;
-  asesor: string;
+  agencia: string;
   hoteles: ServicioCalculado[];
   traslados: ServicioCalculado[];
   tours: ServicioCalculado[];
@@ -81,15 +81,17 @@ function todayIso(): string {
 }
 
 function deriveTipoServicio(r: CotizacionResult): string {
-  const tipos = new Set(r.servicios.map((s) => s.tipo));
-  const tieneHotel = tipos.has("hotel");
-  const tieneTour = tipos.has("tour");
-  const tieneTraslado = tipos.has("traslado");
-  if (tieneHotel && (tieneTour || tieneTraslado)) return "Paquete Turístico";
-  if (tieneHotel) return "Alojamiento";
-  if (tieneTour) return "Tours y Experiencias";
-  if (tieneTraslado) return "Traslados";
-  return "Servicios";
+  const relevantes = r.servicios.filter(
+    (s) => s.tipo === "traslado" || s.tipo === "tour",
+  );
+  if (relevantes.length === 0) return "—";
+  const tipos = new Set<"regular" | "privado">();
+  for (const s of relevantes) {
+    const isPrivado = (s.detalle || "").toLowerCase().includes("privado");
+    tipos.add(isPrivado ? "privado" : "regular");
+  }
+  if (tipos.size === 2) return "Mixto (Regular/Privado)";
+  return tipos.has("privado") ? "Privado" : "Regular";
 }
 
 function deriveDestino(hoteles: ServicioCalculado[]): string {
@@ -169,7 +171,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     validaHasta: cliente.vigencia ? fmtFecha(cliente.vigencia) : "—",
     tipoServicio: deriveTipoServicio(result),
     noches: cliente.noches ? `${cliente.noches}` : "—",
-    asesor: cliente.correo || "—",
+    agencia: (cliente.correo || "").trim() || "—",
     hoteles,
     traslados,
     tours,
@@ -186,13 +188,6 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     editable: input.editable === true,
   };
 }
-
-const LOGO_URL =
-  "https://rgebooking.com/assets/images/logos/style-travel-blue.png";
-
-const LOGO_IMG = `<img src="${LOGO_URL}" alt="Style Travel" style="height:70px; display:block;" crossorigin="anonymous" />`;
-
-export const PROPUESTA_LOGO_SVG = LOGO_IMG;
 
 const COLOR_AZUL = "#2f4ea2";
 const COLOR_NARANJA = "#f97316";
@@ -305,23 +300,11 @@ function adicionalesTable(
         ? `<strong>${escape(fmt(s.totalesPorAcomodacion[d.primary]))}</strong>`
         : `<strong>${escape(fmt(s.unitAplicado ?? 0))}</strong> p/p`;
 
-      const entradaNote =
-        s.tipo === "tour" && s.entrada && s.entrada.precio > 0
-          ? `<div style="${STYLES.cellGreen}">Entrada adicional${
-              s.entrada.tipo
-                ? ` (${escape(entradaTipoLabel(s.entrada.tipo))})`
-                : ""
-            }: ${escape(fmt(s.entrada.precio))} por persona${
-              s.entrada.notas ? ` · ${escape(s.entrada.notas)}` : ""
-            }</div>`
-          : "";
-
       const displayName =
         s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
       return `<tr>
         <td style="${STYLES.td}">
           <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
-          ${entradaNote}
           ${s.notas ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>` : ""}
         </td>
         <td style="${STYLES.td}">${escape(tipo)}</td>
@@ -407,24 +390,32 @@ function descriptivosBlock(d: PropuestaData): string {
         )
         .join("");
 
-      const labelPill = (text: string) =>
-        `<span style="display:inline-block;background:#fbbf23;color:#1f2937;padding:4px 12px;border-radius:999px;font-size:10px;font-weight:bold;letter-spacing:0.6px;text-transform:uppercase;">${escape(text)}</span>`;
+      const incluyeList = t.incluye
+        ? `<div style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border-left:3px solid ${COLOR_VERDE};border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:${COLOR_VERDE};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Incluye</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.incluye)}</div>
+          </div>`
+        : "";
 
-      const labelBlock = (label: string, content: string) =>
-        `<div style="margin-top:10px;">
-          ${labelPill(label)}
-          <div style="margin-top:6px;font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(content)}</div>
-        </div>`;
-
-      const incluyeList = t.incluye ? labelBlock("Incluye", t.incluye) : "";
       const observaciones = t.observaciones
-        ? labelBlock("Observaciones", t.observaciones)
+        ? `<div style="margin-top:8px;padding:10px 12px;background:#fff7ed;border-left:3px solid ${COLOR_NARANJA};border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:${COLOR_NARANJA};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Observaciones</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.observaciones)}</div>
+          </div>`
         : "";
+
       const recomendaciones = t.recomendaciones
-        ? labelBlock("Recomendaciones", t.recomendaciones)
+        ? `<div style="margin-top:8px;padding:10px 12px;background:#eff6ff;border-left:3px solid ${COLOR_AZUL};border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:${COLOR_AZUL};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Recomendaciones</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.recomendaciones)}</div>
+          </div>`
         : "";
+
       const nota = t.notaImportante
-        ? labelBlock("Nota importante", t.notaImportante)
+        ? `<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:6px;">
+            <div style="font-size:10px;font-weight:bold;color:#dc2626;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Nota importante</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.notaImportante)}</div>
+          </div>`
         : "";
 
       return `<div style="padding:18px 0;border-bottom:1px solid ${COLOR_BORDE};">
@@ -441,7 +432,7 @@ function descriptivosBlock(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    <div style="${STYLES.pillBlue}">DESCRIPTIVOS</div>
+    <h3 style="margin:0 0 6px;color:#fbbf23;font-size:16px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">DESCRIPTIVOS</h3>
     <div style="margin-top:6px;">${items}</div>
   </div>`;
 }
@@ -484,14 +475,9 @@ export function buildPropuestaBody(d: PropuestaData): string {
   return `
   <div style="width:800px;max-width:800px;margin:0 auto;padding:20px;background:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:12px;line-height:1.45;">
 
-    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:18px;">
-      <tr>
-        <td style="vertical-align:middle;width:200px;padding-right:16px;">${LOGO_IMG}</td>
-        <td style="vertical-align:middle;text-align:right;">
-          <span style="${STYLES.pillBlue};padding:10px 25px;font-size:14px;">PROPUESTA DE SERVICIOS</span>
-        </td>
-      </tr>
-    </table>
+    <div style="text-align:center;margin-bottom:18px;">
+      <span style="${STYLES.pillBlue};padding:10px 25px;font-size:14px;">PROPUESTA DE SERVICIOS</span>
+    </div>
 
     <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:8px;">
       <tr>
@@ -512,7 +498,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
               ${infoRow("Válida hasta", d.validaHasta)}
               ${infoRow("Tipo de Servicio", d.tipoServicio)}
               ${infoRow("Noche(s)", d.noches)}
-              ${infoRow("Agente", d.asesor)}
+              ${infoRow("Agencia", d.agencia)}
             </tbody>
           </table>
         </td>
