@@ -12,6 +12,7 @@ interface Props {
   placeholderEnd?: string;
   showNights?: boolean;
   error?: boolean;
+  allowPast?: boolean;
 }
 
 function diffNoches(a: string, b: string): number {
@@ -27,6 +28,10 @@ function fmtDisplay(iso: string): string {
   return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
 }
 
+function toISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function DateRangePicker({
   startDate,
   endDate,
@@ -35,6 +40,7 @@ export default function DateRangePicker({
   placeholderEnd = "Salida",
   showNights = true,
   error = false,
+  allowPast = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fpRef = useRef<Instance | null>(null);
@@ -46,20 +52,14 @@ export default function DateRangePicker({
       mode: "range",
       dateFormat: "Y-m-d",
       showMonths: 2,
-      minDate: undefined,
+      minDate: allowPast ? undefined : "today",
       disableMobile: true,
       defaultDate: [startDate, endDate].filter(Boolean) as string[],
       onChange(selectedDates) {
         const [s, e] = selectedDates;
         if (s && e) {
-          const toISO = (d: Date) =>
-            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          const start = toISO(s);
-          const end = toISO(e);
-          onChange(start, end);
+          onChange(toISO(s), toISO(e));
         } else if (s && !e) {
-          const toISO = (d: Date) =>
-            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           const next = new Date(s);
           next.setDate(next.getDate() + 1);
           onChange(toISO(s), "");
@@ -80,13 +80,10 @@ export default function DateRangePicker({
   useEffect(() => {
     if (!fpRef.current) return;
     const current = fpRef.current.selectedDates;
-    const toISO = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const currentStart = current[0] ? toISO(current[0]) : "";
     const currentEnd = current[1] ? toISO(current[1]) : "";
     if (currentStart !== startDate || currentEnd !== endDate) {
-      const dates = [startDate, endDate].filter(Boolean) as string[];
-      fpRef.current.setDate(dates, false);
+      fpRef.current.setDate([startDate, endDate].filter(Boolean) as string[], false);
     }
   }, [startDate, endDate]);
 
@@ -94,7 +91,7 @@ export default function DateRangePicker({
   const hasRange = startDate && endDate;
   const ringCls = error
     ? "ring-2 ring-red-300 border-red-400"
-    : "ring-0 border-slate-200 focus-within:ring-2 focus-within:ring-[#2f4ea2]/25 focus-within:border-[#2f4ea2]";
+    : "border-slate-200 focus-within:ring-2 focus-within:ring-[#2563eb]/30 focus-within:border-[#2563eb]";
 
   const clear = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -106,27 +103,23 @@ export default function DateRangePicker({
     <>
       <style>{CALENDAR_CSS}</style>
       <div
-        className={`relative flex items-center gap-0 h-10 rounded-xl border bg-white cursor-pointer transition-all ${ringCls}`}
+        className={`relative flex items-center h-10 rounded-xl border bg-white cursor-pointer transition-all ${ringCls}`}
         onClick={() => fpRef.current?.open()}
       >
         <div className="flex items-center gap-2 pl-3 flex-1 min-w-0">
           <CalendarDays className="w-4 h-4 text-slate-400 flex-shrink-0" />
           <div className="flex items-center gap-1.5 text-sm min-w-0">
-            <span
-              className={`font-medium truncate ${startDate ? "text-slate-900" : "text-slate-400"}`}
-            >
+            <span className={`font-medium truncate ${startDate ? "text-slate-900" : "text-slate-400"}`}>
               {startDate ? fmtDisplay(startDate) : placeholderStart}
             </span>
             <span className="text-slate-300 flex-shrink-0">→</span>
-            <span
-              className={`font-medium truncate ${endDate ? "text-slate-900" : "text-slate-400"}`}
-            >
+            <span className={`font-medium truncate ${endDate ? "text-slate-900" : "text-slate-400"}`}>
               {endDate ? fmtDisplay(endDate) : placeholderEnd}
             </span>
           </div>
         </div>
         {showNights && hasRange && nights > 0 && (
-          <span className="ml-1 px-2 py-0.5 rounded-full bg-[#2f4ea2]/10 text-[#2f4ea2] text-[10px] font-bold flex-shrink-0 mr-1">
+          <span className="ml-1 px-2 py-0.5 rounded-full bg-[#2563eb]/10 text-[#2563eb] text-[10px] font-bold flex-shrink-0 mr-1">
             {nights} noche{nights !== 1 ? "s" : ""}
           </span>
         )}
@@ -147,7 +140,7 @@ export default function DateRangePicker({
           type="text"
           readOnly
           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-          aria-label="Seleccionar fechas"
+          aria-label="Seleccionar rango de fechas"
         />
       </div>
     </>
@@ -159,58 +152,65 @@ const CALENDAR_CSS = `
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
   background: #ffffff !important;
   border: 0 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08) !important;
-  padding: 16px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 48px rgba(37,99,235,0.14), 0 2px 8px rgba(0,0,0,0.07) !important;
+  padding: 18px !important;
+  overflow: hidden !important;
 }
 
 .rge-fp-calendar .flatpickr-months {
-  padding: 0 0 10px !important;
+  background: #eff6ff !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 6px 0 10px !important;
+  margin: -18px -18px 10px !important;
 }
 
 .rge-fp-calendar .flatpickr-month {
   background: transparent !important;
-  color: #1e293b !important;
-  height: 36px !important;
+  color: #1e3a8a !important;
+  height: 40px !important;
 }
 
 .rge-fp-calendar .flatpickr-current-month {
-  color: #1e293b !important;
+  color: #1e3a8a !important;
   font-weight: 700 !important;
   font-size: 15px !important;
-  padding-top: 6px !important;
+  padding-top: 8px !important;
 }
 
-.rge-fp-calendar .flatpickr-current-month .numInputWrapper span {
-  border-color: rgba(0,0,0,0.08) !important;
+.rge-fp-calendar .flatpickr-current-month select,
+.rge-fp-calendar .flatpickr-current-month .numInputWrapper input {
+  color: #1e3a8a !important;
+  font-weight: 700 !important;
 }
 
 .rge-fp-calendar .flatpickr-prev-month,
 .rge-fp-calendar .flatpickr-next-month {
-  color: #64748b !important;
-  fill: #64748b !important;
+  color: #3b82f6 !important;
+  fill: #3b82f6 !important;
   padding: 8px !important;
   border-radius: 10px !important;
-  top: 4px !important;
+  top: 8px !important;
 }
 
 .rge-fp-calendar .flatpickr-prev-month:hover,
 .rge-fp-calendar .flatpickr-next-month:hover {
-  background: #f1f5f9 !important;
-  color: #1e293b !important;
-  fill: #1e293b !important;
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  fill: #1d4ed8 !important;
 }
 
 .rge-fp-calendar .flatpickr-weekdays {
   background: transparent !important;
+  margin-top: 4px !important;
 }
 
 .rge-fp-calendar .flatpickr-weekday {
-  color: #94a3b8 !important;
-  font-weight: 600 !important;
+  color: #93c5fd !important;
+  font-weight: 700 !important;
   font-size: 11px !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.05em !important;
   background: transparent !important;
 }
 
@@ -218,73 +218,78 @@ const CALENDAR_CSS = `
   color: #1e293b !important;
   font-size: 13px !important;
   font-weight: 500 !important;
-  border-radius: 10px !important;
   border: none !important;
+  border-radius: 50% !important;
   height: 38px !important;
   line-height: 38px !important;
   max-width: 38px !important;
+  transition: background 0.12s, color 0.12s !important;
 }
 
-.rge-fp-calendar .flatpickr-day:hover:not(.selected):not(.startRange):not(.endRange):not(.inRange) {
-  background: #f1f5f9 !important;
-  color: #1e293b !important;
+.rge-fp-calendar .flatpickr-day:hover:not(.selected):not(.startRange):not(.endRange):not(.inRange):not(.flatpickr-disabled) {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-radius: 50% !important;
 }
 
-.rge-fp-calendar .flatpickr-day.today {
-  border: 2px solid #2f4ea2 !important;
+.rge-fp-calendar .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
+  border: 2px solid #2563eb !important;
+  color: #2563eb !important;
   font-weight: 700 !important;
-  color: #2f4ea2 !important;
-}
-
-.rge-fp-calendar .flatpickr-day.today.selected,
-.rge-fp-calendar .flatpickr-day.today.startRange,
-.rge-fp-calendar .flatpickr-day.today.endRange {
-  border-color: transparent !important;
-  color: #fff !important;
 }
 
 .rge-fp-calendar .flatpickr-day.selected,
 .rge-fp-calendar .flatpickr-day.startRange,
 .rge-fp-calendar .flatpickr-day.endRange {
-  background: #2f4ea2 !important;
+  background: #2563eb !important;
   color: #ffffff !important;
-  border-radius: 10px !important;
+  border-radius: 50% !important;
   border: none !important;
   font-weight: 700 !important;
-}
-
-.rge-fp-calendar .flatpickr-day.startRange {
-  border-radius: 10px 0 0 10px !important;
-}
-
-.rge-fp-calendar .flatpickr-day.endRange {
-  border-radius: 0 10px 10px 0 !important;
-}
-
-.rge-fp-calendar .flatpickr-day.startRange.endRange {
-  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.35) !important;
 }
 
 .rge-fp-calendar .flatpickr-day.inRange {
-  background: #dbeafe !important;
+  background: rgba(37, 99, 235, 0.12) !important;
   color: #1e3a8a !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   border: none !important;
 }
 
-.rge-fp-calendar .flatpickr-day.flatpickr-disabled,
+.rge-fp-calendar .flatpickr-day.startRange {
+  border-radius: 50% !important;
+}
+
+.rge-fp-calendar .flatpickr-day.endRange {
+  border-radius: 50% !important;
+}
+
+.rge-fp-calendar .flatpickr-day.startRange + .flatpickr-day.inRange,
+.rge-fp-calendar .flatpickr-day.inRange:first-child {
+  border-radius: 0 !important;
+}
+
+.rge-fp-calendar .flatpickr-day.flatpickr-disabled {
+  color: #cbd5e1 !important;
+  cursor: not-allowed !important;
+}
+
 .rge-fp-calendar .flatpickr-day.prevMonthDay,
 .rge-fp-calendar .flatpickr-day.nextMonthDay {
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
 }
 
 .rge-fp-calendar .flatpickr-rContainer {
   display: flex !important;
-  gap: 16px !important;
+  gap: 20px !important;
 }
 
 .rge-fp-calendar .numInputWrapper:hover {
   background: transparent !important;
+}
+
+.rge-fp-calendar .numInputWrapper span {
+  border-color: rgba(37,99,235,0.15) !important;
 }
 `;

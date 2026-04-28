@@ -7,6 +7,7 @@ import {
 } from "@/lib/types";
 import { diffNoches } from "@/lib/calc";
 import DateRangePicker from "./DateRangePicker";
+import SingleDatePicker from "./SingleDatePicker";
 
 interface Props {
   cliente: Cliente;
@@ -90,11 +91,11 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
           />
         </Field>
         <Field label="Vigencia">
-          <input
-            type="date"
+          <SingleDatePicker
             value={cliente.vigencia}
-            onChange={(e) => update({ vigencia: e.target.value })}
-            className={inputCls}
+            onChange={(iso) => update({ vigencia: iso })}
+            placeholder="Válida hasta…"
+            allowPast
           />
         </Field>
       </div>

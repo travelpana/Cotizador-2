@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DateRangePicker from "./DateRangePicker";
+import SingleDatePicker from "./SingleDatePicker";
 import {
   Search,
   Hotel as HotelIcon,
@@ -741,11 +742,11 @@ function TourTrasladoFields({
           </div>
         </div>
         {usarFecha && (
-          <input
-            type="date"
+          <SingleDatePicker
             value={fecha}
-            onChange={(e) => onFecha(e.target.value)}
-            className={inputCls}
+            onChange={onFecha}
+            placeholder="Seleccionar fecha"
+            allowPast
           />
         )}
       </div>
