@@ -6,6 +6,7 @@ import {
   type ClienteValidationErrors,
 } from "@/lib/types";
 import { diffNoches } from "@/lib/calc";
+import DateRangePicker from "./DateRangePicker";
 
 interface Props {
   cliente: Cliente;
@@ -77,21 +78,15 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             data-testid="input-correo"
           />
         </Field>
-        <Field label="Fecha de llegada" required error={errors?.fechaInicio}>
-          <input
-            type="date"
-            value={cliente.fechaInicio}
-            onChange={(e) => update({ fechaInicio: e.target.value })}
-            className={`${inputCls} ${errCls(errors?.fechaInicio)}`}
-            data-testid="input-fecha-llegada"
-          />
-        </Field>
-        <Field label="Fecha de salida">
-          <input
-            type="date"
-            value={cliente.fechaFin}
-            onChange={(e) => update({ fechaFin: e.target.value })}
-            className={inputCls}
+        <Field label="Fechas del viaje" required error={errors?.fechaInicio} span={2}>
+          <DateRangePicker
+            startDate={cliente.fechaInicio}
+            endDate={cliente.fechaFin}
+            onChange={(start, end) => update({ fechaInicio: start, fechaFin: end })}
+            placeholderStart="Llegada"
+            placeholderEnd="Salida"
+            showNights
+            error={errors?.fechaInicio}
           />
         </Field>
         <Field label="Vigencia">
@@ -115,14 +110,16 @@ function Field({
   children,
   required,
   error,
+  span,
 }: {
   label: string;
   children: React.ReactNode;
   required?: boolean;
   error?: boolean;
+  span?: number;
 }) {
   return (
-    <div>
+    <div style={span ? { gridColumn: `span ${span}` } : undefined}>
       <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}

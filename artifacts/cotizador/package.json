@@ -44,6 +44,7 @@
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
+    "@types/flatpickr": "^3.1.4",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -75,6 +76,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "flatpickr": "^4.6.13",
     "html2pdf.js": "^0.14.0",
     "xlsx": "^0.18.5"
   }

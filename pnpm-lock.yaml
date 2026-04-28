@@ -230,6 +230,9 @@ importers:
 
   artifacts/cotizador:
     dependencies:
+      flatpickr:
+        specifier: ^4.6.13
+        version: 4.6.13
       html2pdf.js:
         specifier: ^0.14.0
         version: 0.14.0
@@ -339,6 +342,9 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.90.21(react@19.1.0)
+      '@types/flatpickr':
+        specifier: ^3.1.4
+        version: 3.1.4
       '@types/node':
         specifier: 'catalog:'
         version: 25.3.5
@@ -1698,6 +1704,10 @@ packages:
   '@types/express@5.0.6':
     resolution: {integrity: sha512-sKYVuV7Sv9fbPIt/442koC7+IIwK5olP1KWeD88e/idgoJqDm3JV/YUiPwkoKK92ylff2MGxSz1CSjsXelx0YA==}
 
+  '@types/flatpickr@3.1.4':
+    resolution: {integrity: sha512-czk8lydTB2qzWBqI6gproY594pg+iEfpHQyrvnyMnMKxvD+2qbrs1g2F8KiWZK173jQMw2C7O9lFjiKeBNub+A==}
+    deprecated: This is a stub types definition. flatpickr provides its own type definitions, so you do not need this installed.
+
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
@@ -2428,6 +2438,9 @@ packages:
   find-up@8.0.0:
     resolution: {integrity: sha512-JGG8pvDi2C+JxidYdIwQDyS/CgcrIdh18cvgxcBge3wSHRQOrooMD3GlFBcmMJAN9M42SAZjDp5zv1dglJjwww==}
     engines: {node: '>=20'}
+
+  flatpickr@4.6.13:
+    resolution: {integrity: sha512-97PMG/aywoYpB4IvbvUJi0RQi8vearvU0oov1WW3k0WZPBMrTQVqekSX5CjSG/M4Q3i6A/0FKXC7RyAoAUUSPw==}
 
   forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
@@ -4838,6 +4851,10 @@ snapshots:
       '@types/express-serve-static-core': 5.1.1
       '@types/serve-static': 2.2.0
 
+  '@types/flatpickr@3.1.4':
+    dependencies:
+      flatpickr: 4.6.13
+
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -5481,6 +5498,8 @@ snapshots:
     dependencies:
       locate-path: 8.0.0
       unicorn-magic: 0.3.0
+
+  flatpickr@4.6.13: {}
 
   forwarded@0.2.0: {}
 

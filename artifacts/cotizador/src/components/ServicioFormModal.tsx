@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import DateRangePicker from "./DateRangePicker";
 import {
   Search,
   Hotel as HotelIcon,
@@ -596,22 +597,15 @@ function HotelFields({
           <Calendar className="w-3.5 h-3.5" /> Estadía
         </SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <Label>Check-in</Label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => onChange({ fechaInicio: e.target.value })}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <Label>Check-out</Label>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => onChange({ fechaFin: e.target.value })}
-              className={inputCls}
+          <div className="md:col-span-2">
+            <Label>Check-in / Check-out</Label>
+            <DateRangePicker
+              startDate={fechaInicio}
+              endDate={fechaFin}
+              onChange={(start, end) => onChange({ fechaInicio: start, fechaFin: end })}
+              placeholderStart="Check-in"
+              placeholderEnd="Check-out"
+              showNights
             />
           </div>
           <div>
