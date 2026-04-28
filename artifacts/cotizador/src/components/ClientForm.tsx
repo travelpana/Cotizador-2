@@ -187,31 +187,29 @@ export function AlojamientoBar({
       className="rounded-2xl shadow-sm px-5 py-4 text-white"
       style={{ backgroundColor: "#eb7309" }}
     >
-      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-        <div className="flex items-center gap-3 flex-wrap min-w-0">
-          <h2 className="text-sm font-bold uppercase tracking-[0.18em] mr-1">
-            Alojamiento
-          </h2>
-          <div className="flex items-center gap-2 bg-white/15 rounded-xl p-1">
-            <NumberInput
-              label="Noches"
-              value={cliente.noches}
-              onChange={(v) => updateNum({ noches: v })}
-              min={0}
-            />
-            <NumberInput
-              label="Pasajeros"
-              value={cliente.pasajeros}
-              onChange={(v) => updateNum({ pasajeros: v })}
-              min={1}
-            />
-            <NumberInput
-              label="Niños"
-              value={cliente.ninos}
-              onChange={(v) => updateNum({ ninos: v })}
-              min={0}
-            />
-          </div>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h2 className="text-sm font-bold uppercase tracking-[0.18em]">
+          Alojamiento
+        </h2>
+        <div className="flex items-center gap-2 bg-white/15 rounded-xl p-1">
+          <NumberInput
+            label="Noches"
+            value={cliente.noches}
+            onChange={(v) => updateNum({ noches: v })}
+            min={0}
+          />
+          <NumberInput
+            label="Pasajeros"
+            value={cliente.pasajeros}
+            onChange={(v) => updateNum({ pasajeros: v })}
+            min={1}
+          />
+          <NumberInput
+            label="Niños"
+            value={cliente.ninos}
+            onChange={(v) => updateNum({ ninos: v })}
+            min={0}
+          />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {PILLS.map((p) => {
