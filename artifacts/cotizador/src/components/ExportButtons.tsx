@@ -113,7 +113,7 @@ export default function ExportButtons({
             `${a}: ${
               isCalc
                 ? fmt(s.totalesPorAcomodacion[a])
-                : `${fmt(s.preciosPorAcomodacion[a])}/noche p/p`
+                : `${fmt(s.preciosPorAcomodacion[a])}/noche`
             }`,
           );
         }
@@ -138,7 +138,7 @@ export default function ExportButtons({
           `   ${
             isCalc
               ? `Total: ${fmt(s.totalesPorAcomodacion[primary])}`
-              : `Tarifa: ${fmt(s.unitAplicado ?? 0)} p/p`
+              : `Tarifa: ${fmt(s.unitAplicado ?? 0)}`
           }`,
         );
       }

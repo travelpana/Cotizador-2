@@ -238,10 +238,14 @@ function infoRow(label: string, value: string) {
 
 function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
+  const showNoches = d.isCalc;
+  const acomSuffix = d.isCalc
+    ? ""
+    : `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`;
   const acomCols = d.acoms
     .map(
       (a) =>
-        `<th style="${STYLES.thNum}">${escape(a)}<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche p/p</div></th>`,
+        `<th style="${STYLES.thNum}">${escape(a)}${acomSuffix}</th>`,
     )
     .join("");
 
@@ -262,7 +266,7 @@ function alojamientoTable(d: PropuestaData): string {
         </td>
         <td style="${STYLES.tdCenter}">${escape(h.estrellas || "—")}</td>
         <td style="${STYLES.td}">${escape(h.tipoHabitacion || "Standard")}</td>
-        <td style="${STYLES.tdCenter}">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>
+        ${showNoches ? `<td style="${STYLES.tdCenter}">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>` : ""}
         ${acomVals}
       </tr>`;
     })
@@ -277,7 +281,7 @@ function alojamientoTable(d: PropuestaData): string {
           <th style="${STYLES.th}">HOTEL</th>
           <th style="${STYLES.thCenter}">CATEGORÍA</th>
           <th style="${STYLES.th}">TIPO HAB.</th>
-          <th style="${STYLES.thCenter}">NOCHES</th>
+          ${showNoches ? `<th style="${STYLES.thCenter}">NOCHES</th>` : ""}
           ${acomCols}
         </tr>
       </thead>
@@ -307,7 +311,7 @@ function adicionalesTable(
 
       const tarifa = d.isCalc
         ? `<strong>${escape(fmt(s.totalesPorAcomodacion[d.primary]))}</strong>`
-        : `<strong>${escape(fmt(s.unitAplicado ?? 0))}</strong> p/p`;
+        : `<strong>${escape(fmt(s.unitAplicado ?? 0))}</strong>`;
 
       const displayName =
         s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
@@ -521,7 +525,6 @@ export function buildPropuestaBody(d: PropuestaData): string {
             <tbody>
               ${infoRow("Nº de Cotización", d.numeroCotizacion)}
               ${infoRow("Válida hasta", d.validaHasta)}
-              ${infoRow("Tipo de Servicio", d.tipoServicio)}
               ${infoRow("Noche(s)", d.noches)}
               ${infoRow("Agencia", d.agencia)}
               ${infoRow("Agente", d.agente)}
