@@ -8,9 +8,11 @@ import {
   ListChecks,
   ChevronDown,
   Copy,
+  FileDown,
 } from "lucide-react";
 import type { CotizacionGuardada, EstadoCotizacion } from "./Guardadas";
 import { calcularLocal, fmt } from "@/lib/calc";
+import { exportarCotizacionesExcel } from "@/lib/exportExcel";
 
 interface Props {
   items: CotizacionGuardada[];
@@ -114,6 +116,21 @@ export default function Seguimiento({
               </p>
             </div>
           </div>
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={() => exportarCotizacionesExcel(filtered.length < items.length ? filtered : items)}
+              title={filtered.length < items.length ? `Exportar ${filtered.length} visibles` : "Exportar todas"}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-medium transition-colors shadow-sm whitespace-nowrap"
+            >
+              <FileDown className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {filtered.length < items.length
+                  ? `Exportar ${filtered.length}`
+                  : "Exportar Excel"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col md:flex-row gap-2">
