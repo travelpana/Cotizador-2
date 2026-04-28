@@ -36,6 +36,11 @@ export default function SingleDatePicker({
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fpRef = useRef<Instance | null>(null);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     if (!inputRef.current) return;
@@ -48,7 +53,7 @@ export default function SingleDatePicker({
       defaultDate: value || undefined,
       onChange(selectedDates) {
         const [d] = selectedDates;
-        onChange(d ? toISO(d) : "");
+        onChangeRef.current(d ? toISO(d) : "");
       },
       onReady(_d, _s, fp) {
         fp.calendarContainer.classList.add("rge-fp-calendar", "rge-fp-single");
