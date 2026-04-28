@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import DateRangePicker from "./DateRangePicker";
 import SingleDatePicker from "./SingleDatePicker";
 import {
   Search,
@@ -598,15 +597,32 @@ function HotelFields({
           <Calendar className="w-3.5 h-3.5" /> Estadía
         </SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="md:col-span-2">
-            <Label>Check-in / Check-out</Label>
-            <DateRangePicker
-              startDate={fechaInicio}
-              endDate={fechaFin}
-              onChange={(start, end) => onChange({ fechaInicio: start, fechaFin: end })}
-              placeholderStart="Check-in"
-              placeholderEnd="Check-out"
-              showNights
+          <div>
+            <Label>Check-in</Label>
+            <SingleDatePicker
+              value={fechaInicio}
+              onChange={(iso) => {
+                const patch: Parameters<typeof onChange>[0] = { fechaInicio: iso };
+                if (iso) {
+                  const d = new Date(iso + "T00:00:00");
+                  d.setDate(d.getDate() + 1);
+                  const nextDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                  if (!fechaFin || fechaFin <= iso) patch.fechaFin = nextDay;
+                }
+                onChange(patch);
+              }}
+              placeholder="Check-in"
+              allowPast
+            />
+          </div>
+          <div>
+            <Label>Check-out</Label>
+            <SingleDatePicker
+              value={fechaFin}
+              onChange={(iso) => onChange({ fechaFin: iso })}
+              placeholder="Check-out"
+              allowPast
+              minDate={fechaInicio || undefined}
             />
           </div>
           <div>

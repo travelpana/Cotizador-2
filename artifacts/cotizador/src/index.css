@@ -109,159 +109,31 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Flatpickr calendar – global overrides (outside @layer so cascade wins)
+   Flatpickr calendar – minimal container overrides only
+   Day cells intentionally left to Flatpickr defaults for stability
    ──────────────────────────────────────────────────────────────────────── */
 
 .rge-fp-calendar {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-  background: #ffffff !important;
-  border: 0 !important;
-  border-radius: 20px !important;
-  box-shadow: 0 12px 48px rgba(37,99,235,0.14), 0 2px 8px rgba(0,0,0,0.07) !important;
-  padding: 18px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06) !important;
+  border: 1px solid #e2e8f0 !important;
   overflow: hidden !important;
 }
 
 .rge-fp-calendar .flatpickr-months {
-  background: #eff6ff !important;
-  border-radius: 12px 12px 0 0 !important;
-  padding: 6px 0 10px !important;
-  margin: -18px -18px 10px !important;
-}
-
-.rge-fp-calendar .flatpickr-month {
-  background: transparent !important;
-  color: #1e3a8a !important;
-  height: 40px !important;
-}
-
-.rge-fp-calendar .flatpickr-current-month {
-  color: #1e3a8a !important;
-  font-weight: 700 !important;
-  font-size: 15px !important;
-  padding-top: 8px !important;
-}
-
-.rge-fp-calendar .flatpickr-current-month select,
-.rge-fp-calendar .flatpickr-current-month .numInputWrapper input {
-  color: #1e3a8a !important;
-  font-weight: 700 !important;
-}
-
-.rge-fp-calendar .flatpickr-prev-month,
-.rge-fp-calendar .flatpickr-next-month {
-  color: #3b82f6 !important;
-  fill: #3b82f6 !important;
-  padding: 8px !important;
-  border-radius: 10px !important;
-  top: 8px !important;
-}
-
-.rge-fp-calendar .flatpickr-prev-month:hover,
-.rge-fp-calendar .flatpickr-next-month:hover {
-  background: #dbeafe !important;
-  color: #1d4ed8 !important;
-  fill: #1d4ed8 !important;
-}
-
-.rge-fp-calendar .flatpickr-weekdays {
-  background: transparent !important;
-  margin-top: 4px !important;
-}
-
-.rge-fp-calendar .flatpickr-weekday {
-  color: #93c5fd !important;
-  font-weight: 700 !important;
-  font-size: 11px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  background: transparent !important;
-}
-
-/* ── Day cells: critical visibility fix ────────────────────────────────── */
-.rge-fp-calendar .flatpickr-day {
-  color: #1e293b !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border: none !important;
-  border-radius: 50% !important;
-  width: 38px !important;
-  height: 38px !important;
-  line-height: normal !important;
-  max-width: 38px !important;
-  transition: background 0.12s, color 0.12s !important;
-}
-
-.rge-fp-calendar .flatpickr-day:hover:not(.selected):not(.startRange):not(.endRange):not(.inRange):not(.flatpickr-disabled) {
-  background: #dbeafe !important;
-  color: #1d4ed8 !important;
-  border-radius: 50% !important;
-}
-
-.rge-fp-calendar .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
-  border: 2px solid #2563eb !important;
-  color: #2563eb !important;
-  font-weight: 700 !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
 }
 
 .rge-fp-calendar .flatpickr-day.selected,
-.rge-fp-calendar .flatpickr-day.startRange,
-.rge-fp-calendar .flatpickr-day.endRange {
+.rge-fp-calendar .flatpickr-day.selected:hover {
   background: #2563eb !important;
-  color: #ffffff !important;
-  border-radius: 50% !important;
-  border: none !important;
-  font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.35) !important;
+  border-color: #2563eb !important;
 }
 
-.rge-fp-calendar .flatpickr-day.inRange {
-  background: rgba(37,99,235,0.12) !important;
-  color: #1e3a8a !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  border: none !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.rge-fp-calendar .flatpickr-day.flatpickr-disabled {
-  color: #cbd5e1 !important;
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-}
-
-.rge-fp-calendar .flatpickr-day.prevMonthDay,
-.rge-fp-calendar .flatpickr-day.nextMonthDay {
-  color: #e2e8f0 !important;
-  opacity: 1 !important;
-}
-
-.rge-fp-calendar .flatpickr-rContainer {
-  display: flex !important;
-  gap: 20px !important;
-}
-
-.rge-fp-single .flatpickr-rContainer {
-  display: block !important;
-}
-
-.rge-fp-single {
-  min-width: 280px !important;
-}
-
-.rge-fp-calendar .numInputWrapper:hover {
-  background: transparent !important;
-}
-
-.rge-fp-calendar .numInputWrapper span {
-  border-color: rgba(37,99,235,0.15) !important;
+.rge-fp-calendar .flatpickr-day.today {
+  border-color: #2563eb !important;
 }
 
 /* Print styles for PDF export view */

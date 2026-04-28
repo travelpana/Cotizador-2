@@ -11,6 +11,7 @@ interface Props {
   error?: boolean;
   allowPast?: boolean;
   disabled?: boolean;
+  minDate?: string;
 }
 
 function fmtDisplay(iso: string): string {
@@ -31,6 +32,7 @@ export default function SingleDatePicker({
   error = false,
   allowPast = true,
   disabled = false,
+  minDate,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fpRef = useRef<Instance | null>(null);
@@ -41,13 +43,12 @@ export default function SingleDatePicker({
     fpRef.current = flatpickr(inputRef.current, {
       mode: "single",
       dateFormat: "Y-m-d",
-      minDate: allowPast ? undefined : "today",
+      minDate: minDate ?? (allowPast ? undefined : "today"),
       disableMobile: true,
       defaultDate: value || undefined,
       onChange(selectedDates) {
         const [d] = selectedDates;
-        if (d) onChange(toISO(d));
-        else onChange("");
+        onChange(d ? toISO(d) : "");
       },
       onReady(_d, _s, fp) {
         fp.calendarContainer.classList.add("rge-fp-calendar", "rge-fp-single");
@@ -60,6 +61,7 @@ export default function SingleDatePicker({
     };
   }, []);
 
+  // Sync value from outside
   useEffect(() => {
     if (!fpRef.current) return;
     const current = fpRef.current.selectedDates[0];
@@ -68,6 +70,13 @@ export default function SingleDatePicker({
       fpRef.current.setDate(value || [], false);
     }
   }, [value]);
+
+  // Update minDate dynamically (e.g. checkout follows checkin)
+  useEffect(() => {
+    if (!fpRef.current) return;
+    const newMin = minDate ?? (allowPast ? undefined : "today");
+    fpRef.current.set("minDate", newMin);
+  }, [minDate, allowPast]);
 
   const ringCls = error
     ? "ring-2 ring-red-300 border-red-400"

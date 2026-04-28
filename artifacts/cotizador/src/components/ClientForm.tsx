@@ -6,13 +6,18 @@ import {
   type ClienteValidationErrors,
 } from "@/lib/types";
 import { diffNoches } from "@/lib/calc";
-import DateRangePicker from "./DateRangePicker";
 import SingleDatePicker from "./SingleDatePicker";
 
 interface Props {
   cliente: Cliente;
   onChange: (c: Cliente) => void;
   errors?: ClienteValidationErrors;
+}
+
+function addOneDay(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default function ClientForm({ cliente, onChange, errors }: Props) {
@@ -23,6 +28,16 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
       if (calc > 0) next.noches = calc;
     }
     onChange(next);
+  };
+
+  const onCheckinChange = (iso: string) => {
+    const patch: Partial<Cliente> = { fechaInicio: iso };
+    if (iso) {
+      const nextDay = addOneDay(iso);
+      const currentFin = cliente.fechaFin;
+      if (!currentFin || currentFin <= iso) patch.fechaFin = nextDay;
+    }
+    update(patch);
   };
 
   const errCls = (on: boolean | undefined) =>
@@ -79,15 +94,22 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             data-testid="input-correo"
           />
         </Field>
-        <Field label="Fechas del viaje" required error={errors?.fechaInicio} span={2}>
-          <DateRangePicker
-            startDate={cliente.fechaInicio}
-            endDate={cliente.fechaFin}
-            onChange={(start, end) => update({ fechaInicio: start, fechaFin: end })}
-            placeholderStart="Llegada"
-            placeholderEnd="Salida"
-            showNights
+        <Field label="Fecha de llegada" required error={errors?.fechaInicio}>
+          <SingleDatePicker
+            value={cliente.fechaInicio}
+            onChange={onCheckinChange}
+            placeholder="Llegada"
+            allowPast
             error={errors?.fechaInicio}
+          />
+        </Field>
+        <Field label="Fecha de salida">
+          <SingleDatePicker
+            value={cliente.fechaFin}
+            onChange={(iso) => update({ fechaFin: iso })}
+            placeholder="Salida"
+            allowPast
+            minDate={cliente.fechaInicio || undefined}
           />
         </Field>
         <Field label="Vigencia">
