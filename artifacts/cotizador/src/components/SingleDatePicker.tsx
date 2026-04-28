@@ -80,48 +80,36 @@ export default function SingleDatePicker({
   };
 
   return (
-    <>
-      <style>{SINGLE_EXTRA_CSS}</style>
-      <div
-        className={`relative flex items-center h-10 rounded-xl border bg-white cursor-pointer transition-all ${ringCls} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
-        onClick={() => !disabled && fpRef.current?.open()}
-      >
-        <div className="flex items-center gap-2 pl-3 flex-1 min-w-0">
-          <CalendarDays className="w-4 h-4 text-slate-400 flex-shrink-0" />
-          <span className={`text-sm font-medium truncate ${value ? "text-slate-900" : "text-slate-400"}`}>
-            {value ? fmtDisplay(value) : placeholder}
-          </span>
-        </div>
-        {value ? (
-          <button
-            type="button"
-            onClick={clear}
-            className="p-1.5 mr-1 text-slate-400 hover:text-slate-700 flex-shrink-0 rounded-lg hover:bg-slate-100"
-            aria-label="Limpiar fecha"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        ) : (
-          <div className="w-2 mr-2" />
-        )}
-        <input
-          ref={inputRef}
-          type="text"
-          readOnly
-          disabled={disabled}
-          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-          aria-label={placeholder}
-        />
+    <div
+      className={`relative flex items-center h-10 rounded-xl border bg-white cursor-pointer transition-all ${ringCls} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
+      onClick={() => !disabled && fpRef.current?.open()}
+    >
+      <div className="flex items-center gap-2 pl-3 flex-1 min-w-0">
+        <CalendarDays className="w-4 h-4 text-slate-400 flex-shrink-0" />
+        <span className={`text-sm font-medium truncate ${value ? "text-slate-900" : "text-slate-400"}`}>
+          {value ? fmtDisplay(value) : placeholder}
+        </span>
       </div>
-    </>
+      {value ? (
+        <button
+          type="button"
+          onClick={clear}
+          className="p-1.5 mr-1 text-slate-400 hover:text-slate-700 flex-shrink-0 rounded-lg hover:bg-slate-100"
+          aria-label="Limpiar fecha"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      ) : (
+        <div className="w-2 mr-2" />
+      )}
+      <input
+        ref={inputRef}
+        type="text"
+        readOnly
+        disabled={disabled}
+        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+        aria-label={placeholder}
+      />
+    </div>
   );
 }
-
-const SINGLE_EXTRA_CSS = `
-.rge-fp-single {
-  min-width: 280px !important;
-}
-.rge-fp-single .flatpickr-rContainer {
-  display: block !important;
-}
-`;
