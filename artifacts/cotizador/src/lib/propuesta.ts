@@ -247,7 +247,7 @@ function alojamientoTable(d: PropuestaData): string {
 
   const rows = d.hoteles
     .map((h) => {
-      const meta = [h.ubicacion, h.estrellas].filter(Boolean).join(" · ");
+      const meta = [h.ubicacion].filter(Boolean).join(" · ");
       const acomVals = d.acoms
         .map(
           (a) =>
@@ -260,6 +260,7 @@ function alojamientoTable(d: PropuestaData): string {
           ${meta ? `<div style="${STYLES.cellSub}">${escape(meta)}</div>` : ""}
           ${h.notas ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>` : ""}
         </td>
+        <td style="${STYLES.tdCenter}">${escape(h.estrellas || "—")}</td>
         <td style="${STYLES.td}">${escape(h.tipoHabitacion || "Standard")}</td>
         <td style="${STYLES.tdCenter}">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>
         ${acomVals}
@@ -273,7 +274,8 @@ function alojamientoTable(d: PropuestaData): string {
     <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:10px;">
       <thead>
         <tr>
-          <th style="${STYLES.th}">HOTEL · CATEGORÍA</th>
+          <th style="${STYLES.th}">HOTEL</th>
+          <th style="${STYLES.thCenter}">CATEGORÍA</th>
           <th style="${STYLES.th}">TIPO HAB.</th>
           <th style="${STYLES.thCenter}">NOCHES</th>
           ${acomCols}

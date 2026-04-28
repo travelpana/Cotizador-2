@@ -50,6 +50,14 @@ interface Props {
 const EMAIL_INTRO =
   "Hola,\n\nUn gusto saludarte. Conforme a lo solicitado, te comparto la cotización de los servicios de su interés:";
 
+/** Formats an ISO date (YYYY-MM-DD) as d-m-a (e.g. 5-1-25). */
+function fmtDMA(iso: string): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return `${d}-${m}-${String(y).slice(-2)}`;
+}
+
 export default function ExportButtons({
   cliente,
   servicios,
@@ -81,11 +89,11 @@ export default function ExportButtons({
   const buildText = () => {
     const lines: string[] = [];
     lines.push(
-      "¡Hola! Un gusto saludarte. Aquí tienes el detalle de tu cotización:",
+      "Hola! Un gusto saludarte. A continuación comparto los detalles de su cotización:",
     );
     lines.push("");
     if (cliente.fechaInicio)
-      lines.push(`Fechas: ${cliente.fechaInicio} → ${cliente.fechaFin}`);
+      lines.push(`Fechas: ${fmtDMA(cliente.fechaInicio)} - ${fmtDMA(cliente.fechaFin)}`);
     lines.push(
       `Pasajeros: ${cliente.pasajeros}${cliente.ninos ? ` + ${cliente.ninos} niños` : ""}`,
     );
@@ -93,18 +101,19 @@ export default function ExportButtons({
       lines.push("");
       lines.push(`*ALOJAMIENTO*`);
       for (const s of hoteles) {
-        const meta = [s.ubicacion, s.estrellas].filter(Boolean).join(" · ");
-        lines.push(`• ${s.nombre}${meta ? ` (${meta})` : ""}`);
-        if (s.fechaInicio || s.fechaFin)
-          lines.push(
-            `   ${s.fechaInicio || ""} → ${s.fechaFin || ""} · ${s.noches ?? ""} noches`,
-          );
+        const starsLabel = s.estrellas ? ` · ${s.estrellas}` : "";
+        lines.push(`• ${s.nombre}${starsLabel}`);
+        if (s.fechaInicio || s.fechaFin) {
+          const start = s.fechaInicio ? fmtDMA(s.fechaInicio) : "";
+          const end = s.fechaFin ? fmtDMA(s.fechaFin) : "";
+          lines.push(`${start} - ${end} → · ${s.noches ?? ""} noches`);
+        }
         for (const a of acoms) {
           lines.push(
-            `   ${a}: ${
+            `${a}: ${
               isCalc
                 ? fmt(s.totalesPorAcomodacion[a])
-                : `${fmt(s.preciosPorAcomodacion[a])}/noche`
+                : `${fmt(s.preciosPorAcomodacion[a])}/noche p/p`
             }`,
           );
         }
