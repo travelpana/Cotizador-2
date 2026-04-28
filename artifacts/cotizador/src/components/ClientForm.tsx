@@ -187,11 +187,11 @@ export function AlojamientoBar({
       className="rounded-2xl shadow-sm px-5 py-4 text-white"
       style={{ backgroundColor: "#eb7309" }}
     >
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-sm font-bold uppercase tracking-[0.18em]">
+      <div className="flex items-center justify-between gap-4 flex-nowrap">
+        <h2 className="text-sm font-bold uppercase tracking-[0.18em] whitespace-nowrap flex-shrink-0">
           Alojamiento
         </h2>
-        <div className="flex items-center gap-2 bg-white/15 rounded-xl p-1">
+        <div className="flex items-center gap-2 bg-white/15 rounded-xl p-1 flex-shrink-0">
           <NumberInput
             label="Noches"
             value={cliente.noches}
@@ -211,7 +211,7 @@ export function AlojamientoBar({
             min={0}
           />
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-nowrap gap-1.5 flex-shrink-0">
           {PILLS.map((p) => {
             const active = acomodaciones.includes(p);
             return (
