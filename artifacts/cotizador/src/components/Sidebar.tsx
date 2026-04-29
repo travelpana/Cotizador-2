@@ -1,6 +1,5 @@
-import { Plane, FileSpreadsheet, RefreshCw, ListChecks } from "lucide-react";
+import { Plane, FileSpreadsheet, RefreshCw, ListChecks, Check, AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { api } from "@/lib/api";
 
 export type View = "cotizador" | "seguimiento";
 
@@ -8,8 +7,10 @@ interface Props {
   view: View;
   onView: (v: View) => void;
   seguimientoCount: number;
-  onReload?: () => void;
+  onReload?: () => Promise<void>;
 }
+
+type ReloadStatus = "idle" | "loading" | "success" | "error";
 
 export default function Sidebar({
   view,
@@ -17,17 +18,44 @@ export default function Sidebar({
   seguimientoCount,
   onReload,
 }: Props) {
-  const [reloading, setReloading] = useState(false);
+  const [status, setStatus] = useState<ReloadStatus>("idle");
 
   const handleReload = async () => {
-    setReloading(true);
+    if (status === "loading") return;
+    setStatus("loading");
     try {
-      await api.reload();
-      onReload?.();
-    } finally {
-      setReloading(false);
+      await onReload?.();
+      setStatus("success");
+      window.setTimeout(() => setStatus("idle"), 2500);
+    } catch (e) {
+      console.error("[Recargar tarifario]", e);
+      setStatus("error");
+      window.setTimeout(() => setStatus("idle"), 3500);
     }
   };
+
+  const isLoading = status === "loading";
+
+  const btnLabel = {
+    idle: "Recargar tarifario",
+    loading: "Actualizando...",
+    success: "Tarifario actualizado",
+    error: "Error al recargar",
+  }[status];
+
+  const btnIcon = {
+    idle: <RefreshCw className="w-4 h-4" />,
+    loading: <RefreshCw className="w-4 h-4 animate-spin" />,
+    success: <Check className="w-4 h-4" />,
+    error: <AlertCircle className="w-4 h-4" />,
+  }[status];
+
+  const btnCls = {
+    idle: "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80",
+    loading: "bg-sidebar-accent text-sidebar-accent-foreground opacity-70 cursor-not-allowed",
+    success: "bg-emerald-600/15 text-emerald-700",
+    error: "bg-red-500/10 text-red-600",
+  }[status];
 
   return (
     <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border h-screen sticky top-0 flex flex-col">
@@ -62,11 +90,11 @@ export default function Sidebar({
       <div className="p-4 border-t border-sidebar-border">
         <button
           onClick={handleReload}
-          disabled={reloading}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80 text-sm disabled:opacity-50"
+          disabled={isLoading}
+          className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${btnCls}`}
         >
-          <RefreshCw className={`w-4 h-4 ${reloading ? "animate-spin" : ""}`} />
-          {reloading ? "Recargando..." : "Recargar tarifario"}
+          {btnIcon}
+          {btnLabel}
         </button>
         <p className="mt-3 text-[11px] text-muted-foreground leading-snug">
           Datos cargados desde el archivo Excel TARIFARIO.xlsx

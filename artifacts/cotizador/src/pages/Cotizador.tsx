@@ -174,6 +174,24 @@ export default function CotizadorPage() {
     }
   };
 
+  const handleTarifarioReload = async () => {
+    try {
+      const { hoteles: h, tours: t, traslados: tr, descriptivos: ds } =
+        await api.reloadAll();
+      setHoteles(h);
+      setTours(t);
+      setTraslados(tr);
+      setDescriptivos(ds);
+      showToast(
+        `Tarifario actualizado · ${h.length} hoteles · ${t.length} tours · ${tr.length} traslados`,
+      );
+    } catch (e) {
+      console.error("[Recargar tarifario]", e);
+      showToast("Error al recargar el tarifario", "error");
+      throw e;
+    }
+  };
+
   useEffect(() => {
     fetchAll();
   }, []);
@@ -315,7 +333,7 @@ export default function CotizadorPage() {
         view={view}
         onView={setView}
         seguimientoCount={guardadas.length}
-        onReload={fetchAll}
+        onReload={handleTarifarioReload}
       />
 
       <main className="flex-1 overflow-x-hidden">
