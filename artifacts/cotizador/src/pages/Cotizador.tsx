@@ -33,7 +33,7 @@ import type {
   Traslado,
 } from "@/lib/types";
 import { validateCliente } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, type CatalogInfo } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
 import { Loader2 } from "lucide-react";
 
@@ -71,6 +71,7 @@ export default function CotizadorPage() {
   const [tours, setTours] = useState<Tour[]>([]);
   const [traslados, setTraslados] = useState<Traslado[]>([]);
   const [descriptivos, setDescriptivos] = useState<Descriptivo[]>([]);
+  const [fileInfo, setFileInfo] = useState<CatalogInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -157,6 +158,51 @@ export default function CotizadorPage() {
     setLoading(true);
     setError(null);
     try {
+      const [h, t, tr, ds, info] = await Promise.all([
+        api.hoteles(),
+        api.tours(),
+        api.traslados(),
+        api.descriptivos().catch(() => [] as Descriptivo[]),
+        api.catalogInfo().catch(() => null),
+      ]);
+      setHoteles(h);
+      setTours(t);
+      setTraslados(tr);
+      setDescriptivos(ds);
+      setFileInfo(info);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTarifarioReload = async () => {
+    try {
+      const { hoteles: h, tours: t, traslados: tr, descriptivos: ds, loadedAt } =
+        await api.reloadAll();
+      setHoteles(h);
+      setTours(t);
+      setTraslados(tr);
+      setDescriptivos(ds);
+      setFileInfo((prev) => ({
+        filename: prev?.filename ?? "TARIFARIO.xlsx",
+        loadedAt,
+        counts: { hoteles: h.length, tours: t.length, traslados: tr.length },
+      }));
+      showToast(
+        `Tarifario actualizado · ${h.length} hoteles · ${t.length} tours · ${tr.length} traslados`,
+      );
+    } catch (e) {
+      console.error("[Recargar tarifario]", e);
+      showToast("Error al recargar el tarifario", "error");
+      throw e;
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    try {
+      const result = await api.uploadTarifario(file);
       const [h, t, tr, ds] = await Promise.all([
         api.hoteles(),
         api.tours(),
@@ -167,27 +213,17 @@ export default function CotizadorPage() {
       setTours(t);
       setTraslados(tr);
       setDescriptivos(ds);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTarifarioReload = async () => {
-    try {
-      const { hoteles: h, tours: t, traslados: tr, descriptivos: ds } =
-        await api.reloadAll();
-      setHoteles(h);
-      setTours(t);
-      setTraslados(tr);
-      setDescriptivos(ds);
+      setFileInfo({
+        filename: result.filename,
+        loadedAt: result.loadedAt,
+        counts: result.counts,
+      });
       showToast(
-        `Tarifario actualizado · ${h.length} hoteles · ${t.length} tours · ${tr.length} traslados`,
+        `Nuevo tarifario cargado correctamente · ${result.counts.hoteles} hoteles · ${result.counts.tours} tours`,
       );
     } catch (e) {
-      console.error("[Recargar tarifario]", e);
-      showToast("Error al recargar el tarifario", "error");
+      console.error("[Subir tarifario]", e);
+      showToast((e as Error).message || "Error al subir el tarifario", "error");
       throw e;
     }
   };
@@ -333,7 +369,9 @@ export default function CotizadorPage() {
         view={view}
         onView={setView}
         seguimientoCount={guardadas.length}
+        fileInfo={fileInfo}
         onReload={handleTarifarioReload}
+        onUpload={handleUpload}
       />
 
       <main className="flex-1 overflow-x-hidden">

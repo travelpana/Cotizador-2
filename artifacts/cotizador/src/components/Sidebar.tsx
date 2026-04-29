@@ -1,5 +1,15 @@
-import { Plane, FileSpreadsheet, RefreshCw, ListChecks, Check, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import {
+  Plane,
+  FileSpreadsheet,
+  RefreshCw,
+  ListChecks,
+  Check,
+  AlertCircle,
+  Upload,
+  FileText,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import type { CatalogInfo } from "@/lib/api";
 
 export type View = "cotizador" | "seguimiento";
 
@@ -7,55 +17,130 @@ interface Props {
   view: View;
   onView: (v: View) => void;
   seguimientoCount: number;
+  fileInfo?: CatalogInfo | null;
   onReload?: () => Promise<void>;
+  onUpload?: (file: File) => Promise<void>;
 }
 
-type ReloadStatus = "idle" | "loading" | "success" | "error";
+type ActionStatus = "idle" | "loading" | "success" | "error";
+
+function useAsyncAction(timeout = 2800) {
+  const [status, setStatus] = useState<ActionStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const run = async (fn: () => Promise<void>) => {
+    if (status === "loading") return;
+    setStatus("loading");
+    setErrorMsg(null);
+    try {
+      await fn();
+      setStatus("success");
+      window.setTimeout(() => setStatus("idle"), timeout);
+    } catch (e) {
+      console.error(e);
+      setErrorMsg((e as Error).message);
+      setStatus("error");
+      window.setTimeout(() => {
+        setStatus("idle");
+        setErrorMsg(null);
+      }, timeout + 700);
+    }
+  };
+
+  return { status, errorMsg, run };
+}
+
+function formatRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "hace un momento";
+  if (mins < 60) return `hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `hace ${hrs} h`;
+  const days = Math.floor(hrs / 24);
+  return `hace ${days} día${days !== 1 ? "s" : ""}`;
+}
 
 export default function Sidebar({
   view,
   onView,
   seguimientoCount,
+  fileInfo,
   onReload,
+  onUpload,
 }: Props) {
-  const [status, setStatus] = useState<ReloadStatus>("idle");
+  const reload = useAsyncAction();
+  const upload = useAsyncAction();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleReload = async () => {
-    if (status === "loading") return;
-    setStatus("loading");
-    try {
+  const handleReload = () =>
+    reload.run(async () => {
       await onReload?.();
-      setStatus("success");
-      window.setTimeout(() => setStatus("idle"), 2500);
-    } catch (e) {
-      console.error("[Recargar tarifario]", e);
-      setStatus("error");
-      window.setTimeout(() => setStatus("idle"), 3500);
+    });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      alert("Solo se admiten archivos .xlsx");
+      return;
     }
+    await upload.run(async () => {
+      await onUpload?.(file);
+    });
   };
 
-  const isLoading = status === "loading";
-
-  const btnLabel = {
+  const reloadLabel = {
     idle: "Recargar tarifario",
     loading: "Actualizando...",
     success: "Tarifario actualizado",
     error: "Error al recargar",
-  }[status];
+  }[reload.status];
 
-  const btnIcon = {
-    idle: <RefreshCw className="w-4 h-4" />,
-    loading: <RefreshCw className="w-4 h-4 animate-spin" />,
-    success: <Check className="w-4 h-4" />,
-    error: <AlertCircle className="w-4 h-4" />,
-  }[status];
+  const reloadIcon =
+    reload.status === "loading" ? (
+      <RefreshCw className="w-4 h-4 animate-spin" />
+    ) : reload.status === "success" ? (
+      <Check className="w-4 h-4" />
+    ) : reload.status === "error" ? (
+      <AlertCircle className="w-4 h-4" />
+    ) : (
+      <RefreshCw className="w-4 h-4" />
+    );
 
-  const btnCls = {
-    idle: "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80",
-    loading: "bg-sidebar-accent text-sidebar-accent-foreground opacity-70 cursor-not-allowed",
-    success: "bg-emerald-600/15 text-emerald-700",
-    error: "bg-red-500/10 text-red-600",
-  }[status];
+  const reloadCls =
+    reload.status === "success"
+      ? "bg-emerald-600/15 text-emerald-700"
+      : reload.status === "error"
+        ? "bg-red-500/10 text-red-600"
+        : "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80";
+
+  const uploadLabel = {
+    idle: "Subir nuevo tarifario",
+    loading: "Subiendo...",
+    success: "Nuevo tarifario cargado",
+    error: upload.errorMsg ?? "Error al subir",
+  }[upload.status];
+
+  const uploadIcon =
+    upload.status === "loading" ? (
+      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+    ) : upload.status === "success" ? (
+      <Check className="w-3.5 h-3.5" />
+    ) : upload.status === "error" ? (
+      <AlertCircle className="w-3.5 h-3.5" />
+    ) : (
+      <Upload className="w-3.5 h-3.5" />
+    );
+
+  const uploadCls =
+    upload.status === "success"
+      ? "text-emerald-700 border-emerald-300 bg-emerald-50"
+      : upload.status === "error"
+        ? "text-red-600 border-red-300 bg-red-50"
+        : "text-sidebar-foreground/70 border-sidebar-border hover:bg-sidebar-accent/40 hover:text-sidebar-foreground";
 
   return (
     <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border h-screen sticky top-0 flex flex-col">
@@ -87,18 +172,44 @@ export default function Sidebar({
         />
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        <div className="flex items-start gap-2 px-1">
+          <FileText className="w-3.5 h-3.5 mt-0.5 text-muted-foreground shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-sidebar-foreground truncate">
+              {fileInfo?.filename ?? "TARIFARIO.xlsx"}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {formatRelativeTime(fileInfo?.loadedAt)}
+            </p>
+          </div>
+        </div>
+
         <button
           onClick={handleReload}
-          disabled={isLoading}
-          className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${btnCls}`}
+          disabled={reload.status === "loading" || upload.status === "loading"}
+          className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadCls}`}
         >
-          {btnIcon}
-          {btnLabel}
+          {reloadIcon}
+          {reloadLabel}
         </button>
-        <p className="mt-3 text-[11px] text-muted-foreground leading-snug">
-          Datos cargados desde el archivo Excel TARIFARIO.xlsx
-        </p>
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={upload.status === "loading" || reload.status === "loading"}
+          className={`w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${uploadCls}`}
+        >
+          {uploadIcon}
+          <span className="truncate">{uploadLabel}</span>
+        </button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx"
+          className="hidden"
+          onChange={handleFileChange}
+        />
       </div>
     </aside>
   );

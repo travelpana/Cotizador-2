@@ -218,3 +218,41 @@ export function reloadCatalog(): Catalog {
   };
   return cache;
 }
+
+export function getFileInfo(): { filename: string; loadedAt: string | null } {
+  if (cache) {
+    return { filename: path.basename(EXCEL_PATH), loadedAt: cache.loadedAt };
+  }
+  try {
+    const stat = fs.statSync(EXCEL_PATH);
+    return {
+      filename: path.basename(EXCEL_PATH),
+      loadedAt: stat.mtime.toISOString(),
+    };
+  } catch {
+    return { filename: path.basename(EXCEL_PATH), loadedAt: null };
+  }
+}
+
+const REQUIRED_SHEETS = [
+  "Hotelería",
+  "Tours",
+  "Traslados Regulares",
+  "Traslados Privados",
+];
+
+export function replaceAndReload(buffer: Buffer): Catalog {
+  let wb: XLSX.WorkBook;
+  try {
+    wb = XLSX.read(buffer, { type: "buffer" });
+  } catch {
+    throw new Error("El archivo no es un Excel válido (.xlsx)");
+  }
+  for (const sheet of REQUIRED_SHEETS) {
+    if (!wb.SheetNames.includes(sheet)) {
+      throw new Error(`El archivo no contiene la hoja requerida: "${sheet}"`);
+    }
+  }
+  fs.writeFileSync(EXCEL_PATH, buffer);
+  return reloadCatalog();
+}
