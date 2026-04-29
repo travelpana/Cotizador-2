@@ -206,7 +206,7 @@ const STYLES = {
   pillBlue: `display:inline-block;background:${COLOR_AZUL};color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
   pillOrange: `display:inline-block;background:${COLOR_NARANJA};color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
   pillAmber: `display:inline-block;background:#fbbf23;color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
-  divider: `height:2px;background:${COLOR_NARANJA};border:0;margin:14px 0 22px;`,
+  divider: `height:2px;background:${COLOR_NARANJA};border:0;margin:16px 0 20px;`,
   th: `text-align:left;color:#64748b;font-weight:700;font-size:10px;letter-spacing:0.6px;padding:10px 12px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
   thNum: `text-align:right;color:#64748b;font-weight:700;font-size:10px;letter-spacing:0.6px;padding:10px 12px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
   thCenter: `text-align:center;color:#64748b;font-weight:700;font-size:10px;letter-spacing:0.6px;padding:10px 12px;border-bottom:1px solid ${COLOR_BORDE};text-transform:uppercase;background:#f8fafc;`,
@@ -522,15 +522,14 @@ export function buildPropuestaBody(d: PropuestaData): string {
             </tr>
 
             <tr>
-              <td style="padding-bottom:8px;">
+              <td style="padding-bottom:12px;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
                   <tr>
                     <td style="vertical-align:top;width:50%;padding-right:20px;">
                       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
                         <tbody>
-                          ${infoRow("Fecha de Emisión", d.fechaEmision)}
                           ${infoRow("Destino", d.destino)}
-                          ${infoRow("Fecha de Viaje", d.fechaViaje)}
+                          ${infoRow("Fechas de estadía", d.fechaViaje)}
                           ${infoRow("Pasajeros", d.pasajerosLabel)}
                         </tbody>
                       </table>
@@ -538,11 +537,8 @@ export function buildPropuestaBody(d: PropuestaData): string {
                     <td style="vertical-align:top;width:50%;padding-left:20px;">
                       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
                         <tbody>
-                          ${infoRow("Nº de Cotización", d.numeroCotizacion)}
+                          ${infoRow("Noches", d.noches)}
                           ${infoRow("Válida hasta", d.validaHasta)}
-                          ${infoRow("Noche(s)", d.noches)}
-                          ${infoRow("Agencia", d.agencia)}
-                          ${infoRow("Agente", d.agente)}
                         </tbody>
                       </table>
                     </td>
@@ -552,7 +548,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
             </tr>
 
             <tr>
-              <td style="padding-bottom:22px;">
+              <td style="margin-bottom:16px;">
                 <hr style="${STYLES.divider}" />
               </td>
             </tr>
@@ -564,6 +560,13 @@ export function buildPropuestaBody(d: PropuestaData): string {
             <tr><td>${itinerarioTable(d)}</td></tr>
             <tr><td>${descriptivosBlock(d)}</td></tr>
             <tr><td>${totalsBlock(d)}</td></tr>
+
+            <tr>
+              <td style="padding-top:24px;text-align:right;color:#9ca3af;font-size:11px;line-height:1.5;">
+                <div>Cotización N°: ${escape(d.numeroCotizacion)}</div>
+                <div>Fecha de emisión: ${escape(d.fechaEmision)}</div>
+              </td>
+            </tr>
 
           </tbody>
         </table>
