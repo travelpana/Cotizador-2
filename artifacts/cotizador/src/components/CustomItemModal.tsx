@@ -328,12 +328,12 @@ export default function CustomItemModal({
                 Precio (USD)
               </label>
               <input
-                type="number"
-                min={0}
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                placeholder="0.00"
+                onChange={(e) => setPrecio(e.target.value.replace(/[^0-9]/g, ""))}
+                onFocus={(e) => e.target.select()}
+                placeholder="0"
                 className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
               />
             </div>
@@ -347,12 +347,12 @@ export default function CustomItemModal({
                   Precio niño (USD)
                 </label>
                 <input
-                  type="number"
-                  min={0}
-                  step="0.01"
+                  type="text"
+                  inputMode="numeric"
                   value={precioNino}
-                  onChange={(e) => setPrecioNino(e.target.value)}
-                  placeholder="0.00"
+                  onChange={(e) => setPrecioNino(e.target.value.replace(/[^0-9]/g, ""))}
+                  onFocus={(e) => e.target.select()}
+                  placeholder="0"
                   disabled={!ninosEnabled}
                   title={
                     ninosEnabled ? undefined : "Disponible cuando se agregan niños"

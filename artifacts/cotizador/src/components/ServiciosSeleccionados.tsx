@@ -723,10 +723,10 @@ function PricesEditor({
               {a}
             </label>
             <input
-              type="number"
-              inputMode="decimal"
+              type="text"
+              inputMode="numeric"
               value={vals[a] ?? "0"}
-              onChange={(e) => setVals((prev) => ({ ...prev, [a]: e.target.value }))}
+              onChange={(e) => setVals((prev) => ({ ...prev, [a]: e.target.value.replace(/[^0-9]/g, "") }))}
               onFocus={(e) => e.target.select()}
               className="w-full h-9 px-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
@@ -779,10 +779,10 @@ function UnitPriceEditor({
         Precio por persona
       </div>
       <input
-        type="number"
-        inputMode="decimal"
+        type="text"
+        inputMode="numeric"
         value={val}
-        onChange={(e) => setVal(e.target.value)}
+        onChange={(e) => setVal(e.target.value.replace(/[^0-9]/g, ""))}
         onFocus={(e) => e.target.select()}
         autoFocus
         className="w-full h-9 px-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
@@ -945,19 +945,14 @@ function TicketsEditor({
                 $
               </span>
               <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={adultPrice}
+                type="text"
+                inputMode="numeric"
+                value={String(adultPrice)}
                 onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") {
-                    setAdultPrice(0);
-                    return;
-                  }
-                  const v = Number(raw);
-                  setAdultPrice(Number.isFinite(v) ? v : 0);
+                  const sanitized = e.target.value.replace(/[^0-9]/g, "");
+                  setAdultPrice(sanitized === "" ? 0 : Number(sanitized));
                 }}
+                onFocus={(e) => e.target.select()}
                 placeholder="0"
                 className={`${inputClass} pl-6 tabular-nums`}
               />
@@ -972,11 +967,11 @@ function TicketsEditor({
                 $
               </span>
               <input
-                type="number"
-                min={0}
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 value={childPriceText}
-                onChange={(e) => setChildPriceText(e.target.value)}
+                onChange={(e) => setChildPriceText(e.target.value.replace(/[^0-9]/g, ""))}
+                onFocus={(e) => e.target.select()}
                 placeholder="—"
                 className={`${inputClass} pl-6 tabular-nums`}
               />

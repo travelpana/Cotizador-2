@@ -681,11 +681,14 @@ function HotelFields({
             <div key={a}>
               <Label>{a}</Label>
               <input
-                type="number"
-                value={precios[a]}
-                onChange={(e) =>
-                  onChange({ precios: { [a]: Number(e.target.value) || 0 } })
-                }
+                type="text"
+                inputMode="numeric"
+                value={String(precios[a])}
+                onChange={(e) => {
+                  const sanitized = e.target.value.replace(/[^0-9]/g, "");
+                  onChange({ precios: { [a]: sanitized === "" ? 0 : Number(sanitized) } });
+                }}
+                onFocus={(e) => e.target.select()}
                 className={inputCls}
               />
             </div>
@@ -791,10 +794,14 @@ function TourTrasladoFields({
         </div>
         {paxMode === "manual" && (
           <input
-            type="number"
-            min={1}
-            value={paxValue}
-            onChange={(e) => onPaxValue(Math.max(1, Number(e.target.value) || 1))}
+            type="text"
+            inputMode="numeric"
+            value={String(paxValue)}
+            onChange={(e) => {
+              const sanitized = e.target.value.replace(/[^0-9]/g, "");
+              onPaxValue(Math.max(1, sanitized === "" ? 1 : Number(sanitized)));
+            }}
+            onFocus={(e) => e.target.select()}
             placeholder="Cantidad de personas"
             className={inputCls}
           />
@@ -827,19 +834,14 @@ function TourTrasladoFields({
                 $
               </span>
               <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={unitAplicado}
+                type="text"
+                inputMode="numeric"
+                value={String(unitAplicado)}
                 onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") {
-                    onUnitOverride(0);
-                    return;
-                  }
-                  const v = Number(raw);
-                  onUnitOverride(Number.isFinite(v) ? v : 0);
+                  const sanitized = e.target.value.replace(/[^0-9]/g, "");
+                  onUnitOverride(sanitized === "" ? 0 : Number(sanitized));
                 }}
+                onFocus={(e) => e.target.select()}
                 className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-300 text-base font-bold text-slate-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 style={{ color: "#1f2937" }}
               />
@@ -867,44 +869,56 @@ function TourTrasladoFields({
             <div>
               <Label>1 pax</Label>
               <input
-                type="number"
-                value={precios.p1}
-                onChange={(e) =>
-                  onPrecios({ p1: Number(e.target.value) || 0 })
-                }
+                type="text"
+                inputMode="numeric"
+                value={String(precios.p1)}
+                onChange={(e) => {
+                  const s = e.target.value.replace(/[^0-9]/g, "");
+                  onPrecios({ p1: s === "" ? 0 : Number(s) });
+                }}
+                onFocus={(e) => e.target.select()}
                 className={inputCls}
               />
             </div>
             <div>
               <Label>2-5 pax</Label>
               <input
-                type="number"
-                value={precios.p2_5}
-                onChange={(e) =>
-                  onPrecios({ p2_5: Number(e.target.value) || 0 })
-                }
+                type="text"
+                inputMode="numeric"
+                value={String(precios.p2_5)}
+                onChange={(e) => {
+                  const s = e.target.value.replace(/[^0-9]/g, "");
+                  onPrecios({ p2_5: s === "" ? 0 : Number(s) });
+                }}
+                onFocus={(e) => e.target.select()}
                 className={inputCls}
               />
             </div>
             <div>
               <Label>6-10 pax</Label>
               <input
-                type="number"
-                value={precios.p6_10}
-                onChange={(e) =>
-                  onPrecios({ p6_10: Number(e.target.value) || 0 })
-                }
+                type="text"
+                inputMode="numeric"
+                value={String(precios.p6_10)}
+                onChange={(e) => {
+                  const s = e.target.value.replace(/[^0-9]/g, "");
+                  onPrecios({ p6_10: s === "" ? 0 : Number(s) });
+                }}
+                onFocus={(e) => e.target.select()}
                 className={inputCls}
               />
             </div>
             <div>
               <Label>Niño</Label>
               <input
-                type="number"
-                value={precios.chd}
-                onChange={(e) =>
-                  onPrecios({ chd: Number(e.target.value) || 0 })
-                }
+                type="text"
+                inputMode="numeric"
+                value={String(precios.chd)}
+                onChange={(e) => {
+                  const s = e.target.value.replace(/[^0-9]/g, "");
+                  onPrecios({ chd: s === "" ? 0 : Number(s) });
+                }}
+                onFocus={(e) => e.target.select()}
                 className={inputCls}
               />
             </div>
