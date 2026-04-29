@@ -1,7 +1,7 @@
 import {
   Settings2,
   Map,
-  FileText,
+  Clock,
   BookOpen,
   Tag,
   Calculator,
@@ -75,9 +75,9 @@ export default function ConfiguracionPanel({
             <Toggle
               checked={incluirDescriptivos}
               onChange={onToggleDescriptivos}
-              icon={<FileText className="w-4 h-4" />}
-              label="Incluir detalles"
-              help="Texto extra debajo de cada actividad"
+              icon={<Clock className="w-4 h-4" />}
+              label="Incluir horarios"
+              help="Horario debajo de cada tour del itinerario"
               disabled={!incluirItinerario}
             />
             <Toggle

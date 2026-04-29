@@ -33,16 +33,12 @@ export interface Traslado {
   precios: { p1: number; p2_5: number; p6_10: number; chd: number };
 }
 
-export type EntradaTipo =
-  | "canal_panama"
-  | "museo"
-  | "sitio_historico"
-  | "otro";
-
-export interface EntradaAdicional {
-  tipo: EntradaTipo;
-  precio: number;
-  notas?: string;
+/** Tour-only manual add-on for entrance tickets. */
+export interface TourTickets {
+  enabled: boolean;
+  label: string;
+  adultPrice: number;
+  childPrice?: number;
 }
 
 export interface ServicioSeleccionado {
@@ -55,8 +51,10 @@ export interface ServicioSeleccionado {
   origen?: string;
   /** Vuelo-only: airport / city of destination. */
   destino?: string;
-  /** Tour-only: optional add-on entry (museum, site, etc.) priced per person. */
-  entrada?: EntradaAdicional;
+  /** Tour-only: optional manual ticket add-on (e.g. museum entry). */
+  tickets?: TourTickets;
+  /** Tour-only: schedule label captured from catalog (days · time · duration). */
+  horario?: string;
   precios: {
     p1?: number;
     p2_5?: number;
@@ -171,8 +169,10 @@ export interface ServicioCalculado {
   /** For tours/traslados: which tier was applied. */
   tierAplicado?: Tier;
   unitAplicado?: number;
-  /** Tour-only: copy of the add-on entry, surfaced for display. */
-  entrada?: EntradaAdicional;
+  /** Tour-only: surfaced ticket add-on for display. */
+  tickets?: TourTickets;
+  /** Tour-only: schedule label surfaced for display. */
+  horario?: string;
 }
 
 export interface CotizacionResult {

@@ -24,13 +24,23 @@ exportación por WhatsApp, Email y PDF (impresión).
   Exportación a WhatsApp (copiar al portapapeles), Email
   (mailto, mismo HTML) y PDF (impresión, mismo HTML). Sirve en `/`.
   En `ConfiguracionPanel` hay 3 toggles: "Incluir itinerario",
-  "Incluir detalles" (texto corto bajo cada actividad del itinerario,
-  campo `incluirDescriptivos`) e "Incluir descriptivo" (sección
-  completa "DESCRIPTIVOS" después del itinerario con título, info,
-  párrafos, Incluye, Observaciones, Recomendaciones y Nota importante;
-  campo `incluirDescriptivoCompleto`). Los descriptivos se cargan
-  automáticamente al seleccionar tours por código RGE; el código
+  "Incluir horarios" (línea "Horario: …" debajo de cada tour del
+  itinerario, campo `incluirDescriptivos`) e "Incluir descriptivo"
+  (sección completa "DESCRIPTIVOS" después del itinerario con título,
+  info, párrafos, Incluye, Observaciones, Recomendaciones y Nota
+  importante; campo `incluirDescriptivoCompleto`). Los descriptivos se
+  cargan automáticamente al seleccionar tours por código RGE; el código
   nunca se muestra en exportes.
+
+  **Tours UX**: cada tour expone 4 acciones en el orden Tickets, Notas,
+  Editar, Eliminar. El botón Tickets abre un popover (`TicketsEditor`)
+  para configurar entradas manuales (`tickets`: `enabled`, `label`,
+  `adultPrice`, `childPrice?`). Cuando hay tickets activos se muestra
+  "Costo adicional por entradas: {label} ${adultPrice} p/p" debajo del
+  nombre del tour. El campo `horario` se captura del catálogo (o se edita
+  manualmente en el modal) y aparece como "Horario: {días · hora ·
+  duración}" debajo del nombre y, si está activado el toggle, también en
+  la columna Actividad del itinerario (solo en días que son tour).
 - `artifacts/api-server` — API Express. Lee `TARIFARIO.xlsx` y expone:
   - `GET /api/hoteles` · `GET /api/tours` · `GET /api/traslados` · `GET /api/catalog`
   - `GET /api/descriptivos` · `GET /api/descriptivos/:codigo` — descriptivos

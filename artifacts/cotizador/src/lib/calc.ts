@@ -40,19 +40,6 @@ export function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function entradaTipoLabel(t: import("./types").EntradaTipo): string {
-  switch (t) {
-    case "canal_panama":
-      return "Canal de Panamá";
-    case "museo":
-      return "Museo";
-    case "sitio_historico":
-      return "Sitio histórico";
-    case "otro":
-      return "Otro";
-  }
-}
-
 export function fmt(n: number): string {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
@@ -126,16 +113,23 @@ export function calcularLocal(
           ? s.unitOverride
           : priceForTier(s.precios, tier);
       const chdUnit = s.precios.chd ?? 0;
-      const entradaPP =
-        s.tipo === "tour" && s.entrada && s.entrada.precio > 0
-          ? s.entrada.precio
+      const ticketsAdult =
+        s.tipo === "tour" && s.tickets?.enabled && s.tickets.adultPrice > 0
+          ? s.tickets.adultPrice
           : 0;
+      const ticketsChild =
+        s.tipo === "tour" &&
+        s.tickets?.enabled &&
+        typeof s.tickets.childPrice === "number" &&
+        s.tickets.childPrice > 0
+          ? s.tickets.childPrice
+          : ticketsAdult;
       preciosPorAcom.SGL = unit;
       preciosPorAcom.DBL = unit;
       preciosPorAcom.TPL = unit;
       preciosPorAcom.CHD = chdUnit;
       const totalUnit =
-        (unit + entradaPP) * paxLocal + (chdUnit + entradaPP) * ninos;
+        (unit + ticketsAdult) * paxLocal + (chdUnit + ticketsChild) * ninos;
       for (const a of acoms) {
         totalesPorAcom[a] = totalUnit;
         subtotales[s.tipo][a] += totalUnit;
@@ -159,7 +153,8 @@ export function calcularLocal(
         tierAplicado: tier,
         unitAplicado: unit,
         paxAplicados: paxLocal,
-        entrada: s.tipo === "tour" ? s.entrada : undefined,
+        tickets: s.tipo === "tour" ? s.tickets : undefined,
+        horario: s.tipo === "tour" ? s.horario : undefined,
       });
     }
   }

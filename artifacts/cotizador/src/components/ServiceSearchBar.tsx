@@ -224,6 +224,7 @@ export default function ServiceSearchBar({
           chd: t.precios.chd,
         },
         usarFecha: false,
+        horario: t.horario || undefined,
       };
     }
     const tr = r.raw as Traslado;

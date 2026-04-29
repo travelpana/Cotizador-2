@@ -48,6 +48,10 @@ export interface ItinerarioDia {
   actividad: string;
   hotel: string;
   descripcion?: string;
+  /** Tour-day only: schedule label "{days} · {time} · {duration}". */
+  horario?: string;
+  /** Whether this day's activity is a tour (vs llegada/salida/día libre). */
+  esTour?: boolean;
 }
 
 export function buildItinerario(
@@ -69,6 +73,8 @@ export function buildItinerario(
     let actividad = "";
     let hotel = hotelDefault;
     let descripcion = "";
+    let horario: string | undefined;
+    let esTour = false;
 
     if (i === 0) {
       const t = traslados[0];
@@ -89,9 +95,13 @@ export function buildItinerario(
       const tour = tours[tourIdx++];
       actividad = tour ? tour.nombre : "Día libre";
       descripcion = tour ? tour.nombre : "Día libre para actividades a su elección";
+      if (tour) {
+        esTour = true;
+        horario = tour.horario?.trim() || undefined;
+      }
     }
 
-    out.push({ dia: i + 1, fecha, actividad, hotel, descripcion });
+    out.push({ dia: i + 1, fecha, actividad, hotel, descripcion, horario, esTour });
   }
   return out;
 }
@@ -221,9 +231,9 @@ export default function Itinerario({
                         editable={editable}
                         onCommit={(next) => commit(d.dia, next)}
                       />
-                      {incluirDescriptivos && d.descripcion && (
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          {d.descripcion}
+                      {incluirDescriptivos && d.esTour && d.horario && (
+                        <div className="text-xs text-slate-500 mt-1.5">
+                          Horario: {d.horario}
                         </div>
                       )}
                     </td>

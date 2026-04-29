@@ -319,9 +319,24 @@ function adicionalesTable(
 
       const displayName =
         s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
+
+      const ticketsLine =
+        s.tipo === "tour" &&
+        s.tickets?.enabled &&
+        s.tickets.adultPrice > 0
+          ? `<div style="${STYLES.cellNote}">Costo adicional por entradas: ${escape(s.tickets.label || "Entradas")} ${escape(fmt(s.tickets.adultPrice))} p/p</div>`
+          : "";
+
+      const horarioLine =
+        s.tipo === "tour" && d.incluirDescriptivos && s.horario
+          ? `<div style="${STYLES.cellNote}">Horario: ${escape(s.horario)}</div>`
+          : "";
+
       return `<tr style="page-break-inside:avoid;">
         <td style="${STYLES.td};width:65%;">
           <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
+          ${ticketsLine}
+          ${horarioLine}
           ${s.notas ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>` : ""}
         </td>
         <td style="${STYLES.td};width:15%;">${escape(tipo)}</td>
@@ -363,8 +378,8 @@ function itinerarioTable(d: PropuestaData): string {
         <td style="${STYLES.td}">
           <div${editAttrs(it.dia)}>${escape(it.actividad)}</div>
           ${
-            d.incluirDescriptivos && it.descripcion
-              ? `<div style="${STYLES.cellNote}">${escape(it.descripcion)}</div>`
+            d.incluirDescriptivos && it.esTour && it.horario
+              ? `<div style="${STYLES.cellNote}">Horario: ${escape(it.horario)}</div>`
               : ""
           }
         </td>

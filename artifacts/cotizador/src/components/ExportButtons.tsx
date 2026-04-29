@@ -19,7 +19,7 @@ import type {
   ServicioSeleccionado,
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
-import { fmt, entradaTipoLabel } from "@/lib/calc";
+import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
 
@@ -129,10 +129,17 @@ export default function ExportButtons({
       lines.push(`*${title}*`);
       for (const s of items) {
         lines.push(`• ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}`);
-        if (s.tipo === "tour" && s.entrada && s.entrada.precio > 0) {
+        if (
+          s.tipo === "tour" &&
+          s.tickets?.enabled &&
+          s.tickets.adultPrice > 0
+        ) {
           lines.push(
-            `   Entrada adicional (${entradaTipoLabel(s.entrada.tipo)}): ${fmt(s.entrada.precio)} por persona${s.entrada.notas ? ` · ${s.entrada.notas}` : ""}`,
+            `   Costo adicional por entradas: ${s.tickets.label || "Entradas"} ${fmt(s.tickets.adultPrice)} p/p`,
           );
+        }
+        if (s.tipo === "tour" && s.horario) {
+          lines.push(`   Horario: ${s.horario}`);
         }
         lines.push(
           `   ${

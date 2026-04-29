@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Section } from "./ClientForm";
-import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
+import type {
+  Acomodacion,
+  ServicioSeleccionado,
+  TourTickets,
+} from "@/lib/types";
 import { fmt, pickTier, priceForTier } from "@/lib/calc";
 import { formatTrasladoNombre } from "@/lib/utils";
 import SingleDatePicker from "./SingleDatePicker";
@@ -21,6 +25,7 @@ import {
   Plus,
   Calendar,
   StickyNote,
+  Ticket,
   GripVertical,
 } from "lucide-react";
 
@@ -254,7 +259,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | null
+    "dates" | "price" | "notes" | "tickets" | null
   >(null);
 
   let descripcion: React.ReactNode = null;
@@ -395,14 +400,21 @@ function ServicioRow({
           </div>
         )}
 
-        {/* Tour entrada adicional */}
+        {/* Tour tickets add-on */}
         {servicio.tipo === "tour" &&
-          servicio.entrada &&
-          servicio.entrada.precio > 0 && (
-            <div className="text-[11px] text-emerald-700 font-medium mt-0.5 truncate">
-              + Entrada adicional: {fmt(servicio.entrada.precio)} por persona
+          servicio.tickets?.enabled &&
+          servicio.tickets.adultPrice > 0 && (
+            <div className="text-[11px] text-slate-500 mt-1 truncate">
+              Costo adicional por entradas: {servicio.tickets.label || "Entradas"} {fmt(servicio.tickets.adultPrice)} p/p
             </div>
           )}
+
+        {/* Tour horario */}
+        {servicio.tipo === "tour" && servicio.horario && (
+          <div className="text-[11px] text-slate-500 mt-1 truncate">
+            Horario: {servicio.horario}
+          </div>
+        )}
       </div>
 
       {/* Price area */}
@@ -483,6 +495,46 @@ function ServicioRow({
 
       {/* Action icons — all service types */}
       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0">
+        {servicio.tipo === "tour" && (
+          <Popover
+            open={openEditor === "tickets"}
+            onOpenChange={(o) => setOpenEditor(o ? "tickets" : null)}
+          >
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  servicio.tickets?.enabled
+                    ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100 opacity-100"
+                    : "text-slate-500 hover:bg-slate-100"
+                }`}
+                aria-label="Entradas"
+                title={
+                  servicio.tickets?.enabled
+                    ? "Editar entradas"
+                    : "Agregar entradas"
+                }
+              >
+                <Ticket className="w-3.5 h-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-[320px] p-4 z-[60]"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <TicketsEditor
+                value={servicio.tickets}
+                onSave={(tickets) => {
+                  onUpdate({ ...servicio, tickets });
+                  setOpenEditor(null);
+                }}
+                onClose={() => setOpenEditor(null)}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+
         <Popover
           open={openEditor === "notes"}
           onOpenChange={(o) => setOpenEditor(o ? "notes" : null)}
@@ -795,6 +847,145 @@ function NotesEditor({
         className="w-full px-2.5 py-2 rounded-md border border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
       />
       <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={handleApply}
+          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90"
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────── TicketsEditor (tours) ───────────────────────── */
+
+function TicketsEditor({
+  value,
+  onSave,
+  onClose,
+}: {
+  value?: TourTickets;
+  onSave: (tickets: TourTickets | undefined) => void;
+  onClose: () => void;
+}) {
+  const [enabled, setEnabled] = useState<boolean>(value?.enabled ?? true);
+  const [label, setLabel] = useState<string>(value?.label ?? "");
+  const [adultPrice, setAdultPrice] = useState<number>(value?.adultPrice ?? 0);
+  const [childPriceText, setChildPriceText] = useState<string>(
+    value?.childPrice !== undefined ? String(value.childPrice) : "",
+  );
+
+  const handleApply = () => {
+    if (!enabled) {
+      onSave(undefined);
+      return;
+    }
+    const childPrice = childPriceText.trim() === "" ? undefined : Number(childPriceText);
+    onSave({
+      enabled: true,
+      label: label.trim(),
+      adultPrice: Number.isFinite(adultPrice) ? adultPrice : 0,
+      childPrice:
+        childPrice !== undefined && Number.isFinite(childPrice) && childPrice >= 0
+          ? childPrice
+          : undefined,
+    });
+  };
+
+  const inputClass =
+    "w-full px-2.5 py-2 rounded-md border border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary";
+
+  return (
+    <div className="space-y-3">
+      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 flex items-center gap-1.5">
+        <Ticket className="w-3 h-3" />
+        Entradas
+      </div>
+
+      <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => setEnabled(e.target.checked)}
+          className="w-3.5 h-3.5 accent-primary"
+        />
+        Cobrar entrada por persona
+      </label>
+
+      <div className={enabled ? "space-y-2.5" : "space-y-2.5 opacity-50 pointer-events-none"}>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+            Etiqueta
+          </label>
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Ej: Museo del Canal"
+            autoFocus
+            className={inputClass}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+              Adulto
+            </label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
+                $
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={adultPrice}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    setAdultPrice(0);
+                    return;
+                  }
+                  const v = Number(raw);
+                  setAdultPrice(Number.isFinite(v) ? v : 0);
+                }}
+                placeholder="0"
+                className={`${inputClass} pl-6 tabular-nums`}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+              Niño (opc.)
+            </label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
+                $
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={childPriceText}
+                onChange={(e) => setChildPriceText(e.target.value)}
+                placeholder="—"
+                className={`${inputClass} pl-6 tabular-nums`}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={onClose}
