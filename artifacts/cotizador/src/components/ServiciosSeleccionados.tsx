@@ -404,8 +404,11 @@ function ServicioRow({
         {servicio.tipo === "tour" &&
           servicio.tickets?.enabled &&
           servicio.tickets.adultPrice > 0 && (
-            <div className="text-[11px] text-slate-500 mt-1 truncate">
-              Costo adicional por entradas: {servicio.tickets.label || "Entradas"} {fmt(servicio.tickets.adultPrice)} p/p
+            <div className="text-[11px] text-amber-600 mt-1 truncate">
+              Costo adicional por entradas:{servicio.tickets.label ? ` ${servicio.tickets.label} ·` : ""} Adultos {fmt(servicio.tickets.adultPrice)} p/p
+              {servicio.tickets.childPrice !== undefined && servicio.tickets.childPrice > 0
+                ? ` · Niños ${fmt(servicio.tickets.childPrice)} p/p`
+                : ""}
             </div>
           )}
 
@@ -877,7 +880,6 @@ function TicketsEditor({
   onSave: (tickets: TourTickets | undefined) => void;
   onClose: () => void;
 }) {
-  const [enabled, setEnabled] = useState<boolean>(value?.enabled ?? true);
   const [label, setLabel] = useState<string>(value?.label ?? "");
   const [adultPrice, setAdultPrice] = useState<number>(value?.adultPrice ?? 0);
   const [childPriceText, setChildPriceText] = useState<string>(
@@ -885,10 +887,6 @@ function TicketsEditor({
   );
 
   const handleApply = () => {
-    if (!enabled) {
-      onSave(undefined);
-      return;
-    }
     const childPrice = childPriceText.trim() === "" ? undefined : Number(childPriceText);
     onSave({
       enabled: true,
@@ -911,20 +909,10 @@ function TicketsEditor({
         Entradas
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          className="w-3.5 h-3.5 accent-primary"
-        />
-        Cobrar entrada por persona
-      </label>
-
-      <div className={enabled ? "space-y-2.5" : "space-y-2.5 opacity-50 pointer-events-none"}>
+      <div className="space-y-2.5">
         <div>
           <label className="block text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
-            Etiqueta
+            Etiqueta (opcional)
           </label>
           <input
             type="text"
@@ -960,7 +948,7 @@ function TicketsEditor({
           </div>
           <div>
             <label className="block text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
-              Niño (opc.)
+              Niño (opcional)
             </label>
             <div className="relative">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
@@ -980,21 +968,35 @@ function TicketsEditor({
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={handleApply}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90"
-        >
-          Guardar
-        </button>
+      <div className="flex justify-between gap-2 pt-1">
+        {value?.enabled ? (
+          <button
+            type="button"
+            onClick={() => { onSave(undefined); onClose(); }}
+            className="px-3 py-1.5 text-xs font-medium rounded-md text-red-500 hover:bg-red-50"
+          >
+            Quitar entradas
+          </button>
+        ) : (
+          <div />
+        )}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={adultPrice === 0}
+            className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
+          >
+            Guardar
+          </button>
+        </div>
       </div>
     </div>
   );

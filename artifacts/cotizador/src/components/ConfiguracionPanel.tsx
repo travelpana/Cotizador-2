@@ -66,19 +66,18 @@ export default function ConfiguracionPanel({
           </div>
           <div className="rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
             <Toggle
+              checked={incluirDescriptivos}
+              onChange={onToggleDescriptivos}
+              icon={<Clock className="w-4 h-4" />}
+              label="Incluir horarios"
+              help="Horario debajo de cada tour en la propuesta"
+            />
+            <Toggle
               checked={incluirItinerario}
               onChange={onToggleItinerario}
               icon={<Map className="w-4 h-4" />}
               label="Incluir itinerario"
               help="Tabla día a día en preview, PDF y WhatsApp"
-            />
-            <Toggle
-              checked={incluirDescriptivos}
-              onChange={onToggleDescriptivos}
-              icon={<Clock className="w-4 h-4" />}
-              label="Incluir horarios"
-              help="Horario debajo de cada tour del itinerario"
-              disabled={!incluirItinerario}
             />
             <Toggle
               checked={incluirDescriptivoCompleto}

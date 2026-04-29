@@ -320,12 +320,17 @@ function adicionalesTable(
       const displayName =
         s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
 
-      const ticketsLine =
-        s.tipo === "tour" &&
-        s.tickets?.enabled &&
-        s.tickets.adultPrice > 0
-          ? `<div style="${STYLES.cellNote}">Costo adicional por entradas: ${escape(s.tickets.label || "Entradas")} ${escape(fmt(s.tickets.adultPrice))} p/p</div>`
-          : "";
+      const ticketsLine = (() => {
+        if (s.tipo !== "tour" || !s.tickets?.enabled || s.tickets.adultPrice <= 0) return "";
+        const t = s.tickets;
+        const labelPart = t.label ? `${escape(t.label)} · ` : "";
+        const adultPart = `Adultos ${escape(fmt(t.adultPrice))} p/p`;
+        const childPart =
+          t.childPrice !== undefined && t.childPrice > 0
+            ? ` · Niños ${escape(fmt(t.childPrice))} p/p`
+            : "";
+        return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">Costo adicional por entradas: ${labelPart}${adultPart}${childPart}</div>`;
+      })();
 
       const horarioLine =
         s.tipo === "tour" && d.incluirDescriptivos && s.horario

@@ -517,7 +517,7 @@ export default function ServicioFormModal(props: Props) {
               className={inputCls}
             />
             <div className="text-[11px] text-slate-500 mt-1.5">
-              Días, hora y duración. Aparece en el itinerario si está activado "Incluir horarios".
+              Días, hora y duración. Aparece en la propuesta si está activado "Incluir horarios".
             </div>
           </div>
         )}
