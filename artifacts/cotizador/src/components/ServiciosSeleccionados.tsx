@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PriceInput } from "@/components/ui/price-input";
 import { Section } from "./ClientForm";
 import type {
@@ -263,6 +263,36 @@ function ServicioRow({
     "dates" | "price" | "notes" | "tickets" | null
   >(null);
 
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(servicio.nombre);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
+
+  function startNameEdit() {
+    setNameValue(servicio.nombre);
+    setEditingName(true);
+    setTimeout(() => {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.select();
+    }, 0);
+  }
+
+  function commitName() {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    const trimmed = nameValue.trim();
+    if (trimmed) {
+      onUpdate({ ...servicio, nombre: trimmed });
+    }
+    setEditingName(false);
+    setTimeout(() => { savingRef.current = false; }, 0);
+  }
+
+  function cancelName() {
+    setNameValue(servicio.nombre);
+    setEditingName(false);
+  }
+
   let descripcion: React.ReactNode = null;
   if (isHotel) {
     const meta = [servicio.ubicacion, servicio.estrellas]
@@ -338,9 +368,28 @@ function ServicioRow({
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-slate-900 truncate">
-          {titleLabel}
-        </div>
+        {editingName ? (
+          <input
+            ref={nameInputRef}
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); commitName(); }
+              if (e.key === "Escape") { e.preventDefault(); cancelName(); }
+            }}
+            className="text-sm font-semibold text-slate-900 w-full bg-transparent border-b border-primary/50 focus:outline-none focus:border-primary pb-px leading-tight"
+          />
+        ) : (
+          <div
+            className="text-sm font-semibold text-slate-900 truncate cursor-pointer flex items-center gap-1 group/name"
+            onClick={startNameEdit}
+            title="Clic para editar el nombre"
+          >
+            <span className="truncate">{titleLabel}</span>
+            <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
+          </div>
+        )}
         {servicio.manual && (
           <div className="mt-0.5">
             <span className="inline-block text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
