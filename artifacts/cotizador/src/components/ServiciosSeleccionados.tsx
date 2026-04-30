@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PriceInput } from "@/components/ui/price-input";
 import { Section } from "./ClientForm";
 import type {
   Acomodacion,
@@ -725,13 +726,13 @@ function PricesEditor({
             <label className="block text-[11px] font-medium text-slate-600 mb-1">
               {a}
             </label>
-            <input
-              type="text"
-              inputMode="numeric"
+            <PriceInput
               value={vals[a] ?? "0"}
-              onChange={(e) => setVals((prev) => ({ ...prev, [a]: e.target.value.replace(/[^0-9]/g, "") }))}
-              onFocus={(e) => e.target.select()}
-              className="w-full h-9 px-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              onChange={(v) => setVals((prev) => ({ ...prev, [a]: v }))}
+              onApply={handleApply}
+              onCancel={onClose}
+              wrapperClassName="w-full"
+              inputClassName="w-full h-9 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
         ))}
@@ -784,14 +785,14 @@ function UnitPriceEditor({
         </div>
       </div>
       <div className="px-5 pb-3">
-        <input
-          type="text"
-          inputMode="numeric"
+        <PriceInput
           value={val}
-          onChange={(e) => setVal(e.target.value.replace(/[^0-9]/g, ""))}
-          onFocus={(e) => e.target.select()}
+          onChange={setVal}
+          onApply={handleApply}
+          onCancel={onClose}
           autoFocus
-          className="w-full h-9 px-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          wrapperClassName="w-full"
+          inputClassName="w-full h-9 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
       </div>
       <div className="px-5 pb-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-3 flex-wrap">
@@ -943,6 +944,10 @@ function TicketsEditor({
                   setAdultPrice(sanitized === "" ? 0 : Number(sanitized));
                 }}
                 onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); handleApply(); }
+                  else if (e.key === "Escape") { e.preventDefault(); onClose(); }
+                }}
                 placeholder="0"
                 className={`${inputClass} pl-6 tabular-nums`}
               />
@@ -962,6 +967,10 @@ function TicketsEditor({
                 value={childPriceText}
                 onChange={(e) => setChildPriceText(e.target.value.replace(/[^0-9]/g, ""))}
                 onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); handleApply(); }
+                  else if (e.key === "Escape") { e.preventDefault(); onClose(); }
+                }}
                 placeholder="—"
                 className={`${inputClass} pl-6 tabular-nums`}
               />

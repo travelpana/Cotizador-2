@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PriceInput } from "@/components/ui/price-input";
 import { X, Plus, Sparkles, Plane } from "lucide-react";
 import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
 
@@ -327,14 +328,12 @@ export default function CustomItemModal({
               <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
                 Precio (USD)
               </label>
-              <input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 value={precio}
-                onChange={(e) => setPrecio(e.target.value.replace(/[^0-9]/g, ""))}
-                onFocus={(e) => e.target.select()}
+                onChange={setPrecio}
                 placeholder="0"
-                className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+                wrapperClassName="w-full"
+                inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
               />
             </div>
             {tipo !== "hotel" && (
@@ -346,18 +345,13 @@ export default function CustomItemModal({
                 >
                   Precio niño (USD)
                 </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
+                <PriceInput
                   value={precioNino}
-                  onChange={(e) => setPrecioNino(e.target.value.replace(/[^0-9]/g, ""))}
-                  onFocus={(e) => e.target.select()}
+                  onChange={setPrecioNino}
                   placeholder="0"
                   disabled={!ninosEnabled}
-                  title={
-                    ninosEnabled ? undefined : "Disponible cuando se agregan niños"
-                  }
-                  className={`w-full h-10 px-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
+                  wrapperClassName="w-full"
+                  inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
                     ninosEnabled
                       ? "border-slate-200 text-slate-900"
                       : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"

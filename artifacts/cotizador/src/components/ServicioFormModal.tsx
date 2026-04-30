@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PriceInput } from "@/components/ui/price-input";
 import SingleDatePicker from "./SingleDatePicker";
 import {
   Search,
@@ -680,16 +681,11 @@ function HotelFields({
           {(["SGL", "DBL", "TPL", "CHD"] as const).map((a) => (
             <div key={a}>
               <Label>{a}</Label>
-              <input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 value={String(precios[a])}
-                onChange={(e) => {
-                  const sanitized = e.target.value.replace(/[^0-9]/g, "");
-                  onChange({ precios: { [a]: sanitized === "" ? 0 : Number(sanitized) } });
-                }}
-                onFocus={(e) => e.target.select()}
-                className={inputCls}
+                onChange={(v) => onChange({ precios: { [a]: v === "" ? 0 : Number(v) } })}
+                wrapperClassName="w-full"
+                inputClassName="w-full pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
               />
             </div>
           ))}
@@ -842,6 +838,12 @@ function TourTrasladoFields({
                   onUnitOverride(sanitized === "" ? 0 : Number(sanitized));
                 }}
                 onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === "Escape") {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
                 className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-300 text-base font-bold text-slate-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 style={{ color: "#1f2937" }}
               />
@@ -868,58 +870,38 @@ function TourTrasladoFields({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <Label>1 pax</Label>
-              <input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 value={String(precios.p1)}
-                onChange={(e) => {
-                  const s = e.target.value.replace(/[^0-9]/g, "");
-                  onPrecios({ p1: s === "" ? 0 : Number(s) });
-                }}
-                onFocus={(e) => e.target.select()}
-                className={inputCls}
+                onChange={(v) => onPrecios({ p1: v === "" ? 0 : Number(v) })}
+                wrapperClassName="w-full"
+                inputClassName="w-full pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
               />
             </div>
             <div>
               <Label>2-5 pax</Label>
-              <input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 value={String(precios.p2_5)}
-                onChange={(e) => {
-                  const s = e.target.value.replace(/[^0-9]/g, "");
-                  onPrecios({ p2_5: s === "" ? 0 : Number(s) });
-                }}
-                onFocus={(e) => e.target.select()}
-                className={inputCls}
+                onChange={(v) => onPrecios({ p2_5: v === "" ? 0 : Number(v) })}
+                wrapperClassName="w-full"
+                inputClassName="w-full pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
               />
             </div>
             <div>
               <Label>6-10 pax</Label>
-              <input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 value={String(precios.p6_10)}
-                onChange={(e) => {
-                  const s = e.target.value.replace(/[^0-9]/g, "");
-                  onPrecios({ p6_10: s === "" ? 0 : Number(s) });
-                }}
-                onFocus={(e) => e.target.select()}
-                className={inputCls}
+                onChange={(v) => onPrecios({ p6_10: v === "" ? 0 : Number(v) })}
+                wrapperClassName="w-full"
+                inputClassName="w-full pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
               />
             </div>
             <div>
               <Label>Niño</Label>
-              <input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 value={String(precios.chd)}
-                onChange={(e) => {
-                  const s = e.target.value.replace(/[^0-9]/g, "");
-                  onPrecios({ chd: s === "" ? 0 : Number(s) });
-                }}
-                onFocus={(e) => e.target.select()}
-                className={inputCls}
+                onChange={(v) => onPrecios({ chd: v === "" ? 0 : Number(v) })}
+                wrapperClassName="w-full"
+                inputClassName="w-full pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
               />
             </div>
           </div>
