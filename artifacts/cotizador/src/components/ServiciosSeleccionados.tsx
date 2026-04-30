@@ -481,7 +481,7 @@ function ServicioRow({
           </PopoverTrigger>
           <PopoverContent
             align="end"
-            className="w-[220px] p-4 z-[60]"
+            className="w-[280px] p-0 z-[60] overflow-hidden"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <UnitPriceEditor
@@ -777,44 +777,46 @@ function UnitPriceEditor({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-        Precio por persona
+    <div className="flex flex-col box-border w-full">
+      <div className="px-5 pt-4 pb-2">
+        <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
+          Precio por persona
+        </div>
       </div>
-      <input
-        type="text"
-        inputMode="numeric"
-        value={val}
-        onChange={(e) => setVal(e.target.value.replace(/[^0-9]/g, ""))}
-        onFocus={(e) => e.target.select()}
-        autoFocus
-        className="w-full h-9 px-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-      />
-      <div className="flex justify-between gap-2 pt-1">
+      <div className="px-5 pb-3">
+        <input
+          type="text"
+          inputMode="numeric"
+          value={val}
+          onChange={(e) => setVal(e.target.value.replace(/[^0-9]/g, ""))}
+          onFocus={(e) => e.target.select()}
+          autoFocus
+          className="w-full h-9 px-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+        />
+      </div>
+      <div className="px-5 pb-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-3 flex-wrap">
         <button
           type="button"
           onClick={handleReset}
-          className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100"
           title="Restablecer precio automático"
+          className="mr-auto px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 whitespace-nowrap"
         >
           Restablecer
         </button>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90"
-          >
-            Aplicar
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100 whitespace-nowrap"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={handleApply}
+          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 whitespace-nowrap"
+        >
+          Aplicar
+        </button>
       </div>
     </div>
   );
