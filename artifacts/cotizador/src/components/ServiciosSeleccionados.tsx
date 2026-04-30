@@ -382,11 +382,22 @@ function ServicioRow({
           />
         ) : (
           <div
-            className="text-sm font-semibold text-slate-900 truncate cursor-pointer flex items-center gap-1 group/name"
+            className="cursor-pointer flex items-center gap-1.5 group/name"
             onClick={startNameEdit}
             title="Clic para editar el nombre"
           >
-            <span className="truncate">{titleLabel}</span>
+            <span className="text-sm font-semibold text-slate-900 truncate">{titleLabel}</span>
+            {servicio.tipoServicio && (
+              <span
+                className={`flex-shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                  servicio.tipoServicio === "Privado"
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "bg-emerald-50 text-emerald-600"
+                }`}
+              >
+                {servicio.tipoServicio}
+              </span>
+            )}
             <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
           </div>
         )}

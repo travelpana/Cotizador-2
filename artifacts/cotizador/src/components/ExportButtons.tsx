@@ -128,7 +128,8 @@ export default function ExportButtons({
       lines.push("");
       lines.push(`*${title}*`);
       for (const s of items) {
-        lines.push(`• ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}`);
+        const tipoLabel = s.tipoServicio ? ` · ${s.tipoServicio}` : "";
+        lines.push(`• ${s.nombre}${s.fecha ? ` (${s.fecha})` : ""}${tipoLabel}`);
         if (
           s.tipo === "tour" &&
           s.tickets?.enabled &&
@@ -407,10 +408,7 @@ export default function ExportButtons({
         Acciones
       </div>
       <button
-        onClick={() => {
-          if (!validateBeforeAction()) return;
-          onPreview();
-        }}
+        onClick={() => onPreview()}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
       >
         <Eye className="w-4 h-4" />

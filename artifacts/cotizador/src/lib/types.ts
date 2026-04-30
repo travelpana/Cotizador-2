@@ -88,6 +88,8 @@ export interface ServicioSeleccionado {
   vigencia?: string;
   tipoHabitacion?: string;
   manual?: boolean;
+  /** For traslados: whether the service is Regular or Privado. */
+  tipoServicio?: "Regular" | "Privado";
 }
 
 export interface Descriptivo {
@@ -173,6 +175,8 @@ export interface ServicioCalculado {
   tickets?: TourTickets;
   /** Tour-only: schedule label surfaced for display. */
   horario?: string;
+  /** For traslados/tours: Regular or Privado. */
+  tipoServicio?: "Regular" | "Privado";
 }
 
 export interface CotizacionResult {

@@ -240,6 +240,7 @@ export default function ServiceSearchBar({
         chd: tr.precios.chd,
       },
       usarFecha: false,
+      tipoServicio: tr.tipo,
     };
   };
 

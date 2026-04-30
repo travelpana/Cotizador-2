@@ -155,6 +155,7 @@ export function calcularLocal(
         paxAplicados: paxLocal,
         tickets: s.tipo === "tour" ? s.tickets : undefined,
         horario: s.tipo === "tour" ? s.horario : undefined,
+        tipoServicio: s.tipoServicio,
       });
     }
   }

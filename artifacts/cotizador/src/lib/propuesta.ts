@@ -91,7 +91,9 @@ function deriveTipoServicio(r: CotizacionResult): string {
   if (relevantes.length === 0) return "—";
   const tipos = new Set<"regular" | "privado">();
   for (const s of relevantes) {
-    const isPrivado = (s.detalle || "").toLowerCase().includes("privado");
+    const isPrivado = s.tipoServicio
+      ? s.tipoServicio === "Privado"
+      : (s.detalle || "").toLowerCase().includes("privado");
     tipos.add(isPrivado ? "privado" : "regular");
   }
   if (tipos.size === 2) return "Mixto (Regular/Privado)";
@@ -303,15 +305,15 @@ function adicionalesTable(
   const rows = items
     .map((s) => {
       const tipo =
-        s.tipo === "traslado"
-          ? s.detalle?.includes("Privado")
-            ? "Privado"
-            : "Regular"
-          : s.tipo === "tour"
-            ? "Regular"
-            : s.tipo === "vuelo"
-              ? "Vuelo"
-              : "—";
+        s.tipo === "vuelo"
+          ? "Vuelo"
+          : s.tipoServicio
+            ? s.tipoServicio
+            : s.tipo === "traslado"
+              ? s.detalle?.includes("Privado")
+                ? "Privado"
+                : "Regular"
+              : "Regular";
 
       const tarifa = d.isCalc
         ? escape(fmt(s.totalesPorAcomodacion[d.primary]))
