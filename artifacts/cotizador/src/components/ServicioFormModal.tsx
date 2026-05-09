@@ -600,6 +600,7 @@ function HotelFields({
           <Calendar className="w-3.5 h-3.5" /> Estadía
         </SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Fila 1: Check-in | Check-out | Ubicación */}
           <div>
             <Label>Check-in</Label>
             <SingleDatePicker
@@ -630,23 +631,41 @@ function HotelFields({
           </div>
           <div>
             <Label>Ubicación</Label>
-            <input
+            <select
               value={ubicacion}
               onChange={(e) => onChange({ ubicacion: e.target.value })}
-              placeholder="Ciudad / país"
-              className={inputCls}
-            />
+              className={selectCls}
+              style={{ color: ubicacion ? "#0f172a" : "#94a3b8" }}
+            >
+              <option value="">— Seleccionar —</option>
+              <option value="BOCAS DEL TORO">BOCAS DEL TORO</option>
+              <option value="CHIRIQUÍ">CHIRIQUÍ</option>
+              <option value="CIUDAD DE PANAMÁ">CIUDAD DE PANAMÁ</option>
+              <option value="COCLÉ (RIVIERA PACÍFICA)">COCLÉ (RIVIERA PACÍFICA)</option>
+              <option value="COLÓN">COLÓN</option>
+              <option value="CONTADORA">CONTADORA</option>
+              <option value="SAN BLAS">SAN BLAS</option>
+              <option value="TABOGA">TABOGA</option>
+              <option value="VERAGUAS / SANTIAGO">VERAGUAS / SANTIAGO</option>
+            </select>
           </div>
+
+          {/* Fila 2: Categoría | Tipo de Habitación | Vigencia */}
           <div>
             <Label>Categoría</Label>
-            <input
+            <select
               value={estrellas}
               onChange={(e) => onChange({ estrellas: e.target.value })}
-              placeholder="Ej: 4 estrellas"
-              className={inputCls}
-            />
+              className={selectCls}
+              style={{ color: estrellas ? "#0f172a" : "#94a3b8" }}
+            >
+              <option value="">— Seleccionar —</option>
+              <option value="★★★">★★★</option>
+              <option value="★★★★">★★★★</option>
+              <option value="★★★★★">★★★★★</option>
+            </select>
           </div>
-          <div className="md:col-span-2">
+          <div>
             <Label>Tipo de Habitación</Label>
             <input
               value={tipoHabitacion}
@@ -655,7 +674,7 @@ function HotelFields({
               className={inputCls}
             />
           </div>
-          <div className="md:col-span-3">
+          <div>
             <div className="flex items-center justify-between mb-1">
               <Label>Vigencia</Label>
               <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -664,7 +683,7 @@ function HotelFields({
                     aplicarVigencia ? "text-primary" : "text-slate-500"
                   }`}
                 >
-                  Aplicar vigencia
+                  Aplicar
                 </span>
                 <ToggleSwitch
                   checked={aplicarVigencia}
@@ -678,7 +697,7 @@ function HotelFields({
               placeholder={
                 aplicarVigencia
                   ? "Ej: 01/04 al 30/09"
-                  : "Activa el toggle para aplicar una vigencia"
+                  : "Activa el toggle"
               }
               disabled={!aplicarVigencia}
               className={`${inputCls} transition-all ${
@@ -954,6 +973,9 @@ function ToggleSwitch({
 
 const inputCls =
   "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400";
+
+const selectCls =
+  "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
