@@ -108,6 +108,9 @@ export default function ExportButtons({
           const end = s.fechaFin ? fmtDMA(s.fechaFin) : "";
           lines.push(`${start} - ${end} → · ${s.noches ?? ""} noches`);
         }
+        if (s.tipoHabitacion) {
+          lines.push(`   Habitación: ${s.tipoHabitacion}`);
+        }
         for (const a of acoms) {
           lines.push(
             `${a}: ${

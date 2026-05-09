@@ -269,7 +269,7 @@ function alojamientoTable(d: PropuestaData): string {
           ${h.notas ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>` : ""}
         </td>
         <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
-        <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "Standard")}</td>
+        <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
         ${showNoches ? `<td style="${STYLES.tdCenter};width:10%;">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>` : ""}
         ${acomVals}
         <td style="${STYLES.tdEmpty};width:10%;"></td>

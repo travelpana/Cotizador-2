@@ -464,6 +464,7 @@ export default function ServicioFormModal(props: Props) {
             estrellas={estrellas}
             vigencia={vigencia}
             aplicarVigencia={aplicarVigencia}
+            tipoHabitacion={tipoHabitacion}
             precios={precios}
             onChange={(patch) => {
               if (patch.fechaInicio !== undefined)
@@ -472,6 +473,8 @@ export default function ServicioFormModal(props: Props) {
               if (patch.ubicacion !== undefined) setUbicacion(patch.ubicacion);
               if (patch.estrellas !== undefined) setEstrellas(patch.estrellas);
               if (patch.vigencia !== undefined) setVigencia(patch.vigencia);
+              if (patch.tipoHabitacion !== undefined)
+                setTipoHabitacion(patch.tipoHabitacion);
               if (patch.precios)
                 setPrecios((p) => ({ ...p, ...patch.precios }));
             }}
@@ -564,6 +567,7 @@ function HotelFields({
   estrellas,
   vigencia,
   aplicarVigencia,
+  tipoHabitacion,
   precios,
   onChange,
   onToggleAplicarVigencia,
@@ -574,6 +578,7 @@ function HotelFields({
   estrellas: string;
   vigencia: string;
   aplicarVigencia: boolean;
+  tipoHabitacion: string;
   precios: { SGL: number; DBL: number; TPL: number; CHD: number };
   onChange: (
     patch: Partial<{
@@ -582,6 +587,7 @@ function HotelFields({
       ubicacion: string;
       estrellas: string;
       vigencia: string;
+      tipoHabitacion: string;
       precios: Partial<{ SGL: number; DBL: number; TPL: number; CHD: number }>;
     }>,
   ) => void;
@@ -641,6 +647,15 @@ function HotelFields({
             />
           </div>
           <div className="md:col-span-2">
+            <Label>Tipo de Habitación</Label>
+            <input
+              value={tipoHabitacion}
+              onChange={(e) => onChange({ tipoHabitacion: e.target.value })}
+              placeholder="Ej: Standard, Deluxe, Suite, Ocean View..."
+              className={inputCls}
+            />
+          </div>
+          <div className="md:col-span-3">
             <div className="flex items-center justify-between mb-1">
               <Label>Vigencia</Label>
               <label className="flex items-center gap-2 cursor-pointer select-none">
