@@ -13,6 +13,7 @@ import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
 import Seguimiento from "@/components/Seguimiento";
 import Plantillas from "@/components/Plantillas";
+import Descriptivos from "@/components/Descriptivos";
 import {
   loadGuardadas,
   saveGuardadas,
@@ -29,6 +30,10 @@ import {
   serviciosToBlocks,
   newPlantilla,
 } from "@/lib/plantillas";
+import {
+  loadDescriptivosLS,
+  mergeDescriptivos,
+} from "@/lib/descriptivos";
 import type {
   Acomodacion,
   Cliente,
@@ -122,6 +127,16 @@ export default function CotizadorPage() {
   const refreshPlantillasCount = () => {
     setPlantillasCount(loadPlantillas().length);
   };
+
+  const [lsDescriptivosVersion, setLsDescriptivosVersion] = useState(0);
+  const handleDescriptivosChanged = () => {
+    setLsDescriptivosVersion((v) => v + 1);
+  };
+
+  const mergedDescriptivos = useMemo(() => {
+    const lsItems = loadDescriptivosLS();
+    return mergeDescriptivos(lsItems, descriptivos);
+  }, [descriptivos, lsDescriptivosVersion]);
 
   const [toast, setToast] = useState<{
     msg: string;
@@ -426,14 +441,18 @@ export default function CotizadorPage() {
                   ? "Cotizador de Viajes"
                   : view === "seguimiento"
                     ? "Seguimiento"
-                    : "Plantillas"}
+                    : view === "plantillas"
+                      ? "Plantillas"
+                      : "Descriptivos"}
               </h1>
               <p className="text-xs text-muted-foreground">
                 {view === "cotizador"
                   ? "Multi-acomodación · cálculo en tiempo real desde tarifario Excel"
                   : view === "seguimiento"
                     ? "Cotizaciones guardadas en este equipo"
-                    : "Estructuras reutilizables para circuitos y multi-destino"}
+                    : view === "plantillas"
+                      ? "Estructuras reutilizables para circuitos y multi-destino"
+                      : "Biblioteca de descriptivos turísticos vinculados al tarifario"}
               </p>
             </div>
             <div className="text-xs text-muted-foreground hidden md:block">
@@ -480,6 +499,11 @@ export default function CotizadorPage() {
                 handleUsarPlantilla(svcs);
                 refreshPlantillasCount();
               }}
+            />
+          ) : view === "descriptivos" ? (
+            <Descriptivos
+              apiDescriptivos={descriptivos}
+              onChanged={handleDescriptivosChanged}
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
@@ -556,7 +580,7 @@ export default function CotizadorPage() {
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   incluirDescriptivoCompleto={incluirDescriptivoCompleto}
-                  descriptivos={descriptivos}
+                  descriptivos={mergedDescriptivos}
                   actividadesOverride={actividadesOverride}
                   onSave={handleSave}
                   onClear={handleClear}
@@ -621,7 +645,7 @@ export default function CotizadorPage() {
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
         incluirDescriptivoCompleto={incluirDescriptivoCompleto}
-        descriptivos={descriptivos}
+        descriptivos={mergedDescriptivos}
         actividadesOverride={actividadesOverride}
         onActividadesOverrideChange={setActividadesOverride}
         numeroCotizacion={previewNumero}

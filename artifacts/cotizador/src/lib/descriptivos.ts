@@ -1,0 +1,200 @@
+import type { Descriptivo } from "@/lib/types";
+
+export interface DescriptivoLocal {
+  id: string;
+  codigo: string;
+  titulo: string;
+  horario?: string;
+  duracion?: string;
+  categoria?: string;
+  parrafos: string[];
+  incluyeItems: string[];
+  observacionesItems: string[];
+  recomendacionesItems: string[];
+  notaImportante?: string;
+  activo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const LS_KEY = "rge_descriptivos_v1";
+
+export function loadDescriptivosLS(): DescriptivoLocal[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as DescriptivoLocal[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveDescriptivosLS(items: DescriptivoLocal[]): void {
+  localStorage.setItem(LS_KEY, JSON.stringify(items));
+}
+
+let _cnt = 0;
+function uid(): string {
+  return `${Date.now()}_${++_cnt}`;
+}
+
+export function newDescriptivoLocal(partial?: Partial<DescriptivoLocal>): DescriptivoLocal {
+  const now = new Date().toISOString();
+  return {
+    id: `desc_${uid()}`,
+    codigo: "",
+    titulo: "",
+    horario: "",
+    duracion: "",
+    categoria: "",
+    parrafos: [],
+    incluyeItems: [],
+    observacionesItems: [],
+    recomendacionesItems: [],
+    notaImportante: "",
+    activo: true,
+    createdAt: now,
+    updatedAt: now,
+    ...partial,
+  };
+}
+
+export function duplicarDescriptivo(d: DescriptivoLocal): DescriptivoLocal {
+  const now = new Date().toISOString();
+  return {
+    ...d,
+    id: `desc_${uid()}`,
+    codigo: `${d.codigo}-COPIA`,
+    titulo: `${d.titulo} (copia)`,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function toDescriptivo(d: DescriptivoLocal): Descriptivo {
+  const infoBits = [d.horario, d.duracion].filter(Boolean);
+  return {
+    codigo: d.codigo.trim().toUpperCase(),
+    titulo: d.titulo,
+    info: infoBits.join(" · ") || undefined,
+    parrafos: d.parrafos.filter(Boolean),
+    incluye: d.incluyeItems.filter(Boolean).join("\n") || undefined,
+    observaciones: d.observacionesItems.filter(Boolean).join("\n") || undefined,
+    recomendaciones: d.recomendacionesItems.filter(Boolean).join("\n") || undefined,
+    notaImportante: d.notaImportante?.trim() || undefined,
+    horarioExtra: d.horario?.trim() || undefined,
+  };
+}
+
+export function fromDescriptivo(d: Descriptivo): DescriptivoLocal {
+  const now = new Date().toISOString();
+  return {
+    id: `desc_${uid()}`,
+    codigo: d.codigo ?? "",
+    titulo: d.titulo ?? "",
+    horario: d.horarioExtra ?? d.info ?? "",
+    duracion: "",
+    categoria: "",
+    parrafos: Array.isArray(d.parrafos) ? d.parrafos : [],
+    incluyeItems: d.incluye ? d.incluye.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    observacionesItems: d.observaciones ? d.observaciones.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    recomendacionesItems: d.recomendaciones ? d.recomendaciones.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    notaImportante: d.notaImportante ?? "",
+    activo: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function mergeDescriptivos(
+  lsItems: DescriptivoLocal[],
+  apiItems: Descriptivo[],
+): Descriptivo[] {
+  const active = lsItems.filter((d) => d.activo);
+  const converted = active.map(toDescriptivo);
+  const lsCodes = new Set(converted.map((d) => d.codigo.trim().toUpperCase()));
+  const apiOnly = apiItems.filter(
+    (d) => !lsCodes.has((d.codigo ?? "").trim().toUpperCase()),
+  );
+  return [...converted, ...apiOnly];
+}
+
+const COLOR_AZUL = "#1E3A8A";
+const COLOR_NARANJA = "#f97316";
+const COLOR_VERDE = "#16a34a";
+const COLOR_TEXTO = "#1f2937";
+const COLOR_BORDE = "#e5e7eb";
+const COLOR_LABEL = "#6b7280";
+
+function esc(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escNL(s: string): string {
+  return esc(s).replace(/\n/g, "<br />");
+}
+
+export function buildDescriptivoPreviewHtml(d: DescriptivoLocal): string {
+  const infoBits = [d.horario, d.duracion].filter(Boolean);
+  const infoLine = infoBits.length
+    ? `<div style="font-size:11px;color:${COLOR_LABEL};margin:4px 0 10px;">${esc(infoBits.join(" · "))}</div>`
+    : "";
+
+  const parrafos = d.parrafos
+    .filter(Boolean)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 8px;color:${COLOR_TEXTO};font-size:12px;line-height:1.5;">${esc(p)}</p>`,
+    )
+    .join("");
+
+  const incluyeText = d.incluyeItems.filter(Boolean).join("\n");
+  const incluyeList = incluyeText
+    ? `<div style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border-left:3px solid ${COLOR_VERDE};border-radius:6px;">
+        <div style="font-size:10px;font-weight:bold;color:${COLOR_VERDE};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Incluye</div>
+        <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escNL(incluyeText)}</div>
+       </div>`
+    : "";
+
+  const obsText = d.observacionesItems.filter(Boolean).join("\n");
+  const observaciones = obsText
+    ? `<div style="margin-top:8px;padding:10px 12px;background:#fff7ed;border-left:3px solid ${COLOR_NARANJA};border-radius:6px;">
+        <div style="font-size:10px;font-weight:bold;color:${COLOR_NARANJA};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Observaciones</div>
+        <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escNL(obsText)}</div>
+       </div>`
+    : "";
+
+  const recText = d.recomendacionesItems.filter(Boolean).join("\n");
+  const recomendaciones = recText
+    ? `<div style="margin-top:8px;padding:10px 12px;background:#eff6ff;border-left:3px solid ${COLOR_AZUL};border-radius:6px;">
+        <div style="font-size:10px;font-weight:bold;color:${COLOR_AZUL};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Recomendaciones</div>
+        <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escNL(recText)}</div>
+       </div>`
+    : "";
+
+  const nota = d.notaImportante?.trim()
+    ? `<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:6px;">
+        <div style="font-size:10px;font-weight:bold;color:#dc2626;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Nota importante</div>
+        <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escNL(d.notaImportante!)}</div>
+       </div>`
+    : "";
+
+  const item = `<div style="padding:18px 0;border-bottom:1px solid ${COLOR_BORDE};">
+    <div style="font-weight:bold;color:${COLOR_AZUL};font-size:14px;line-height:1.3;">${esc(d.titulo || "(sin título)")}</div>
+    ${infoLine}
+    ${parrafos}
+    ${incluyeList}
+    ${observaciones}
+    ${recomendaciones}
+    ${nota}
+  </div>`;
+
+  return `<div style="font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:13px;line-height:1.45;padding:16px;">
+    <div style="display:inline-block;background:#fbbf23;color:#fff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;">DESCRIPTIVOS</div>
+    <div style="margin-top:10px;">${item}</div>
+  </div>`;
+}

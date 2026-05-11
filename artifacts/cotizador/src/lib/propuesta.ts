@@ -233,6 +233,9 @@ const escape = (s: unknown) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/** Like escape() but also converts newlines to <br /> for multi-line fields */
+const escapeML = (s: unknown) => escape(s).replace(/\n/g, "<br />");
+
 function infoRow(label: string, value: string) {
   return `<tr>
     <td style="${STYLES.infoLabel}">${escape(label)}:</td>
@@ -434,28 +437,28 @@ function descriptivosBlock(d: PropuestaData): string {
       const incluyeList = t.incluye
         ? `<div style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border-left:3px solid ${COLOR_VERDE};border-radius:6px;">
             <div style="font-size:10px;font-weight:bold;color:${COLOR_VERDE};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Incluye</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.incluye)}</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escapeML(t.incluye)}</div>
           </div>`
         : "";
 
       const observaciones = t.observaciones
         ? `<div style="margin-top:8px;padding:10px 12px;background:#fff7ed;border-left:3px solid ${COLOR_NARANJA};border-radius:6px;">
             <div style="font-size:10px;font-weight:bold;color:${COLOR_NARANJA};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Observaciones</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.observaciones)}</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escapeML(t.observaciones)}</div>
           </div>`
         : "";
 
       const recomendaciones = t.recomendaciones
         ? `<div style="margin-top:8px;padding:10px 12px;background:#eff6ff;border-left:3px solid ${COLOR_AZUL};border-radius:6px;">
             <div style="font-size:10px;font-weight:bold;color:${COLOR_AZUL};letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Recomendaciones</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.recomendaciones)}</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escapeML(t.recomendaciones)}</div>
           </div>`
         : "";
 
       const nota = t.notaImportante
         ? `<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:6px;">
             <div style="font-size:10px;font-weight:bold;color:#dc2626;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;">Nota importante</div>
-            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escape(t.notaImportante)}</div>
+            <div style="font-size:11px;color:${COLOR_TEXTO};line-height:1.5;">${escapeML(t.notaImportante)}</div>
           </div>`
         : "";
 
