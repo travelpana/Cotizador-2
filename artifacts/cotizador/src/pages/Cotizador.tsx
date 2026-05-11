@@ -14,6 +14,7 @@ import Itinerario from "@/components/Itinerario";
 import Seguimiento from "@/components/Seguimiento";
 import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
+import Tarifas from "@/components/Tarifas";
 import {
   loadGuardadas,
   saveGuardadas,
@@ -34,6 +35,14 @@ import {
   loadDescriptivosLS,
   mergeDescriptivos,
 } from "@/lib/descriptivos";
+import {
+  loadHotelesLS,
+  loadToursLS,
+  loadTrasladosLS,
+  mergeHoteles,
+  mergeTours,
+  mergeTraslados,
+} from "@/lib/tarifas";
 import type {
   Acomodacion,
   Cliente,
@@ -137,6 +146,22 @@ export default function CotizadorPage() {
     const lsItems = loadDescriptivosLS();
     return mergeDescriptivos(lsItems, descriptivos);
   }, [descriptivos, lsDescriptivosVersion]);
+
+  const [lsTarifasVersion, setLsTarifasVersion] = useState(0);
+  const handleTarifasChanged = () => setLsTarifasVersion((v) => v + 1);
+
+  const mergedHoteles = useMemo(
+    () => mergeHoteles(loadHotelesLS(), hoteles),
+    [hoteles, lsTarifasVersion],
+  );
+  const mergedTours = useMemo(
+    () => mergeTours(loadToursLS(), tours),
+    [tours, lsTarifasVersion],
+  );
+  const mergedTraslados = useMemo(
+    () => mergeTraslados(loadTrasladosLS(), traslados),
+    [traslados, lsTarifasVersion],
+  );
 
   const [toast, setToast] = useState<{
     msg: string;
@@ -443,7 +468,9 @@ export default function CotizadorPage() {
                     ? "Seguimiento"
                     : view === "plantillas"
                       ? "Plantillas"
-                      : "Descriptivos"}
+                      : view === "descriptivos"
+                        ? "Descriptivos"
+                        : "Tarifas"}
               </h1>
               <p className="text-xs text-muted-foreground">
                 {view === "cotizador"
@@ -452,12 +479,14 @@ export default function CotizadorPage() {
                     ? "Cotizaciones guardadas en este equipo"
                     : view === "plantillas"
                       ? "Estructuras reutilizables para circuitos y multi-destino"
-                      : "Biblioteca de descriptivos turísticos vinculados al tarifario"}
+                      : view === "descriptivos"
+                        ? "Biblioteca de descriptivos turísticos vinculados al tarifario"
+                        : "Administra hoteles, tours y traslados · localStorage + Excel"}
               </p>
             </div>
             <div className="text-xs text-muted-foreground hidden md:block">
-              {hoteles.length} hoteles · {tours.length} tours ·{" "}
-              {traslados.length} traslados
+              {mergedHoteles.length} hoteles · {mergedTours.length} tours ·{" "}
+              {mergedTraslados.length} traslados
             </div>
           </div>
         </header>
@@ -492,9 +521,9 @@ export default function CotizadorPage() {
             />
           ) : view === "plantillas" ? (
             <Plantillas
-              hoteles={hoteles}
-              tours={tours}
-              traslados={traslados}
+              hoteles={mergedHoteles}
+              tours={mergedTours}
+              traslados={mergedTraslados}
               onUsarPlantilla={(svcs) => {
                 handleUsarPlantilla(svcs);
                 refreshPlantillasCount();
@@ -504,6 +533,14 @@ export default function CotizadorPage() {
             <Descriptivos
               apiDescriptivos={descriptivos}
               onChanged={handleDescriptivosChanged}
+            />
+          ) : view === "tarifas" ? (
+            <Tarifas
+              apiHoteles={hoteles}
+              apiTours={tours}
+              apiTraslados={traslados}
+              onChanged={handleTarifasChanged}
+              onUpload={handleUpload}
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
@@ -520,9 +557,9 @@ export default function CotizadorPage() {
                   onAcomodacionesChange={setAcomodaciones}
                 />
                 <ServiceSearchBar
-                  hoteles={hoteles}
-                  tours={tours}
-                  traslados={traslados}
+                  hoteles={mergedHoteles}
+                  tours={mergedTours}
+                  traslados={mergedTraslados}
                   globalFechaInicio={cliente.fechaInicio}
                   globalFechaFin={cliente.fechaFin}
                   onPick={handleQuickAdd}
@@ -625,9 +662,9 @@ export default function CotizadorPage() {
         tipo={form.tipo}
         isManual={form.isManual}
         allowTipoSwitch={form.allowSwitch}
-        hoteles={hoteles}
-        tours={tours}
-        traslados={traslados}
+        hoteles={mergedHoteles}
+        tours={mergedTours}
+        traslados={mergedTraslados}
         initial={form.initial}
         globalPasajeros={cliente.pasajeros}
         globalFechaInicio={cliente.fechaInicio}

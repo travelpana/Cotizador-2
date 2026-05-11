@@ -9,11 +9,12 @@ import {
   FileText,
   LayoutTemplate,
   BookOpen,
+  Tag,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { CatalogInfo } from "@/lib/api";
 
-export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos";
+export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos" | "tarifas";
 
 interface Props {
   view: View;
@@ -186,6 +187,12 @@ export default function Sidebar({
           onClick={() => onView("descriptivos")}
           icon={<BookOpen className="w-4 h-4" />}
           label="Descriptivos"
+        />
+        <NavItem
+          active={view === "tarifas"}
+          onClick={() => onView("tarifas")}
+          icon={<Tag className="w-4 h-4" />}
+          label="Tarifas"
         />
       </nav>
 
