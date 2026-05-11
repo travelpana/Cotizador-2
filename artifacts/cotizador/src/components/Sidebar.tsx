@@ -7,16 +7,18 @@ import {
   AlertCircle,
   Upload,
   FileText,
+  LayoutTemplate,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { CatalogInfo } from "@/lib/api";
 
-export type View = "cotizador" | "seguimiento";
+export type View = "cotizador" | "seguimiento" | "plantillas";
 
 interface Props {
   view: View;
   onView: (v: View) => void;
   seguimientoCount: number;
+  plantillasCount: number;
   fileInfo?: CatalogInfo | null;
   onReload?: () => Promise<void>;
   onUpload?: (file: File) => Promise<void>;
@@ -66,6 +68,7 @@ export default function Sidebar({
   view,
   onView,
   seguimientoCount,
+  plantillasCount,
   fileInfo,
   onReload,
   onUpload,
@@ -169,6 +172,13 @@ export default function Sidebar({
           icon={<ListChecks className="w-4 h-4" />}
           label="Seguimiento"
           badge={seguimientoCount}
+        />
+        <NavItem
+          active={view === "plantillas"}
+          onClick={() => onView("plantillas")}
+          icon={<LayoutTemplate className="w-4 h-4" />}
+          label="Plantillas"
+          badge={plantillasCount}
         />
       </nav>
 

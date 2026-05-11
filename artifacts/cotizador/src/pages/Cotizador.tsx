@@ -12,6 +12,7 @@ import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
 import Seguimiento from "@/components/Seguimiento";
+import Plantillas from "@/components/Plantillas";
 import {
   loadGuardadas,
   saveGuardadas,
@@ -22,6 +23,12 @@ import {
   type EstadoCotizacion,
   type ModoCotizacion,
 } from "@/components/Guardadas";
+import {
+  loadPlantillas,
+  savePlantillas,
+  serviciosToBlocks,
+  newPlantilla,
+} from "@/lib/plantillas";
 import type {
   Acomodacion,
   Cliente,
@@ -107,6 +114,14 @@ export default function CotizadorPage() {
   useEffect(() => {
     setGuardadas(loadGuardadas());
   }, []);
+
+  const [plantillasCount, setPlantillasCount] = useState(
+    () => loadPlantillas().length,
+  );
+
+  const refreshPlantillasCount = () => {
+    setPlantillasCount(loadPlantillas().length);
+  };
 
   const [toast, setToast] = useState<{
     msg: string;
@@ -357,6 +372,30 @@ export default function CotizadorPage() {
     setPreviewQuote(null);
   };
 
+  const handleUsarPlantilla = (servicios: ServicioSeleccionado[]) => {
+    setServicios(servicios);
+    setCurrentNumero(null);
+    setView("cotizador");
+    showToast(
+      servicios.length > 0
+        ? `Plantilla cargada · ${servicios.length} servicio${servicios.length !== 1 ? "s" : ""} agregado${servicios.length !== 1 ? "s" : ""}`
+        : "Plantilla cargada (sin servicios en el tarifario actual)",
+    );
+  };
+
+  const handleGuardarComoPlantilla = () => {
+    if (servicios.length === 0) return;
+    const nombre = window.prompt("Nombre para la nueva plantilla:");
+    if (!nombre?.trim()) return;
+    const plantilla = newPlantilla(nombre.trim());
+    plantilla.bloques = serviciosToBlocks(servicios);
+    const existing = loadPlantillas();
+    const next = [plantilla, ...existing];
+    savePlantillas(next);
+    setPlantillasCount(next.length);
+    showToast(`Plantilla "${plantilla.nombre}" guardada`);
+  };
+
   const previewModo: ModoCotizacion = previewQuote?.modoCotizacion ?? modo;
   const previewCliente = previewQuote?.cliente ?? cliente;
   const previewServicios = previewQuote?.servicios ?? servicios;
@@ -367,8 +406,12 @@ export default function CotizadorPage() {
     <div className="flex min-h-screen">
       <Sidebar
         view={view}
-        onView={setView}
+        onView={(v) => {
+          if (v === "plantillas") refreshPlantillasCount();
+          setView(v);
+        }}
         seguimientoCount={guardadas.length}
+        plantillasCount={plantillasCount}
         fileInfo={fileInfo}
         onReload={handleTarifarioReload}
         onUpload={handleUpload}
@@ -381,12 +424,16 @@ export default function CotizadorPage() {
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {view === "cotizador"
                   ? "Cotizador de Viajes"
-                  : "Seguimiento"}
+                  : view === "seguimiento"
+                    ? "Seguimiento"
+                    : "Plantillas"}
               </h1>
               <p className="text-xs text-muted-foreground">
                 {view === "cotizador"
                   ? "Multi-acomodación · cálculo en tiempo real desde tarifario Excel"
-                  : "Cotizaciones guardadas en este equipo"}
+                  : view === "seguimiento"
+                    ? "Cotizaciones guardadas en este equipo"
+                    : "Estructuras reutilizables para circuitos y multi-destino"}
               </p>
             </div>
             <div className="text-xs text-muted-foreground hidden md:block">
@@ -423,6 +470,16 @@ export default function CotizadorPage() {
               onDelete={seguimientoDelete}
               onDuplicate={seguimientoDuplicate}
               onUpdateEstado={seguimientoUpdateEstado}
+            />
+          ) : view === "plantillas" ? (
+            <Plantillas
+              hoteles={hoteles}
+              tours={tours}
+              traslados={traslados}
+              onUsarPlantilla={(svcs) => {
+                handleUsarPlantilla(svcs);
+                refreshPlantillasCount();
+              }}
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
@@ -467,6 +524,16 @@ export default function CotizadorPage() {
               </div>
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+                {servicios.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleGuardarComoPlantilla}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all text-xs font-medium"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/><line x1="9" x2="9" y1="9" y2="21"/></svg>
+                    Guardar cotización como plantilla
+                  </button>
+                )}
                 <ConfiguracionPanel
                   modo={modo}
                   onModoChange={setModo}
