@@ -57,7 +57,7 @@ function LineListEditor({
               value={item}
               onChange={(e) => update(idx, e.target.value)}
               placeholder={placeholder}
-              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-300"
+              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
             />
             <button
               type="button"
@@ -82,7 +82,7 @@ function LineListEditor({
 }
 
 const inputCls =
-  "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400";
+  "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400";
 
 export default function DescriptivoEditor({ descriptivo, onSave, onCancel }: Props) {
   const [d, setD] = useState<DescriptivoLocal>({ ...descriptivo });
@@ -191,7 +191,7 @@ export default function DescriptivoEditor({ descriptivo, onSave, onCancel }: Pro
                 <select
                   value={d.categoria ?? ""}
                   onChange={(e) => patch({ categoria: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
                 >
                   <option value="">— Sin categoría —</option>
                   {CATEGORIAS.map((c) => (
@@ -258,7 +258,7 @@ export default function DescriptivoEditor({ descriptivo, onSave, onCancel }: Pro
                       }}
                       placeholder="Párrafo de descripción..."
                       rows={2}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-300 resize-none"
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none"
                     />
                     <button
                       type="button"
@@ -316,7 +316,7 @@ export default function DescriptivoEditor({ descriptivo, onSave, onCancel }: Pro
                   onChange={(e) => patch({ notaImportante: e.target.value })}
                   placeholder="Nota crítica para el cliente..."
                   rows={2}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-300 resize-none"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none"
                 />
               </div>
             </div>

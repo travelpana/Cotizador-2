@@ -153,13 +153,13 @@ export default function Descriptivos({ apiDescriptivos, onChanged }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por código, título o categoría..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
           />
         </div>
         <select
           value={filterCat}
           onChange={(e) => setFilterCat(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
         >
           {CATEGORIAS_FILTER.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -168,7 +168,7 @@ export default function Descriptivos({ apiDescriptivos, onChanged }: Props) {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
         >
           <option value="todos">Todos los estados</option>
           <option value="activo">Activos</option>

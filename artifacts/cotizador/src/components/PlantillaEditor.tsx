@@ -83,7 +83,7 @@ function CatalogPicker<T extends CatalogItem>({
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
       />
       {open && filtered.length > 0 && (
         <div className="absolute z-50 mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden">
@@ -92,7 +92,7 @@ function CatalogPicker<T extends CatalogItem>({
               key={item.id}
               type="button"
               onClick={() => { onSelect(item); setQuery(""); setOpen(false); }}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-primary/5 transition-colors truncate border-b border-slate-50 last:border-0"
+              className="w-full text-left px-3 py-2 text-sm text-slate-900 hover:bg-primary/5 transition-colors truncate border-b border-slate-50 last:border-0"
             >
               {item.nombre}
             </button>
@@ -183,9 +183,9 @@ function BlockEditor({
   const meta = BLOCK_META[block.tipo];
 
   const inputCls =
-    "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400";
+    "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400";
   const textareaCls =
-    "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none";
+    "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none";
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -428,7 +428,7 @@ export default function PlantillaEditor({
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Ej: Ciudad + Contadora + Bocas"
-          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
+          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400"
           autoFocus
         />
       </div>
