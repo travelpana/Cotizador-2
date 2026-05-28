@@ -269,12 +269,15 @@ function alojamientoTable(d: PropuestaData): string {
         ? `<td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
         : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
 
-      // Hotel cell: name + ubicación (uppercase) + régimen from notas
+      // Hotel cell: name + ubicación (uppercase) + régimen (desayuno) + notas
       const ubicacionLine = h.ubicacion
         ? `<div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${escape(h.ubicacion)}</div>`
         : "";
-      const regimenLine = h.notas
-        ? `<div style="font-size:11px;color:${COLOR_VERDE};font-weight:500;margin-top:3px;">${escape(h.notas)}</div>`
+      const regimenLine = h.desayuno
+        ? `<div style="font-size:11px;color:${COLOR_VERDE};font-weight:500;margin-top:3px;">${escape(h.desayuno)}</div>`
+        : "";
+      const notasHotelLine = h.notas
+        ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
         : "";
 
       return `<tr style="page-break-inside:avoid;">
@@ -282,6 +285,7 @@ function alojamientoTable(d: PropuestaData): string {
           <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
           ${ubicacionLine}
           ${regimenLine}
+          ${notasHotelLine}
         </td>
         <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
         <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>

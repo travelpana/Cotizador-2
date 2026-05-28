@@ -99,6 +99,8 @@ export default function ServicioFormModal(props: Props) {
   const [unitOverride, setUnitOverride] = useState<number | null>(null);
   // Tour-only schedule captured from catalog
   const [horario, setHorario] = useState<string>("");
+  // Hotel-only: meal plan / régimen
+  const [desayuno, setDesayuno] = useState<string>("");
   // Tour/traslado/vuelo modalidad
   const [tipoServicio, setTipoServicio] = useState<"Regular" | "Privado">("Regular");
   // Catalog selection
@@ -140,6 +142,7 @@ export default function ServicioFormModal(props: Props) {
         typeof initial.unitOverride === "number" ? initial.unitOverride : null,
       );
       setHorario(initial.horario ?? "");
+      setDesayuno(initial.desayuno ?? "");
       setTipoServicio(initial.tipoServicio ?? "Regular");
       setSelectedCatId(initial.manual ? null : initial.id);
     } else {
@@ -170,6 +173,7 @@ export default function ServicioFormModal(props: Props) {
       setTarifaOverride("auto");
       setUnitOverride(null);
       setHorario("");
+      setDesayuno("");
       setTipoServicio("Regular");
       setSelectedCatId(null);
       setTipoHabitacion("");
@@ -215,6 +219,7 @@ export default function ServicioFormModal(props: Props) {
       setEstrellas(h.estrellas);
       setVigencia(h.vigencia);
       setTipoHabitacion(h.tipoHabitacion || "");
+      setDesayuno(h.desayuno || "");
       setPrecios((p) => ({
         ...p,
         SGL: h.precios.SGL,
@@ -312,6 +317,7 @@ export default function ServicioFormModal(props: Props) {
       base.estrellas = estrellas || undefined;
       base.vigencia = aplicarVigencia ? vigencia || undefined : undefined;
       base.tipoHabitacion = tipoHabitacion || undefined;
+      base.desayuno = desayuno || undefined;
     } else {
       base.usarFecha = usarFecha;
       if (usarFecha) base.fecha = fecha || undefined;
@@ -480,9 +486,11 @@ export default function ServicioFormModal(props: Props) {
               if (patch.vigencia !== undefined) setVigencia(patch.vigencia);
               if (patch.tipoHabitacion !== undefined)
                 setTipoHabitacion(patch.tipoHabitacion);
+              if (patch.desayuno !== undefined) setDesayuno(patch.desayuno);
               if (patch.precios)
                 setPrecios((p) => ({ ...p, ...patch.precios }));
             }}
+            desayuno={desayuno}
             onToggleAplicarVigencia={() => setAplicarVigencia((v) => !v)}
           />
         ) : (
@@ -597,6 +605,7 @@ function HotelFields({
   vigencia,
   aplicarVigencia,
   tipoHabitacion,
+  desayuno,
   precios,
   onChange,
   onToggleAplicarVigencia,
@@ -608,6 +617,7 @@ function HotelFields({
   vigencia: string;
   aplicarVigencia: boolean;
   tipoHabitacion: string;
+  desayuno: string;
   precios: { SGL: number; DBL: number; TPL: number; CHD: number };
   onChange: (
     patch: Partial<{
@@ -617,6 +627,7 @@ function HotelFields({
       estrellas: string;
       vigencia: string;
       tipoHabitacion: string;
+      desayuno: string;
       precios: Partial<{ SGL: number; DBL: number; TPL: number; CHD: number }>;
     }>,
   ) => void;
@@ -624,12 +635,12 @@ function HotelFields({
 }) {
   return (
     <>
+      {/* ── Estadía ── */}
       <div>
         <SectionTitle>
           <Calendar className="w-3.5 h-3.5" /> Estadía
         </SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Fila 1: Check-in | Check-out | Ubicación */}
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Check-in</Label>
             <SingleDatePicker
@@ -658,6 +669,13 @@ function HotelFields({
               minDate={fechaInicio || undefined}
             />
           </div>
+        </div>
+      </div>
+
+      {/* ── Propiedad ── */}
+      <div>
+        <SectionTitle>Propiedad</SectionTitle>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <Label>Ubicación</Label>
             <select
@@ -678,8 +696,6 @@ function HotelFields({
               <option value="VERAGUAS / SANTIAGO">VERAGUAS / SANTIAGO</option>
             </select>
           </div>
-
-          {/* Fila 2: Categoría | Tipo de Habitación | Vigencia */}
           <div>
             <Label>Categoría</Label>
             <select
@@ -697,47 +713,75 @@ function HotelFields({
           <div>
             <Label>Tipo de Habitación</Label>
             <input
+              list="tipos-habitacion"
               value={tipoHabitacion}
               onChange={(e) => onChange({ tipoHabitacion: e.target.value })}
-              placeholder="Ej: Standard, Deluxe, Suite, Ocean View..."
+              placeholder="Standard, Deluxe, Suite..."
               className={inputCls}
             />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label>Vigencia</Label>
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <span
-                  className={`text-[11px] font-medium transition-colors ${
-                    aplicarVigencia ? "text-primary" : "text-slate-500"
-                  }`}
-                >
-                  Aplicar
-                </span>
-                <ToggleSwitch
-                  checked={aplicarVigencia}
-                  onChange={onToggleAplicarVigencia}
-                />
-              </label>
-            </div>
-            <input
-              value={vigencia}
-              onChange={(e) => onChange({ vigencia: e.target.value })}
-              placeholder={
-                aplicarVigencia
-                  ? "Ej: 01/04 al 30/09"
-                  : "Activa el toggle"
-              }
-              disabled={!aplicarVigencia}
-              className={`${inputCls} transition-all ${
-                !aplicarVigencia
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200"
-                  : ""
-              }`}
-            />
+            <datalist id="tipos-habitacion">
+              <option value="Standard" />
+              <option value="Deluxe" />
+              <option value="Suite" />
+              <option value="Junior Suite" />
+              <option value="Vista Jardín" />
+              <option value="Vista Mar" />
+            </datalist>
           </div>
         </div>
       </div>
+
+      {/* ── Régimen y Vigencia ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label>Régimen / Desayuno</Label>
+          <input
+            list="regimenes"
+            value={desayuno}
+            onChange={(e) => onChange({ desayuno: e.target.value })}
+            placeholder="Ej: Desayuno buffet incluido"
+            className={inputCls}
+          />
+          <datalist id="regimenes">
+            <option value="Solo alojamiento" />
+            <option value="Desayuno continental incluido" />
+            <option value="Desayuno buffet incluido" />
+            <option value="Alimentación completa incluida" />
+            <option value="Todo incluido" />
+          </datalist>
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <Label>Vigencia</Label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <span
+                className={`text-[11px] font-medium transition-colors ${
+                  aplicarVigencia ? "text-primary" : "text-slate-500"
+                }`}
+              >
+                Aplicar
+              </span>
+              <ToggleSwitch
+                checked={aplicarVigencia}
+                onChange={onToggleAplicarVigencia}
+              />
+            </label>
+          </div>
+          <input
+            value={vigencia}
+            onChange={(e) => onChange({ vigencia: e.target.value })}
+            placeholder={aplicarVigencia ? "Ej: 01/04 al 30/09" : "Activa el toggle"}
+            disabled={!aplicarVigencia}
+            className={`${inputCls} transition-all ${
+              !aplicarVigencia
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200"
+                : ""
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* ── Precios ── */}
       <div>
         <SectionTitle>Precios por acomodación (por noche)</SectionTitle>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

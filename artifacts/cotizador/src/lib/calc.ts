@@ -103,6 +103,7 @@ export function calcularLocal(
         estrellas: s.estrellas,
         vigencia: s.vigencia,
         tipoHabitacion: s.tipoHabitacion,
+        desayuno: s.desayuno,
         noches: hotelNoches,
         paxAplicados: paxLocal,
       });

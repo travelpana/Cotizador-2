@@ -87,6 +87,8 @@ export interface ServicioSeleccionado {
   estrellas?: string;
   vigencia?: string;
   tipoHabitacion?: string;
+  /** Hotel-only: meal plan / régimen (e.g. "Desayuno buffet incluido"). */
+  desayuno?: string;
   manual?: boolean;
   /** For traslados: whether the service is Regular or Privado. */
   tipoServicio?: "Regular" | "Privado";
@@ -166,6 +168,8 @@ export interface ServicioCalculado {
   estrellas?: string;
   vigencia?: string;
   tipoHabitacion?: string;
+  /** Hotel-only: meal plan displayed under hotel name in proposals. */
+  desayuno?: string;
   noches?: number;
   paxAplicados?: number;
   /** For tours/traslados: which tier was applied. */

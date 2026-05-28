@@ -309,6 +309,12 @@ function ServicioRow({
             {fmtDMA(servicio.fechaInicio)} → {fmtDMA(servicio.fechaFin)}
           </span>
         )}
+        {servicio.desayuno && (
+          <>
+            {(meta || hasDates) && <span className="text-slate-300">·</span>}
+            <span className="text-amber-700 font-medium">{servicio.desayuno}</span>
+          </>
+        )}
       </span>
     );
   } else if (servicio.tipo === "vuelo") {
