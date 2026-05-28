@@ -133,9 +133,9 @@ export default function ExportButtons({
 
         for (const a of acoms) {
           if (isCalc) {
-            lines.push(`💲 ${a}: ${fmt(s.totalesPorAcomodacion[a])} total`);
+            lines.push(`💲 ${a}: ${fmt(s.totalesPorAcomodacion[a])}`);
           } else {
-            lines.push(`💲 ${a}: ${fmt(s.preciosPorAcomodacion[a])} por noche, por persona`);
+            lines.push(`💲 ${a}: ${fmt(s.preciosPorAcomodacion[a])}`);
           }
         }
 
