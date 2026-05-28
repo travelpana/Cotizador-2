@@ -92,8 +92,6 @@ export default function ExportButtons({
     const lines: string[] = [];
 
     // ── Encabezado ──────────────────────────────────────────────
-    lines.push("Hola! Un gusto saludarte ✨");
-    lines.push("");
     lines.push("A continuación comparto los detalles de su cotización:");
     lines.push("");
 
@@ -118,14 +116,6 @@ export default function ExportButtons({
       for (const s of hoteles) {
         const starsLabel = s.estrellas ? ` · ${s.estrellas}` : "";
         lines.push(`• *${s.nombre}*${starsLabel}`);
-
-        if (s.fechaInicio || s.fechaFin) {
-          const start = s.fechaInicio ? fmtDMA(s.fechaInicio) : "";
-          const end = s.fechaFin ? fmtDMA(s.fechaFin) : "";
-          const n = s.noches ?? cliente.noches ?? "";
-          const nochesLabel = n === 1 ? "1 noche" : `${n} noches`;
-          lines.push(`📍 ${start}${end ? ` → ${end}` : ""} · ${nochesLabel}`);
-        }
 
         if (s.tipoHabitacion) {
           lines.push(`🛏 Habitación: ${s.tipoHabitacion}`);
