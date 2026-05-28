@@ -246,8 +246,9 @@ function infoRow(label: string, value: string) {
 function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
   const showNoches = d.isCalc;
+  // In calc mode the tarifa column is already labelled by acom; add /noche only in tarifas mode
   const acomSuffix = d.isCalc
-    ? `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`
+    ? ""
     : `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`;
   const acomCols = d.acoms
     .map(
@@ -258,7 +259,6 @@ function alojamientoTable(d: PropuestaData): string {
 
   const rows = d.hoteles
     .map((h) => {
-      const meta = [h.ubicacion].filter(Boolean).join(" · ");
       const acomVals = d.acoms
         .map(
           (a) =>
@@ -268,11 +268,20 @@ function alojamientoTable(d: PropuestaData): string {
       const lastCell = d.isCalc
         ? `<td style="${STYLES.tdNum};font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
         : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
+
+      // Hotel cell: name + ubicación (uppercase) + régimen from notas
+      const ubicacionLine = h.ubicacion
+        ? `<div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${escape(h.ubicacion)}</div>`
+        : "";
+      const regimenLine = h.notas
+        ? `<div style="font-size:11px;color:${COLOR_VERDE};font-weight:500;margin-top:3px;">${escape(h.notas)}</div>`
+        : "";
+
       return `<tr style="page-break-inside:avoid;">
         <td style="${STYLES.td};width:50%;">
           <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
-          ${meta ? `<div style="${STYLES.cellSub}">${escape(meta)}</div>` : ""}
-          ${h.notas ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>` : ""}
+          ${ubicacionLine}
+          ${regimenLine}
         </td>
         <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
         <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
@@ -303,7 +312,6 @@ function alojamientoTable(d: PropuestaData): string {
       </thead>
       <tbody>${rows}</tbody>
     </table>
-    ${d.isCalc ? `<div style="font-size:11px;color:${COLOR_LABEL};margin-top:6px;text-align:right;">Total incluye noches × pasajeros · tipo ${escape(d.primary)}</div>` : ""}
   </div>`;
 }
 
@@ -386,7 +394,7 @@ function adicionalesTable(
   const thead = d.isCalc
     ? `<tr>
         <th style="${STYLES.th};width:44%;">DESCRIPCIÓN</th>
-        <th style="${STYLES.th};width:14%;">TIPO</th>
+        <th style="${STYLES.th};width:14%;">MODALIDAD</th>
         <th style="${STYLES.thNum};width:12%;">TARIFA P/P</th>
         <th style="${STYLES.thCenter};width:8%;">PAX</th>
         <th style="${STYLES.thNum};width:12%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>
