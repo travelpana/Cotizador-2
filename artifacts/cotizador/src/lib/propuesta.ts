@@ -247,7 +247,7 @@ function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
   const showNoches = d.isCalc;
   const acomSuffix = d.isCalc
-    ? ""
+    ? `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`
     : `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`;
   const acomCols = d.acoms
     .map(
@@ -265,6 +265,9 @@ function alojamientoTable(d: PropuestaData): string {
             `<td style="${STYLES.tdNum}">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
         )
         .join("");
+      const lastCell = d.isCalc
+        ? `<td style="${STYLES.tdNum};font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
+        : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
       return `<tr style="page-break-inside:avoid;">
         <td style="${STYLES.td};width:50%;">
           <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
@@ -275,10 +278,14 @@ function alojamientoTable(d: PropuestaData): string {
         <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
         ${showNoches ? `<td style="${STYLES.tdCenter};width:10%;">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>` : ""}
         ${acomVals}
-        <td style="${STYLES.tdEmpty};width:10%;"></td>
+        ${lastCell}
       </tr>`;
     })
     .join("");
+
+  const lastHeader = d.isCalc
+    ? `<th style="${STYLES.thNum};width:10%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>`
+    : `<th style="${STYLES.thEmpty};width:10%;"></th>`;
 
   return `
   <div style="${STYLES.block}">
@@ -291,11 +298,12 @@ function alojamientoTable(d: PropuestaData): string {
           <th style="${STYLES.th};width:15%;">TIPO HAB.</th>
           ${showNoches ? `<th style="${STYLES.thCenter};width:10%;">NOCHES</th>` : ""}
           ${acomCols}
-          <th style="${STYLES.thEmpty};width:10%;"></th>
+          ${lastHeader}
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
+    ${d.isCalc ? `<div style="font-size:11px;color:${COLOR_LABEL};margin-top:6px;text-align:right;">Total incluye noches × pasajeros · tipo ${escape(d.primary)}</div>` : ""}
   </div>`;
 }
 
@@ -318,10 +326,6 @@ function adicionalesTable(
                 : "Regular"
               : "Regular";
 
-      const tarifa = d.isCalc
-        ? escape(fmt(s.totalesPorAcomodacion[d.primary]))
-        : escape(fmt(s.unitAplicado ?? 0));
-
       const displayName =
         s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
 
@@ -342,32 +346,64 @@ function adicionalesTable(
           ? `<div style="${STYLES.cellNote}">Horario: ${escape(s.horario)}</div>`
           : "";
 
+      const notasLine = s.notas
+        ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>`
+        : "";
+
+      if (d.isCalc) {
+        const unitPrice = escape(fmt(s.unitAplicado ?? 0));
+        const pax = s.paxAplicados ?? d.result.pasajeros;
+        const total = escape(fmt(s.totalesPorAcomodacion[d.primary]));
+        return `<tr style="page-break-inside:avoid;">
+          <td style="${STYLES.td};width:44%;">
+            <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
+            ${ticketsLine}
+            ${horarioLine}
+            ${notasLine}
+          </td>
+          <td style="${STYLES.td};width:14%;">${escape(tipo)}</td>
+          <td style="${STYLES.tdNum};width:12%;">${unitPrice}</td>
+          <td style="${STYLES.tdCenter};width:8%;">${escape(String(pax))}</td>
+          <td style="${STYLES.tdNum};width:12%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${total}</td>
+          <td style="${STYLES.tdEmpty};width:10%;"></td>
+        </tr>`;
+      }
+
       return `<tr style="page-break-inside:avoid;">
         <td style="${STYLES.td};width:65%;">
           <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
           ${ticketsLine}
           ${horarioLine}
-          ${s.notas ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>` : ""}
+          ${notasLine}
         </td>
         <td style="${STYLES.td};width:15%;">${escape(tipo)}</td>
-        <td style="${STYLES.tdNum};width:10%;">${tarifa}</td>
+        <td style="${STYLES.tdNum};width:10%;">${escape(fmt(s.unitAplicado ?? 0))}</td>
         <td style="${STYLES.tdEmpty};width:10%;"></td>
       </tr>`;
     })
     .join("");
 
+  const thead = d.isCalc
+    ? `<tr>
+        <th style="${STYLES.th};width:44%;">DESCRIPCIÓN</th>
+        <th style="${STYLES.th};width:14%;">TIPO</th>
+        <th style="${STYLES.thNum};width:12%;">TARIFA P/P</th>
+        <th style="${STYLES.thCenter};width:8%;">PAX</th>
+        <th style="${STYLES.thNum};width:12%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>
+        <th style="${STYLES.thEmpty};width:10%;"></th>
+      </tr>`
+    : `<tr>
+        <th style="${STYLES.th};width:65%;">DESCRIPCIÓN</th>
+        <th style="${STYLES.th};width:15%;">TIPO</th>
+        <th style="${STYLES.thNum};width:10%;">TARIFA P/P</th>
+        <th style="${STYLES.thEmpty};width:10%;"></th>
+      </tr>`;
+
   return `
   <div style="${STYLES.block}">
     <div style="${STYLES.pillBlue}">${escape(title)}</div>
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin-top:12px;">
-      <thead>
-        <tr>
-          <th style="${STYLES.th};width:65%;">DESCRIPCIÓN</th>
-          <th style="${STYLES.th};width:15%;">TIPO</th>
-          <th style="${STYLES.thNum};width:10%;">${d.isCalc ? "TOTAL" : "TARIFA P/P"}</th>
-          <th style="${STYLES.thEmpty};width:10%;"></th>
-        </tr>
-      </thead>
+      <thead>${thead}</thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -483,16 +519,51 @@ function descriptivosBlock(d: PropuestaData): string {
 
 function totalsBlock(d: PropuestaData): string {
   if (!d.isCalc) return "";
-  const rows = d.acoms
+
+  const sub = d.result.subtotalesPorTipo;
+  const TIPO_LABELS: Array<{ key: "hotel" | "traslado" | "tour" | "vuelo"; label: string }> = [
+    { key: "hotel",    label: "Alojamiento" },
+    { key: "traslado", label: "Traslados" },
+    { key: "tour",     label: "Tours y experiencias" },
+    { key: "vuelo",    label: "Vuelos" },
+  ];
+
+  // Build acom header columns
+  const acomHeaders = d.acoms
+    .map(
+      (a) =>
+        `<th style="${STYLES.thNum};width:14%;padding:10px 14px;">${escape(a)}</th>`,
+    )
+    .join("");
+
+  // Subtotal rows — only for types that have at least one service
+  const subtotalRows = TIPO_LABELS
+    .filter(({ key }) => d.result.servicios.some((s) => s.tipo === key))
+    .map(({ key, label }) => {
+      const vals = d.acoms
+        .map((a) => {
+          const v = sub[key][a];
+          return `<td style="padding:9px 14px;border-top:1px solid ${COLOR_BORDE};text-align:right;color:#475569;font-size:13px;">${escape(fmt(v))}</td>`;
+        })
+        .join("");
+      return `<tr>
+        <td style="padding:9px 14px;border-top:1px solid ${COLOR_BORDE};color:#475569;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">${escape(label)}</td>
+        ${vals}
+      </tr>`;
+    })
+    .join("");
+
+  // Grand total rows per acom
+  const totalRows = d.acoms
     .map((a) => {
       const isPrimary = a === d.primary;
+      const labelStyle = `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:12px;letter-spacing:0.6px;text-transform:uppercase;background:#f0f4ff;`;
       const valStyle = isPrimary
-        ? `font-weight:700;color:${COLOR_AZUL};font-size:20px;text-align:right;padding:10px 16px;`
-        : `font-weight:700;color:#334155;font-size:14px;text-align:right;padding:10px 16px;`;
-      return `<tr style="page-break-inside:avoid;">
-        <td style="font-weight:700;color:#475569;font-size:11px;letter-spacing:0.6px;padding:10px 16px;border-top:1px dashed ${COLOR_BORDE};text-transform:uppercase;">TOTAL ${escape(a)}</td>
-        <td style="${valStyle};border-top:1px dashed ${COLOR_BORDE};">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
-        <td style="padding:10px 16px;border-top:1px dashed ${COLOR_BORDE};width:10%;"></td>
+        ? `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:18px;background:#f0f4ff;`
+        : `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:700;color:#334155;font-size:14px;background:#f0f4ff;`;
+      return `<tr>
+        <td style="${labelStyle}">TOTAL GENERAL · ${escape(a)}</td>
+        <td colspan="${d.acoms.length}" style="${valStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
       </tr>`;
     })
     .join("");
@@ -500,8 +571,19 @@ function totalsBlock(d: PropuestaData): string {
   return `
   <div style="${STYLES.block}">
     <div style="${STYLES.pillBlue}">RESUMEN DE COSTOS</div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#f8fafc;margin-top:12px;border-collapse:collapse;border:1px solid ${COLOR_BORDE};">
-      <tbody>${rows}</tbody>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;margin-top:12px;border-collapse:collapse;border:1px solid ${COLOR_BORDE};">
+      <thead>
+        <tr>
+          <th style="${STYLES.th};padding:10px 14px;">CONCEPTO</th>
+          ${acomHeaders}
+        </tr>
+      </thead>
+      <tbody>
+        ${subtotalRows}
+      </tbody>
+      <tfoot>
+        ${totalRows}
+      </tfoot>
     </table>
   </div>`;
 }
