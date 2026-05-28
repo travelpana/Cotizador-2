@@ -99,6 +99,8 @@ export default function ServicioFormModal(props: Props) {
   const [unitOverride, setUnitOverride] = useState<number | null>(null);
   // Tour-only schedule captured from catalog
   const [horario, setHorario] = useState<string>("");
+  // Tour/traslado/vuelo modalidad
+  const [tipoServicio, setTipoServicio] = useState<"Regular" | "Privado">("Regular");
   // Catalog selection
   const [search, setSearch] = useState("");
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
@@ -138,6 +140,7 @@ export default function ServicioFormModal(props: Props) {
         typeof initial.unitOverride === "number" ? initial.unitOverride : null,
       );
       setHorario(initial.horario ?? "");
+      setTipoServicio(initial.tipoServicio ?? "Regular");
       setSelectedCatId(initial.manual ? null : initial.id);
     } else {
       // Fresh
@@ -167,6 +170,7 @@ export default function ServicioFormModal(props: Props) {
       setTarifaOverride("auto");
       setUnitOverride(null);
       setHorario("");
+      setTipoServicio("Regular");
       setSelectedCatId(null);
       setTipoHabitacion("");
     }
@@ -314,6 +318,7 @@ export default function ServicioFormModal(props: Props) {
       if (tarifaOverride !== "auto")
         base.tarifaOverride = tarifaOverride as Tier;
       if (unitOverride !== null) base.unitOverride = unitOverride;
+      base.tipoServicio = tipoServicio;
     }
     if (tipo === "tour" && horario.trim()) {
       base.horario = horario.trim();
@@ -506,6 +511,30 @@ export default function ServicioFormModal(props: Props) {
             onPrecios={(p) => setPrecios((prev) => ({ ...prev, ...p }))}
             isManual={!!isManual}
           />
+        )}
+
+        {tipo !== "hotel" && (
+          <div>
+            <SectionTitle>Modalidad</SectionTitle>
+            <div className="flex gap-2">
+              {(["Regular", "Privado"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setTipoServicio(m)}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    tipoServicio === m
+                      ? m === "Privado"
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-emerald-600 text-white border-emerald-600"
+                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {tipo === "tour" && (

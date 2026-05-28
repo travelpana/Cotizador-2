@@ -387,16 +387,24 @@ function ServicioRow({
             title="Clic para editar el nombre"
           >
             <span className="text-sm font-semibold text-slate-900 truncate">{titleLabel}</span>
-            {servicio.tipoServicio && (
-              <span
-                className={`flex-shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                  servicio.tipoServicio === "Privado"
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "bg-emerald-50 text-emerald-600"
+            {!isHotel && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const current = servicio.tipoServicio ?? "Regular";
+                  const next = current === "Regular" ? "Privado" : "Regular";
+                  onUpdate({ ...servicio, tipoServicio: next });
+                }}
+                title="Cambiar modalidad (Regular / Privado)"
+                className={`flex-shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                  (servicio.tipoServicio ?? "Regular") === "Privado"
+                    ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                 }`}
               >
-                {servicio.tipoServicio}
-              </span>
+                {servicio.tipoServicio ?? "Regular"}
+              </button>
             )}
             <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
           </div>

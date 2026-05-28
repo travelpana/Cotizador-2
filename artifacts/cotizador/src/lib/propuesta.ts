@@ -266,7 +266,7 @@ function alojamientoTable(d: PropuestaData): string {
         )
         .join("");
       const lastCell = d.isCalc
-        ? `<td style="${STYLES.tdNum};font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
+        ? `<td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
         : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
 
       // Hotel cell: name + ubicación (uppercase) + régimen from notas
@@ -363,17 +363,16 @@ function adicionalesTable(
         const pax = s.paxAplicados ?? d.result.pasajeros;
         const total = escape(fmt(s.totalesPorAcomodacion[d.primary]));
         return `<tr style="page-break-inside:avoid;">
-          <td style="${STYLES.td};width:44%;">
+          <td style="${STYLES.td};width:50%;">
             <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
             ${ticketsLine}
             ${horarioLine}
             ${notasLine}
           </td>
           <td style="${STYLES.td};width:14%;">${escape(tipo)}</td>
-          <td style="${STYLES.tdNum};width:12%;">${unitPrice}</td>
+          <td style="${STYLES.tdNum};width:10%;">${unitPrice}</td>
           <td style="${STYLES.tdCenter};width:8%;">${escape(String(pax))}</td>
-          <td style="${STYLES.tdNum};width:12%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${total}</td>
-          <td style="${STYLES.tdEmpty};width:10%;"></td>
+          <td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${total}</td>
         </tr>`;
       }
 
@@ -393,12 +392,11 @@ function adicionalesTable(
 
   const thead = d.isCalc
     ? `<tr>
-        <th style="${STYLES.th};width:44%;">DESCRIPCIÓN</th>
+        <th style="${STYLES.th};width:50%;">DESCRIPCIÓN</th>
         <th style="${STYLES.th};width:14%;">MODALIDAD</th>
-        <th style="${STYLES.thNum};width:12%;">TARIFA P/P</th>
+        <th style="${STYLES.thNum};width:10%;">TARIFA P/P</th>
         <th style="${STYLES.thCenter};width:8%;">PAX</th>
-        <th style="${STYLES.thNum};width:12%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>
-        <th style="${STYLES.thEmpty};width:10%;"></th>
+        <th style="${STYLES.thNum};width:18%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>
       </tr>`
     : `<tr>
         <th style="${STYLES.th};width:65%;">DESCRIPCIÓN</th>
