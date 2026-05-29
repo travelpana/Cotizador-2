@@ -10,7 +10,11 @@
   },
   "private": true,
   "pnpm": {
-    "onlyBuiltDependencies": ["core-js", "puppeteer"]
+    "onlyBuiltDependencies": [
+      "core-js",
+      "puppeteer",
+      "esbuild"
+    ]
   },
   "devDependencies": {
     "typescript": "~5.9.2",
