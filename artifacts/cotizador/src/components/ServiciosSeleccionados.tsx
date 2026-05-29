@@ -8,6 +8,7 @@ import type {
 } from "@/lib/types";
 import { fmt, pickTier, priceForTier } from "@/lib/calc";
 import { formatTrasladoNombre } from "@/lib/utils";
+import { formatRegimen } from "@/lib/regimen";
 import SingleDatePicker from "./SingleDatePicker";
 import {
   Popover,
@@ -309,10 +310,10 @@ function ServicioRow({
             {fmtDMA(servicio.fechaInicio)} → {fmtDMA(servicio.fechaFin)}
           </span>
         )}
-        {servicio.desayuno && (
+        {formatRegimen(servicio.desayuno) && (
           <>
             {(meta || hasDates) && <span className="text-slate-300">·</span>}
-            <span className="text-amber-700 font-medium">{servicio.desayuno}</span>
+            <span className="text-amber-700 font-medium">{formatRegimen(servicio.desayuno)}</span>
           </>
         )}
       </span>

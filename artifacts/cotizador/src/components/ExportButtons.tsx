@@ -22,6 +22,7 @@ import type { ModoCotizacion } from "./Guardadas";
 import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
+import { formatRegimen } from "@/lib/regimen";
 
 interface Props {
   cliente: Cliente;
@@ -119,6 +120,11 @@ export default function ExportButtons({
 
         if (s.tipoHabitacion) {
           lines.push(`🛏 Habitación: ${s.tipoHabitacion}`);
+        }
+
+        const regimenWa = formatRegimen(s.desayuno);
+        if (regimenWa) {
+          lines.push(`🍽 ${regimenWa}`);
         }
 
         for (const a of acoms) {

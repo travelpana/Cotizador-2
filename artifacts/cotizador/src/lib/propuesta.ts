@@ -6,6 +6,7 @@ import type {
   ServicioCalculado,
   ServicioSeleccionado,
 } from "./types";
+import { formatRegimen } from "./regimen";
 import { fmt } from "./calc";
 import { formatTrasladoNombre } from "./utils";
 import { buildItinerario, type ItinerarioDia } from "@/components/Itinerario";
@@ -273,8 +274,9 @@ function alojamientoTable(d: PropuestaData): string {
       const ubicacionLine = h.ubicacion
         ? `<div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${escape(h.ubicacion)}</div>`
         : "";
-      const regimenLine = h.desayuno
-        ? `<div style="font-size:11px;color:${COLOR_VERDE};font-weight:500;margin-top:3px;">${escape(h.desayuno)}</div>`
+      const regimenFmt = formatRegimen(h.desayuno);
+      const regimenLine = regimenFmt
+        ? `<div style="font-size:11px;color:#0369a1;font-weight:500;margin-top:3px;">${escape(regimenFmt)}</div>`
         : "";
       const notasHotelLine = h.notas
         ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
