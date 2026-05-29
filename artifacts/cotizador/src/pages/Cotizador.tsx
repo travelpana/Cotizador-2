@@ -21,6 +21,7 @@ import {
   guardarEnSeguimiento,
   generateNumeroCotizacion,
   duplicarCotizacion,
+  registrarActividad,
   type CotizacionGuardada,
   type EstadoCotizacion,
   type ModoCotizacion,
@@ -422,6 +423,17 @@ export default function CotizadorPage() {
     setGuardadas(next);
   };
 
+  const seguimientoUpdateCRM = (
+    id: string,
+    patch: Partial<CotizacionGuardada>,
+  ) => {
+    const next = guardadas.map((g) =>
+      g.id === id ? { ...g, ...patch } : g,
+    );
+    saveGuardadas(next);
+    setGuardadas(next);
+  };
+
   const closePreview = () => {
     setPreviewOpen(false);
     setPreviewQuote(null);
@@ -532,7 +544,7 @@ export default function CotizadorPage() {
               onEdit={seguimientoEdit}
               onDelete={seguimientoDelete}
               onDuplicate={seguimientoDuplicate}
-              onUpdateEstado={seguimientoUpdateEstado}
+              onUpdateCRM={seguimientoUpdateCRM}
             />
           ) : view === "plantillas" ? (
             <Plantillas

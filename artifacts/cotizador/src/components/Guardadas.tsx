@@ -1,11 +1,41 @@
 import type { Acomodacion, Cliente, ServicioSeleccionado } from "@/lib/types";
 
 export type ModoCotizacion = "tarifas" | "calculo";
+
+/** Legacy status — kept for backward compat, prefer estadoCRM */
 export type EstadoCotizacion =
   | "pendiente"
   | "enviado"
   | "confirmado"
   | "cancelado";
+
+/** New commercial CRM states */
+export type EstadoCRM =
+  | "nueva"
+  | "enviada"
+  | "seguimiento"
+  | "negociacion"
+  | "confirmada"
+  | "perdida";
+
+export type Prioridad = "alta" | "media" | "baja";
+
+export type ActividadTipo =
+  | "creada"
+  | "editada"
+  | "pdf_enviado"
+  | "whatsapp_enviado"
+  | "correo_enviado"
+  | "duplicada"
+  | "confirmada"
+  | "nota_agregada"
+  | "estado_cambiado";
+
+export interface ActividadEntry {
+  fecha: string;
+  tipo: ActividadTipo;
+  detalle?: string;
+}
 
 export interface CotizacionGuardada {
   id: string;
@@ -15,10 +45,28 @@ export interface CotizacionGuardada {
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
   modoCotizacion: ModoCotizacion;
+  /** @deprecated use estadoCRM */
   estado?: EstadoCotizacion;
+  /** New CRM commercial state */
+  estadoCRM?: EstadoCRM;
+  prioridad?: Prioridad;
+  /** ISO date of last follow-up action */
+  ultimoSeguimiento?: string;
+  proximaAccion?: string;
+  fechaRecordatorio?: string;
+  notaInterna?: string;
+  historial?: ActividadEntry[];
 }
 
 const STORAGE_KEY = "cotizador.guardadas";
+
+/** Map legacy estado → estadoCRM for old entries */
+function migrarEstado(estado?: EstadoCotizacion): EstadoCRM {
+  if (estado === "enviado") return "enviada";
+  if (estado === "confirmado") return "confirmada";
+  if (estado === "cancelado") return "perdida";
+  return "nueva";
+}
 
 export function generateNumeroCotizacion(): string {
   const code = Date.now().toString(36).slice(-6).toUpperCase();
@@ -50,9 +98,10 @@ export function loadGuardadas(): CotizacionGuardada[] {
     return items.map((g) => ({
       ...g,
       modoCotizacion: g.modoCotizacion ?? "calculo",
-      // backwards-compat: legacy quotes (created before the RGE-XXXXXX scheme)
-      // get a deterministic code derived from their id so it stays stable.
       numeroCotizacion: g.numeroCotizacion || deriveNumeroFromId(g.id),
+      // Migrate legacy estado → estadoCRM if not already set
+      estadoCRM: g.estadoCRM ?? migrarEstado(g.estado),
+      historial: g.historial ?? [],
     }));
   } catch {
     return [];
@@ -63,12 +112,36 @@ export function saveGuardadas(items: CotizacionGuardada[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
 
+/** Add an activity entry to a specific quote in the list and save */
+export function registrarActividad(
+  items: CotizacionGuardada[],
+  id: string,
+  tipo: ActividadTipo,
+  detalle?: string,
+): CotizacionGuardada[] {
+  const entry: ActividadEntry = {
+    fecha: new Date().toISOString(),
+    tipo,
+    detalle,
+  };
+  const next = items.map((g) =>
+    g.id === id
+      ? {
+          ...g,
+          historial: [entry, ...(g.historial ?? [])].slice(0, 50),
+          ultimoSeguimiento: new Date().toISOString(),
+        }
+      : g,
+  );
+  saveGuardadas(next);
+  return next;
+}
+
 export interface GuardarEnSeguimientoInput {
   cliente: Cliente;
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
   modo: ModoCotizacion;
-  /** When provided, the saved entry will use this code so it matches the one shown in the preview/PDF/email. */
   numeroCotizacion?: string;
 }
 
@@ -100,18 +173,16 @@ export function guardarEnSeguimiento(
     servicios: input.servicios,
     acomodaciones: input.acomodaciones,
     modoCotizacion: input.modo,
+    estadoCRM: "nueva",
+    prioridad: "media",
+    historial: [{ fecha: new Date().toISOString(), tipo: "creada" }],
+    ultimoSeguimiento: new Date().toISOString(),
   };
   const next = [nueva, ...items].slice(0, 50);
   saveGuardadas(next);
   return { saved: true, items: next };
 }
 
-/**
- * Returns a fresh copy of the cotización ready to be inserted as a new entry.
- * Keeps every detail (cliente, agente, agencia, servicios, fechas, pax, etc.)
- * but assigns a brand new id, fechaCreacion and numeroCotizacion, and resets
- * the estado so the duplicate starts as "pendiente".
- */
 export function duplicarCotizacion(
   orig: CotizacionGuardada,
 ): CotizacionGuardada {
@@ -121,7 +192,13 @@ export function duplicarCotizacion(
     fechaCreacion: new Date().toISOString(),
     numeroCotizacion: generateNumeroCotizacion(),
     estado: "pendiente",
-    // deep clone the mutable nested arrays/objects so future edits don't bleed back
+    estadoCRM: "nueva",
+    prioridad: orig.prioridad ?? "media",
+    ultimoSeguimiento: new Date().toISOString(),
+    proximaAccion: undefined,
+    fechaRecordatorio: undefined,
+    notaInterna: undefined,
+    historial: [{ fecha: new Date().toISOString(), tipo: "duplicada", detalle: `Desde ${orig.numeroCotizacion}` }],
     cliente: { ...orig.cliente },
     servicios: orig.servicios.map((s) => ({ ...s })),
     acomodaciones: [...orig.acomodaciones],
