@@ -248,10 +248,27 @@ function infoRow(label: string, value: string) {
   </tr>`;
 }
 
+function groupByLocation<T extends { ubicacion?: string }>(
+  items: T[],
+): { label: string; items: T[] }[] {
+  const groups: { key: string; label: string; items: T[] }[] = [];
+  const indexMap = new Map<string, number>();
+  for (const h of items) {
+    const key = (h.ubicacion ?? "").trim().toUpperCase();
+    const label = (h.ubicacion ?? "Sin ubicación").trim().toUpperCase();
+    if (indexMap.has(key)) {
+      groups[indexMap.get(key)!].items.push(h);
+    } else {
+      indexMap.set(key, groups.length);
+      groups.push({ key, label, items: [h] });
+    }
+  }
+  return groups;
+}
+
 function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
   const showNoches = d.isCalc;
-  // In calc mode the tarifa column is already labelled by acom; add /noche only in tarifas mode
   const acomSuffix = d.isCalc
     ? ""
     : `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`;
@@ -262,43 +279,56 @@ function alojamientoTable(d: PropuestaData): string {
     )
     .join("");
 
-  const rows = d.hoteles
-    .map((h) => {
-      const acomVals = d.acoms
-        .map(
-          (a) =>
-            `<td style="${STYLES.tdNum}">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
-        )
-        .join("");
-      const lastCell = d.isCalc
-        ? `<td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
-        : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
+  // Total column count for location header colspan
+  const totalCols = 3 + (showNoches ? 1 : 0) + d.acoms.length + 1;
+  const groups = groupByLocation(d.hoteles);
 
-      // Hotel cell: name + ubicación (uppercase) + régimen (desayuno) + notas
-      const ubicacionLine = h.ubicacion
-        ? `<div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${escape(h.ubicacion)}</div>`
-        : "";
-      const regimenFmt = formatRegimen(h.desayuno);
-      const regimenLine = regimenFmt
-        ? `<div style="font-size:11px;color:#0369a1;font-weight:500;margin-top:3px;">${escape(regimenFmt)}</div>`
-        : "";
-      const notasHotelLine = h.notas
-        ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
-        : "";
-
-      return `<tr style="page-break-inside:avoid;">
-        <td style="${STYLES.td};width:50%;">
-          <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
-          ${ubicacionLine}
-          ${regimenLine}
-          ${notasHotelLine}
+  const rows = groups
+    .map(({ label, items }) => {
+      const locationHeader = `<tr style="page-break-inside:avoid;">
+        <td colspan="${totalCols}" style="padding:10px 16px 6px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
+          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:${COLOR_AZUL};letter-spacing:0.8px;text-transform:uppercase;">
+            📍 ${escape(label)}
+          </div>
         </td>
-        <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
-        <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
-        ${showNoches ? `<td style="${STYLES.tdCenter};width:10%;">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>` : ""}
-        ${acomVals}
-        ${lastCell}
       </tr>`;
+
+      const hotelRows = items
+        .map((h) => {
+          const acomVals = d.acoms
+            .map(
+              (a) =>
+                `<td style="${STYLES.tdNum}">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
+            )
+            .join("");
+          const lastCell = d.isCalc
+            ? `<td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
+            : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
+
+          const regimenFmt = formatRegimen(h.desayuno);
+          const regimenLine = regimenFmt
+            ? `<div style="font-size:11px;color:#0369a1;font-weight:500;margin-top:3px;">${escape(regimenFmt)}</div>`
+            : "";
+          const notasHotelLine = h.notas
+            ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
+            : "";
+
+          return `<tr style="page-break-inside:avoid;">
+            <td style="${STYLES.td};width:50%;">
+              <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
+              ${regimenLine}
+              ${notasHotelLine}
+            </td>
+            <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
+            <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
+            ${showNoches ? `<td style="${STYLES.tdCenter};width:10%;">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>` : ""}
+            ${acomVals}
+            ${lastCell}
+          </tr>`;
+        })
+        .join("");
+
+      return locationHeader + hotelRows;
     })
     .join("");
 

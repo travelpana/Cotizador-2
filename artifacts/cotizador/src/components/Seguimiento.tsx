@@ -47,7 +47,7 @@ interface Props {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AlertLevel = "urgente" | "pendiente" | "aldia" | "none";
+type AlertLevel = "urgente" | "pendiente" | "aldia" | "sinenviar" | "none";
 
 // ─── Estado CRM config ────────────────────────────────────────────────────────
 
@@ -176,8 +176,9 @@ function daysSince(iso?: string): number {
 function getAlertLevel(g: CotizacionGuardada): AlertLevel {
   const estado = g.estadoCRM ?? "nueva";
   if (estado === "confirmada" || estado === "perdida") return "none";
+  if (estado === "nueva") return "sinenviar";
   const days = daysSince(g.ultimoSeguimiento ?? g.fechaCreacion);
-  if (days >= 5) return "urgente";
+  if (days >= 3) return "urgente";
   if (days >= 2) return "pendiente";
   return "aldia";
 }
@@ -559,6 +560,8 @@ export default function Seguimiento({
       const al = getAlertLevel(g);
       return al === "urgente" || al === "pendiente";
     }).length;
+    const urgentes = items.filter((g) => getAlertLevel(g) === "urgente").length;
+    const recordatoriosHoy = items.filter(isRecordatorioHoy).length;
     const confirmadas = items.filter((g) => g.estadoCRM === "confirmada").length;
     const perdidas = items.filter((g) => g.estadoCRM === "perdida").length;
     const now = new Date();
@@ -567,7 +570,7 @@ export default function Seguimiento({
       const d = new Date(g.ultimoSeguimiento ?? g.fechaCreacion);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
-    return { activas, seguimientosPendientes, confirmadas, perdidas, ventasMes };
+    return { activas, seguimientosPendientes, urgentes, recordatoriosHoy, confirmadas, perdidas, ventasMes };
   }, [items]);
 
   // ─── Filtered items ─────────────────────────────────────────────────────────
@@ -601,6 +604,38 @@ export default function Seguimiento({
 
   return (
     <div className="space-y-4">
+      {/* Notification Center */}
+      {(kpi.urgentes > 0 || kpi.recordatoriosHoy > 0) && (
+        <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl px-4 py-3 shadow-sm">
+          <div className="relative w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+            <Bell className="w-4 h-4 text-amber-600" />
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1">
+              {kpi.urgentes + kpi.recordatoriosHoy}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-amber-900 mb-1">Centro de notificaciones</div>
+            <div className="flex flex-col gap-0.5">
+              {kpi.urgentes > 0 && (
+                <span className="text-xs text-red-700 font-medium">
+                  🔴 {kpi.urgentes} {kpi.urgentes === 1 ? "cotización requiere" : "cotizaciones requieren"} seguimiento urgente
+                </span>
+              )}
+              {kpi.seguimientosPendientes > kpi.urgentes && (
+                <span className="text-xs text-amber-800 font-medium">
+                  🟡 {kpi.seguimientosPendientes - kpi.urgentes} {(kpi.seguimientosPendientes - kpi.urgentes) === 1 ? "cotización pendiente" : "cotizaciones pendientes"} de seguimiento
+                </span>
+              )}
+              {kpi.recordatoriosHoy > 0 && (
+                <span className="text-xs text-violet-700 font-medium">
+                  🔔 {kpi.recordatoriosHoy} recordatorio{kpi.recordatoriosHoy > 1 ? "s" : ""} vence{kpi.recordatoriosHoy > 1 ? "n" : ""} hoy
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPI Dashboard */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard
@@ -1036,23 +1071,30 @@ function TableRow({
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function AlertBadge({ level, days }: { level: AlertLevel; days: number }) {
+  if (level === "sinenviar")
+    return (
+      <div className="flex items-center gap-1 mt-0.5">
+        <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+        <span className="text-[10px] text-slate-500 font-medium">Sin enviar</span>
+      </div>
+    );
   if (level === "urgente")
     return (
       <div className="flex items-center gap-1 mt-0.5">
-        <AlertTriangle className="w-3 h-3 text-red-500" />
+        <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
         <span className="text-[10px] text-red-600 font-semibold">Urgente · {days}d</span>
       </div>
     );
   if (level === "pendiente")
     return (
       <div className="flex items-center gap-1 mt-0.5">
-        <Clock className="w-3 h-3 text-amber-500" />
+        <Clock className="w-3 h-3 text-amber-500 shrink-0" />
         <span className="text-[10px] text-amber-600 font-medium">Seg. pendiente</span>
       </div>
     );
   return (
     <div className="flex items-center gap-1 mt-0.5">
-      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+      <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
       <span className="text-[10px] text-emerald-600">Al día</span>
     </div>
   );

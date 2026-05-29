@@ -18,7 +18,7 @@ import type {
   Descriptivo,
   ServicioSeleccionado,
 } from "@/lib/types";
-import type { ModoCotizacion } from "./Guardadas";
+import type { ModoCotizacion, ActividadTipo } from "./Guardadas";
 import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
@@ -48,6 +48,8 @@ interface Props {
   getNumeroCotizacion: () => string;
   /** Resolved observation strings to include in all exports */
   observaciones?: string[];
+  /** Called after a successful export action to register CRM activity */
+  onRegisterActivity?: (tipo: ActividadTipo) => void;
 }
 
 const EMAIL_INTRO =
@@ -78,6 +80,7 @@ export default function ExportButtons({
   onAutoSave,
   validateBeforeAction,
   getNumeroCotizacion,
+  onRegisterActivity,
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
@@ -117,32 +120,48 @@ export default function ExportButtons({
       lines.push(SEP);
       lines.push("");
 
+      // Group hotels by location maintaining insertion order
+      const hotelGroups: { ubicacion: string; items: typeof hoteles }[] = [];
+      const hotelGroupMap = new Map<string, number>();
       for (const s of hoteles) {
-        const starsLabel = s.estrellas ? ` · ${s.estrellas}` : "";
-        lines.push(`• *${s.nombre}*${starsLabel}`);
-
-        if (s.tipoHabitacion) {
-          lines.push(`🛏 Habitación: ${s.tipoHabitacion}`);
+        const key =
+          (s.ubicacion ?? "").trim().toUpperCase() || "SIN UBICACIÓN";
+        if (hotelGroupMap.has(key)) {
+          hotelGroups[hotelGroupMap.get(key)!].items.push(s);
+        } else {
+          hotelGroupMap.set(key, hotelGroups.length);
+          hotelGroups.push({ ubicacion: key, items: [s] });
         }
+      }
 
-        const regimenWa = formatRegimen(s.desayuno);
-        if (regimenWa) {
-          lines.push(`🍽 ${regimenWa}`);
-        }
-
-        for (const a of acoms) {
-          if (isCalc) {
-            lines.push(`💲 ${a}: ${fmt(s.totalesPorAcomodacion[a])}`);
-          } else {
-            lines.push(`💲 ${a}: ${fmt(s.preciosPorAcomodacion[a])}`);
-          }
-        }
-
-        if (s.notas) {
-          lines.push(`🍽 ${s.notas}`);
-        }
-
+      for (const group of hotelGroups) {
+        lines.push(`📍 *${group.ubicacion}*`);
         lines.push("");
+
+        for (const s of group.items) {
+          const starsLabel = s.estrellas ? ` · ${s.estrellas}` : "";
+          const tipoLabel = s.tipoHabitacion ? ` · ${s.tipoHabitacion}` : "";
+          lines.push(`• *${s.nombre}*${starsLabel}${tipoLabel}`);
+
+          const regimenWa = formatRegimen(s.desayuno);
+          if (regimenWa) {
+            lines.push(`🍽 ${regimenWa}`);
+          }
+
+          for (const a of acoms) {
+            if (isCalc) {
+              lines.push(`💲 ${a}: ${fmt(s.totalesPorAcomodacion[a])}`);
+            } else {
+              lines.push(`💲 ${a}: ${fmt(s.preciosPorAcomodacion[a])}`);
+            }
+          }
+
+          if (s.notas) {
+            lines.push(`📝 ${s.notas}`);
+          }
+
+          lines.push("");
+        }
       }
 
       lines.push("ℹ️ Tarifas netas por persona y por noche.");
@@ -361,6 +380,8 @@ export default function ExportButtons({
       await navigator.clipboard.writeText(buildText());
       setWaCopied(true);
       setTimeout(() => setWaCopied(false), 2000);
+      onAutoSave?.();
+      onRegisterActivity?.("whatsapp_enviado");
     } catch {
       // noop
     }
@@ -418,6 +439,7 @@ export default function ExportButtons({
         setMailCopied(true);
         setTimeout(() => setMailCopied(false), 2000);
         onAutoSave?.();
+        onRegisterActivity?.("correo_enviado");
       }
     } catch (err) {
       console.error("Copy email failed:", err);
@@ -495,6 +517,7 @@ export default function ExportButtons({
         .save();
 
       onAutoSave?.();
+      onRegisterActivity?.("pdf_enviado");
     } catch (err) {
       console.error("PDF generation failed:", err);
       setPdfError(true);

@@ -51,6 +51,8 @@ export interface CotizacionGuardada {
   observacionesSeleccionadas?: string[];
   /** Free-text custom observation */
   observacionManual?: string;
+  /** ISO timestamp when the quote was first sent (WhatsApp/email/PDF) */
+  sentAt?: string;
   /** New CRM commercial state */
   estadoCRM?: EstadoCRM;
   prioridad?: Prioridad;

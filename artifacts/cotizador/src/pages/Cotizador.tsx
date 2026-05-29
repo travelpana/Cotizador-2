@@ -26,7 +26,10 @@ import {
   registrarActividad,
   type CotizacionGuardada,
   type EstadoCotizacion,
+  type EstadoCRM,
   type ModoCotizacion,
+  type Prioridad,
+  type ActividadTipo,
 } from "@/components/Guardadas";
 import {
   loadPlantillas,
@@ -337,21 +340,100 @@ export default function CotizadorPage() {
 
   const handleSave = () => {
     const numero = getOrCreateNumero();
+    const now = new Date().toISOString();
+    const total = result.totalesPorAcomodacion[acomodaciones[0]] ?? 0;
+    const autoPriority: Prioridad =
+      total > 1500 ? "alta" : total > 500 ? "media" : "baja";
     const item: CotizacionGuardada = {
       id: `${Date.now()}`,
-      fechaCreacion: new Date().toISOString(),
+      fechaCreacion: now,
       numeroCotizacion: numero,
       cliente,
       servicios,
       acomodaciones,
       modoCotizacion: modo,
-      observacionesSeleccionadas: observacionesSeleccionadas.length > 0 ? [...observacionesSeleccionadas] : undefined,
+      observacionesSeleccionadas:
+        observacionesSeleccionadas.length > 0
+          ? [...observacionesSeleccionadas]
+          : undefined,
       observacionManual: observacionManual.trim() || undefined,
+      estadoCRM: "enviada",
+      sentAt: now,
+      prioridad: autoPriority,
+      ultimoSeguimiento: now,
+      historial: [{ fecha: now, tipo: "creada" }],
     };
     const next = [item, ...guardadas].slice(0, 30);
     saveGuardadas(next);
     setGuardadas(next);
     showToast(`Cotización ${numero} guardada`);
+  };
+
+  const handleRegisterActivity = (tipo: ActividadTipo) => {
+    const numero = currentNumero ?? getOrCreateNumero();
+    const now = new Date().toISOString();
+    const newEntry = { fecha: now, tipo };
+    const total = result.totalesPorAcomodacion[acomodaciones[0]] ?? 0;
+    const autoPriority: Prioridad =
+      total > 1500 ? "alta" : total > 500 ? "media" : "baja";
+
+    setGuardadas((prev) => {
+      const idx = prev.findIndex((g) => g.numeroCotizacion === numero);
+
+      if (idx === -1) {
+        const nueva: CotizacionGuardada = {
+          id: `${Date.now()}`,
+          fechaCreacion: now,
+          numeroCotizacion: numero,
+          cliente,
+          servicios,
+          acomodaciones,
+          modoCotizacion: modo,
+          estadoCRM: "enviada",
+          sentAt: now,
+          prioridad: autoPriority,
+          ultimoSeguimiento: now,
+          historial: [{ fecha: now, tipo: "creada" }, newEntry],
+          observacionesSeleccionadas:
+            observacionesSeleccionadas.length > 0
+              ? [...observacionesSeleccionadas]
+              : undefined,
+          observacionManual: observacionManual.trim() || undefined,
+        };
+        const next = [nueva, ...prev].slice(0, 50);
+        saveGuardadas(next);
+        return next;
+      }
+
+      const g = prev[idx];
+      const days = Math.floor(
+        (Date.now() -
+          new Date(g.ultimoSeguimiento ?? g.fechaCreacion).getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+      let finalPriority = autoPriority;
+      if (days >= 3) {
+        if (finalPriority === "baja") finalPriority = "media";
+        else if (finalPriority === "media") finalPriority = "alta";
+      }
+      const newEstado: EstadoCRM =
+        g.estadoCRM === "nueva" ? "enviada" : g.estadoCRM ?? "enviada";
+
+      const next = prev.map((item) =>
+        item.numeroCotizacion !== numero
+          ? item
+          : {
+              ...item,
+              estadoCRM: newEstado,
+              sentAt: item.sentAt ?? (newEstado === "enviada" ? now : undefined),
+              ultimoSeguimiento: now,
+              prioridad: finalPriority,
+              historial: [newEntry, ...(item.historial ?? [])].slice(0, 50),
+            },
+      );
+      saveGuardadas(next);
+      return next;
+    });
   };
 
   const handleClear = () => {
@@ -688,6 +770,7 @@ export default function CotizadorPage() {
                   onAutoSave={handleAutoSave}
                   validateBeforeAction={validateBeforeAction}
                   getNumeroCotizacion={getOrCreateNumero}
+                  onRegisterActivity={handleRegisterActivity}
                 />
               </aside>
             </div>
