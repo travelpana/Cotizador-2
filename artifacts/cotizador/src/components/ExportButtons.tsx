@@ -46,6 +46,8 @@ interface Props {
    * preview, the PDF header and the Seguimiento table all match.
    */
   getNumeroCotizacion: () => string;
+  /** Resolved observation strings to include in all exports */
+  observaciones?: string[];
 }
 
 const EMAIL_INTRO =
@@ -69,6 +71,7 @@ export default function ExportButtons({
   incluirDescriptivoCompleto,
   descriptivos,
   actividadesOverride,
+  observaciones,
   onSave,
   onClear,
   onPreview,
@@ -311,6 +314,18 @@ export default function ExportButtons({
       }
     }
 
+    // ── Observaciones ─────────────────────────────────────────────
+    if (observaciones && observaciones.length > 0) {
+      lines.push("");
+      lines.push(SEP);
+      lines.push("📋 *OBSERVACIONES*");
+      lines.push(SEP);
+      lines.push("");
+      for (const o of observaciones) {
+        lines.push(`• ${o}`);
+      }
+    }
+
     // Trim trailing blank lines
     while (lines.length && lines[lines.length - 1] === "") lines.pop();
 
@@ -328,6 +343,7 @@ export default function ExportButtons({
       incluirDescriptivoCompleto,
       descriptivos,
       actividadesOverride,
+      observaciones,
       numeroCotizacion,
       intro,
     });

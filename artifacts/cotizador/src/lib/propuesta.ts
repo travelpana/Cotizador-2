@@ -28,6 +28,8 @@ export interface PropuestaInput {
   editable?: boolean;
   /** Optional intro text rendered at the very top of the body (used for emails). */
   intro?: string;
+  /** Resolved observation strings to show at the bottom of the proposal */
+  observaciones?: string[];
 }
 
 export interface PropuestaData {
@@ -56,6 +58,7 @@ export interface PropuestaData {
   descriptivosTours: Descriptivo[];
   editable: boolean;
   intro: string;
+  observaciones: string[];
 }
 
 const MESES = [
@@ -195,6 +198,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     descriptivosTours,
     editable: input.editable === true,
     intro: input.intro?.trim() ? input.intro.trim() : "",
+    observaciones: input.observaciones ?? [],
   };
 }
 
@@ -600,6 +604,27 @@ function totalsBlock(d: PropuestaData): string {
   </div>`;
 }
 
+function observacionesBlock(d: PropuestaData): string {
+  if (!d.observaciones || d.observaciones.length === 0) return "";
+  const items = d.observaciones
+    .map(
+      (o) =>
+        `<tr><td style="padding:4px 0 4px 10px;color:${COLOR_TEXTO};font-size:12px;line-height:1.5;border-left:3px solid ${COLOR_NARANJA};">• ${escape(o)}</td></tr>`,
+    )
+    .join("");
+  return `
+  <div style="${STYLES.block}">
+    <div style="margin-bottom:10px;">
+      <span style="${STYLES.pillOrange};font-size:11px;padding:5px 12px;">OBSERVACIONES</span>
+    </div>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#fff8f5;border-radius:8px;padding:8px;">
+      <tbody style="display:block;padding:10px 14px;">
+        ${items}
+      </tbody>
+    </table>
+  </div>`;
+}
+
 export const PROPUESTA_CSS = `
   html, body { margin: 0; padding: 0; background: #ffffff; }
   body {
@@ -679,6 +704,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
             <tr><td>${itinerarioTable(d)}</td></tr>
             <tr><td>${descriptivosBlock(d)}</td></tr>
             <tr><td>${totalsBlock(d)}</td></tr>
+            <tr><td>${observacionesBlock(d)}</td></tr>
 
             <tr>
               <td style="padding-top:24px;text-align:right;color:#9ca3af;font-size:11px;line-height:1.5;">

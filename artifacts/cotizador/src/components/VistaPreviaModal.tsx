@@ -26,6 +26,8 @@ interface Props {
   ) => void;
   /** Stable cotización code shown in the preview header (matches PDF/email/Seguimiento). */
   numeroCotizacion: string;
+  /** Resolved observation strings to show in the proposal */
+  observaciones?: string[];
 }
 
 export default function VistaPreviaModal({
@@ -42,6 +44,7 @@ export default function VistaPreviaModal({
   actividadesOverride,
   onActividadesOverrideChange,
   numeroCotizacion,
+  observaciones,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const overrideRef = useRef(actividadesOverride);
@@ -101,6 +104,7 @@ export default function VistaPreviaModal({
       incluirDescriptivoCompleto,
       descriptivos: descriptivosEffective,
       actividadesOverride,
+      observaciones,
       editable: true,
       numeroCotizacion,
     });

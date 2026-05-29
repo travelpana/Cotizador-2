@@ -47,6 +47,10 @@ export interface CotizacionGuardada {
   modoCotizacion: ModoCotizacion;
   /** @deprecated use estadoCRM */
   estado?: EstadoCotizacion;
+  /** IDs of selected quick observations from the catalog */
+  observacionesSeleccionadas?: string[];
+  /** Free-text custom observation */
+  observacionManual?: string;
   /** New CRM commercial state */
   estadoCRM?: EstadoCRM;
   prioridad?: Prioridad;
@@ -143,6 +147,8 @@ export interface GuardarEnSeguimientoInput {
   acomodaciones: Acomodacion[];
   modo: ModoCotizacion;
   numeroCotizacion?: string;
+  observacionesSeleccionadas?: string[];
+  observacionManual?: string;
 }
 
 export interface GuardarEnSeguimientoResult {
@@ -177,6 +183,10 @@ export function guardarEnSeguimiento(
     prioridad: "media",
     historial: [{ fecha: new Date().toISOString(), tipo: "creada" }],
     ultimoSeguimiento: new Date().toISOString(),
+    observacionesSeleccionadas: input.observacionesSeleccionadas?.length
+      ? [...input.observacionesSeleccionadas]
+      : undefined,
+    observacionManual: input.observacionManual || undefined,
   };
   const next = [nueva, ...items].slice(0, 50);
   saveGuardadas(next);
@@ -199,6 +209,9 @@ export function duplicarCotizacion(
     fechaRecordatorio: undefined,
     notaInterna: undefined,
     historial: [{ fecha: new Date().toISOString(), tipo: "duplicada", detalle: `Desde ${orig.numeroCotizacion}` }],
+    // Preserve observations from the original
+    observacionesSeleccionadas: orig.observacionesSeleccionadas ? [...orig.observacionesSeleccionadas] : undefined,
+    observacionManual: orig.observacionManual,
     cliente: { ...orig.cliente },
     servicios: orig.servicios.map((s) => ({ ...s })),
     acomodaciones: [...orig.acomodaciones],

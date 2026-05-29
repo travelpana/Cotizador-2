@@ -15,6 +15,8 @@ import Seguimiento from "@/components/Seguimiento";
 import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
+import ObservacionesPanel from "@/components/ObservacionesPanel";
+import { loadObservaciones, resolveObservaciones } from "@/lib/observaciones";
 import {
   loadGuardadas,
   saveGuardadas,
@@ -111,6 +113,20 @@ export default function CotizadorPage() {
   const [actividadesOverride, setActividadesOverride] = useState<
     Record<number, string>
   >({});
+  const [observacionesSeleccionadas, setObservacionesSeleccionadas] = useState<
+    string[]
+  >([]);
+  const [observacionManual, setObservacionManual] = useState("");
+  const observacionesCatalog = useMemo(() => loadObservaciones(), []);
+  const resolvedObservaciones = useMemo(
+    () =>
+      resolveObservaciones(
+        observacionesCatalog,
+        observacionesSeleccionadas,
+        observacionManual,
+      ),
+    [observacionesCatalog, observacionesSeleccionadas, observacionManual],
+  );
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewQuote, setPreviewQuote] = useState<CotizacionGuardada | null>(
     null,
@@ -205,6 +221,8 @@ export default function CotizadorPage() {
       acomodaciones,
       modo,
       numeroCotizacion: numero,
+      observacionesSeleccionadas: observacionesSeleccionadas.length > 0 ? [...observacionesSeleccionadas] : undefined,
+      observacionManual: observacionManual.trim() || undefined,
     });
     setGuardadas(items);
     if (saved) showToast("Cotización guardada en seguimiento");
@@ -327,6 +345,8 @@ export default function CotizadorPage() {
       servicios,
       acomodaciones,
       modoCotizacion: modo,
+      observacionesSeleccionadas: observacionesSeleccionadas.length > 0 ? [...observacionesSeleccionadas] : undefined,
+      observacionManual: observacionManual.trim() || undefined,
     };
     const next = [item, ...guardadas].slice(0, 30);
     saveGuardadas(next);
@@ -343,6 +363,8 @@ export default function CotizadorPage() {
     setServicios([]);
     setModo("tarifas");
     setCurrentNumero(null);
+    setObservacionesSeleccionadas([]);
+    setObservacionManual("");
   };
 
   const handleQuickAdd = (s: ServicioSeleccionado) => {
@@ -400,6 +422,8 @@ export default function CotizadorPage() {
     setServicios(g.servicios);
     setModo(g.modoCotizacion);
     setCurrentNumero(g.numeroCotizacion);
+    setObservacionesSeleccionadas(g.observacionesSeleccionadas ?? []);
+    setObservacionManual(g.observacionManual ?? "");
     setView("cotizador");
   };
   const seguimientoDelete = (id: string) => {
@@ -600,6 +624,13 @@ export default function CotizadorPage() {
                   onEdit={openEdit}
                   onAddCustom={() => setCustomOpen(true)}
                 />
+                <ObservacionesPanel
+                  servicios={servicios}
+                  seleccionadas={observacionesSeleccionadas}
+                  onSeleccionadasChange={setObservacionesSeleccionadas}
+                  manual={observacionManual}
+                  onManualChange={setObservacionManual}
+                />
                 {incluirItinerario && (
                   <Itinerario
                     cliente={cliente}
@@ -646,6 +677,7 @@ export default function CotizadorPage() {
                   incluirDescriptivoCompleto={incluirDescriptivoCompleto}
                   descriptivos={mergedDescriptivos}
                   actividadesOverride={actividadesOverride}
+                  observaciones={resolvedObservaciones}
                   onSave={handleSave}
                   onClear={handleClear}
                   onPreview={() => {
@@ -713,6 +745,13 @@ export default function CotizadorPage() {
         actividadesOverride={actividadesOverride}
         onActividadesOverrideChange={setActividadesOverride}
         numeroCotizacion={previewNumero}
+        observaciones={previewQuote
+          ? resolveObservaciones(
+              observacionesCatalog,
+              previewQuote.observacionesSeleccionadas ?? [],
+              previewQuote.observacionManual ?? "",
+            )
+          : resolvedObservaciones}
       />
 
       {toast && (
