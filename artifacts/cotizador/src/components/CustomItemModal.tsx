@@ -11,9 +11,7 @@ interface Props {
   onSave: (s: ServicioSeleccionado) => void;
   globalFechaInicio?: string;
   globalFechaFin?: string;
-  /** Global niños count from Alojamiento — gates the precio niño field. */
   globalNinos?: number;
-  /** When provided, the modal opens in edit mode pre-filled with this service. */
   initial?: ServicioSeleccionado | null;
 }
 
@@ -27,6 +25,13 @@ const TIPO_OPTIONS: { value: CustomTipo; label: string }[] = [
 const ALL_ACOM: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
 
 const CIUDADES_VUELO = ["Panamá", "Bocas del Toro"] as const;
+
+const lbl =
+  "block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide";
+const inputCls =
+  "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
+const selectCls =
+  "w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary";
 
 export default function CustomItemModal({
   open,
@@ -46,8 +51,14 @@ export default function CustomItemModal({
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
   const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
-  const nombreRef = useRef<HTMLInputElement>(null);
 
+  // Hotel-only fields
+  const [ubicacion, setUbicacion] = useState("");
+  const [estrellas, setEstrellas] = useState("");
+  const [tipoHabitacion, setTipoHabitacion] = useState("");
+  const [desayuno, setDesayuno] = useState("");
+
+  const nombreRef = useRef<HTMLInputElement>(null);
   const ninosEnabled = globalNinos > 0;
 
   useEffect(() => {
@@ -84,6 +95,11 @@ export default function CustomItemModal({
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
         const arrowCount = (initial.nombre.match(/→/g) ?? []).length;
         setIdaVuelta(initial.tipo === "vuelo" ? arrowCount >= 2 : true);
+        // Hotel fields
+        setUbicacion(initial.ubicacion ?? "");
+        setEstrellas(initial.estrellas ?? "");
+        setTipoHabitacion(initial.tipoHabitacion ?? "");
+        setDesayuno(initial.desayuno ?? "");
       } else {
         setTipo("tour");
         setNombre("");
@@ -93,6 +109,10 @@ export default function CustomItemModal({
         setOrigen(CIUDADES_VUELO[0]);
         setDestino(CIUDADES_VUELO[1]);
         setIdaVuelta(true);
+        setUbicacion("");
+        setEstrellas("");
+        setTipoHabitacion("");
+        setDesayuno("");
       }
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
@@ -105,6 +125,7 @@ export default function CustomItemModal({
   }, [ninosEnabled, precioNino]);
 
   const isVuelo = tipo === "vuelo";
+  const isHotel = tipo === "hotel";
 
   const vueloNombre = useMemo(
     () =>
@@ -159,10 +180,14 @@ export default function CustomItemModal({
       precios,
       manual: true,
       notas: notas.trim() || undefined,
-      ...(tipo === "hotel"
+      ...(isHotel
         ? {
             fechaInicio: globalFechaInicio || undefined,
             fechaFin: globalFechaFin || undefined,
+            ubicacion: ubicacion || undefined,
+            estrellas: estrellas || undefined,
+            tipoHabitacion: tipoHabitacion || undefined,
+            desayuno: desayuno || undefined,
           }
         : {}),
       ...(isVuelo
@@ -185,6 +210,7 @@ export default function CustomItemModal({
         className="w-full max-w-md bg-white rounded-2xl shadow-xl ring-1 ring-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -221,15 +247,14 @@ export default function CustomItemModal({
           </button>
         </header>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Tipo de servicio */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Tipo de servicio
-            </label>
+            <label className={lbl}>Tipo de servicio</label>
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value as CustomTipo)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              className={selectCls}
             >
               {TIPO_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -239,17 +264,16 @@ export default function CustomItemModal({
             </select>
           </div>
 
-          {isVuelo ? (
+          {/* ── VUELO ── */}
+          {isVuelo && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                    Origen
-                  </label>
+                  <label className={lbl}>Origen</label>
                   <select
                     value={origen}
                     onChange={(e) => setOrigen(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    className={selectCls}
                   >
                     {CIUDADES_VUELO.map((c) => (
                       <option key={c} value={c}>
@@ -259,13 +283,11 @@ export default function CustomItemModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                    Destino
-                  </label>
+                  <label className={lbl}>Destino</label>
                   <select
                     value={destino}
                     onChange={(e) => setDestino(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    className={selectCls}
                   >
                     {CIUDADES_VUELO.map((c) => (
                       <option key={c} value={c}>
@@ -307,79 +329,225 @@ export default function CustomItemModal({
                 </div>
               </div>
             </>
-          ) : (
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                Nombre del servicio
-              </label>
-              <input
-                ref={nombreRef}
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Cena especial en restaurante"
-                className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400"
-              />
-            </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                Precio (USD)
-              </label>
-              <PriceInput
-                value={precio}
-                onChange={setPrecio}
-                placeholder="0"
-                wrapperClassName="w-full"
-                inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
-              />
-            </div>
-            {tipo !== "hotel" && (
+          {/* ── HOTEL ── */}
+          {isHotel && (
+            <>
+              {/* Nombre del hotel */}
               <div>
-                <label
-                  className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
-                    ninosEnabled ? "text-slate-500" : "text-slate-300"
-                  }`}
-                >
-                  Precio niño (USD)
-                </label>
-                <PriceInput
-                  value={precioNino}
-                  onChange={setPrecioNino}
-                  placeholder="0"
-                  disabled={!ninosEnabled}
-                  wrapperClassName="w-full"
-                  inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
-                    ninosEnabled
-                      ? "border-slate-200 text-slate-900"
-                      : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
-                  }`}
+                <label className={lbl}>Nombre del hotel</label>
+                <input
+                  ref={nombreRef}
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ej: Hotel Hilton Garden Inn"
+                  className={inputCls}
                 />
               </div>
-            )}
-          </div>
-          <p className="text-[11px] text-slate-500 -mt-2">
-            {tipo === "hotel"
-              ? "Se aplicará el mismo valor a todas las acomodaciones"
-              : isVuelo
-                ? ninosEnabled
-                  ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                  : "Precio por persona del vuelo (puedes editarlo más tarde)"
-                : ninosEnabled
+
+              {/* Fila 1: Ubicación | Categoría */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Ubicación</label>
+                  <select
+                    value={ubicacion}
+                    onChange={(e) => setUbicacion(e.target.value)}
+                    className={selectCls}
+                    style={{ color: ubicacion ? "#0f172a" : "#94a3b8" }}
+                  >
+                    <option value="">— Seleccionar —</option>
+                    <option value="BOCAS DEL TORO">BOCAS DEL TORO</option>
+                    <option value="CHIRIQUÍ">CHIRIQUÍ</option>
+                    <option value="CIUDAD DE PANAMÁ">CIUDAD DE PANAMÁ</option>
+                    <option value="COCLÉ (RIVIERA PACÍFICA)">COCLÉ (RIVIERA PACÍFICA)</option>
+                    <option value="COLÓN">COLÓN</option>
+                    <option value="CONTADORA">CONTADORA</option>
+                    <option value="SAN BLAS">SAN BLAS</option>
+                    <option value="TABOGA">TABOGA</option>
+                    <option value="VERAGUAS / SANTIAGO">VERAGUAS / SANTIAGO</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={lbl}>Categoría</label>
+                  <select
+                    value={estrellas}
+                    onChange={(e) => setEstrellas(e.target.value)}
+                    className={selectCls}
+                    style={{ color: estrellas ? "#0f172a" : "#94a3b8" }}
+                  >
+                    <option value="">— Seleccionar —</option>
+                    <option value="★★★">★★★</option>
+                    <option value="★★★★">★★★★</option>
+                    <option value="★★★★★">★★★★★</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Fila 2: Tipo habitación | Precio */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Tipo de habitación</label>
+                  <input
+                    list="cim-tipos-hab"
+                    value={tipoHabitacion}
+                    onChange={(e) => setTipoHabitacion(e.target.value)}
+                    placeholder="Standard, Deluxe, Suite..."
+                    className={inputCls}
+                  />
+                  <datalist id="cim-tipos-hab">
+                    <option value="Standard" />
+                    <option value="Deluxe" />
+                    <option value="Suite" />
+                    <option value="Junior Suite" />
+                    <option value="Vista Jardín" />
+                    <option value="Vista Mar" />
+                  </datalist>
+                </div>
+                <div>
+                  <label className={lbl}>Precio por noche (USD)</label>
+                  <PriceInput
+                    value={precio}
+                    onChange={setPrecio}
+                    placeholder="0"
+                    wrapperClassName="w-full"
+                    inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 -mt-2">
+                Se aplicará el mismo valor a todas las acomodaciones
+              </p>
+
+              {/* Fila 3: Régimen */}
+              <div>
+                <label className={lbl}>Régimen / Desayuno</label>
+                <input
+                  list="cim-regimenes"
+                  value={desayuno}
+                  onChange={(e) => setDesayuno(e.target.value)}
+                  placeholder="Ej: Desayuno buffet incluido"
+                  className={inputCls}
+                />
+                <datalist id="cim-regimenes">
+                  <option value="Solo alojamiento" />
+                  <option value="Desayuno continental incluido" />
+                  <option value="Desayuno buffet incluido" />
+                  <option value="Alimentación completa incluida" />
+                  <option value="Todo incluido" />
+                </datalist>
+              </div>
+            </>
+          )}
+
+          {/* ── NON-HOTEL, NON-VUELO: nombre + precio ── */}
+          {!isVuelo && !isHotel && (
+            <>
+              <div>
+                <label className={lbl}>Nombre del servicio</label>
+                <input
+                  ref={nombreRef}
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ej: Cena especial en restaurante"
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Precio (USD)</label>
+                  <PriceInput
+                    value={precio}
+                    onChange={setPrecio}
+                    placeholder="0"
+                    wrapperClassName="w-full"
+                    inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
+                      ninosEnabled ? "text-slate-500" : "text-slate-300"
+                    }`}
+                  >
+                    Precio niño (USD)
+                  </label>
+                  <PriceInput
+                    value={precioNino}
+                    onChange={setPrecioNino}
+                    placeholder="0"
+                    disabled={!ninosEnabled}
+                    wrapperClassName="w-full"
+                    inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
+                      ninosEnabled
+                        ? "border-slate-200 text-slate-900"
+                        : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
+                    }`}
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 -mt-2">
+                {ninosEnabled
                   ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
                   : "Precio por persona, igual para todos los rangos"}
-          </p>
+              </p>
+            </>
+          )}
 
+          {/* Precio para vuelo */}
+          {isVuelo && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Precio (USD)</label>
+                  <PriceInput
+                    value={precio}
+                    onChange={setPrecio}
+                    placeholder="0"
+                    wrapperClassName="w-full"
+                    inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
+                      ninosEnabled ? "text-slate-500" : "text-slate-300"
+                    }`}
+                  >
+                    Precio niño (USD)
+                  </label>
+                  <PriceInput
+                    value={precioNino}
+                    onChange={setPrecioNino}
+                    placeholder="0"
+                    disabled={!ninosEnabled}
+                    wrapperClassName="w-full"
+                    inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
+                      ninosEnabled
+                        ? "border-slate-200 text-slate-900"
+                        : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
+                    }`}
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 -mt-2">
+                {ninosEnabled
+                  ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                  : "Precio por persona del vuelo (puedes editarlo más tarde)"}
+              </p>
+            </>
+          )}
+
+          {/* Fila 4: Observaciones — más pequeño */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Notas
-            </label>
+            <label className={lbl}>Observaciones</label>
             <textarea
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
-              rows={3}
+              rows={2}
               placeholder="Detalles adicionales que aparecerán en la cotización"
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 resize-none"
             />
