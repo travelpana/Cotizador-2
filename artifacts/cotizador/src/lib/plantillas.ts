@@ -104,6 +104,7 @@ export function buildServiciosFromPlantilla(
           estrellas: h.estrellas,
           vigencia: h.vigencia,
           tipoHabitacion: h.tipoHabitacion,
+          desayuno: h.desayuno || undefined,
           notas: blk.hotelNotas || undefined,
         });
       }

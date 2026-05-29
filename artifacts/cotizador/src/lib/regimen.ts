@@ -24,10 +24,14 @@ export function formatRegimen(raw: string | null | undefined): string {
     lo === "no incluido" ||
     lo === "no incluye" ||
     lo === "solo alojamiento" ||
-    lo === "room only" ||
-    lo === "incluido" // generic "Incluido" from old Tarifas select — ambiguous, suppress
+    lo === "room only"
   ) {
     return "";
+  }
+
+  // Generic "Incluido" / "incluido" → Desayuno incluido
+  if (lo === "incluido" || lo === "con desayuno" || lo === "breakfast included") {
+    return "Desayuno incluido";
   }
 
   // ── Already well-formed (user typed a complete phrase) ───────────

@@ -287,19 +287,34 @@ export default function CotizadorPage() {
     fetchAll();
   }, []);
 
-  const result = useMemo(
-    () => calcularLocal(servicios, acomodaciones, cliente),
-    [servicios, acomodaciones, cliente],
-  );
+  const result = useMemo(() => {
+    const r = calcularLocal(servicios, acomodaciones, cliente);
+    return {
+      ...r,
+      servicios: r.servicios.map((s) => {
+        if (s.tipo !== "hotel" || s.desayuno) return s;
+        const cat = mergedHoteles.find((h) => h.id === s.codigo || h.id === s.id);
+        return cat?.desayuno ? { ...s, desayuno: cat.desayuno } : s;
+      }),
+    };
+  }, [servicios, acomodaciones, cliente, mergedHoteles]);
 
   const previewResult = useMemo(() => {
     if (!previewQuote) return result;
-    return calcularLocal(
+    const r = calcularLocal(
       previewQuote.servicios,
       previewQuote.acomodaciones,
       previewQuote.cliente,
     );
-  }, [previewQuote, result]);
+    return {
+      ...r,
+      servicios: r.servicios.map((s) => {
+        if (s.tipo !== "hotel" || s.desayuno) return s;
+        const cat = mergedHoteles.find((h) => h.id === s.codigo || h.id === s.id);
+        return cat?.desayuno ? { ...s, desayuno: cat.desayuno } : s;
+      }),
+    };
+  }, [previewQuote, result, mergedHoteles]);
 
   const handleSave = () => {
     const numero = getOrCreateNumero();
