@@ -153,7 +153,10 @@ export function getSugeridos(servicios: ServicioSeleccionado[]): Set<string> {
   return suggested;
 }
 
-/** Resolve selected IDs + manual text into an array of final strings for export */
+/** Resolve selected IDs + manual text into an array of final strings for export.
+ *  Each line in `manual` becomes its own item. Duplicates are silently dropped.
+ *  Old saved quotes that stored multi-line text as a single string are handled
+ *  automatically by splitting on newlines. */
 export function resolveObservaciones(
   catalog: ObservacionRapida[],
   seleccionadas: string[],
@@ -165,8 +168,17 @@ export function resolveObservaciones(
     .sort((a, b) => a.orden - b.orden)
     .map((o) => o.texto);
 
-  const manualTrimmed = manual.trim();
-  if (manualTrimmed) textos.push(manualTrimmed);
+  // Track what's already included (case-insensitive) to prevent duplicates
+  const seen = new Set(textos.map((t) => t.trim().toLowerCase()));
+
+  // Each non-empty line in the manual textarea is a separate observation
+  for (const line of manual.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !seen.has(trimmed.toLowerCase())) {
+      textos.push(trimmed);
+      seen.add(trimmed.toLowerCase());
+    }
+  }
 
   return textos;
 }

@@ -36,24 +36,24 @@ export default function ObservacionesPanel({
   }, [open]);
 
   const insertClause = (text: string) => {
-    const ta = textareaRef.current;
-    if (!ta) {
-      onManualChange(manual ? `${manual}\n${text}` : text);
+    // Deduplicate: don't add if already present as a line
+    const existingLines = manual
+      .split("\n")
+      .map((l) => l.trim().toLowerCase())
+      .filter(Boolean);
+    if (existingLines.includes(text.trim().toLowerCase())) {
       setOpen(false);
       return;
     }
-    const start = ta.selectionStart ?? manual.length;
-    const end = ta.selectionEnd ?? manual.length;
-    const before = manual.slice(0, start);
-    const after = manual.slice(end);
-    const sep = before.length > 0 && !before.endsWith("\n") ? "\n" : "";
-    const newText = before + sep + text + after;
+    // Append as a new line
+    const newText = manual.trimEnd() ? `${manual.trimEnd()}\n${text}` : text;
     onManualChange(newText);
     setOpen(false);
     requestAnimationFrame(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
       ta.focus();
-      const cursor = start + sep.length + text.length;
-      ta.setSelectionRange(cursor, cursor);
+      ta.setSelectionRange(newText.length, newText.length);
     });
   };
 
@@ -96,7 +96,7 @@ export default function ObservacionesPanel({
               }`}
             >
               <List className="w-3.5 h-3.5 shrink-0" />
-              Insertar cláusula rápida
+              Observaciones rápidas
             </button>
 
             {open && (
