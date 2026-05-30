@@ -107,10 +107,10 @@ export interface Descriptivo {
 }
 
 export const AGENTES = [
-  "Johanna C.",
-  "Melisa A.",
-  "Gabriela S.",
-  "Jonathan C.",
+  "JOHANNA C.",
+  "MELISA A.",
+  "GABRIELA S.",
+  "JONATHAN C.",
 ] as const;
 
 export type Agente = (typeof AGENTES)[number];

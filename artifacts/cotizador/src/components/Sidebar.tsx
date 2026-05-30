@@ -173,14 +173,12 @@ export default function Sidebar({
           onClick={() => onView("seguimiento")}
           icon={<ListChecks className="w-4 h-4" />}
           label="Seguimiento"
-          badge={seguimientoCount}
         />
         <NavItem
           active={view === "plantillas"}
           onClick={() => onView("plantillas")}
           icon={<LayoutTemplate className="w-4 h-4" />}
           label="Plantillas"
-          badge={plantillasCount}
         />
         <NavItem
           active={view === "descriptivos"}

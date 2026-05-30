@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Check } from "lucide-react";
 import {
   AGENTES,
   type Acomodacion,
@@ -51,7 +52,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             type="text"
             value={cliente.nombre}
             onChange={(e) => update({ nombre: e.target.value })}
-            placeholder="Ej: Familia Pérez"
+            placeholder=""
             className={`${inputCls} ${errCls(errors?.nombre)}`}
             data-testid="input-nombre"
           />
@@ -61,29 +62,17 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             type="text"
             value={cliente.correo}
             onChange={(e) => update({ correo: e.target.value })}
-            placeholder="Ej: RGE Style Travel"
+            placeholder=""
             className={`${inputCls} ${errCls(errors?.agencia)}`}
             data-testid="input-agencia"
           />
         </Field>
         <Field label="Agente" required error={errors?.agente}>
-          <select
+          <AgentSelect
             value={cliente.agente}
-            onChange={(e) => update({ agente: e.target.value })}
-            className={`${inputCls} ${errCls(errors?.agente)}`}
-            style={{
-              color: cliente.agente ? "#0f172a" : "#94a3b8",
-              backgroundColor: "#ffffff",
-            }}
-            data-testid="select-agente"
-          >
-            <option value="" style={{ color: "#94a3b8" }}>Selecciona un agente…</option>
-            {AGENTES.map((a) => (
-              <option key={a} value={a} style={{ color: "#0f172a" }}>
-                {a}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => update({ agente: v })}
+            error={errors?.agente}
+          />
         </Field>
 
         <Field label="Correo electrónico">
@@ -129,6 +118,72 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
 
 const inputCls =
   "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] placeholder:text-slate-400";
+
+function AgentSelect({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const errBorder = error
+    ? "border-red-400 ring-1 ring-red-200 bg-red-50/40"
+    : "border-slate-200";
+
+  return (
+    <div ref={ref} className="relative" data-testid="select-agente">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full h-10 px-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] flex items-center justify-between gap-2 transition-colors hover:border-slate-300 ${errBorder}`}
+        style={{ color: value ? "#0f172a" : "#94a3b8" }}
+      >
+        <span className="truncate font-medium tracking-wide">
+          {value || "Seleccionar"}
+        </span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+          {AGENTES.map((a) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => {
+                onChange(a);
+                setOpen(false);
+              }}
+              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm font-medium text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be] transition-colors tracking-wide"
+            >
+              <span>{a}</span>
+              {value === a && (
+                <Check className="w-3.5 h-3.5 text-[#2596be] flex-shrink-0" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Field({
   label,

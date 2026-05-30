@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PriceInput } from "@/components/ui/price-input";
-import { X, Plus, Sparkles, Plane } from "lucide-react";
+import { X, Plus, Sparkles, Plane, ChevronDown, Check } from "lucide-react";
 import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
 
 type CustomTipo = "hotel" | "traslado" | "tour" | "vuelo";
@@ -26,12 +26,94 @@ const ALL_ACOM: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
 
 const CIUDADES_VUELO = ["Panamá", "Bocas del Toro"] as const;
 
+const UBICACIONES = [
+  "BOCAS DEL TORO",
+  "CHIRIQUÍ",
+  "CIUDAD DE PANAMÁ",
+  "COCLÉ (RIVIERA PACÍFICA)",
+  "COLÓN",
+  "CONTADORA",
+  "SAN BLAS",
+  "TABOGA",
+  "VERAGUAS / SANTIAGO",
+];
+
+const CATEGORIAS = [
+  { value: "★★★", label: "★★★ Tres estrellas" },
+  { value: "★★★★", label: "★★★★ Cuatro estrellas" },
+  { value: "★★★★★", label: "★★★★★ Cinco estrellas" },
+];
+
 const lbl =
   "block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide";
 const inputCls =
   "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
-const selectCls =
-  "w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary";
+
+interface CustomSelectProps<T extends string> {
+  value: T | "";
+  onChange: (v: T) => void;
+  options: { value: T; label: string }[];
+  placeholder?: string;
+}
+
+function CustomSelect<T extends string>({
+  value,
+  onChange,
+  options,
+  placeholder = "Seleccionar",
+}: CustomSelectProps<T>) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const selectedLabel = options.find((o) => o.value === value)?.label;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary flex items-center justify-between gap-2 transition-colors hover:border-slate-300"
+        style={{ color: value ? "#0f172a" : "#94a3b8" }}
+      >
+        <span className="truncate">{selectedLabel ?? placeholder}</span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+          {options.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => {
+                onChange(o.value);
+                setOpen(false);
+              }}
+              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm text-slate-800 hover:bg-primary/5 hover:text-primary transition-colors text-left"
+            >
+              <span>{o.label}</span>
+              {value === o.value && (
+                <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CustomItemModal({
   open,
@@ -52,7 +134,6 @@ export default function CustomItemModal({
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
   const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
 
-  // Hotel-only fields
   const [ubicacion, setUbicacion] = useState("");
   const [estrellas, setEstrellas] = useState("");
   const [tipoHabitacion, setTipoHabitacion] = useState("");
@@ -95,7 +176,6 @@ export default function CustomItemModal({
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
         const arrowCount = (initial.nombre.match(/→/g) ?? []).length;
         setIdaVuelta(initial.tipo === "vuelo" ? arrowCount >= 2 : true);
-        // Hotel fields
         setUbicacion(initial.ubicacion ?? "");
         setEstrellas(initial.estrellas ?? "");
         setTipoHabitacion(initial.tipoHabitacion ?? "");
@@ -203,6 +283,9 @@ export default function CustomItemModal({
     onClose();
   };
 
+  const ciudadOptions = CIUDADES_VUELO.map((c) => ({ value: c, label: c }));
+  const ubicacionOptions = UBICACIONES.map((u) => ({ value: u, label: u }));
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <form
@@ -251,17 +334,12 @@ export default function CustomItemModal({
           {/* Tipo de servicio */}
           <div>
             <label className={lbl}>Tipo de servicio</label>
-            <select
+            <CustomSelect
               value={tipo}
-              onChange={(e) => setTipo(e.target.value as CustomTipo)}
-              className={selectCls}
-            >
-              {TIPO_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setTipo(v as CustomTipo)}
+              options={TIPO_OPTIONS}
+              placeholder="Seleccionar tipo"
+            />
           </div>
 
           {/* ── VUELO ── */}
@@ -270,31 +348,21 @@ export default function CustomItemModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Origen</label>
-                  <select
+                  <CustomSelect
                     value={origen}
-                    onChange={(e) => setOrigen(e.target.value)}
-                    className={selectCls}
-                  >
-                    {CIUDADES_VUELO.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setOrigen}
+                    options={ciudadOptions}
+                    placeholder="Seleccionar"
+                  />
                 </div>
                 <div>
                   <label className={lbl}>Destino</label>
-                  <select
+                  <CustomSelect
                     value={destino}
-                    onChange={(e) => setDestino(e.target.value)}
-                    className={selectCls}
-                  >
-                    {CIUDADES_VUELO.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setDestino}
+                    options={ciudadOptions}
+                    placeholder="Seleccionar"
+                  />
                 </div>
               </div>
 
@@ -334,7 +402,6 @@ export default function CustomItemModal({
           {/* ── HOTEL ── */}
           {isHotel && (
             <>
-              {/* Nombre del hotel */}
               <div>
                 <label className={lbl}>Nombre del hotel</label>
                 <input
@@ -347,45 +414,27 @@ export default function CustomItemModal({
                 />
               </div>
 
-              {/* Fila 1: Ubicación | Categoría */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Ubicación</label>
-                  <select
+                  <CustomSelect
                     value={ubicacion}
-                    onChange={(e) => setUbicacion(e.target.value)}
-                    className={selectCls}
-                    style={{ color: ubicacion ? "#0f172a" : "#94a3b8" }}
-                  >
-                    <option value="">— Seleccionar —</option>
-                    <option value="BOCAS DEL TORO">BOCAS DEL TORO</option>
-                    <option value="CHIRIQUÍ">CHIRIQUÍ</option>
-                    <option value="CIUDAD DE PANAMÁ">CIUDAD DE PANAMÁ</option>
-                    <option value="COCLÉ (RIVIERA PACÍFICA)">COCLÉ (RIVIERA PACÍFICA)</option>
-                    <option value="COLÓN">COLÓN</option>
-                    <option value="CONTADORA">CONTADORA</option>
-                    <option value="SAN BLAS">SAN BLAS</option>
-                    <option value="TABOGA">TABOGA</option>
-                    <option value="VERAGUAS / SANTIAGO">VERAGUAS / SANTIAGO</option>
-                  </select>
+                    onChange={setUbicacion}
+                    options={ubicacionOptions}
+                    placeholder="— Seleccionar —"
+                  />
                 </div>
                 <div>
                   <label className={lbl}>Categoría</label>
-                  <select
+                  <CustomSelect
                     value={estrellas}
-                    onChange={(e) => setEstrellas(e.target.value)}
-                    className={selectCls}
-                    style={{ color: estrellas ? "#0f172a" : "#94a3b8" }}
-                  >
-                    <option value="">— Seleccionar —</option>
-                    <option value="★★★">★★★</option>
-                    <option value="★★★★">★★★★</option>
-                    <option value="★★★★★">★★★★★</option>
-                  </select>
+                    onChange={setEstrellas}
+                    options={CATEGORIAS}
+                    placeholder="— Seleccionar —"
+                  />
                 </div>
               </div>
 
-              {/* Fila 2: Tipo habitación | Precio */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Tipo de habitación</label>
@@ -420,7 +469,6 @@ export default function CustomItemModal({
                 Se aplicará el mismo valor a todas las acomodaciones
               </p>
 
-              {/* Fila 3: Régimen */}
               <div>
                 <label className={lbl}>Régimen / Desayuno</label>
                 <input
@@ -541,7 +589,7 @@ export default function CustomItemModal({
             </>
           )}
 
-          {/* Fila 4: Observaciones — más pequeño */}
+          {/* Observaciones */}
           <div>
             <label className={lbl}>Observaciones</label>
             <textarea

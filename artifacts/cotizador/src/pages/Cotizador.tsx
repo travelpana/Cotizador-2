@@ -654,7 +654,7 @@ export default function CotizadorPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {view === "cotizador"
-                  ? "Cotizador de Viajes"
+                  ? "Cotizador"
                   : view === "seguimiento"
                     ? "Seguimiento"
                     : view === "plantillas"
@@ -663,17 +663,17 @@ export default function CotizadorPage() {
                         ? "Descriptivos"
                         : "Tarifas"}
               </h1>
-              <p className="text-xs text-muted-foreground">
-                {view === "cotizador"
-                  ? "Multi-acomodación · cálculo en tiempo real desde tarifario Excel"
-                  : view === "seguimiento"
+              {view !== "cotizador" && (
+                <p className="text-xs text-muted-foreground">
+                  {view === "seguimiento"
                     ? "Cotizaciones guardadas en este equipo"
                     : view === "plantillas"
                       ? "Estructuras reutilizables para circuitos y multi-destino"
                       : view === "descriptivos"
                         ? "Biblioteca de descriptivos turísticos vinculados al tarifario"
                         : "Administra hoteles, tours y traslados · localStorage + Excel"}
-              </p>
+                </p>
+              )}
             </div>
             <div className="text-xs text-muted-foreground hidden md:block">
               {mergedHoteles.length} hoteles · {mergedTours.length} tours ·{" "}
@@ -784,16 +784,6 @@ export default function CotizadorPage() {
               </div>
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-                {servicios.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleGuardarComoPlantilla}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all text-xs font-medium"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/><line x1="9" x2="9" y1="9" y2="21"/></svg>
-                    Guardar cotización como plantilla
-                  </button>
-                )}
                 <ConfiguracionPanel
                   modo={modo}
                   onModoChange={setModo}
@@ -831,6 +821,16 @@ export default function CotizadorPage() {
                   getNumeroCotizacion={getOrCreateNumero}
                   onRegisterActivity={handleRegisterActivity}
                 />
+                {servicios.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleGuardarComoPlantilla}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all text-xs font-medium"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/><line x1="9" x2="9" y1="9" y2="21"/></svg>
+                    Guardar cotización como plantilla
+                  </button>
+                )}
               </aside>
             </div>
           )}
