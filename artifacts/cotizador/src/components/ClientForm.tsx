@@ -70,14 +70,16 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
           <select
             value={cliente.agente}
             onChange={(e) => update({ agente: e.target.value })}
-            className={`${inputCls} ${errCls(errors?.agente)} ${
-              cliente.agente ? "text-slate-900" : "text-slate-400"
-            }`}
+            className={`${inputCls} ${errCls(errors?.agente)}`}
+            style={{
+              color: cliente.agente ? "#0f172a" : "#94a3b8",
+              backgroundColor: "#ffffff",
+            }}
             data-testid="select-agente"
           >
-            <option value="">Selecciona un agente…</option>
+            <option value="" style={{ color: "#94a3b8" }}>Selecciona un agente…</option>
             {AGENTES.map((a) => (
-              <option key={a} value={a}>
+              <option key={a} value={a} style={{ color: "#0f172a" }}>
                 {a}
               </option>
             ))}

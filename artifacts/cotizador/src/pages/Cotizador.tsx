@@ -900,14 +900,14 @@ export default function CotizadorPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm shadow-lg ring-1 animate-in fade-in slide-in-from-bottom-2 ${
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2.5 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-xl ring-1 animate-in fade-in slide-in-from-top-2 duration-200 whitespace-nowrap ${
             toast.tone === "error"
               ? "bg-red-600 ring-red-500/30"
               : "bg-slate-900 ring-white/10"
           }`}
         >
           <span
-            className="w-2 h-2 rounded-full"
+            className="w-2 h-2 rounded-full flex-shrink-0"
             style={{
               backgroundColor:
                 toast.tone === "error" ? "#fecaca" : "#2596be",

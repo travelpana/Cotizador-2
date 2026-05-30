@@ -86,6 +86,7 @@ export default function ExportButtons({
   const [mailCopied, setMailCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const acoms = result.acomodaciones;
   const primary = acoms[0];
@@ -623,13 +624,29 @@ export default function ExportButtons({
       <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
         <IconBtn
           onClick={() => {
+            if (saving) return;
             if (!validateBeforeAction()) return;
-            onSave();
+            setSaving(true);
+            try {
+              onSave();
+            } finally {
+              setTimeout(() => setSaving(false), 1500);
+            }
           }}
           title="Guardar"
+          disabled={saving}
         >
-          <Save className="w-4 h-4" />
-          Guardar
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Guardando…
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Guardar
+            </>
+          )}
         </IconBtn>
         <IconBtn onClick={onClear} title="Limpiar" danger>
           <Trash2 className="w-4 h-4" />
@@ -645,17 +662,20 @@ function IconBtn({
   title,
   children,
   danger,
+  disabled,
 }: {
   onClick: () => void;
   title: string;
   children: React.ReactNode;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       title={title}
-      className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors ${
+      disabled={disabled}
+      className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
         danger
           ? "border-red-200 text-red-600 hover:bg-red-50"
           : "border-slate-200 text-slate-700 hover:bg-slate-50"
