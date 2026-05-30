@@ -241,6 +241,11 @@ const escape = (s: unknown) =>
 /** Like escape() but also converts newlines to <br /> for multi-line fields */
 const escapeML = (s: unknown) => escape(s).replace(/\n/g, "<br />");
 
+/** Full-width colored section header bar (replaces pill-style headers). */
+function sectionBar(title: string, color: string = COLOR_AZUL): string {
+  return `<div style="background:${color};color:#ffffff;padding:8px 14px;font-weight:700;font-size:11px;letter-spacing:0.8px;text-transform:uppercase;border-radius:4px 4px 0 0;">${escape(title)}</div>`;
+}
+
 function infoRow(label: string, value: string) {
   return `<tr>
     <td style="${STYLES.infoLabel}">${escape(label)}:</td>
@@ -268,28 +273,28 @@ function groupByLocation<T extends { ubicacion?: string }>(
 
 function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
-  const showNoches = d.isCalc;
-  const acomSuffix = d.isCalc
-    ? ""
-    : `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`;
+
+  // In Totales mode: no NOCHES column, no TOTAL per row (totals live in the summary block)
+  // In Tarifas mode: no NOCHES, an empty placeholder column (keeps Tarifas layout unchanged)
+  const showNoches = false;
+  const showTotalCol = !d.isCalc; // empty placeholder only in Tarifas mode
+
+  const nochesSuffix = `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">/noche</div>`;
   const acomCols = d.acoms
     .map(
       (a) =>
-        `<th style="${STYLES.thNum};width:10%;">${escape(a)}${acomSuffix}</th>`,
+        `<th style="${STYLES.thNum};width:10%;">${escape(String(a))}${nochesSuffix}</th>`,
     )
     .join("");
 
-  // Total column count for location header colspan
-  const totalCols = 3 + (showNoches ? 1 : 0) + d.acoms.length + 1;
+  const totalCols = 3 + d.acoms.length + (showTotalCol ? 1 : 0);
   const groups = groupByLocation(d.hoteles);
 
   const rows = groups
     .map(({ label, items }) => {
       const locationHeader = `<tr style="page-break-inside:avoid;">
-        <td colspan="${totalCols}" style="padding:10px 16px 6px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
-          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:${COLOR_AZUL};letter-spacing:0.8px;text-transform:uppercase;">
-            📍 ${escape(label)}
-          </div>
+        <td colspan="${totalCols}" style="padding:8px 16px 6px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
+          <div style="font-size:11px;font-weight:700;color:${COLOR_AZUL};letter-spacing:0.8px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
 
@@ -301,9 +306,7 @@ function alojamientoTable(d: PropuestaData): string {
                 `<td style="${STYLES.tdNum}">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
             )
             .join("");
-          const lastCell = d.isCalc
-            ? `<td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${escape(fmt(h.totalesPorAcomodacion[d.primary]))}</td>`
-            : `<td style="${STYLES.tdEmpty};width:10%;"></td>`;
+          const lastCell = showTotalCol ? `<td style="${STYLES.tdEmpty};width:10%;"></td>` : "";
 
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
@@ -321,7 +324,6 @@ function alojamientoTable(d: PropuestaData): string {
             </td>
             <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
             <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
-            ${showNoches ? `<td style="${STYLES.tdCenter};width:10%;">${escape(h.noches ?? d.cliente.noches ?? "—")}</td>` : ""}
             ${acomVals}
             ${lastCell}
           </tr>`;
@@ -332,20 +334,17 @@ function alojamientoTable(d: PropuestaData): string {
     })
     .join("");
 
-  const lastHeader = d.isCalc
-    ? `<th style="${STYLES.thNum};width:10%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>`
-    : `<th style="${STYLES.thEmpty};width:10%;"></th>`;
+  const lastHeader = showTotalCol ? `<th style="${STYLES.thEmpty};width:10%;"></th>` : "";
 
   return `
   <div style="${STYLES.block}">
-    <div style="${STYLES.pillBlue}">ALOJAMIENTO</div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin-top:12px;">
+    ${sectionBar("ALOJAMIENTO")}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr>
           <th style="${STYLES.th};width:50%;">HOTEL</th>
           <th style="${STYLES.thCenter};width:15%;">CATEGORÍA</th>
           <th style="${STYLES.th};width:15%;">TIPO HAB.</th>
-          ${showNoches ? `<th style="${STYLES.thCenter};width:10%;">NOCHES</th>` : ""}
           ${acomCols}
           ${lastHeader}
         </tr>
@@ -398,24 +397,22 @@ function adicionalesTable(
         ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>`
         : "";
 
+      // Totales mode: show only name, type, and unit price — no PAX/TOTAL columns
+      // (calculations live in the Resumen de costos block)
       if (d.isCalc) {
-        const unitPrice = escape(fmt(s.unitAplicado ?? 0));
-        const pax = s.paxAplicados ?? d.result.pasajeros;
-        const total = escape(fmt(s.totalesPorAcomodacion[d.primary]));
         return `<tr style="page-break-inside:avoid;">
-          <td style="${STYLES.td};width:50%;">
+          <td style="${STYLES.td};width:65%;">
             <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
             ${ticketsLine}
             ${horarioLine}
             ${notasLine}
           </td>
-          <td style="${STYLES.td};width:14%;">${escape(tipo)}</td>
-          <td style="${STYLES.tdNum};width:10%;">${unitPrice}</td>
-          <td style="${STYLES.tdCenter};width:8%;">${escape(String(pax))}</td>
-          <td style="${STYLES.tdNum};width:18%;font-weight:700;color:${COLOR_AZUL};background:#f0f4ff;">${total}</td>
+          <td style="${STYLES.td};width:15%;">${escape(tipo)}</td>
+          <td style="${STYLES.tdNum};width:20%;">${escape(fmt(s.unitAplicado ?? 0))}</td>
         </tr>`;
       }
 
+      // Tarifas mode: unchanged layout
       return `<tr style="page-break-inside:avoid;">
         <td style="${STYLES.td};width:65%;">
           <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
@@ -432,11 +429,9 @@ function adicionalesTable(
 
   const thead = d.isCalc
     ? `<tr>
-        <th style="${STYLES.th};width:50%;">DESCRIPCIÓN</th>
-        <th style="${STYLES.th};width:14%;">MODALIDAD</th>
-        <th style="${STYLES.thNum};width:10%;">TARIFA P/P</th>
-        <th style="${STYLES.thCenter};width:8%;">PAX</th>
-        <th style="${STYLES.thNum};width:18%;color:${COLOR_AZUL};background:#f0f4ff;">TOTAL</th>
+        <th style="${STYLES.th};width:65%;">DESCRIPCIÓN</th>
+        <th style="${STYLES.th};width:15%;">MODALIDAD</th>
+        <th style="${STYLES.thNum};width:20%;">TARIFA P/P</th>
       </tr>`
     : `<tr>
         <th style="${STYLES.th};width:65%;">DESCRIPCIÓN</th>
@@ -447,8 +442,8 @@ function adicionalesTable(
 
   return `
   <div style="${STYLES.block}">
-    <div style="${STYLES.pillBlue}">${escape(title)}</div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin-top:12px;">
+    ${sectionBar(title)}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
       <thead>${thead}</thead>
       <tbody>${rows}</tbody>
     </table>
@@ -481,8 +476,8 @@ function itinerarioTable(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    <div style="${STYLES.pillOrange}">ITINERARIO SUGERIDO</div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin-top:12px;">
+    ${sectionBar("ITINERARIO SUGERIDO", COLOR_NARANJA)}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr>
           <th style="${STYLES.th};width:50px;">DÍA</th>
@@ -558,78 +553,121 @@ function descriptivosBlock(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    <div style="${STYLES.pillAmber}">DESCRIPTIVOS</div>
-    <div style="margin-top:10px;">${items}</div>
+    ${sectionBar("DESCRIPTIVOS", "#d97706")}
+    <div style="margin-top:6px;">${items}</div>
   </div>`;
 }
 
 function totalsBlock(d: PropuestaData): string {
   if (!d.isCalc) return "";
 
-  const sub = d.result.subtotalesPorTipo;
-  const TIPO_LABELS: Array<{ key: "hotel" | "traslado" | "tour" | "vuelo"; label: string }> = [
-    { key: "hotel",    label: "Alojamiento" },
-    { key: "traslado", label: "Traslados" },
-    { key: "tour",     label: "Tours y experiencias" },
-    { key: "vuelo",    label: "Vuelos" },
-  ];
+  const C = 6; // total column count for colspan purposes
+  const secHdr = `padding:8px 14px;background:#eff6ff;font-weight:700;color:${COLOR_AZUL};font-size:10px;letter-spacing:0.8px;text-transform:uppercase;border-top:2px solid #dbeafe;border-bottom:1px solid ${COLOR_BORDE};`;
+  const tdBase = `padding:9px 14px;border-top:1px solid ${COLOR_BORDE};color:${COLOR_TEXTO};font-size:12px;vertical-align:middle;`;
+  const tdNum = `${tdBase}text-align:right;font-weight:600;`;
+  const tdCtr = `${tdBase}text-align:center;`;
 
-  // Build acom header columns
-  const acomHeaders = d.acoms
-    .map(
-      (a) =>
-        `<th style="${STYLES.thNum};width:14%;padding:10px 14px;">${escape(a)}</th>`,
-    )
-    .join("");
+  let rows = "";
 
-  // Subtotal rows — only for types that have at least one service
-  const subtotalRows = TIPO_LABELS
-    .filter(({ key }) => d.result.servicios.some((s) => s.tipo === key))
-    .map(({ key, label }) => {
-      const vals = d.acoms
-        .map((a) => {
-          const v = sub[key][a];
-          return `<td style="padding:9px 14px;border-top:1px solid ${COLOR_BORDE};text-align:right;color:#475569;font-size:13px;">${escape(fmt(v))}</td>`;
-        })
-        .join("");
-      return `<tr>
-        <td style="padding:9px 14px;border-top:1px solid ${COLOR_BORDE};color:#475569;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">${escape(label)}</td>
-        ${vals}
+  // ── ALOJAMIENTO ───────────────────────────────────────
+  if (d.hoteles.length > 0) {
+    rows += `<tr><td colspan="${C}" style="${secHdr}">ALOJAMIENTO</td></tr>`;
+    rows += `<tr>
+      <th style="${STYLES.th};padding:7px 14px;">CONCEPTO</th>
+      <th style="${STYLES.thCenter};padding:7px 14px;width:11%;">ACOM.</th>
+      <th style="${STYLES.thNum};padding:7px 14px;width:13%;">TARIFA/NOC</th>
+      <th style="${STYLES.thCenter};padding:7px 14px;width:7%;">PAX</th>
+      <th style="${STYLES.thCenter};padding:7px 14px;width:7%;">NOC.</th>
+      <th style="${STYLES.thNum};padding:7px 14px;width:13%;color:${COLOR_AZUL};">TOTAL</th>
+    </tr>`;
+    for (const h of d.hoteles) {
+      const hotelNoches = h.noches ?? d.cliente.noches ?? 1;
+      const validAcoms = d.acoms.filter((a) => (h.preciosPorAcomodacion[a] ?? 0) > 0);
+      for (const a of validAcoms) {
+        const tarifa = h.preciosPorAcomodacion[a];
+        const pax = String(a).toUpperCase() === "CHD"
+          ? (d.cliente.ninos ?? 0)
+          : d.result.pasajeros;
+        const total = h.totalesPorAcomodacion[a];
+        rows += `<tr>
+          <td style="${tdBase};font-weight:600;">${escape(h.nombre)}</td>
+          <td style="${tdCtr};font-weight:700;color:#475569;">${escape(String(a))}</td>
+          <td style="${tdNum}">${escape(fmt(tarifa))}</td>
+          <td style="${tdCtr}">${escape(String(pax))}</td>
+          <td style="${tdCtr}">${escape(String(hotelNoches))}</td>
+          <td style="${tdNum};color:${COLOR_AZUL};">${escape(fmt(total))}</td>
+        </tr>`;
+      }
+    }
+  }
+
+  // Helper for service sections (Traslados / Tours / Vuelos)
+  const serviceSection = (
+    label: string,
+    items: ServicioCalculado[],
+    getTipo: (s: ServicioCalculado) => string,
+    getName: (s: ServicioCalculado) => string,
+  ) => {
+    if (items.length === 0) return "";
+    let r = `<tr><td colspan="${C}" style="${secHdr}">${escape(label)}</td></tr>`;
+    r += `<tr>
+      <th style="${STYLES.th};padding:7px 14px;" colspan="2">CONCEPTO</th>
+      <th style="${STYLES.th};padding:7px 14px;width:13%;">MODALIDAD</th>
+      <th style="${STYLES.thNum};padding:7px 14px;width:13%;">TARIFA P/P</th>
+      <th style="${STYLES.thCenter};padding:7px 14px;width:7%;">PAX</th>
+      <th style="${STYLES.thNum};padding:7px 14px;width:13%;color:${COLOR_AZUL};">TOTAL</th>
+    </tr>`;
+    for (const s of items) {
+      const pax = s.paxAplicados ?? d.result.pasajeros;
+      const total = s.totalesPorAcomodacion[d.primary];
+      r += `<tr>
+        <td style="${tdBase};font-weight:600;" colspan="2">${escape(getName(s))}</td>
+        <td style="${tdBase}">${escape(getTipo(s))}</td>
+        <td style="${tdNum}">${escape(fmt(s.unitAplicado ?? 0))}</td>
+        <td style="${tdCtr}">${escape(String(pax))}</td>
+        <td style="${tdNum};color:${COLOR_AZUL};">${escape(fmt(total))}</td>
       </tr>`;
-    })
-    .join("");
+    }
+    return r;
+  };
 
-  // Grand total rows per acom
+  rows += serviceSection(
+    "TRASLADOS",
+    d.traslados,
+    (s) => s.tipoServicio ?? (s.detalle?.includes("Privado") ? "Privado" : "Regular"),
+    (s) => formatTrasladoNombre(s.nombre),
+  );
+  rows += serviceSection(
+    "TOURS Y EXPERIENCIAS",
+    d.tours,
+    (s) => s.tipoServicio ?? "Regular",
+    (s) => s.nombre,
+  );
+  rows += serviceSection(
+    "VUELOS",
+    d.vuelos,
+    () => "Vuelo",
+    (s) => s.nombre,
+  );
+
+  // ── GRAND TOTALS — uniform style for all acomodaciones ──
+  const totalLabelStyle = `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
+  const totalValStyle = `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:700;color:${COLOR_AZUL};font-size:14px;background:#f0f4ff;`;
   const totalRows = d.acoms
-    .map((a) => {
-      const isPrimary = a === d.primary;
-      const labelStyle = `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:12px;letter-spacing:0.6px;text-transform:uppercase;background:#f0f4ff;`;
-      const valStyle = isPrimary
-        ? `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:18px;background:#f0f4ff;`
-        : `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:700;color:#334155;font-size:14px;background:#f0f4ff;`;
-      return `<tr>
-        <td style="${labelStyle}">TOTAL GENERAL · ${escape(a)}</td>
-        <td colspan="${d.acoms.length}" style="${valStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
-      </tr>`;
-    })
+    .map(
+      (a) => `<tr>
+        <td colspan="${C - 1}" style="${totalLabelStyle}">TOTAL ${escape(String(a))}</td>
+        <td style="${totalValStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
+      </tr>`,
+    )
     .join("");
 
   return `
   <div style="${STYLES.block}">
-    <div style="${STYLES.pillBlue}">RESUMEN DE COSTOS</div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;margin-top:12px;border-collapse:collapse;border:1px solid ${COLOR_BORDE};">
-      <thead>
-        <tr>
-          <th style="${STYLES.th};padding:10px 14px;">CONCEPTO</th>
-          ${acomHeaders}
-        </tr>
-      </thead>
-      <tbody>
-        ${subtotalRows}
-      </tbody>
-      <tfoot>
-        ${totalRows}
-      </tfoot>
+    ${sectionBar("RESUMEN DE COSTOS")}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:1px solid ${COLOR_BORDE};">
+      <tbody>${rows}</tbody>
+      <tfoot>${totalRows}</tfoot>
     </table>
   </div>`;
 }
@@ -639,18 +677,14 @@ function observacionesBlock(d: PropuestaData): string {
   const items = d.observaciones
     .map(
       (o) =>
-        `<tr><td style="padding:4px 0 4px 10px;color:${COLOR_TEXTO};font-size:12px;line-height:1.5;border-left:3px solid ${COLOR_NARANJA};">• ${escape(o)}</td></tr>`,
+        `<tr><td style="padding:5px 14px 5px 16px;color:${COLOR_TEXTO};font-size:12px;line-height:1.6;border-left:3px solid ${COLOR_NARANJA};border-bottom:1px solid #fde8d8;">• ${escape(o)}</td></tr>`,
     )
     .join("");
   return `
   <div style="${STYLES.block}">
-    <div style="margin-bottom:10px;">
-      <span style="${STYLES.pillOrange};font-size:11px;padding:5px 12px;">OBSERVACIONES</span>
-    </div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#fff8f5;border-radius:8px;padding:8px;">
-      <tbody style="display:block;padding:10px 14px;">
-        ${items}
-      </tbody>
+    ${sectionBar("OBSERVACIONES", COLOR_NARANJA)}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#fff8f5;">
+      <tbody>${items}</tbody>
     </table>
   </div>`;
 }
