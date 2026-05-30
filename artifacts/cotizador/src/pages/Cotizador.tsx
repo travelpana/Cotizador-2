@@ -66,18 +66,28 @@ import { api, type CatalogInfo } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
 import { Loader2 } from "lucide-react";
 
-const DEFAULT_CLIENTE: Cliente = {
-  nombre: "",
-  correo: "",
-  whatsapp: "",
-  agente: "",
-  fechaInicio: "",
-  fechaFin: "",
-  vigencia: "",
-  pasajeros: 2,
-  ninos: 0,
-  noches: 1,
-};
+function addTwoMonths(date: Date): string {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + 2);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function makeDefaultCliente(): Cliente {
+  return {
+    nombre: "",
+    correo: "",
+    whatsapp: "",
+    agente: "",
+    fechaInicio: "",
+    fechaFin: "",
+    vigencia: addTwoMonths(new Date()),
+    pasajeros: 2,
+    ninos: 0,
+    noches: 1,
+  };
+}
+
+const DEFAULT_CLIENTE = makeDefaultCliente();
 
 interface FormState {
   open: boolean;
@@ -140,6 +150,7 @@ export default function CotizadorPage() {
   // export/preview/save and reused across PDF, email, WhatsApp and Seguimiento
   // so all surfaces show the same code (e.g. RGE-HF9ZMW).
   const [currentNumero, setCurrentNumero] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
   const [customOpen, setCustomOpen] = useState(false);
   const [customEditing, setCustomEditing] =
@@ -346,6 +357,33 @@ export default function CotizadorPage() {
     const total = result.totalesPorAcomodacion[acomodaciones[0]] ?? 0;
     const autoPriority: Prioridad =
       total > 1500 ? "alta" : total > 500 ? "media" : "baja";
+
+    if (savedId) {
+      const next = guardadas.map((g) =>
+        g.id === savedId
+          ? {
+              ...g,
+              cliente,
+              servicios,
+              acomodaciones,
+              modoCotizacion: modo,
+              observacionesSeleccionadas:
+                observacionesSeleccionadas.length > 0
+                  ? [...observacionesSeleccionadas]
+                  : undefined,
+              observacionManual: observacionManual.trim() || undefined,
+              prioridad: autoPriority,
+              ultimoSeguimiento: now,
+              historial: [...(g.historial ?? []), { fecha: now, tipo: "creada" as const }],
+            }
+          : g,
+      );
+      saveGuardadas(next);
+      setGuardadas(next);
+      showToast("Cotización actualizada correctamente");
+      return;
+    }
+
     const item: CotizacionGuardada = {
       id: `${Date.now()}`,
       fechaCreacion: now,
@@ -368,7 +406,8 @@ export default function CotizadorPage() {
     const next = [item, ...guardadas].slice(0, 30);
     saveGuardadas(next);
     setGuardadas(next);
-    showToast(`Cotización ${numero} guardada`);
+    setSavedId(item.id);
+    showToast("Cotización guardada correctamente");
   };
 
   const handleRegisterActivity = (tipo: ActividadTipo) => {
@@ -441,12 +480,13 @@ export default function CotizadorPage() {
   const handleClear = () => {
     if (servicios.length > 0 && !confirm("¿Limpiar la cotización actual?"))
       return;
-    setCliente(DEFAULT_CLIENTE);
+    setCliente(makeDefaultCliente());
     setValidationErrors({});
     setAcomodaciones(["DBL"]);
     setServicios([]);
     setModo("tarifas");
     setCurrentNumero(null);
+    setSavedId(null);
     setObservacionesSeleccionadas([]);
     setObservacionManual("");
   };
@@ -500,12 +540,13 @@ export default function CotizadorPage() {
     setPreviewOpen(true);
   };
   const seguimientoEdit = (g: CotizacionGuardada) => {
-    setCliente({ ...DEFAULT_CLIENTE, ...g.cliente });
+    setCliente({ ...makeDefaultCliente(), ...g.cliente });
     setValidationErrors({});
     setAcomodaciones(g.acomodaciones);
     setServicios(g.servicios);
     setModo(g.modoCotizacion);
     setCurrentNumero(g.numeroCotizacion);
+    setSavedId(g.id);
     setObservacionesSeleccionadas(g.observacionesSeleccionadas ?? []);
     setObservacionManual(g.observacionManual ?? "");
     setView("cotizador");
@@ -808,6 +849,7 @@ export default function CotizadorPage() {
                   actividadesOverride={actividadesOverride}
                   observaciones={resolvedObservaciones}
                   onSave={handleSave}
+                  isSaved={savedId !== null}
                   onClear={handleClear}
                   onPreview={() => {
                     getOrCreateNumero();

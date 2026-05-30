@@ -8,6 +8,7 @@ import {
   Eye,
   Check,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import html2pdfImport from "html2pdf.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,6 +36,7 @@ interface Props {
   descriptivos: Descriptivo[];
   actividadesOverride?: Record<number, string>;
   onSave: () => void;
+  isSaved?: boolean;
   onClear: () => void;
   onPreview: () => void;
   onAutoSave?: () => void;
@@ -75,6 +77,7 @@ export default function ExportButtons({
   actividadesOverride,
   observaciones,
   onSave,
+  isSaved,
   onClear,
   onPreview,
   onAutoSave,
@@ -630,16 +633,21 @@ export default function ExportButtons({
             try {
               onSave();
             } finally {
-              setTimeout(() => setSaving(false), 1500);
+              setTimeout(() => setSaving(false), 1200);
             }
           }}
-          title="Guardar"
+          title={isSaved ? "Actualizar" : "Guardar"}
           disabled={saving}
         >
           {saving ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
               Guardando…
+            </>
+          ) : isSaved ? (
+            <>
+              <RefreshCw className="w-4 h-4" />
+              Actualizar
             </>
           ) : (
             <>
