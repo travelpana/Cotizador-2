@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PriceInput } from "@/components/ui/price-input";
 import { Section } from "./ClientForm";
 import type {
