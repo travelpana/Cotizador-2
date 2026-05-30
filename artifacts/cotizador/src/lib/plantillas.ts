@@ -9,12 +9,13 @@ export type PlantillaBlockTipo =
   | "traslado"
   | "vuelo"
   | "catamaran"
-  | "observaciones";
+  | "observaciones"
+  | "observacionesGenerales";
 
 export interface PlantillaBlock {
   id: string;
   tipo: PlantillaBlockTipo;
-  /** Used for: titulo, nota, texto, observaciones (newline-separated bullets) */
+  /** titulo · nota · texto · observaciones · observacionesGenerales */
   texto?: string;
   hotelId?: string;
   hotelNombre?: string;
@@ -30,7 +31,7 @@ export interface PlantillaBlock {
   vueloPrecio?: number;
   vueloPrecioChd?: number;
   vueloNotas?: string;
-  /** Catamaran fields (uses tours catalog) */
+  /** Catamaran fields (backed by tours catalog) */
   catamaranId?: string;
   catamaranNombre?: string;
 }
@@ -42,6 +43,14 @@ export interface Plantilla {
   bloques: PlantillaBlock[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** Result returned by buildServiciosFromPlantilla. */
+export interface PlantillaLoadResult {
+  servicios: ServicioSeleccionado[];
+  observaciones: string[];
+  /** Services that were NOT found in the catalog and loaded as manual placeholders. */
+  noEncontrados: { tipo: string; nombre: string }[];
 }
 
 const LS_KEY = "rge_plantillas_v1";
@@ -92,18 +101,96 @@ export function duplicarPlantilla(p: Plantilla): Plantilla {
   };
 }
 
+// ─── Matching helpers ────────────────────────────────────────────────────────
+
+/** Normalize a string for fuzzy matching: trim, lowercase, remove accents, collapse spaces. */
+function normalize(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+/** Find a hotel by id (primary), then exact normalized name, then partial name. */
+function findHotel(hoteles: Hotel[], id?: string, nombre?: string): Hotel | null {
+  if (id) {
+    const h = hoteles.find((x) => x.id === id);
+    if (h) return h;
+  }
+  if (nombre) {
+    const n = normalize(nombre);
+    return (
+      hoteles.find((x) => normalize(x.nombre) === n) ??
+      hoteles.find((x) => {
+        const xn = normalize(x.nombre);
+        return xn.includes(n) || n.includes(xn);
+      }) ??
+      null
+    );
+  }
+  return null;
+}
+
+/** Find a tour by id, then exact/partial name. */
+function findTour(tours: Tour[], id?: string, nombre?: string): Tour | null {
+  if (id) {
+    const t = tours.find((x) => x.id === id);
+    if (t) return t;
+  }
+  if (nombre) {
+    const n = normalize(nombre);
+    return (
+      tours.find((x) => normalize(x.nombre) === n) ??
+      tours.find((x) => {
+        const xn = normalize(x.nombre);
+        return xn.includes(n) || n.includes(xn);
+      }) ??
+      null
+    );
+  }
+  return null;
+}
+
+/** Find a traslado by id, then exact/partial name. */
+function findTraslado(traslados: Traslado[], id?: string, nombre?: string): Traslado | null {
+  if (id) {
+    const t = traslados.find((x) => x.id === id);
+    if (t) return t;
+  }
+  if (nombre) {
+    const n = normalize(nombre);
+    return (
+      traslados.find((x) => normalize(x.nombre) === n) ??
+      traslados.find((x) => {
+        const xn = normalize(x.nombre);
+        return xn.includes(n) || n.includes(xn);
+      }) ??
+      null
+    );
+  }
+  return null;
+}
+
+// ─── Main loader ─────────────────────────────────────────────────────────────
+
 export function buildServiciosFromPlantilla(
   plantilla: Plantilla,
   hoteles: Hotel[],
   tours: Tour[],
   traslados: Traslado[],
-): ServicioSeleccionado[] {
-  const out: ServicioSeleccionado[] = [];
+): PlantillaLoadResult {
+  const servicios: ServicioSeleccionado[] = [];
+  const observaciones: string[] = [];
+  const noEncontrados: { tipo: string; nombre: string }[] = [];
+
   for (const blk of plantilla.bloques) {
-    if (blk.tipo === "hotel" && blk.hotelId) {
-      const h = hoteles.find((x) => x.id === blk.hotelId);
+    // ── Hotel ──────────────────────────────────────────────────────
+    if (blk.tipo === "hotel") {
+      const h = findHotel(hoteles, blk.hotelId, blk.hotelNombre);
       if (h) {
-        out.push({
+        servicios.push({
           id: `hotel-${h.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           codigo: h.id,
           tipo: "hotel",
@@ -121,11 +208,23 @@ export function buildServiciosFromPlantilla(
           desayuno: h.desayuno || undefined,
           notas: blk.hotelNotas || undefined,
         });
+      } else if (blk.hotelNombre) {
+        servicios.push({
+          id: `hotel-manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo: "hotel",
+          nombre: blk.hotelNombre,
+          precios: { SGL: 0, DBL: 0, TPL: 0, CHD: 0 },
+          manual: true,
+          notas: blk.hotelNotas || undefined,
+        });
+        noEncontrados.push({ tipo: "Hotel", nombre: blk.hotelNombre });
       }
-    } else if (blk.tipo === "tour" && blk.tourId) {
-      const t = tours.find((x) => x.id === blk.tourId);
+
+    // ── Tour ──────────────────────────────────────────────────────
+    } else if (blk.tipo === "tour") {
+      const t = findTour(tours, blk.tourId, blk.tourNombre);
       if (t) {
-        out.push({
+        servicios.push({
           id: `tour-${t.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           codigo: t.id,
           tipo: "tour",
@@ -139,11 +238,23 @@ export function buildServiciosFromPlantilla(
           usarFecha: false,
           horario: t.horario || undefined,
         });
+      } else if (blk.tourNombre) {
+        servicios.push({
+          id: `tour-manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo: "tour",
+          nombre: blk.tourNombre,
+          precios: { p1: 0, p2_5: 0, p6_10: 0, chd: 0 },
+          manual: true,
+          usarFecha: false,
+        });
+        noEncontrados.push({ tipo: "Tour", nombre: blk.tourNombre });
       }
-    } else if (blk.tipo === "traslado" && blk.trasladoId) {
-      const tr = traslados.find((x) => x.id === blk.trasladoId);
+
+    // ── Traslado ──────────────────────────────────────────────────
+    } else if (blk.tipo === "traslado") {
+      const tr = findTraslado(traslados, blk.trasladoId, blk.trasladoNombre);
       if (tr) {
-        out.push({
+        servicios.push({
           id: `traslado-${tr.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           codigo: tr.id,
           tipo: "traslado",
@@ -157,37 +268,52 @@ export function buildServiciosFromPlantilla(
           usarFecha: false,
           tipoServicio: tr.tipo,
         });
+      } else if (blk.trasladoNombre) {
+        servicios.push({
+          id: `traslado-manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo: "traslado",
+          nombre: blk.trasladoNombre,
+          precios: { p1: 0, p2_5: 0, p6_10: 0, chd: 0 },
+          manual: true,
+          usarFecha: false,
+        });
+        noEncontrados.push({ tipo: "Traslado", nombre: blk.trasladoNombre });
       }
+
+    // ── Vuelo — always create, even if fields are empty ───────────
     } else if (blk.tipo === "vuelo") {
       const origen = blk.vueloOrigen?.trim() || "";
       const destino = blk.vueloDestino?.trim() || "";
-      if (origen || destino) {
-        const nombre = blk.vueloIdaVuelta
-          ? `${origen || "?"} → ${destino || "?"} → ${origen || "?"}`
-          : `${origen || "?"} → ${destino || "?"}`;
-        const precio = blk.vueloPrecio ?? 0;
-        const precioChd = blk.vueloPrecioChd ?? precio;
-        out.push({
-          id: `vuelo-plt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          tipo: "vuelo",
-          nombre,
-          origen,
-          destino,
-          precios: {
-            p1: precio,
-            p2_5: precio,
-            p6_10: precio,
-            chd: precioChd,
-          },
-          unitOverride: precio,
-          manual: true,
-          notas: blk.vueloNotas || undefined,
-        });
-      }
-    } else if (blk.tipo === "catamaran" && blk.catamaranId) {
-      const t = tours.find((x) => x.id === blk.catamaranId);
+      const nombre =
+        origen && destino
+          ? blk.vueloIdaVuelta
+            ? `${origen} → ${destino} → ${origen}`
+            : `${origen} → ${destino}`
+          : origen || destino || "Vuelo por confirmar";
+      const precio = blk.vueloPrecio ?? 0;
+      const precioChd = blk.vueloPrecioChd ?? precio;
+      servicios.push({
+        id: `vuelo-plt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        tipo: "vuelo",
+        nombre,
+        origen: origen || undefined,
+        destino: destino || undefined,
+        precios: {
+          p1: precio,
+          p2_5: precio,
+          p6_10: precio,
+          chd: precioChd,
+        },
+        unitOverride: precio > 0 ? precio : undefined,
+        manual: true,
+        notas: blk.vueloNotas || undefined,
+      });
+
+    // ── Catamarán — catalog match first, manual fallback ──────────
+    } else if (blk.tipo === "catamaran") {
+      const t = findTour(tours, blk.catamaranId, blk.catamaranNombre);
       if (t) {
-        out.push({
+        servicios.push({
           id: `catamaran-${t.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           codigo: t.id,
           tipo: "catamaran",
@@ -200,20 +326,54 @@ export function buildServiciosFromPlantilla(
           },
           usarFecha: false,
         });
+      } else {
+        const nombre = blk.catamaranNombre || "Catamarán por confirmar";
+        servicios.push({
+          id: `catamaran-manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo: "catamaran",
+          nombre,
+          precios: { p1: 0, p2_5: 0, p6_10: 0, chd: 0 },
+          manual: true,
+          usarFecha: false,
+        });
+        if (blk.catamaranNombre) {
+          noEncontrados.push({ tipo: "Catamarán", nombre: blk.catamaranNombre });
+        }
       }
+
+    // ── Observaciones (both naming conventions) ───────────────────
+    } else if (blk.tipo === "observaciones" || blk.tipo === "observacionesGenerales") {
+      if (blk.texto) {
+        for (const line of blk.texto.split("\n")) {
+          const trimmed = line.trim();
+          if (trimmed) observaciones.push(trimmed);
+        }
+      }
+
+    // ── titulo / nota / texto — informational only (no services) ──
+    } else if (
+      blk.tipo === "titulo" ||
+      blk.tipo === "nota" ||
+      blk.tipo === "texto"
+    ) {
+      // These blocks don't generate services or observations.
+      // They are skipped silently during loading.
     }
   }
-  return out;
+
+  return { servicios, observaciones, noEncontrados };
 }
 
-/** Extracts observaciones bullets from an "observaciones" block in the template. */
+/** Extracts observaciones text from a template (supports both type names). */
 export function extractObservacionesFromPlantilla(plantilla: Plantilla): string[] {
   const lines: string[] = [];
   for (const blk of plantilla.bloques) {
-    if (blk.tipo === "observaciones" && blk.texto) {
-      for (const line of blk.texto.split("\n")) {
-        const trimmed = line.trim();
-        if (trimmed) lines.push(trimmed);
+    if (blk.tipo === "observaciones" || blk.tipo === "observacionesGenerales") {
+      if (blk.texto) {
+        for (const line of blk.texto.split("\n")) {
+          const trimmed = line.trim();
+          if (trimmed) lines.push(trimmed);
+        }
       }
     }
   }

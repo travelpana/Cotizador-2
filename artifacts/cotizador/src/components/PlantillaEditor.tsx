@@ -160,6 +160,11 @@ const BLOCK_META: Record<
     badgeCls: "bg-violet-100 text-violet-700",
     icon: <ClipboardList className="w-3 h-3" />,
   },
+  observacionesGenerales: {
+    label: "Observaciones",
+    badgeCls: "bg-violet-100 text-violet-700",
+    icon: <ClipboardList className="w-3 h-3" />,
+  },
 };
 
 const ADD_BLOCK_TYPES: PlantillaBlockTipo[] = [
@@ -168,7 +173,7 @@ const ADD_BLOCK_TYPES: PlantillaBlockTipo[] = [
   "traslado",
   "vuelo",
   "catamaran",
-  "observaciones",
+  "observacionesGenerales",
 ];
 
 interface BlockEditorProps {
@@ -403,7 +408,7 @@ function BlockEditor({
           />
         )}
 
-        {block.tipo === "observaciones" && (
+        {(block.tipo === "observaciones" || block.tipo === "observacionesGenerales") && (
           <>
             <p className="text-[11px] text-slate-400 -mb-1">Una observación por línea. Se agregarán a la sección de observaciones de la cotización al usar la plantilla.</p>
             <textarea
@@ -501,7 +506,9 @@ export default function PlantillaEditor({
   const trasladoCount = bloques.filter((b) => b.tipo === "traslado" && b.trasladoId).length;
   const vueloCount = bloques.filter((b) => b.tipo === "vuelo" && (b.vueloOrigen || b.vueloDestino)).length;
   const catamaranCount = bloques.filter((b) => b.tipo === "catamaran" && b.catamaranId).length;
-  const obsCount = bloques.filter((b) => b.tipo === "observaciones" && b.texto?.trim()).length;
+  const obsCount = bloques.filter(
+    (b) => (b.tipo === "observaciones" || b.tipo === "observacionesGenerales") && b.texto?.trim(),
+  ).length;
 
   return (
     <div className="space-y-4">

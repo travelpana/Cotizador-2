@@ -37,7 +37,7 @@ import {
   serviciosToBlocks,
   newPlantilla,
   buildServiciosFromPlantilla,
-  extractObservacionesFromPlantilla,
+  type PlantillaLoadResult,
 } from "@/lib/plantillas";
 import {
   loadDescriptivosLS,
@@ -547,42 +547,70 @@ export default function CotizadorPage() {
     setPreviewQuote(null);
   };
 
-  const handleUsarPlantilla = (servicios: ServicioSeleccionado[], observaciones: string[]) => {
-    setServicios(servicios);
-    if (observaciones.length > 0) {
-      setObservacionManual(observaciones.join("\n"));
+  const handleUsarPlantilla = (result: PlantillaLoadResult) => {
+    setServicios(result.servicios);
+    if (result.observaciones.length > 0) {
+      setObservacionManual(result.observaciones.join("\n"));
     }
     setCurrentNumero(null);
     setView("cotizador");
+    const parts: string[] = [];
+    if (result.servicios.length > 0)
+      parts.push(`${result.servicios.length} servicio${result.servicios.length !== 1 ? "s" : ""}`);
+    if (result.observaciones.length > 0)
+      parts.push(`${result.observaciones.length} obs.`);
+    const missing =
+      result.noEncontrados.length > 0
+        ? ` · ${result.noEncontrados.length} sin coincidencia en tarifario (manual)`
+        : "";
     showToast(
-      servicios.length > 0
-        ? `Plantilla cargada · ${servicios.length} servicio${servicios.length !== 1 ? "s" : ""} agregado${servicios.length !== 1 ? "s" : ""}`
-        : "Plantilla cargada (sin servicios en el tarifario actual)",
+      parts.length > 0
+        ? `Plantilla cargada · ${parts.join(", ")}${missing}`
+        : "Plantilla cargada (sin servicios ni observaciones)",
     );
   };
 
   const handleCargarPlantillaEnCotizacion = (plantillaId: string) => {
     const plantilla = loadPlantillas().find((p) => p.id === plantillaId);
     if (!plantilla) return;
-    const nuevos = buildServiciosFromPlantilla(
+    const result = buildServiciosFromPlantilla(
       plantilla,
       mergedHoteles,
       mergedTours,
       mergedTraslados,
     );
-    setServicios((prev) => [...prev, ...nuevos]);
-    const obsFromPlantilla = extractObservacionesFromPlantilla(plantilla);
-    if (obsFromPlantilla.length > 0) {
+    setServicios((prev) => [...prev, ...result.servicios]);
+    if (result.observaciones.length > 0) {
       setObservacionManual((prev) => {
-        const existing = prev.trim();
-        const newLines = obsFromPlantilla.join("\n");
-        return existing ? `${existing}\n${newLines}` : newLines;
+        const existingLines = prev.trim()
+          ? prev
+              .trim()
+              .split("\n")
+              .map((l) => l.trim().toLowerCase())
+          : [];
+        const newLines = result.observaciones.filter(
+          (l) => !existingLines.includes(l.trim().toLowerCase()),
+        );
+        const combined = [
+          ...(prev.trim() ? [prev.trim()] : []),
+          ...newLines,
+        ].join("\n");
+        return combined;
       });
     }
+    const parts: string[] = [];
+    if (result.servicios.length > 0)
+      parts.push(`${result.servicios.length} servicio${result.servicios.length !== 1 ? "s" : ""}`);
+    if (result.observaciones.length > 0)
+      parts.push(`${result.observaciones.length} obs.`);
+    const missing =
+      result.noEncontrados.length > 0
+        ? ` · ${result.noEncontrados.length} sin coincidencia (manual)`
+        : "";
     showToast(
-      nuevos.length > 0
-        ? `"${plantilla.nombre}" · ${nuevos.length} servicio${nuevos.length !== 1 ? "s" : ""} agregado${nuevos.length !== 1 ? "s" : ""}`
-        : `"${plantilla.nombre}" cargada (sin coincidencias en el tarifario actual)`,
+      parts.length > 0
+        ? `"${plantilla.nombre}" · ${parts.join(", ")} agregados${missing}`
+        : `"${plantilla.nombre}" cargada (plantilla vacía)`,
     );
   };
 
@@ -687,8 +715,8 @@ export default function CotizadorPage() {
               hoteles={mergedHoteles}
               tours={mergedTours}
               traslados={mergedTraslados}
-              onUsarPlantilla={(svcs, obs) => {
-                handleUsarPlantilla(svcs, obs);
+              onUsarPlantilla={(result) => {
+                handleUsarPlantilla(result);
                 refreshPlantillasCount();
               }}
             />

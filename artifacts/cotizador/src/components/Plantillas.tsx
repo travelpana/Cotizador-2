@@ -10,11 +10,10 @@ import {
   Trash2,
   Wand2,
 } from "lucide-react";
-import type { Hotel, ServicioSeleccionado, Tour, Traslado } from "@/lib/types";
-import type { Plantilla, PlantillaBlockTipo } from "@/lib/plantillas";
+import type { Hotel, Tour, Traslado } from "@/lib/types";
+import type { Plantilla, PlantillaBlockTipo, PlantillaLoadResult } from "@/lib/plantillas";
 import {
   buildServiciosFromPlantilla,
-  extractObservacionesFromPlantilla,
   duplicarPlantilla,
   loadPlantillas,
   newPlantilla,
@@ -26,7 +25,7 @@ interface Props {
   hoteles: Hotel[];
   tours: Tour[];
   traslados: Traslado[];
-  onUsarPlantilla: (servicios: ServicioSeleccionado[], observaciones: string[]) => void;
+  onUsarPlantilla: (result: PlantillaLoadResult) => void;
 }
 
 type EditorMode = { tipo: "nuevo" } | { tipo: "editar"; plantilla: Plantilla };
@@ -41,6 +40,7 @@ const BLOCK_TYPE_LABELS: Record<PlantillaBlockTipo, string> = {
   vuelo: "Vuelo",
   catamaran: "Catamarán",
   observaciones: "Observaciones",
+  observacionesGenerales: "Observaciones",
 };
 
 function plantillaResumen(p: Plantilla) {
@@ -48,13 +48,14 @@ function plantillaResumen(p: Plantilla) {
   for (const b of p.bloques) {
     counts[b.tipo] = (counts[b.tipo] ?? 0) + 1;
   }
+  const obsCount = (counts.observaciones ?? 0) + (counts.observacionesGenerales ?? 0);
   const parts: string[] = [];
   if (counts.hotel) parts.push(`${counts.hotel} hotel${counts.hotel !== 1 ? "es" : ""}`);
   if (counts.tour) parts.push(`${counts.tour} tour${counts.tour !== 1 ? "s" : ""}`);
   if (counts.traslado) parts.push(`${counts.traslado} traslado${counts.traslado !== 1 ? "s" : ""}`);
   if (counts.vuelo) parts.push(`${counts.vuelo} vuelo${counts.vuelo !== 1 ? "s" : ""}`);
   if (counts.catamaran) parts.push(`${counts.catamaran} catamarán`);
-  if (counts.observaciones) parts.push("observaciones");
+  if (obsCount) parts.push("observaciones");
   return parts.length > 0 ? parts.join(" · ") : "Sin bloques";
 }
 
@@ -105,28 +106,35 @@ export default function Plantillas({
   };
 
   const handleUsar = (p: Plantilla) => {
-    const servicios = buildServiciosFromPlantilla(p, hoteles, tours, traslados);
-    const observaciones = extractObservacionesFromPlantilla(p);
-    const found = servicios.length;
-    const total = p.bloques.filter(
-      (b) =>
-        b.tipo === "hotel" ||
-        b.tipo === "tour" ||
-        b.tipo === "traslado" ||
-        b.tipo === "vuelo" ||
-        b.tipo === "catamaran",
-    ).length;
-    const missing = total - found;
+    const result = buildServiciosFromPlantilla(p, hoteles, tours, traslados);
+    const { servicios, observaciones, noEncontrados } = result;
+
+    const summaryParts: string[] = [];
+    if (servicios.length > 0)
+      summaryParts.push(`${servicios.length} servicio${servicios.length !== 1 ? "s" : ""}`);
+    if (observaciones.length > 0)
+      summaryParts.push(`${observaciones.length} observación${observaciones.length !== 1 ? "es" : ""}`);
+
     let msg = `¿Cargar la plantilla "${p.nombre}"?`;
-    if (found === 0) {
-      msg += "\n\nNingún servicio de esta plantilla existe en el tarifario actual.";
-    } else if (missing > 0) {
-      msg += `\n\nSe cargarán ${found} servicio${found !== 1 ? "s" : ""}. ${missing} no se encontró en el tarifario actual y se omitirá.`;
+    if (summaryParts.length === 0) {
+      msg += "\n\nEsta plantilla no tiene servicios ni observaciones para cargar.";
+    } else {
+      msg += `\n\nSe cargarán: ${summaryParts.join(" · ")}.`;
     }
+    if (noEncontrados.length > 0) {
+      msg +=
+        `\n\nNo encontrados en tarifario (se cargan como ítem manual con precio $0):\n` +
+        noEncontrados
+          .slice(0, 6)
+          .map((x) => `• [${x.tipo}] ${x.nombre}`)
+          .join("\n") +
+        (noEncontrados.length > 6 ? `\n• … y ${noEncontrados.length - 6} más` : "");
+    }
+
     if (!confirm(msg)) return;
     setUsandoId(p.id);
     window.setTimeout(() => setUsandoId(null), 800);
-    onUsarPlantilla(servicios, observaciones);
+    onUsarPlantilla(result);
   };
 
   if (editor !== null) {
