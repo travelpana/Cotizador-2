@@ -15,7 +15,13 @@ export default function ObservacionesPanel({
   manual,
   onManualChange,
 }: Props) {
-  const catalog = useMemo(() => loadObservaciones().filter((o) => o.activo), []);
+  const PRIORITY_IDS = ["precios_netos_pp", "sujeto_disponibilidad", "suplemento_sgl", "suplemento_vuelo_nocturno"];
+  const allActive = useMemo(() => loadObservaciones().filter((o) => o.activo), []);
+  const catalog = useMemo(() => {
+    const priority = allActive.filter((o) => PRIORITY_IDS.includes(o.id));
+    const rest = allActive.filter((o) => !PRIORITY_IDS.includes(o.id));
+    return { priority, rest };
+  }, [allActive]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -107,7 +113,7 @@ export default function ObservacionesPanel({
                   </span>
                 </div>
                 <div className="max-h-56 overflow-y-auto">
-                  {catalog.map((obs) => (
+                  {catalog.priority.map((obs) => (
                     <button
                       key={obs.id}
                       type="button"
@@ -117,6 +123,25 @@ export default function ObservacionesPanel({
                       {obs.texto}
                     </button>
                   ))}
+                  {catalog.rest.length > 0 && (
+                    <>
+                      <div className="px-3 pt-2 pb-1 border-t border-slate-100 mt-1">
+                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide">
+                          Otras cláusulas
+                        </span>
+                      </div>
+                      {catalog.rest.map((obs) => (
+                        <button
+                          key={obs.id}
+                          type="button"
+                          onClick={() => insertClause(obs.texto)}
+                          className="w-full text-left px-3 py-2 text-xs text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors leading-relaxed"
+                        >
+                          {obs.texto}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -127,7 +152,7 @@ export default function ObservacionesPanel({
             value={manual}
             onChange={(e) => onManualChange(e.target.value)}
             placeholder="Escribe observaciones, condiciones o notas para el cliente…"
-            rows={5}
+            rows={3}
             className="w-full px-3 pt-10 pb-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 resize-none transition-colors leading-relaxed"
           />
         </div>

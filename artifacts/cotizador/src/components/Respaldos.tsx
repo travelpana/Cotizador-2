@@ -166,11 +166,11 @@ function SectionHeading({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5">
+      <div className="w-9 h-9 rounded-xl bg-slate-900/8 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
         {icon}
       </div>
       <div>
-        <p className="font-medium text-slate-800 text-sm">{title}</p>
+        <p className="font-semibold text-slate-900 text-base leading-tight">{title}</p>
         <p className="text-xs text-slate-500 mt-0.5">{description}</p>
       </div>
     </div>

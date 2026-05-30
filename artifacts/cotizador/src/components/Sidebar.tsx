@@ -11,11 +11,15 @@ import {
   BookOpen,
   Tag,
   HardDrive,
+  Settings2,
+  ChevronDown,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { CatalogInfo } from "@/lib/api";
 
 export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
+
+const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "respaldos"];
 
 interface Props {
   view: View;
@@ -79,6 +83,9 @@ export default function Sidebar({
   const reload = useAsyncAction();
   const upload = useAsyncAction();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isConfigView = CONFIG_VIEWS.includes(view);
+  const [configOpen, setConfigOpen] = useState(isConfigView);
 
   const handleReload = () =>
     reload.run(async () => {
@@ -162,7 +169,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <nav className="p-4 flex-1 space-y-1">
+      <nav className="p-4 flex-1 space-y-1 overflow-y-auto">
         <NavItem
           active={view === "cotizador"}
           onClick={() => onView("cotizador")}
@@ -174,31 +181,66 @@ export default function Sidebar({
           onClick={() => onView("seguimiento")}
           icon={<ListChecks className="w-4 h-4" />}
           label="Seguimiento"
+          badge={seguimientoCount}
         />
-        <NavItem
-          active={view === "plantillas"}
-          onClick={() => onView("plantillas")}
-          icon={<LayoutTemplate className="w-4 h-4" />}
-          label="Plantillas"
-        />
-        <NavItem
-          active={view === "descriptivos"}
-          onClick={() => onView("descriptivos")}
-          icon={<BookOpen className="w-4 h-4" />}
-          label="Descriptivos"
-        />
-        <NavItem
-          active={view === "tarifas"}
-          onClick={() => onView("tarifas")}
-          icon={<Tag className="w-4 h-4" />}
-          label="Tarifas"
-        />
-        <NavItem
-          active={view === "respaldos"}
-          onClick={() => onView("respaldos")}
-          icon={<HardDrive className="w-4 h-4" />}
-          label="Respaldos"
-        />
+
+        <div className="pt-3">
+          <button
+            onClick={() => {
+              setConfigOpen((o) => !o);
+              if (!configOpen && !isConfigView) {
+                onView("plantillas");
+              }
+            }}
+            className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-widest transition-colors ${
+              isConfigView
+                ? "text-primary"
+                : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Settings2 className="w-3.5 h-3.5" />
+              Configuración
+            </span>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${configOpen ? "rotate-0" : "-rotate-90"}`}
+            />
+          </button>
+
+          {configOpen && (
+            <div className="mt-1 space-y-0.5 pl-2 border-l border-sidebar-border ml-3">
+              <NavItem
+                active={view === "plantillas"}
+                onClick={() => onView("plantillas")}
+                icon={<LayoutTemplate className="w-4 h-4" />}
+                label="Plantillas"
+                badge={plantillasCount}
+                sub
+              />
+              <NavItem
+                active={view === "descriptivos"}
+                onClick={() => onView("descriptivos")}
+                icon={<BookOpen className="w-4 h-4" />}
+                label="Descriptivos"
+                sub
+              />
+              <NavItem
+                active={view === "tarifas"}
+                onClick={() => onView("tarifas")}
+                icon={<Tag className="w-4 h-4" />}
+                label="Tarifas"
+                sub
+              />
+              <NavItem
+                active={view === "respaldos"}
+                onClick={() => onView("respaldos")}
+                icon={<HardDrive className="w-4 h-4" />}
+                label="Respaldos"
+                sub
+              />
+            </div>
+          )}
+        </div>
       </nav>
 
       <div className="p-4 border-t border-sidebar-border space-y-3">
@@ -250,17 +292,21 @@ function NavItem({
   icon,
   label,
   badge,
+  sub,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   badge?: number;
+  sub?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+        sub ? "py-1.5" : ""
+      } ${
         active
           ? "bg-primary/10 text-primary"
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
