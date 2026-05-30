@@ -15,6 +15,7 @@ import Seguimiento from "@/components/Seguimiento";
 import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
+import Respaldos from "@/components/Respaldos";
 import ObservacionesPanel from "@/components/ObservacionesPanel";
 import { loadObservaciones, resolveObservaciones } from "@/lib/observaciones";
 import {
@@ -701,7 +702,9 @@ export default function CotizadorPage() {
                       ? "Plantillas"
                       : view === "descriptivos"
                         ? "Descriptivos"
-                        : "Tarifas"}
+                        : view === "respaldos"
+                          ? "Respaldos"
+                          : "Tarifas"}
                 </h1>
                 <p className="text-xs text-muted-foreground">
                   {view === "seguimiento"
@@ -710,7 +713,9 @@ export default function CotizadorPage() {
                       ? "Estructuras reutilizables para circuitos y multi-destino"
                       : view === "descriptivos"
                         ? "Biblioteca de descriptivos turísticos vinculados al tarifario"
-                        : "Administra hoteles, tours y traslados · localStorage + Excel"}
+                        : view === "respaldos"
+                          ? "Exporta e importa tu información sin internet ni servidor"
+                          : "Administra hoteles, tours y traslados · localStorage + Excel"}
                 </p>
               </div>
               <div className="text-xs text-muted-foreground hidden md:block">
@@ -771,6 +776,14 @@ export default function CotizadorPage() {
               apiTraslados={traslados}
               onChanged={handleTarifasChanged}
               onUpload={handleUpload}
+            />
+          ) : view === "respaldos" ? (
+            <Respaldos
+              onImported={() => {
+                handleTarifasChanged();
+                handleDescriptivosChanged();
+                refreshPlantillasCount();
+              }}
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
