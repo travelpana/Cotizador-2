@@ -47,13 +47,13 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
   return (
     <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 p-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Field label="Nombre" required error={errors?.nombre}>
+        <Field label="Nombre">
           <input
             type="text"
             value={cliente.nombre}
-            onChange={(e) => update({ nombre: e.target.value })}
+            onChange={(e) => update({ nombre: e.target.value.toUpperCase() })}
             placeholder=""
-            className={`${inputCls} ${errCls(errors?.nombre)}`}
+            className={inputCls}
             data-testid="input-nombre"
           />
         </Field>
@@ -61,7 +61,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
           <input
             type="text"
             value={cliente.correo}
-            onChange={(e) => update({ correo: e.target.value })}
+            onChange={(e) => update({ correo: e.target.value.toUpperCase() })}
             placeholder=""
             className={`${inputCls} ${errCls(errors?.agencia)}`}
             data-testid="input-agencia"
@@ -85,7 +85,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             data-testid="input-correo"
           />
         </Field>
-        <Field label="Fecha de llegada" required error={errors?.fechaInicio}>
+        <Field label="Fecha de llegada">
           <SingleDatePicker
             value={cliente.fechaInicio}
             onChange={onCheckinChange}

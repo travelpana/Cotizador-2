@@ -128,11 +128,7 @@ export interface Cliente {
   noches: number;
 }
 
-export type ClienteValidationField =
-  | "nombre"
-  | "agencia"
-  | "agente"
-  | "fechaInicio";
+export type ClienteValidationField = "agencia" | "agente";
 
 export type ClienteValidationErrors = Partial<
   Record<ClienteValidationField, boolean>
@@ -143,10 +139,8 @@ export function validateCliente(c: Cliente): {
   errors: ClienteValidationErrors;
 } {
   const errors: ClienteValidationErrors = {};
-  if (!c.nombre?.trim()) errors.nombre = true;
   if (!c.correo?.trim()) errors.agencia = true;
   if (!c.agente?.trim()) errors.agente = true;
-  if (!c.fechaInicio?.trim()) errors.fechaInicio = true;
   return { ok: Object.keys(errors).length === 0, errors };
 }
 

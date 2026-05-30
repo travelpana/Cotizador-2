@@ -649,21 +649,19 @@ export default function CotizadorPage() {
       />
 
       <main className="flex-1 overflow-x-hidden">
-        <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                {view === "cotizador"
-                  ? "Cotizador"
-                  : view === "seguimiento"
+        {view !== "cotizador" && (
+          <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                  {view === "seguimiento"
                     ? "Seguimiento"
                     : view === "plantillas"
                       ? "Plantillas"
                       : view === "descriptivos"
                         ? "Descriptivos"
                         : "Tarifas"}
-              </h1>
-              {view !== "cotizador" && (
+                </h1>
                 <p className="text-xs text-muted-foreground">
                   {view === "seguimiento"
                     ? "Cotizaciones guardadas en este equipo"
@@ -673,14 +671,14 @@ export default function CotizadorPage() {
                         ? "Biblioteca de descriptivos turísticos vinculados al tarifario"
                         : "Administra hoteles, tours y traslados · localStorage + Excel"}
                 </p>
-              )}
+              </div>
+              <div className="text-xs text-muted-foreground hidden md:block">
+                {mergedHoteles.length} hoteles · {mergedTours.length} tours ·{" "}
+                {mergedTraslados.length} traslados
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground hidden md:block">
-              {mergedHoteles.length} hoteles · {mergedTours.length} tours ·{" "}
-              {mergedTraslados.length} traslados
-            </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8">
           {loading ? (
@@ -783,7 +781,7 @@ export default function CotizadorPage() {
                 )}
               </div>
 
-              <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+              <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
                 <ConfiguracionPanel
                   modo={modo}
                   onModoChange={setModo}

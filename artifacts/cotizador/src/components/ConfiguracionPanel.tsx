@@ -70,21 +70,18 @@ export default function ConfiguracionPanel({
               onChange={onToggleDescriptivos}
               icon={<Clock className="w-4 h-4" />}
               label="Incluir horarios"
-              help="Horario debajo de cada tour en la propuesta"
             />
             <Toggle
               checked={incluirItinerario}
               onChange={onToggleItinerario}
               icon={<Map className="w-4 h-4" />}
               label="Incluir itinerario"
-              help="Tabla día a día en preview, PDF y WhatsApp"
             />
             <Toggle
               checked={incluirDescriptivoCompleto}
               onChange={onToggleDescriptivoCompleto}
               icon={<BookOpen className="w-4 h-4" />}
               label="Incluir descriptivo"
-              help="Sección con descripción completa de cada tour seleccionado"
             />
           </div>
         </section>

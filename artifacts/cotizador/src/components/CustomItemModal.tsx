@@ -3,7 +3,7 @@ import { PriceInput } from "@/components/ui/price-input";
 import { X, Plus, Sparkles, Plane, ChevronDown, Check } from "lucide-react";
 import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
 
-type CustomTipo = "hotel" | "traslado" | "tour" | "vuelo";
+type CustomTipo = "hotel" | "traslado" | "tour" | "vuelo" | "catamaran" | "otros";
 
 interface Props {
   open: boolean;
@@ -20,6 +20,8 @@ const TIPO_OPTIONS: { value: CustomTipo; label: string }[] = [
   { value: "traslado", label: "Traslado" },
   { value: "tour", label: "Tours" },
   { value: "vuelo", label: "Vuelos" },
+  { value: "catamaran", label: "Catamarán" },
+  { value: "otros", label: "Otros" },
 ];
 
 const ALL_ACOM: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
@@ -152,7 +154,9 @@ export default function CustomItemModal({
               ? "hotel"
               : initial.tipo === "tour"
                 ? "tour"
-                : "traslado";
+                : initial.tipo === "catamaran"
+                  ? "catamaran"
+                  : "traslado";
         setTipo(initTipo);
         setNombre(initial.nombre.replace(/^\[Vuelo\]\s*/, ""));
         const initPrecio =
@@ -245,7 +249,11 @@ export default function CustomItemModal({
           ? "tour"
           : tipo === "vuelo"
             ? "vuelo"
-            : "traslado";
+            : tipo === "catamaran"
+              ? "catamaran"
+              : tipo === "otros"
+                ? "tour"
+                : "traslado";
 
     const precios: ServicioSeleccionado["precios"] =
       tipo === "hotel"

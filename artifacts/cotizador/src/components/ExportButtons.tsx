@@ -4,7 +4,7 @@ import {
   Mail,
   Printer,
   Save,
-  Trash2,
+  Eraser,
   Eye,
   Check,
   Loader2,
@@ -649,7 +649,7 @@ export default function ExportButtons({
           )}
         </IconBtn>
         <IconBtn onClick={onClear} title="Limpiar" danger>
-          <Trash2 className="w-4 h-4" />
+          <Eraser className="w-4 h-4" />
           Limpiar
         </IconBtn>
       </div>
