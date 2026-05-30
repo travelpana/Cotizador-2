@@ -170,6 +170,7 @@ export default function ExportButtons({
 
     const traslados = adicionales.filter((s) => s.tipo === "traslado");
     const tours = adicionales.filter((s) => s.tipo === "tour");
+    const catamarans = adicionales.filter((s) => s.tipo === "catamaran");
     const vuelos = adicionales.filter((s) => s.tipo === "vuelo");
 
     // ── Traslados ────────────────────────────────────────────────
@@ -219,6 +220,24 @@ export default function ExportButtons({
         } else {
           lines.push("🎟 No incluye entradas");
         }
+        lines.push(
+          `💲 Tarifa: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} por persona`}`,
+        );
+        if (s.notas) lines.push(`ℹ️ ${s.notas}`);
+        lines.push("");
+      }
+    }
+
+    // ── Catamarán ────────────────────────────────────────────────
+    if (catamarans.length) {
+      lines.push("");
+      lines.push(SEP);
+      lines.push("⛵ *CATAMARÁN Y NAVEGACIÓN*");
+      lines.push(SEP);
+      lines.push("");
+
+      for (const s of catamarans) {
+        lines.push(`• *${s.nombre}*`);
         lines.push(
           `💲 Tarifa: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} por persona`}`,
         );

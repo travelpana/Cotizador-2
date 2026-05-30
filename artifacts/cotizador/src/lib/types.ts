@@ -45,7 +45,7 @@ export interface ServicioSeleccionado {
   id: string;
   /** External code shown in the document, defaults to id. */
   codigo?: string;
-  tipo: "hotel" | "tour" | "traslado" | "vuelo";
+  tipo: "hotel" | "tour" | "traslado" | "vuelo" | "catamaran";
   nombre: string;
   /** Vuelo-only: airport / city of origin. */
   origen?: string;
@@ -152,7 +152,7 @@ export function validateCliente(c: Cliente): {
 
 export interface ServicioCalculado {
   id: string;
-  tipo: "hotel" | "tour" | "traslado" | "vuelo";
+  tipo: "hotel" | "tour" | "traslado" | "vuelo" | "catamaran";
   nombre: string;
   origen?: string;
   destino?: string;
@@ -191,6 +191,7 @@ export interface CotizacionResult {
     tour: Record<Acomodacion, number>;
     traslado: Record<Acomodacion, number>;
     vuelo: Record<Acomodacion, number>;
+    catamaran: Record<Acomodacion, number>;
   };
   acomodaciones: Acomodacion[];
   noches: number;

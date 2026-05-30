@@ -47,6 +47,7 @@ export interface PropuestaData {
   traslados: ServicioCalculado[];
   tours: ServicioCalculado[];
   vuelos: ServicioCalculado[];
+  catamarans: ServicioCalculado[];
   acoms: Acomodacion[];
   primary: Acomodacion;
   isCalc: boolean;
@@ -122,6 +123,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const traslados = result.servicios.filter((s) => s.tipo === "traslado");
   const tours = result.servicios.filter((s) => s.tipo === "tour");
   const vuelos = result.servicios.filter((s) => s.tipo === "vuelo");
+  const catamarans = result.servicios.filter((s) => s.tipo === "catamaran");
   const acoms = result.acomodaciones;
   const primary = acoms[0];
   const isCalc = modo === "calculo";
@@ -187,6 +189,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     traslados,
     tours,
     vuelos,
+    catamarans,
     acoms,
     primary,
     isCalc,
@@ -764,6 +767,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
             <tr><td>${alojamientoTable(d)}</td></tr>
             <tr><td>${adicionalesTable("TRASLADOS", d.traslados, d)}</td></tr>
             <tr><td>${adicionalesTable("TOUR Y EXPERIENCIAS", d.tours, d)}</td></tr>
+            <tr><td>${adicionalesTable("CATAMARÁN Y NAVEGACIÓN", d.catamarans, d)}</td></tr>
             <tr><td>${adicionalesTable("VUELOS", d.vuelos, d)}</td></tr>
             <tr><td>${itinerarioTable(d)}</td></tr>
             <tr><td>${descriptivosBlock(d)}</td></tr>

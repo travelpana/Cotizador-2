@@ -68,6 +68,7 @@ export function calcularLocal(
     tour: EMPTY_ACOM(),
     traslado: EMPTY_ACOM(),
     vuelo: EMPTY_ACOM(),
+    catamaran: EMPTY_ACOM(),
   };
 
   for (const s of servicios) {

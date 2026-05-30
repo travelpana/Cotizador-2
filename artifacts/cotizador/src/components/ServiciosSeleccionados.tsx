@@ -23,6 +23,7 @@ import {
   MapPin,
   Bus,
   Plane,
+  Ship,
   Search,
   Plus,
   Calendar,
@@ -67,6 +68,7 @@ const GROUP_ORDER: ServicioSeleccionado["tipo"][] = [
   "traslado",
   "vuelo",
   "tour",
+  "catamaran",
 ];
 
 const GROUP_TITLE: Record<ServicioSeleccionado["tipo"], string> = {
@@ -74,6 +76,7 @@ const GROUP_TITLE: Record<ServicioSeleccionado["tipo"], string> = {
   traslado: "Traslados",
   vuelo: "Vuelos",
   tour: "Tours",
+  catamaran: "Catamarán y Navegación",
 };
 
 export default function ServiciosSeleccionados({
@@ -295,6 +298,7 @@ function iconForTipo(tipo: ServicioSeleccionado["tipo"]) {
   if (tipo === "hotel") return <Hotel className="w-4 h-4" />;
   if (tipo === "tour") return <MapPin className="w-4 h-4" />;
   if (tipo === "vuelo") return <Plane className="w-4 h-4" />;
+  if (tipo === "catamaran") return <Ship className="w-4 h-4" />;
   return <Bus className="w-4 h-4" />;
 }
 
@@ -302,6 +306,7 @@ function tipoColors(tipo: ServicioSeleccionado["tipo"]) {
   if (tipo === "hotel") return { bg: "bg-amber-50", text: "text-amber-600" };
   if (tipo === "tour") return { bg: "bg-emerald-50", text: "text-emerald-600" };
   if (tipo === "vuelo") return { bg: "bg-indigo-50", text: "text-indigo-600" };
+  if (tipo === "catamaran") return { bg: "bg-teal-50", text: "text-teal-600" };
   return { bg: "bg-sky-50", text: "text-sky-600" };
 }
 

@@ -6,11 +6,15 @@ export type PlantillaBlockTipo =
   | "texto"
   | "hotel"
   | "tour"
-  | "traslado";
+  | "traslado"
+  | "vuelo"
+  | "catamaran"
+  | "observaciones";
 
 export interface PlantillaBlock {
   id: string;
   tipo: PlantillaBlockTipo;
+  /** Used for: titulo, nota, texto, observaciones (newline-separated bullets) */
   texto?: string;
   hotelId?: string;
   hotelNombre?: string;
@@ -19,6 +23,16 @@ export interface PlantillaBlock {
   tourNombre?: string;
   trasladoId?: string;
   trasladoNombre?: string;
+  /** Vuelo fields */
+  vueloOrigen?: string;
+  vueloDestino?: string;
+  vueloIdaVuelta?: boolean;
+  vueloPrecio?: number;
+  vueloPrecioChd?: number;
+  vueloNotas?: string;
+  /** Catamaran fields (uses tours catalog) */
+  catamaranId?: string;
+  catamaranNombre?: string;
 }
 
 export interface Plantilla {
@@ -144,9 +158,66 @@ export function buildServiciosFromPlantilla(
           tipoServicio: tr.tipo,
         });
       }
+    } else if (blk.tipo === "vuelo") {
+      const origen = blk.vueloOrigen?.trim() || "";
+      const destino = blk.vueloDestino?.trim() || "";
+      if (origen || destino) {
+        const nombre = blk.vueloIdaVuelta
+          ? `${origen || "?"} → ${destino || "?"} → ${origen || "?"}`
+          : `${origen || "?"} → ${destino || "?"}`;
+        const precio = blk.vueloPrecio ?? 0;
+        const precioChd = blk.vueloPrecioChd ?? precio;
+        out.push({
+          id: `vuelo-plt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo: "vuelo",
+          nombre,
+          origen,
+          destino,
+          precios: {
+            p1: precio,
+            p2_5: precio,
+            p6_10: precio,
+            chd: precioChd,
+          },
+          unitOverride: precio,
+          manual: true,
+          notas: blk.vueloNotas || undefined,
+        });
+      }
+    } else if (blk.tipo === "catamaran" && blk.catamaranId) {
+      const t = tours.find((x) => x.id === blk.catamaranId);
+      if (t) {
+        out.push({
+          id: `catamaran-${t.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          codigo: t.id,
+          tipo: "catamaran",
+          nombre: t.nombre,
+          precios: {
+            p1: t.precios.p1,
+            p2_5: t.precios.p2_5,
+            p6_10: t.precios.p6_10,
+            chd: t.precios.chd,
+          },
+          usarFecha: false,
+        });
+      }
     }
   }
   return out;
+}
+
+/** Extracts observaciones bullets from an "observaciones" block in the template. */
+export function extractObservacionesFromPlantilla(plantilla: Plantilla): string[] {
+  const lines: string[] = [];
+  for (const blk of plantilla.bloques) {
+    if (blk.tipo === "observaciones" && blk.texto) {
+      for (const line of blk.texto.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed) lines.push(trimmed);
+      }
+    }
+  }
+  return lines;
 }
 
 export function serviciosToBlocks(
@@ -177,6 +248,25 @@ export function serviciosToBlocks(
         tipo: "traslado" as const,
         trasladoId: s.codigo ?? s.id,
         trasladoNombre: s.nombre,
+      };
+    }
+    if (s.tipo === "vuelo") {
+      return {
+        id,
+        tipo: "vuelo" as const,
+        vueloOrigen: s.origen,
+        vueloDestino: s.destino,
+        vueloPrecio: s.unitOverride ?? s.precios.p1,
+        vueloPrecioChd: s.precios.chd,
+        vueloNotas: s.notas,
+      };
+    }
+    if (s.tipo === "catamaran") {
+      return {
+        id,
+        tipo: "catamaran" as const,
+        catamaranId: s.codigo ?? s.id,
+        catamaranNombre: s.nombre,
       };
     }
     return {

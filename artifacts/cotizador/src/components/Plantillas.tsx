@@ -14,6 +14,7 @@ import type { Hotel, ServicioSeleccionado, Tour, Traslado } from "@/lib/types";
 import type { Plantilla, PlantillaBlockTipo } from "@/lib/plantillas";
 import {
   buildServiciosFromPlantilla,
+  extractObservacionesFromPlantilla,
   duplicarPlantilla,
   loadPlantillas,
   newPlantilla,
@@ -25,7 +26,7 @@ interface Props {
   hoteles: Hotel[];
   tours: Tour[];
   traslados: Traslado[];
-  onUsarPlantilla: (servicios: ServicioSeleccionado[]) => void;
+  onUsarPlantilla: (servicios: ServicioSeleccionado[], observaciones: string[]) => void;
 }
 
 type EditorMode = { tipo: "nuevo" } | { tipo: "editar"; plantilla: Plantilla };
@@ -37,6 +38,9 @@ const BLOCK_TYPE_LABELS: Record<PlantillaBlockTipo, string> = {
   hotel: "Hotel",
   tour: "Tour",
   traslado: "Traslado",
+  vuelo: "Vuelo",
+  catamaran: "Catamarán",
+  observaciones: "Observaciones",
 };
 
 function plantillaResumen(p: Plantilla) {
@@ -48,9 +52,9 @@ function plantillaResumen(p: Plantilla) {
   if (counts.hotel) parts.push(`${counts.hotel} hotel${counts.hotel !== 1 ? "es" : ""}`);
   if (counts.tour) parts.push(`${counts.tour} tour${counts.tour !== 1 ? "s" : ""}`);
   if (counts.traslado) parts.push(`${counts.traslado} traslado${counts.traslado !== 1 ? "s" : ""}`);
-  if (counts.titulo) parts.push(`${counts.titulo} título${counts.titulo !== 1 ? "s" : ""}`);
-  if (counts.nota) parts.push(`${counts.nota} nota${counts.nota !== 1 ? "s" : ""}`);
-  if (counts.texto) parts.push(`${counts.texto} texto${counts.texto !== 1 ? "s" : ""}`);
+  if (counts.vuelo) parts.push(`${counts.vuelo} vuelo${counts.vuelo !== 1 ? "s" : ""}`);
+  if (counts.catamaran) parts.push(`${counts.catamaran} catamarán`);
+  if (counts.observaciones) parts.push("observaciones");
   return parts.length > 0 ? parts.join(" · ") : "Sin bloques";
 }
 
@@ -102,9 +106,15 @@ export default function Plantillas({
 
   const handleUsar = (p: Plantilla) => {
     const servicios = buildServiciosFromPlantilla(p, hoteles, tours, traslados);
+    const observaciones = extractObservacionesFromPlantilla(p);
     const found = servicios.length;
     const total = p.bloques.filter(
-      (b) => b.tipo === "hotel" || b.tipo === "tour" || b.tipo === "traslado",
+      (b) =>
+        b.tipo === "hotel" ||
+        b.tipo === "tour" ||
+        b.tipo === "traslado" ||
+        b.tipo === "vuelo" ||
+        b.tipo === "catamaran",
     ).length;
     const missing = total - found;
     let msg = `¿Cargar la plantilla "${p.nombre}"?`;
@@ -116,7 +126,7 @@ export default function Plantillas({
     if (!confirm(msg)) return;
     setUsandoId(p.id);
     window.setTimeout(() => setUsandoId(null), 800);
-    onUsarPlantilla(servicios);
+    onUsarPlantilla(servicios, observaciones);
   };
 
   if (editor !== null) {

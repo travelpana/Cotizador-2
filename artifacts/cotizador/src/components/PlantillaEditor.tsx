@@ -6,10 +6,13 @@ import {
   Bus,
   ChevronDown,
   ChevronUp,
+  ClipboardList,
   Copy,
   MapPin,
+  Plane,
   Plus,
   Save,
+  Ship,
   StickyNote,
   Trash2,
   Type,
@@ -142,15 +145,30 @@ const BLOCK_META: Record<
     badgeCls: "bg-orange-100 text-orange-700",
     icon: <Bus className="w-3 h-3" />,
   },
+  vuelo: {
+    label: "Vuelo",
+    badgeCls: "bg-indigo-100 text-indigo-700",
+    icon: <Plane className="w-3 h-3" />,
+  },
+  catamaran: {
+    label: "Catamarán",
+    badgeCls: "bg-teal-100 text-teal-700",
+    icon: <Ship className="w-3 h-3" />,
+  },
+  observaciones: {
+    label: "Observaciones",
+    badgeCls: "bg-violet-100 text-violet-700",
+    icon: <ClipboardList className="w-3 h-3" />,
+  },
 };
 
 const ADD_BLOCK_TYPES: PlantillaBlockTipo[] = [
-  "titulo",
   "hotel",
   "tour",
   "traslado",
-  "nota",
-  "texto",
+  "vuelo",
+  "catamaran",
+  "observaciones",
 ];
 
 interface BlockEditorProps {
@@ -188,8 +206,8 @@ function BlockEditor({
     "w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none";
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100 rounded-t-xl">
         <span
           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${meta.badgeCls}`}
         >
@@ -307,6 +325,96 @@ function BlockEditor({
             }
           />
         )}
+
+        {block.tipo === "vuelo" && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                value={block.vueloOrigen ?? ""}
+                onChange={(e) => onChange({ vueloOrigen: e.target.value })}
+                placeholder="Origen (ej: PTY)"
+                className={inputCls}
+              />
+              <input
+                value={block.vueloDestino ?? ""}
+                onChange={(e) => onChange({ vueloDestino: e.target.value })}
+                placeholder="Destino (ej: MIA)"
+                className={inputCls}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={block.vueloIdaVuelta ?? false}
+                onChange={(e) => onChange({ vueloIdaVuelta: e.target.checked })}
+                className="rounded border-slate-300 text-primary focus:ring-primary/40"
+              />
+              Ida y vuelta
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Precio adulto p/p</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={block.vueloPrecio ?? ""}
+                  onChange={(e) => onChange({ vueloPrecio: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  placeholder="0.00"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Precio niño p/p</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={block.vueloPrecioChd ?? ""}
+                  onChange={(e) => onChange({ vueloPrecioChd: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  placeholder="Igual que adulto"
+                  className={inputCls}
+                />
+              </div>
+            </div>
+            <textarea
+              value={block.vueloNotas ?? ""}
+              onChange={(e) => onChange({ vueloNotas: e.target.value })}
+              placeholder="Notas opcionales (ej: incluye equipaje de mano...)"
+              rows={2}
+              className={textareaCls}
+            />
+          </>
+        )}
+
+        {block.tipo === "catamaran" && (
+          <CatalogPicker
+            items={tours}
+            selectedId={block.catamaranId}
+            selectedNombre={block.catamaranNombre}
+            placeholder="Buscar catamarán..."
+            onSelect={(t) =>
+              onChange(
+                t
+                  ? { catamaranId: t.id, catamaranNombre: t.nombre }
+                  : { catamaranId: undefined, catamaranNombre: undefined },
+              )
+            }
+          />
+        )}
+
+        {block.tipo === "observaciones" && (
+          <>
+            <p className="text-[11px] text-slate-400 -mb-1">Una observación por línea. Se agregarán a la sección de observaciones de la cotización al usar la plantilla.</p>
+            <textarea
+              value={block.texto ?? ""}
+              onChange={(e) => onChange({ texto: e.target.value })}
+              placeholder={"Tarifas sujetas a disponibilidad\nNo incluye entradas a parques\nDocumentación requerida: pasaporte vigente"}
+              rows={4}
+              className={textareaCls}
+            />
+          </>
+        )}
       </div>
     </div>
   );
@@ -391,6 +499,9 @@ export default function PlantillaEditor({
   const hotelCount = bloques.filter((b) => b.tipo === "hotel" && b.hotelId).length;
   const tourCount = bloques.filter((b) => b.tipo === "tour" && b.tourId).length;
   const trasladoCount = bloques.filter((b) => b.tipo === "traslado" && b.trasladoId).length;
+  const vueloCount = bloques.filter((b) => b.tipo === "vuelo" && (b.vueloOrigen || b.vueloDestino)).length;
+  const catamaranCount = bloques.filter((b) => b.tipo === "catamaran" && b.catamaranId).length;
+  const obsCount = bloques.filter((b) => b.tipo === "observaciones" && b.texto?.trim()).length;
 
   return (
     <div className="space-y-4">
@@ -408,6 +519,9 @@ export default function PlantillaEditor({
           {hotelCount > 0 && <span>{hotelCount} hotel{hotelCount !== 1 ? "es" : ""}</span>}
           {tourCount > 0 && <span>· {tourCount} tour{tourCount !== 1 ? "s" : ""}</span>}
           {trasladoCount > 0 && <span>· {trasladoCount} traslado{trasladoCount !== 1 ? "s" : ""}</span>}
+          {vueloCount > 0 && <span>· {vueloCount} vuelo{vueloCount !== 1 ? "s" : ""}</span>}
+          {catamaranCount > 0 && <span>· {catamaranCount} catamarán</span>}
+          {obsCount > 0 && <span>· {obsCount} obs</span>}
         </div>
         <button
           type="button"

@@ -37,6 +37,7 @@ import {
   serviciosToBlocks,
   newPlantilla,
   buildServiciosFromPlantilla,
+  extractObservacionesFromPlantilla,
 } from "@/lib/plantillas";
 import {
   loadDescriptivosLS,
@@ -465,14 +466,14 @@ export default function CotizadorPage() {
   };
 
   const openEdit = (s: ServicioSeleccionado) => {
-    if (s.tipo === "vuelo") {
+    if (s.tipo === "vuelo" || s.tipo === "catamaran") {
       setCustomEditing(s);
       setCustomOpen(true);
       return;
     }
     setForm({
       open: true,
-      tipo: s.tipo,
+      tipo: s.tipo as import("@/components/ServicioFormModal").ServicioTipo,
       isManual: !!s.manual,
       allowSwitch: !!s.manual,
       initial: s,
@@ -546,8 +547,11 @@ export default function CotizadorPage() {
     setPreviewQuote(null);
   };
 
-  const handleUsarPlantilla = (servicios: ServicioSeleccionado[]) => {
+  const handleUsarPlantilla = (servicios: ServicioSeleccionado[], observaciones: string[]) => {
     setServicios(servicios);
+    if (observaciones.length > 0) {
+      setObservacionManual(observaciones.join("\n"));
+    }
     setCurrentNumero(null);
     setView("cotizador");
     showToast(
@@ -567,6 +571,14 @@ export default function CotizadorPage() {
       mergedTraslados,
     );
     setServicios((prev) => [...prev, ...nuevos]);
+    const obsFromPlantilla = extractObservacionesFromPlantilla(plantilla);
+    if (obsFromPlantilla.length > 0) {
+      setObservacionManual((prev) => {
+        const existing = prev.trim();
+        const newLines = obsFromPlantilla.join("\n");
+        return existing ? `${existing}\n${newLines}` : newLines;
+      });
+    }
     showToast(
       nuevos.length > 0
         ? `"${plantilla.nombre}" · ${nuevos.length} servicio${nuevos.length !== 1 ? "s" : ""} agregado${nuevos.length !== 1 ? "s" : ""}`
@@ -675,8 +687,8 @@ export default function CotizadorPage() {
               hoteles={mergedHoteles}
               tours={mergedTours}
               traslados={mergedTraslados}
-              onUsarPlantilla={(svcs) => {
-                handleUsarPlantilla(svcs);
+              onUsarPlantilla={(svcs, obs) => {
+                handleUsarPlantilla(svcs, obs);
                 refreshPlantillasCount();
               }}
             />
