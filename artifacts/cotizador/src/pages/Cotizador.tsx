@@ -36,6 +36,7 @@ import {
   savePlantillas,
   serviciosToBlocks,
   newPlantilla,
+  buildServiciosFromPlantilla,
 } from "@/lib/plantillas";
 import {
   loadDescriptivosLS,
@@ -556,6 +557,23 @@ export default function CotizadorPage() {
     );
   };
 
+  const handleCargarPlantillaEnCotizacion = (plantillaId: string) => {
+    const plantilla = loadPlantillas().find((p) => p.id === plantillaId);
+    if (!plantilla) return;
+    const nuevos = buildServiciosFromPlantilla(
+      plantilla,
+      mergedHoteles,
+      mergedTours,
+      mergedTraslados,
+    );
+    setServicios((prev) => [...prev, ...nuevos]);
+    showToast(
+      nuevos.length > 0
+        ? `"${plantilla.nombre}" · ${nuevos.length} servicio${nuevos.length !== 1 ? "s" : ""} agregado${nuevos.length !== 1 ? "s" : ""}`
+        : `"${plantilla.nombre}" cargada (sin coincidencias en el tarifario actual)`,
+    );
+  };
+
   const handleGuardarComoPlantilla = () => {
     if (servicios.length === 0) return;
     const nombre = window.prompt("Nombre para la nueva plantilla:");
@@ -705,6 +723,7 @@ export default function CotizadorPage() {
                   onChange={setServicios}
                   onEdit={openEdit}
                   onAddCustom={() => setCustomOpen(true)}
+                  onCargarPlantilla={handleCargarPlantillaEnCotizacion}
                 />
                 <ObservacionesPanel
                   servicios={servicios}

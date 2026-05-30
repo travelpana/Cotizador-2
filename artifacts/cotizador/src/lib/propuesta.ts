@@ -293,7 +293,7 @@ function alojamientoTable(d: PropuestaData): string {
   const rows = groups
     .map(({ label, items }) => {
       const locationHeader = `<tr style="page-break-inside:avoid;">
-        <td colspan="${totalCols}" style="padding:8px 16px 6px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
+        <td colspan="${totalCols}" style="padding:4px 12px 4px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
           <div style="font-size:11px;font-weight:700;color:${COLOR_AZUL};letter-spacing:0.8px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
@@ -303,27 +303,27 @@ function alojamientoTable(d: PropuestaData): string {
           const acomVals = d.acoms
             .map(
               (a) =>
-                `<td style="${STYLES.tdNum}">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
+                `<td style="${STYLES.tdNum};padding:8px 12px;">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
             )
             .join("");
-          const lastCell = showTotalCol ? `<td style="${STYLES.tdEmpty};width:10%;"></td>` : "";
+          const lastCell = showTotalCol ? `<td style="${STYLES.tdEmpty};padding:8px 12px;width:10%;"></td>` : "";
 
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
-            ? `<div style="font-size:11px;color:#0369a1;font-weight:500;margin-top:3px;">${escape(regimenFmt)}</div>`
+            ? `<div style="font-size:11px;color:#0369a1;font-weight:700;margin-top:3px;">${escape(regimenFmt)}</div>`
             : "";
           const notasHotelLine = h.notas
             ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
             : "";
 
           return `<tr style="page-break-inside:avoid;">
-            <td style="${STYLES.td};width:50%;">
+            <td style="${STYLES.td};padding:8px 12px;width:50%;">
               <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
               ${regimenLine}
               ${notasHotelLine}
             </td>
-            <td style="${STYLES.tdCenter};width:15%;">${escape(h.estrellas || "—")}</td>
-            <td style="${STYLES.td};width:15%;">${escape(h.tipoHabitacion || "—")}</td>
+            <td style="${STYLES.tdCenter};padding:8px 12px;width:15%;">${escape(h.estrellas || "—")}</td>
+            <td style="${STYLES.td};padding:8px 12px;width:15%;">${escape(h.tipoHabitacion || "—")}</td>
             ${acomVals}
             ${lastCell}
           </tr>`;
