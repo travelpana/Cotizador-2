@@ -14,4 +14,4 @@ PORT = "8081"
 BASE_PATH = "/__mockup"
 
 [services.development]
-run = "pnpm --filter @workspace/mockup-sandbox run dev"
+run = "/home/runner/workspace/node_modules/.pnpm/node_modules/.bin/vite --config /home/runner/workspace/artifacts/mockup-sandbox/vite.config.ts --host 0.0.0.0"
