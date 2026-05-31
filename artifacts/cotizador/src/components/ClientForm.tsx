@@ -259,11 +259,14 @@ export function AlojamientoBar({
       <span className="pointer-events-none absolute -bottom-4 right-1/4 w-20 h-20 rounded-full opacity-15" style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
 
       <div className="relative px-4 pt-3 pb-3 flex flex-col gap-2.5">
-        {/* Row 1: title + divider + counters */}
+        {/* Row 1: icon + divider + counters */}
         <div className="flex items-center gap-2 flex-nowrap">
-          <h2 className="text-sm font-bold uppercase tracking-[0.15em] whitespace-nowrap flex-shrink-0">
-            Alojamiento
-          </h2>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(147,197,253,0.35)" }}
+          >
+            <Building2 style={{ color: "#bfdbfe", width: 16, height: 16 }} />
+          </div>
 
           <span className="w-px h-5 flex-shrink-0 mx-1" style={{ backgroundColor: "rgba(147,197,253,0.3)" }} />
 
