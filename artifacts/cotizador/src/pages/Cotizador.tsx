@@ -25,6 +25,7 @@ import {
   generateNumeroCotizacion,
   duplicarCotizacion,
   registrarActividad,
+  computeAutoEstado,
   type CotizacionGuardada,
   type EstadoCotizacion,
   type EstadoCRM,
@@ -452,7 +453,7 @@ export default function CotizadorPage() {
       return;
     }
 
-    const item: CotizacionGuardada = {
+    const base: CotizacionGuardada = {
       id: `${Date.now()}`,
       fechaCreacion: now,
       numeroCotizacion: numero,
@@ -465,12 +466,14 @@ export default function CotizadorPage() {
           ? [...observacionesSeleccionadas]
           : undefined,
       observacionManual: observacionManual.trim() || undefined,
-      estadoCRM: "enviada",
+      estadoCRM: "esperando_cliente",
       sentAt: now,
       prioridad: autoPriority,
+      valorCotizacion: total,
       ultimoSeguimiento: now,
       historial: [{ fecha: now, tipo: "creada" }],
     };
+    const item = { ...base, estadoCRM: computeAutoEstado(base) };
     const next = [item, ...guardadas].slice(0, 30);
     saveGuardadas(next);
     setGuardadas(next);
@@ -490,7 +493,7 @@ export default function CotizadorPage() {
       const idx = prev.findIndex((g) => g.numeroCotizacion === numero);
 
       if (idx === -1) {
-        const nueva: CotizacionGuardada = {
+        const nuevaBase: CotizacionGuardada = {
           id: `${Date.now()}`,
           fechaCreacion: now,
           numeroCotizacion: numero,
@@ -498,9 +501,10 @@ export default function CotizadorPage() {
           servicios,
           acomodaciones,
           modoCotizacion: modo,
-          estadoCRM: "enviada",
+          estadoCRM: "esperando_cliente",
           sentAt: now,
           prioridad: autoPriority,
+          valorCotizacion: total,
           ultimoSeguimiento: now,
           historial: [{ fecha: now, tipo: "creada" }, newEntry],
           observacionesSeleccionadas:
@@ -509,6 +513,7 @@ export default function CotizadorPage() {
               : undefined,
           observacionManual: observacionManual.trim() || undefined,
         };
+        const nueva = { ...nuevaBase, estadoCRM: computeAutoEstado(nuevaBase) };
         const next = [nueva, ...prev].slice(0, 50);
         saveGuardadas(next);
         return next;
@@ -525,21 +530,18 @@ export default function CotizadorPage() {
         if (finalPriority === "baja") finalPriority = "media";
         else if (finalPriority === "media") finalPriority = "alta";
       }
-      const newEstado: EstadoCRM =
-        g.estadoCRM === "nueva" ? "enviada" : g.estadoCRM ?? "enviada";
-
-      const next = prev.map((item) =>
-        item.numeroCotizacion !== numero
-          ? item
-          : {
-              ...item,
-              estadoCRM: newEstado,
-              sentAt: item.sentAt ?? (newEstado === "enviada" ? now : undefined),
-              ultimoSeguimiento: now,
-              prioridad: finalPriority,
-              historial: [newEntry, ...(item.historial ?? [])].slice(0, 50),
-            },
-      );
+      const next = prev.map((item) => {
+        if (item.numeroCotizacion !== numero) return item;
+        const updated = {
+          ...item,
+          sentAt: item.sentAt ?? now,
+          ultimoSeguimiento: now,
+          prioridad: finalPriority,
+          valorCotizacion: total,
+          historial: [newEntry, ...(item.historial ?? [])].slice(0, 50),
+        };
+        return { ...updated, estadoCRM: computeAutoEstado(updated) };
+      });
       saveGuardadas(next);
       return next;
     });
@@ -644,9 +646,11 @@ export default function CotizadorPage() {
     id: string,
     patch: Partial<CotizacionGuardada>,
   ) => {
-    const next = guardadas.map((g) =>
-      g.id === id ? { ...g, ...patch } : g,
-    );
+    const next = guardadas.map((g) => {
+      if (g.id !== id) return g;
+      const updated = { ...g, ...patch };
+      return { ...updated, estadoCRM: computeAutoEstado(updated) };
+    });
     saveGuardadas(next);
     setGuardadas(next);
   };

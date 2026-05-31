@@ -2,19 +2,22 @@ import type { Acomodacion, Cliente, ServicioSeleccionado } from "@/lib/types";
 
 export type ModoCotizacion = "tarifas" | "calculo";
 
-/** Legacy status — kept for backward compat, prefer estadoCRM */
+/** Legacy status — kept for backward compat */
 export type EstadoCotizacion =
   | "pendiente"
   | "enviado"
   | "confirmado"
   | "cancelado";
 
-/** New commercial CRM states */
+/**
+ * V2 — 5 simplified states.
+ * NUEVA, ESPERANDO_CLIENTE, REQUIERE_ACCION are auto-managed.
+ * Only CONFIRMADA and PERDIDA are set manually.
+ */
 export type EstadoCRM =
   | "nueva"
-  | "enviada"
-  | "seguimiento"
-  | "negociacion"
+  | "esperando_cliente"
+  | "requiere_accion"
   | "confirmada"
   | "perdida";
 
@@ -56,16 +59,14 @@ export interface CotizacionGuardada {
   modoCotizacion: ModoCotizacion;
   /** @deprecated use estadoCRM */
   estado?: EstadoCotizacion;
-  /** IDs of selected quick observations from the catalog */
   observacionesSeleccionadas?: string[];
-  /** Free-text custom observation */
   observacionManual?: string;
   /** ISO timestamp when the quote was first sent (WhatsApp/email/PDF) */
   sentAt?: string;
-  /** New CRM commercial state */
+  /** V2 commercial state — auto-managed except CONFIRMADA/PERDIDA */
   estadoCRM?: EstadoCRM;
   prioridad?: Prioridad;
-  /** ISO date of last follow-up action */
+  /** ISO timestamp of last follow-up action */
   ultimoSeguimiento?: string;
   proximaAccion?: string;
   fechaRecordatorio?: string;
@@ -74,7 +75,10 @@ export interface CotizacionGuardada {
   tipoProximaAccion?: TipoProximaAccion;
   fechaProximaAccion?: string;
   observacionSeguimiento?: string;
-  // Future fields (architecture ready)
+  /** Quick reminder ISO date — shows in bell under 🔵 Recordatorios */
+  recordatorio?: string;
+  /** Cached total value (primary acomodacion) for priority sorting */
+  valorCotizacion?: number;
   agenteSeguimiento?: string;
   destinoSeguimiento?: string;
   esFavorito?: boolean;
@@ -82,11 +86,77 @@ export interface CotizacionGuardada {
 
 const STORAGE_KEY = "cotizador.guardadas";
 
-/** Map legacy estado → estadoCRM for old entries */
-function migrarEstado(estado?: EstadoCotizacion): EstadoCRM {
-  if (estado === "enviado") return "enviada";
-  if (estado === "confirmado") return "confirmada";
-  if (estado === "cancelado") return "perdida";
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function daysSince(iso?: string): number {
+  if (!iso) return 999;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 999;
+  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function daysUntil(iso?: string): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Compute the automatic state for a quote.
+ * CONFIRMADA and PERDIDA are sticky (never overridden).
+ * All other states are derived from activity rules.
+ */
+export function computeAutoEstado(g: CotizacionGuardada): EstadoCRM {
+  if (g.estadoCRM === "confirmada") return "confirmada";
+  if (g.estadoCRM === "perdida") return "perdida";
+
+  const lastActivity = g.ultimoSeguimiento ?? g.fechaCreacion;
+  const sinActividad = daysSince(lastActivity);
+  const diasHastaVigencia = daysUntil(g.cliente.vigencia);
+
+  // Sin actividad por más de 3 días → Requiere acción
+  if (sinActividad > 3) return "requiere_accion";
+
+  // Vigencia próxima (≤ 5 días) → Requiere acción
+  if (diasHastaVigencia !== null && diasHastaVigencia <= 5) return "requiere_accion";
+
+  // Recordatorio pendiente que ya venció → Requiere acción
+  if (g.recordatorio) {
+    const recDate = new Date(g.recordatorio);
+    if (!Number.isNaN(recDate.getTime()) && recDate <= new Date()) {
+      return "requiere_accion";
+    }
+  }
+
+  // Enviada (sent via PDF/WA/email)
+  if (g.sentAt) return "esperando_cliente";
+
+  return "nueva";
+}
+
+/** Map legacy estado/estadoCRM values to the new 5-state system */
+function migrarEstado(
+  estadoCRM?: EstadoCRM | string,
+  estadoLegacy?: EstadoCotizacion,
+): EstadoCRM {
+  // Already new 5-state values
+  if (estadoCRM === "confirmada") return "confirmada";
+  if (estadoCRM === "perdida") return "perdida";
+  if (estadoCRM === "nueva") return "nueva";
+  if (estadoCRM === "esperando_cliente") return "esperando_cliente";
+  if (estadoCRM === "requiere_accion") return "requiere_accion";
+
+  // Old 6-state values → new 5-state
+  if (estadoCRM === "enviada" || estadoCRM === "seguimiento" || estadoCRM === "negociacion") {
+    return "esperando_cliente";
+  }
+
+  // Legacy estado field
+  if (estadoLegacy === "enviado") return "esperando_cliente";
+  if (estadoLegacy === "confirmado") return "confirmada";
+  if (estadoLegacy === "cancelado") return "perdida";
+
   return "nueva";
 }
 
@@ -117,14 +187,17 @@ export function loadGuardadas(): CotizacionGuardada[] {
         acomodaciones: Acomodacion[];
       }
     >;
-    return items.map((g) => ({
-      ...g,
-      modoCotizacion: g.modoCotizacion ?? "calculo",
-      numeroCotizacion: g.numeroCotizacion || deriveNumeroFromId(g.id),
-      // Migrate legacy estado → estadoCRM if not already set
-      estadoCRM: g.estadoCRM ?? migrarEstado(g.estado),
-      historial: g.historial ?? [],
-    }));
+    return items.map((g) => {
+      const base: CotizacionGuardada = {
+        ...g,
+        modoCotizacion: g.modoCotizacion ?? "calculo",
+        numeroCotizacion: g.numeroCotizacion || deriveNumeroFromId(g.id),
+        estadoCRM: migrarEstado(g.estadoCRM, g.estado),
+        historial: g.historial ?? [],
+      };
+      // Apply automatic state transitions (sticky states preserved inside computeAutoEstado)
+      return { ...base, estadoCRM: computeAutoEstado(base) };
+    });
   } catch {
     return [];
   }
@@ -134,7 +207,6 @@ export function saveGuardadas(items: CotizacionGuardada[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
 
-/** Add an activity entry to a specific quote in the list and save */
 export function registrarActividad(
   items: CotizacionGuardada[],
   id: string,
@@ -146,15 +218,15 @@ export function registrarActividad(
     tipo,
     detalle,
   };
-  const next = items.map((g) =>
-    g.id === id
-      ? {
-          ...g,
-          historial: [entry, ...(g.historial ?? [])].slice(0, 50),
-          ultimoSeguimiento: new Date().toISOString(),
-        }
-      : g,
-  );
+  const next = items.map((g) => {
+    if (g.id !== id) return g;
+    const updated = {
+      ...g,
+      historial: [entry, ...(g.historial ?? [])].slice(0, 50),
+      ultimoSeguimiento: new Date().toISOString(),
+    };
+    return { ...updated, estadoCRM: computeAutoEstado(updated) };
+  });
   saveGuardadas(next);
   return next;
 }
@@ -167,6 +239,7 @@ export interface GuardarEnSeguimientoInput {
   numeroCotizacion?: string;
   observacionesSeleccionadas?: string[];
   observacionManual?: string;
+  valorCotizacion?: number;
 }
 
 export interface GuardarEnSeguimientoResult {
@@ -189,7 +262,7 @@ export function guardarEnSeguimiento(
   if (isDuplicate) {
     return { saved: false, items, duplicate: true };
   }
-  const nueva: CotizacionGuardada = {
+  const base: CotizacionGuardada = {
     id: `${Date.now()}`,
     fechaCreacion: new Date().toISOString(),
     numeroCotizacion: input.numeroCotizacion || generateNumeroCotizacion(),
@@ -201,11 +274,13 @@ export function guardarEnSeguimiento(
     prioridad: "media",
     historial: [{ fecha: new Date().toISOString(), tipo: "creada" }],
     ultimoSeguimiento: new Date().toISOString(),
+    valorCotizacion: input.valorCotizacion,
     observacionesSeleccionadas: input.observacionesSeleccionadas?.length
       ? [...input.observacionesSeleccionadas]
       : undefined,
     observacionManual: input.observacionManual || undefined,
   };
+  const nueva = { ...base, estadoCRM: computeAutoEstado(base) };
   const next = [nueva, ...items].slice(0, 50);
   saveGuardadas(next);
   return { saved: true, items: next };
@@ -214,7 +289,7 @@ export function guardarEnSeguimiento(
 export function duplicarCotizacion(
   orig: CotizacionGuardada,
 ): CotizacionGuardada {
-  return {
+  const base: CotizacionGuardada = {
     ...orig,
     id: `${Date.now()}`,
     fechaCreacion: new Date().toISOString(),
@@ -225,13 +300,14 @@ export function duplicarCotizacion(
     ultimoSeguimiento: new Date().toISOString(),
     proximaAccion: undefined,
     fechaRecordatorio: undefined,
+    recordatorio: undefined,
     notaInterna: undefined,
     historial: [{ fecha: new Date().toISOString(), tipo: "duplicada", detalle: `Desde ${orig.numeroCotizacion}` }],
-    // Preserve observations from the original
     observacionesSeleccionadas: orig.observacionesSeleccionadas ? [...orig.observacionesSeleccionadas] : undefined,
     observacionManual: orig.observacionManual,
     cliente: { ...orig.cliente },
     servicios: orig.servicios.map((s) => ({ ...s })),
     acomodaciones: [...orig.acomodaciones],
   };
+  return { ...base, estadoCRM: computeAutoEstado(base) };
 }

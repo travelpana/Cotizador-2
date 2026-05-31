@@ -78,25 +78,23 @@ const TIPO_ACCION_CONFIG: Record<TipoProximaAccion, TipoAccionMeta> = {
 
 // ─── Estado CRM config ────────────────────────────────────────────────────────
 
-const ESTADO_CRM_OPTIONS: { value: EstadoCRM; label: string }[] = [
-  { value: "nueva",       label: "Nueva"       },
-  { value: "enviada",     label: "Enviada"     },
-  { value: "seguimiento", label: "Seguimiento" },
-  { value: "negociacion", label: "Negociación" },
-  { value: "confirmada",  label: "Confirmada"  },
-  { value: "perdida",     label: "Perdida"     },
+const ESTADO_CRM_OPTIONS: { value: EstadoCRM; label: string; auto: boolean }[] = [
+  { value: "nueva",             label: "Nueva",             auto: true  },
+  { value: "esperando_cliente", label: "Esp. cliente",      auto: true  },
+  { value: "requiere_accion",   label: "Requiere acción",   auto: true  },
+  { value: "confirmada",        label: "Confirmada",        auto: false },
+  { value: "perdida",           label: "Perdida",           auto: false },
 ];
 
 const ESTADO_CRM_STYLES: Record<
   EstadoCRM,
   { bg: string; text: string; ring: string; dot: string }
 > = {
-  nueva:       { bg: "bg-blue-50",    text: "text-blue-700",    ring: "ring-blue-200",    dot: "bg-blue-500"    },
-  enviada:     { bg: "bg-sky-50",     text: "text-sky-700",     ring: "ring-sky-200",     dot: "bg-sky-500"     },
-  seguimiento: { bg: "bg-amber-50",   text: "text-amber-700",   ring: "ring-amber-200",   dot: "bg-amber-500"   },
-  negociacion: { bg: "bg-orange-50",  text: "text-orange-700",  ring: "ring-orange-200",  dot: "bg-orange-500"  },
-  confirmada:  { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", dot: "bg-emerald-500" },
-  perdida:     { bg: "bg-slate-100",  text: "text-slate-500",   ring: "ring-slate-200",   dot: "bg-slate-400"   },
+  nueva:             { bg: "bg-blue-50",    text: "text-blue-700",    ring: "ring-blue-200",    dot: "bg-blue-500"    },
+  esperando_cliente: { bg: "bg-sky-50",     text: "text-sky-700",     ring: "ring-sky-200",     dot: "bg-sky-500"     },
+  requiere_accion:   { bg: "bg-red-50",     text: "text-red-700",     ring: "ring-red-200",     dot: "bg-red-500"     },
+  confirmada:        { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", dot: "bg-emerald-500" },
+  perdida:           { bg: "bg-slate-100",  text: "text-slate-500",   ring: "ring-slate-200",   dot: "bg-slate-400"   },
 };
 
 const PRIORIDAD_OPTIONS: { value: Prioridad; label: string }[] = [
@@ -227,6 +225,12 @@ function KpiCard({
 
 // ─── CRM Modal ────────────────────────────────────────────────────────────────
 
+function addDaysStr(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 function CrmModal({
   g,
   onClose,
@@ -236,37 +240,31 @@ function CrmModal({
   onClose: () => void;
   onSave: (patch: Partial<CotizacionGuardada>) => void;
 }) {
-  const [estadoCRM, setEstadoCRM] = useState<EstadoCRM>(g.estadoCRM ?? "nueva");
+  const currentEstado: EstadoCRM = g.estadoCRM ?? "nueva";
+  const isManualState = currentEstado === "confirmada" || currentEstado === "perdida";
+
+  const [estadoManual, setEstadoManual] = useState<"confirmada" | "perdida" | null>(
+    isManualState ? currentEstado : null,
+  );
   const [prioridad, setPrioridad] = useState<Prioridad>(g.prioridad ?? "media");
-  const [tipoProximaAccion, setTipoProximaAccion] = useState<TipoProximaAccion | "">(
-    g.tipoProximaAccion ?? "",
-  );
-  const [fechaProximaAccion, setFechaProximaAccion] = useState(
-    g.fechaProximaAccion
-      ? g.fechaProximaAccion.slice(0, 10)
-      : g.fechaRecordatorio
-        ? g.fechaRecordatorio.slice(0, 10)
-        : "",
-  );
   const [observacionSeguimiento, setObservacionSeguimiento] = useState(
     g.observacionSeguimiento ?? g.proximaAccion ?? "",
   );
   const [notaInterna, setNotaInterna] = useState(g.notaInterna ?? "");
+  const [recordatorio, setRecordatorio] = useState(g.recordatorio?.slice(0, 10) ?? "");
   const [tab, setTab] = useState<"crm" | "historial">("crm");
 
   const handleSave = () => {
+    const resolvedEstado: EstadoCRM = estadoManual ?? currentEstado;
     const newEntry: ActividadEntry = {
       fecha: new Date().toISOString(),
       tipo: "estado_cambiado",
-      detalle: `Estado → ${ESTADO_CRM_OPTIONS.find((o) => o.value === estadoCRM)?.label ?? estadoCRM}${
-        tipoProximaAccion ? ` · Próxima: ${TIPO_ACCION_CONFIG[tipoProximaAccion]?.label}` : ""
-      }${notaInterna.trim() ? ` · Nota: ${notaInterna.trim().slice(0, 50)}` : ""}`,
+      detalle: `Actualizado · estado: ${ESTADO_CRM_OPTIONS.find((o) => o.value === resolvedEstado)?.label ?? resolvedEstado}${notaInterna.trim() ? ` · Nota: ${notaInterna.trim().slice(0, 60)}` : ""}`,
     };
     const patch: Partial<CotizacionGuardada> = {
-      estadoCRM,
+      estadoCRM: resolvedEstado,
       prioridad,
-      tipoProximaAccion: tipoProximaAccion || undefined,
-      fechaProximaAccion: fechaProximaAccion || undefined,
+      recordatorio: recordatorio || undefined,
       observacionSeguimiento: observacionSeguimiento.trim() || undefined,
       notaInterna: notaInterna.trim() || undefined,
       ultimoSeguimiento: new Date().toISOString(),
@@ -276,9 +274,8 @@ function CrmModal({
     onClose();
   };
 
-  const tipoOptions: TipoProximaAccion[] = [
-    "llamar", "whatsapp", "correo", "esperar", "confirmarPago", "reenviar", "recordatorio",
-  ];
+  const autoStateInfo = ESTADO_CRM_OPTIONS.find((o) => o.value === currentEstado);
+  const autoStateStyle = ESTADO_CRM_STYLES[currentEstado];
 
   return (
     <div
@@ -337,33 +334,103 @@ function CrmModal({
         <div className="overflow-y-auto flex-1">
           {tab === "crm" ? (
             <div className="p-5 space-y-5">
-              {/* Estado */}
+
+              {/* Estado automático (read-only display) */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                    Estado actual (automático)
+                  </div>
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ring-1 ${autoStateStyle.bg} ${autoStateStyle.text} ${autoStateStyle.ring}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${autoStateStyle.dot}`} />
+                    {autoStateInfo?.label ?? currentEstado}
+                    {autoStateInfo?.auto && (
+                      <span className="text-[10px] opacity-60 ml-1">· auto</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cerrar venta / Marcar como perdida */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                  Estado comercial
+                  Resultado final
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {ESTADO_CRM_OPTIONS.map((o) => {
-                    const s = ESTADO_CRM_STYLES[o.value];
-                    const active = estadoCRM === o.value;
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEstadoManual(estadoManual === "confirmada" ? null : "confirmada")}
+                    className={`flex items-center gap-2 flex-1 justify-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ring-1 ${
+                      estadoManual === "confirmada"
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-300 shadow-sm"
+                        : "bg-slate-50 text-slate-500 ring-slate-200 hover:bg-emerald-50/60 hover:text-emerald-600"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    ✅ Venta confirmada
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEstadoManual(estadoManual === "perdida" ? null : "perdida")}
+                    className={`flex items-center gap-2 flex-1 justify-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ring-1 ${
+                      estadoManual === "perdida"
+                        ? "bg-slate-100 text-slate-600 ring-slate-300 shadow-sm"
+                        : "bg-slate-50 text-slate-500 ring-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    ❌ Marcar perdida
+                  </button>
+                </div>
+              </div>
+
+              {/* Recordatorio rápido */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                  Recordarme
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {[
+                    { label: "Mañana", days: 1 },
+                    { label: "En 3 días", days: 3 },
+                    { label: "En 1 semana", days: 7 },
+                  ].map(({ label, days }) => {
+                    const target = addDaysStr(days);
+                    const active = recordatorio === target;
                     return (
                       <button
-                        key={o.value}
+                        key={days}
                         type="button"
-                        onClick={() => setEstadoCRM(o.value)}
-                        className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-all ring-1 ${
+                        onClick={() => setRecordatorio(active ? "" : target)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ring-1 ${
                           active
-                            ? `${s.bg} ${s.text} ${s.ring} shadow-sm`
+                            ? "bg-primary/10 text-primary ring-primary/30 shadow-sm"
                             : "bg-slate-50 text-slate-500 ring-slate-200 hover:bg-slate-100"
                         }`}
                       >
-                        <span
-                          className={`w-2 h-2 rounded-full shrink-0 ${active ? s.dot : "bg-slate-300"}`}
-                        />
-                        {o.label}
+                        {label}
                       </button>
                     );
                   })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={recordatorio}
+                    onChange={(e) => setRecordatorio(e.target.value)}
+                    placeholder="Personalizado"
+                    className="flex-1 h-9 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                  {recordatorio && (
+                    <button
+                      type="button"
+                      onClick={() => setRecordatorio("")}
+                      className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -392,49 +459,6 @@ function CrmModal({
                     );
                   })}
                 </div>
-              </div>
-
-              {/* PHASE 2 — Tipo de próxima acción */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                  Tipo de próxima acción
-                </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {tipoOptions.map((tipo) => {
-                    const cfg = TIPO_ACCION_CONFIG[tipo];
-                    const active = tipoProximaAccion === tipo;
-                    return (
-                      <button
-                        key={tipo}
-                        type="button"
-                        onClick={() =>
-                          setTipoProximaAccion(active ? "" : tipo)
-                        }
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all ring-1 ${
-                          active
-                            ? `${cfg.bg} ${cfg.color} ring-current/30 shadow-sm`
-                            : "bg-slate-50 text-slate-500 ring-slate-200 hover:bg-slate-100"
-                        }`}
-                      >
-                        <cfg.Icon className="w-3.5 h-3.5 shrink-0" />
-                        {cfg.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Fecha próxima acción */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-                  Fecha de la próxima acción
-                </label>
-                <input
-                  type="date"
-                  value={fechaProximaAccion}
-                  onChange={(e) => setFechaProximaAccion(e.target.value)}
-                  className="w-full h-9 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
               </div>
 
               {/* Observación de seguimiento */}
@@ -894,7 +918,6 @@ export default function Seguimiento({
                     onDelete={() => onDelete(g.id)}
                     onDuplicate={onDuplicate ? () => onDuplicate(g) : undefined}
                     onOpenCRM={() => setCrmModal(g)}
-                    onUpdateCRM={onUpdateCRM}
                   />
                 ))}
               </tbody>
@@ -927,7 +950,6 @@ function TableRow({
   onDelete,
   onDuplicate,
   onOpenCRM,
-  onUpdateCRM,
 }: {
   g: CotizacionGuardada;
   onView: () => void;
@@ -935,7 +957,6 @@ function TableRow({
   onDelete: () => void;
   onDuplicate?: () => void;
   onOpenCRM: () => void;
-  onUpdateCRM: (id: string, patch: Partial<CotizacionGuardada>) => void;
 }) {
   const result = useMemo(
     () => calcularLocal(g.servicios, g.acomodaciones, g.cliente),
@@ -1015,23 +1036,7 @@ function TableRow({
 
       {/* Estado CRM */}
       <td className="px-3 py-3 whitespace-nowrap">
-        <EstadoCrmBadge
-          estado={estadoCRM}
-          onChange={(e) =>
-            onUpdateCRM(g.id, {
-              estadoCRM: e,
-              ultimoSeguimiento: new Date().toISOString(),
-              historial: [
-                {
-                  fecha: new Date().toISOString(),
-                  tipo: "estado_cambiado" as ActividadTipo,
-                  detalle: `Estado → ${ESTADO_CRM_OPTIONS.find((o) => o.value === e)?.label}`,
-                },
-                ...(g.historial ?? []),
-              ].slice(0, 50),
-            })
-          }
-        />
+        <EstadoCrmBadge estado={estadoCRM} />
       </td>
 
       {/* Prioridad */}
@@ -1199,37 +1204,18 @@ function AlertBadge({ level, days }: { level: AlertLevel; days: number }) {
   );
 }
 
-function EstadoCrmBadge({
-  estado,
-  onChange,
-}: {
-  estado: EstadoCRM;
-  onChange: (e: EstadoCRM) => void;
-}) {
+function EstadoCrmBadge({ estado }: { estado: EstadoCRM }) {
   const s = ESTADO_CRM_STYLES[estado];
-  const label = ESTADO_CRM_OPTIONS.find((o) => o.value === estado)?.label ?? estado;
+  const opt = ESTADO_CRM_OPTIONS.find((o) => o.value === estado);
+  const label = opt?.label ?? estado;
   return (
-    <div className="relative inline-block">
-      <span
-        className={`inline-flex items-center gap-1.5 pl-2.5 pr-7 py-1 rounded-full text-[11px] font-semibold ring-1 ${s.bg} ${s.text} ${s.ring}`}
-      >
-        <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-        {label}
-        <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-70" />
-      </span>
-      <select
-        value={estado}
-        onChange={(e) => onChange(e.target.value as EstadoCRM)}
-        aria-label="Cambiar estado"
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-      >
-        {ESTADO_CRM_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </div>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ${s.bg} ${s.text} ${s.ring}`}
+      title={opt?.auto ? "Estado automático" : "Estado manual"}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      {label}
+    </span>
   );
 }
 
