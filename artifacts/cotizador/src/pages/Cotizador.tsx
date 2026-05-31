@@ -844,18 +844,18 @@ export default function CotizadorPage() {
                 <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
                 <span className="text-white font-bold tracking-[0.15em] text-sm">COTIZADOR</span>
               </div>
-            <AlojamientoBar
-              cliente={cliente}
-              onClienteChange={handleClienteChange}
-              acomodaciones={acomodaciones}
-              onAcomodacionesChange={setAcomodaciones}
-            />
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
                 <ClientForm
                   cliente={cliente}
                   onChange={handleClienteChange}
                   errors={validationErrors}
+                />
+                <AlojamientoBar
+                  cliente={cliente}
+                  onClienteChange={handleClienteChange}
+                  acomodaciones={acomodaciones}
+                  onAcomodacionesChange={setAcomodaciones}
                 />
                 <ServiceSearchBar
                   hoteles={activeHoteles}
