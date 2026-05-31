@@ -824,7 +824,7 @@ export default function CotizadorPage() {
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#e8eef6]">
       <Sidebar
         view={view}
         onView={(v) => {
