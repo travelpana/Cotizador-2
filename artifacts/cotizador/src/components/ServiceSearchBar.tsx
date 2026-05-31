@@ -297,12 +297,17 @@ export default function ServiceSearchBar({
             <button
               type="button"
               onClick={() => setMercadoOpen((v) => !v)}
-              className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors shadow-sm"
-            style={mercado === "brasil" ? { borderColor: "#0043BB", color: "#0043BB", backgroundColor: "rgba(0,67,187,0.04)" } : undefined}
+              className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl text-sm font-medium transition-all"
+              style={
+                mercado !== "general"
+                  ? { backgroundColor: "#e6ae33", borderColor: "#e6ae33", border: "1px solid #e6ae33", color: "#fff", boxShadow: "0 2px 8px rgba(230,174,51,0.35)" }
+                  : { backgroundColor: "#fff", border: "1px solid #004fbb", color: "#07152f", boxShadow: "0 1px 4px rgba(0,79,187,0.12)" }
+              }
             >
               <span>{MERCADOS.find((m) => m.value === mercado)?.label ?? "General"}</span>
               <ChevronDown
-                className={`w-4 h-4 opacity-60 transition-transform ${mercadoOpen ? "rotate-180" : ""}`}
+                className={`w-4 h-4 transition-transform ${mercadoOpen ? "rotate-180" : ""}`}
+                style={{ color: mercado !== "general" ? "#fff" : "#004fbb", opacity: 0.8 }}
               />
             </button>
             {mercadoOpen && (
@@ -332,14 +337,18 @@ export default function ServiceSearchBar({
           <button
             type="button"
             onClick={() => setCatOpen((v) => !v)}
-            className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors shadow-sm"
+            className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl text-sm font-medium transition-all"
             data-testid="button-category"
+            style={
+              categoria !== "todos"
+                ? { backgroundColor: "#e6ae33", border: "1px solid #e6ae33", color: "#fff", boxShadow: "0 2px 8px rgba(230,174,51,0.35)" }
+                : { backgroundColor: "#fff", border: "1px solid #004fbb", color: "#07152f", boxShadow: "0 1px 4px rgba(0,79,187,0.12)" }
+            }
           >
             <span>{currentCatLabel}</span>
             <ChevronDown
-              className={`w-4 h-4 text-slate-400 transition-transform ${
-                catOpen ? "rotate-180" : ""
-              }`}
+              className={`w-4 h-4 transition-transform ${catOpen ? "rotate-180" : ""}`}
+              style={{ color: categoria !== "todos" ? "#fff" : "#004fbb", opacity: 0.8 }}
             />
           </button>
           {catOpen && (
@@ -379,8 +388,8 @@ export default function ServiceSearchBar({
             onFocus={() => setOpen(true)}
             onKeyDown={handleKey}
             placeholder="Buscar hotel, traslado, tour..."
-            className="w-full h-11 pl-10 pr-10 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 shadow-sm"
-            style={{ color: "#1f2937" }}
+            className="w-full h-11 pl-10 pr-10 rounded-xl bg-white text-sm placeholder:text-slate-400 focus:outline-none transition-all"
+            style={{ border: "1px solid #004fbb", boxShadow: "0 1px 4px rgba(0,79,187,0.12)", color: "#07152f" }}
             data-testid="input-service-search"
           />
           {query && (
