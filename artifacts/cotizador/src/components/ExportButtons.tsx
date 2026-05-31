@@ -563,14 +563,15 @@ export default function ExportButtons({
       <div className="p-5 space-y-2">
       <button
         onClick={() => onPreview()}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
+        style={{ backgroundColor: "#041433" }}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110"
       >
         <Eye className="w-4 h-4" />
         Vista previa
       </button>
       <button
         onClick={copyWhatsapp}
-        style={{ backgroundColor: "#1a87c5" }}
+        style={{ backgroundColor: "#03a04e" }}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
       >
         {waCopied ? (
@@ -587,7 +588,7 @@ export default function ExportButtons({
       </button>
       <button
         onClick={copyEmail}
-        style={{ backgroundColor: "#f07e14" }}
+        style={{ backgroundColor: "#044b9e" }}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
         title="Copia el correo (mismo diseño que el PDF) listo para pegar en tu cliente de email"
       >
@@ -606,7 +607,7 @@ export default function ExportButtons({
       <button
         onClick={handlePdf}
         disabled={pdfLoading}
-        style={{ backgroundColor: pdfError ? "#b91c1c" : "#2c4294" }}
+        style={{ backgroundColor: pdfError ? "#b91c1c" : "#e6ae33" }}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110 disabled:opacity-70 disabled:cursor-wait"
       >
         {pdfLoading ? (

@@ -27,15 +27,15 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
   const [configOpen, setConfigOpen] = useState(isConfigView);
 
   return (
-    <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border h-screen sticky top-0 flex flex-col">
-      <div className="p-6 border-b border-sidebar-border">
+    <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col text-white" style={{ backgroundColor: "#041941" }}>
+      <div className="p-6" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(238,199,116,0.18)", color: "#eec774" }}>
             <Plane className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-semibold tracking-tight">RGE Style Travel</div>
-            <div className="text-xs text-muted-foreground">Cotizador 2026</div>
+            <div className="font-semibold tracking-tight text-white">RGE Style Travel</div>
+            <div className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Cotizador 2026</div>
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
         />
 
         <div className="pt-5">
-          <div className="border-t border-sidebar-border mb-4" />
+          <div className="mb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
           <button
             onClick={() => {
               setConfigOpen((o) => !o);
@@ -64,11 +64,8 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
                 onView("plantillas");
               }
             }}
-            className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-widest transition-colors ${
-              isConfigView
-                ? "text-primary"
-                : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
-            }`}
+            className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-widest transition-colors"
+            style={{ color: isConfigView ? "#eec774" : "rgba(255,255,255,0.4)" }}
           >
             <span className="flex items-center gap-2">
               <Settings2 className="w-3.5 h-3.5" />
@@ -80,7 +77,7 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
           </button>
 
           {configOpen && (
-            <div className="mt-1 space-y-0.5 pl-2 border-l border-sidebar-border ml-3">
+            <div className="mt-1 space-y-0.5 pl-2 ml-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
               <NavItem
                 active={view === "plantillas"}
                 onClick={() => onView("plantillas")}
@@ -136,13 +133,14 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-        sub ? "py-1.5" : ""
-      } ${
+      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors ${sub ? "py-1.5" : ""}`}
+      style={
         active
-          ? "bg-primary/10 text-primary"
-          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
-      }`}
+          ? { backgroundColor: "rgba(230,174,51,0.15)", color: "#e6ae33" }
+          : { color: "rgba(255,255,255,0.7)" }
+      }
+      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)"; }}
+      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
     >
       <span className="flex items-center gap-3">
         {icon}
@@ -150,11 +148,12 @@ function NavItem({
       </span>
       {badge !== undefined && badge > 0 && (
         <span
-          className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+          style={
             active
-              ? "bg-primary/20 text-primary"
-              : "bg-sidebar-accent text-sidebar-accent-foreground"
-          }`}
+              ? { backgroundColor: "rgba(230,174,51,0.25)", color: "#e6ae33" }
+              : { backgroundColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }
+          }
         >
           {badge}
         </span>

@@ -855,6 +855,14 @@ export default function CotizadorPage() {
               }}
             />
           ) : (
+            <div className="space-y-6">
+              <div
+                className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm"
+                style={{ backgroundColor: "#00247e" }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e6ae33" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span className="text-white font-semibold tracking-wide text-sm">Cotizador</span>
+              </div>
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
                 <ClientForm
@@ -951,6 +959,7 @@ export default function CotizadorPage() {
                   </button>
                 )}
               </aside>
+            </div>
             </div>
           )}
         </div>

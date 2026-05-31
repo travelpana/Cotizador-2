@@ -187,9 +187,8 @@ function Toggle({
         aria-checked={checked}
         onClick={() => !disabled && onChange()}
         disabled={disabled}
-        className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${
-          checked ? "bg-primary" : "bg-slate-300"
-        } ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${disabled ? "cursor-not-allowed" : ""}`}
+        style={{ backgroundColor: checked && !disabled ? "#e6ae33" : "#cbd5e1" }}
       >
         <span
           className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${

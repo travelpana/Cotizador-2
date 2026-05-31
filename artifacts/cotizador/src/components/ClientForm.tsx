@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check, UserRound } from "lucide-react";
+import { ChevronDown, Check, UserRound, MoonStar, Users, Baby } from "lucide-react";
 import {
   AGENTES,
   type Acomodacion,
@@ -248,27 +248,30 @@ export function AlojamientoBar({
   return (
     <section
       className="rounded-2xl shadow-sm px-5 py-4 text-white"
-      style={{ backgroundColor: "#eb7309" }}
+      style={{ backgroundColor: "#002682" }}
     >
       <div className="flex items-center justify-between gap-4 flex-nowrap">
         <h2 className="text-sm font-bold uppercase tracking-[0.18em] whitespace-nowrap flex-shrink-0">
           Alojamiento
         </h2>
-        <div className="flex items-center gap-2 bg-white/15 rounded-xl p-1 flex-shrink-0">
+        <div className="flex items-center gap-2 bg-white/10 rounded-xl p-1 flex-shrink-0">
           <NumberInput
             label="Noches"
+            icon={<MoonStar className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
             value={cliente.noches}
             onChange={(v) => updateNum({ noches: v })}
             min={0}
           />
           <NumberInput
             label="Pasajeros"
+            icon={<Users className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
             value={cliente.pasajeros}
             onChange={(v) => updateNum({ pasajeros: v })}
             min={1}
           />
           <NumberInput
             label="Niños"
+            icon={<Baby className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
             value={cliente.ninos}
             onChange={(v) => updateNum({ ninos: v })}
             min={0}
@@ -285,9 +288,9 @@ export function AlojamientoBar({
                 className={`min-w-[58px] px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-all ${
                   active
                     ? "bg-white shadow-sm"
-                    : "bg-white/15 text-white hover:bg-white/25"
+                    : "text-white hover:brightness-110"
                 }`}
-                style={active ? { color: "#eb7309" } : undefined}
+                style={active ? { color: "#002682" } : { backgroundColor: "#0a7eed" }}
                 data-testid={`acomodacion-${p}`}
               >
                 {p}
@@ -302,11 +305,13 @@ export function AlojamientoBar({
 
 function NumberInput({
   label,
+  icon,
   value,
   onChange,
   min = 0,
 }: {
   label: string;
+  icon?: React.ReactNode;
   value: number;
   onChange: (v: number) => void;
   min?: number;
@@ -316,6 +321,7 @@ function NumberInput({
 
   return (
     <label className="flex items-center gap-2 bg-white rounded-lg px-2.5 py-1.5 ring-1 ring-white/40 shadow-sm cursor-text">
+      {icon && <span className="flex-shrink-0">{icon}</span>}
       <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 select-none">
         {label}
       </span>
