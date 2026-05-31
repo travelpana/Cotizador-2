@@ -8,7 +8,7 @@ import {
   Settings2,
   ChevronDown,
 } from "lucide-react";
-import logoRge from "@assets/style-travel-blue__1780204454850.png";
+import logoRge from "@assets/rge-whit_1780206082076.png";
 import { useState } from "react";
 
 export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
