@@ -625,6 +625,12 @@ interface Props {
   fileInfoBrasil?: CatalogInfo | null;
   onReloadBrasil?: () => Promise<void>;
   onUploadBrasil?: (file: File) => Promise<void>;
+  fileInfoEn?: CatalogInfo | null;
+  onReloadEn?: () => Promise<void>;
+  onUploadEn?: (file: File) => Promise<void>;
+  fileInfoPt?: CatalogInfo | null;
+  onReloadPt?: () => Promise<void>;
+  onUploadPt?: (file: File) => Promise<void>;
 }
 
 const TABS: { key: TarifasTab; label: string; icon: React.ReactNode }[] = [
@@ -647,11 +653,13 @@ function formatRelativeTime(iso: string | null | undefined): string {
   return `hace ${days} día${days !== 1 ? "s" : ""}`;
 }
 
-export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHotelesBrasil = [], apiToursBrasil = [], apiTrasladosBrasil = [], onChanged, onUpload, fileInfo, onReload, fileInfoBrasil, onReloadBrasil, onUploadBrasil }: Props) {
+export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHotelesBrasil = [], apiToursBrasil = [], apiTrasladosBrasil = [], onChanged, onUpload, fileInfo, onReload, fileInfoBrasil, onReloadBrasil, onUploadBrasil, fileInfoEn, onReloadEn, onUploadEn, fileInfoPt, onReloadPt, onUploadPt }: Props) {
   const [tab, setTab] = useState<TarifasTab>("hoteles");
   const [importMercado, setImportMercado] = useState<"general" | "brasil">("general");
   const [reloadStatus, setReloadStatus] = useState<ReloadStatus>("idle");
   const [reloadStatusBrasil, setReloadStatusBrasil] = useState<ReloadStatus>("idle");
+  const [reloadStatusEn, setReloadStatusEn] = useState<ReloadStatus>("idle");
+  const [reloadStatusPt, setReloadStatusPt] = useState<ReloadStatus>("idle");
 
   const lsCounts = useMemo(() => ({
     hoteles: loadHotelesLS().length,
@@ -710,9 +718,43 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
     input.click();
   };
 
+  const makeUploadClick = (handler?: (f: File) => Promise<void>) => () => {
+    if (!handler) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+    input.onchange = async () => { if (input.files?.[0]) await handler(input.files[0]); };
+    input.click();
+  };
+
+  const makeReloadHandler = (reloader: (() => Promise<void>) | undefined, setStatus: (s: ReloadStatus) => void) => async () => {
+    if (!reloader) return;
+    setStatus("loading");
+    try {
+      await reloader();
+      setStatus("success");
+      window.setTimeout(() => setStatus("idle"), 2800);
+    } catch {
+      setStatus("error");
+      window.setTimeout(() => setStatus("idle"), 3500);
+    }
+  };
+
+  const handleReloadEn = makeReloadHandler(onReloadEn, setReloadStatusEn);
+  const handleReloadPt = makeReloadHandler(onReloadPt, setReloadStatusPt);
+  const handleUploadEnClick = makeUploadClick(onUploadEn);
+  const handleUploadPtClick = makeUploadClick(onUploadPt);
+
   const reloadLabelBrasil = { idle: "Recargar tarifario", loading: "Actualizando...", success: "Actualizado", error: "Error al recargar" }[reloadStatusBrasil];
   const reloadIconBrasil = reloadStatusBrasil === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatusBrasil === "success" ? <Check className="w-4 h-4" /> : reloadStatusBrasil === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
   const reloadClsBrasil = reloadStatusBrasil === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : reloadStatusBrasil === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
+
+  function statusIcon(s: ReloadStatus) {
+    return s === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : s === "success" ? <Check className="w-4 h-4" /> : s === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
+  }
+  function statusCls(s: ReloadStatus) {
+    return s === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : s === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
+  }
 
   return (
     <div className="space-y-6">
@@ -728,75 +770,128 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
         </button>
       </div>
 
-      {/* Tarifario cards with inline actions */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="flex items-start gap-2 mb-3">
-            <FileText className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Tarifario General</p>
-              <p className="text-sm font-medium text-slate-800 truncate">{fileInfo?.filename ?? "TARIFARIO.xlsx"}</p>
-              <p className="text-xs text-slate-400 mt-0.5">Cargado {formatRelativeTime(fileInfo?.loadedAt)}</p>
-              {fileInfo?.counts && (
-                <p className="text-xs text-slate-400 mt-0.5">{fileInfo.counts.hoteles} hoteles · {fileInfo.counts.tours} tours · {fileInfo.counts.traslados} traslados</p>
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2 pt-3 border-t border-slate-100">
-            <button
-              onClick={handleReload}
-              disabled={reloadStatus === "loading" || !onReload}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadCls}`}
-            >
-              {reloadIcon}
-              {reloadStatus === "loading" ? "Actualizando..." : reloadStatus === "success" ? "Actualizado" : reloadStatus === "error" ? "Error" : "Recargar"}
-            </button>
-            <button
-              onClick={handleUploadClick}
-              disabled={reloadStatus === "loading"}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              Reemplazar
-            </button>
-          </div>
-        </div>
+      {/* Tarifarios por idioma */}
+      <div>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Tarifarios por Idioma</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
-        <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4">
-          <div className="flex items-start gap-2 mb-3">
-            <FileText className="w-3.5 h-3.5 mt-0.5 text-emerald-400 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-emerald-500 uppercase tracking-wide mb-0.5">Tarifario Brasil</p>
-              <p className="text-sm font-medium text-slate-800 truncate">{fileInfoBrasil?.filename ?? "TARIFARIO_BRASIL.xlsx"}</p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0
-                  ? `Cargado ${formatRelativeTime(fileInfoBrasil.loadedAt)}`
-                  : "Sin archivo cargado"}
-              </p>
-              {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
-                <p className="text-xs text-slate-400 mt-0.5">{fileInfoBrasil.counts.hoteles} hoteles · {fileInfoBrasil.counts.tours} tours · {fileInfoBrasil.counts.traslados} traslados</p>
-              )}
+          {/* ES */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="flex items-start gap-2 mb-3">
+              <span className="text-sm shrink-0 mt-0.5">🇪🇸</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Tarifario Español</p>
+                <p className="text-sm font-medium text-slate-800 truncate">{fileInfo?.filename ?? "TARIFARIO.xlsx"}</p>
+                <p className="text-xs text-slate-400 mt-0.5">Cargado {formatRelativeTime(fileInfo?.loadedAt)}</p>
+                {fileInfo?.counts && (
+                  <p className="text-xs text-slate-400 mt-0.5">{fileInfo.counts.hoteles} hoteles · {fileInfo.counts.tours} tours · {fileInfo.counts.traslados} traslados</p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-3 border-t border-slate-100">
+              <button onClick={handleReload} disabled={reloadStatus === "loading" || !onReload} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${statusCls(reloadStatus)}`}>
+                {statusIcon(reloadStatus)}
+                {reloadStatus === "loading" ? "Actualizando..." : reloadStatus === "success" ? "Actualizado" : reloadStatus === "error" ? "Error" : "Recargar"}
+              </button>
+              <button onClick={handleUploadClick} disabled={reloadStatus === "loading"} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60">
+                <Upload className="w-3.5 h-3.5" /> Reemplazar
+              </button>
             </div>
           </div>
-          <div className="flex gap-2 pt-3 border-t border-emerald-100">
-            {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
-              <button
-                onClick={handleReloadBrasil}
-                disabled={reloadStatusBrasil === "loading" || !onReloadBrasil}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadClsBrasil}`}
-              >
-                {reloadIconBrasil}
-                {reloadStatusBrasil === "loading" ? "Actualizando..." : reloadStatusBrasil === "success" ? "Actualizado" : reloadStatusBrasil === "error" ? "Error" : "Recargar"}
+
+          {/* EN */}
+          <div className={`border rounded-xl p-4 ${fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 ? "bg-white border-slate-200" : "bg-slate-50/60 border-slate-200"}`}>
+            <div className="flex items-start gap-2 mb-3">
+              <span className="text-sm shrink-0 mt-0.5">🇺🇸</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Tarifario English</p>
+                <p className="text-sm font-medium text-slate-800 truncate">{fileInfoEn?.filename ?? "TARIFARIO_EN.xlsx"}</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0
+                    ? `Cargado ${formatRelativeTime(fileInfoEn.loadedAt)}`
+                    : "Sin archivo cargado"}
+                </p>
+                {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 && (
+                  <p className="text-xs text-slate-400 mt-0.5">{fileInfoEn.counts.hoteles} hoteles · {fileInfoEn.counts.tours} tours · {fileInfoEn.counts.traslados} traslados</p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-3 border-t border-slate-100">
+              {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 && (
+                <button onClick={handleReloadEn} disabled={reloadStatusEn === "loading" || !onReloadEn} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${statusCls(reloadStatusEn)}`}>
+                  {statusIcon(reloadStatusEn)}
+                  {reloadStatusEn === "loading" ? "Updating..." : reloadStatusEn === "success" ? "Updated" : reloadStatusEn === "error" ? "Error" : "Reload"}
+                </button>
+              )}
+              <button onClick={handleUploadEnClick} disabled={reloadStatusEn === "loading" || !onUploadEn} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60">
+                <Upload className="w-3.5 h-3.5" /> {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 ? "Replace" : "Upload"}
               </button>
-            )}
-            <button
-              onClick={handleUploadBrasilClick}
-              disabled={reloadStatusBrasil === "loading" || !onUploadBrasil}
-              className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg border border-emerald-300 text-emerald-800 bg-emerald-100 text-xs font-semibold hover:bg-emerald-200 transition-colors disabled:opacity-60"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Reemplazar
-            </button>
+            </div>
+          </div>
+
+          {/* PT */}
+          <div className={`border rounded-xl p-4 ${fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 ? "bg-white border-slate-200" : "bg-slate-50/60 border-slate-200"}`}>
+            <div className="flex items-start gap-2 mb-3">
+              <span className="text-sm shrink-0 mt-0.5">🇧🇷</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Tarifario Português</p>
+                <p className="text-sm font-medium text-slate-800 truncate">{fileInfoPt?.filename ?? "TARIFARIO_PT.xlsx"}</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0
+                    ? `Cargado ${formatRelativeTime(fileInfoPt.loadedAt)}`
+                    : "Sem arquivo carregado"}
+                </p>
+                {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 && (
+                  <p className="text-xs text-slate-400 mt-0.5">{fileInfoPt.counts.hoteles} hotéis · {fileInfoPt.counts.tours} tours · {fileInfoPt.counts.traslados} translados</p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-3 border-t border-slate-100">
+              {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 && (
+                <button onClick={handleReloadPt} disabled={reloadStatusPt === "loading" || !onReloadPt} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${statusCls(reloadStatusPt)}`}>
+                  {statusIcon(reloadStatusPt)}
+                  {reloadStatusPt === "loading" ? "Atualizando..." : reloadStatusPt === "success" ? "Atualizado" : reloadStatusPt === "error" ? "Erro" : "Recarregar"}
+                </button>
+              )}
+              <button onClick={handleUploadPtClick} disabled={reloadStatusPt === "loading" || !onUploadPt} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60">
+                <Upload className="w-3.5 h-3.5" /> {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 ? "Substituir" : "Carregar"}
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Brasil (market tarifario) */}
+      <div>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Tarifario Brasil</p>
+        <div className="max-w-sm">
+          <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4">
+            <div className="flex items-start gap-2 mb-3">
+              <FileText className="w-3.5 h-3.5 mt-0.5 text-emerald-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-800 truncate">{fileInfoBrasil?.filename ?? "TARIFARIO_BRASIL.xlsx"}</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0
+                    ? `Cargado ${formatRelativeTime(fileInfoBrasil.loadedAt)}`
+                    : "Sin archivo cargado"}
+                </p>
+                {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
+                  <p className="text-xs text-slate-400 mt-0.5">{fileInfoBrasil.counts.hoteles} hoteles · {fileInfoBrasil.counts.tours} tours · {fileInfoBrasil.counts.traslados} traslados</p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-3 border-t border-emerald-100">
+              {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
+                <button onClick={handleReloadBrasil} disabled={reloadStatusBrasil === "loading" || !onReloadBrasil} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadClsBrasil}`}>
+                  {reloadIconBrasil}
+                  {reloadStatusBrasil === "loading" ? "Actualizando..." : reloadStatusBrasil === "success" ? "Actualizado" : reloadStatusBrasil === "error" ? "Error" : "Recargar"}
+                </button>
+              )}
+              <button onClick={handleUploadBrasilClick} disabled={reloadStatusBrasil === "loading" || !onUploadBrasil} className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg border border-emerald-300 text-emerald-800 bg-emerald-100 text-xs font-semibold hover:bg-emerald-200 transition-colors disabled:opacity-60">
+                <RefreshCw className="w-3.5 h-3.5" /> Reemplazar
+              </button>
+            </div>
           </div>
         </div>
       </div>

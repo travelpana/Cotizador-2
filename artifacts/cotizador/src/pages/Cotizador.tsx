@@ -65,7 +65,7 @@ import type {
 } from "@/lib/types";
 import type { Idioma } from "@/lib/i18n";
 import { validateCliente } from "@/lib/types";
-import { api, type CatalogInfo } from "@/lib/api";
+import { api, type CatalogInfo, type LangCode } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
 import { Loader2 } from "lucide-react";
 
@@ -123,6 +123,16 @@ export default function CotizadorPage() {
   const [toursBrasil, setToursBrasil] = useState<Tour[]>([]);
   const [trasladosBrasil, setTrasladosBrasil] = useState<Traslado[]>([]);
   const [fileInfoBrasil, setFileInfoBrasil] = useState<CatalogInfo | null>(null);
+
+  const [hotelesEn, setHotelesEn] = useState<Hotel[]>([]);
+  const [toursEn, setToursEn] = useState<Tour[]>([]);
+  const [trasladosEn, setTrasladosEn] = useState<Traslado[]>([]);
+  const [fileInfoEn, setFileInfoEn] = useState<CatalogInfo | null>(null);
+
+  const [hotelesPt, setHotelesPt] = useState<Hotel[]>([]);
+  const [toursPt, setToursPt] = useState<Tour[]>([]);
+  const [trasladosPt, setTrasladosPt] = useState<Traslado[]>([]);
+  const [fileInfoPt, setFileInfoPt] = useState<CatalogInfo | null>(null);
 
   const [view, setView] = useState<View>("cotizador");
   const [cliente, setCliente] = useState<Cliente>(DEFAULT_CLIENTE);
@@ -206,9 +216,22 @@ export default function CotizadorPage() {
     [traslados, lsTarifasVersion],
   );
 
-  const activeHoteles = mercado === "brasil" ? hotelesBrasil : mergedHoteles;
-  const activeTours = mercado === "brasil" ? toursBrasil : mergedTours;
-  const activeTraslados = mercado === "brasil" ? trasladosBrasil : mergedTraslados;
+  const langFallback =
+    (idioma === "en" && hotelesEn.length === 0) ||
+    (idioma === "pt" && hotelesPt.length === 0);
+
+  const activeHoteles =
+    idioma === "en" ? (hotelesEn.length > 0 ? hotelesEn : mergedHoteles) :
+    idioma === "pt" ? (hotelesPt.length > 0 ? hotelesPt : mergedHoteles) :
+    mercado === "brasil" ? hotelesBrasil : mergedHoteles;
+  const activeTours =
+    idioma === "en" ? (toursEn.length > 0 ? toursEn : mergedTours) :
+    idioma === "pt" ? (toursPt.length > 0 ? toursPt : mergedTours) :
+    mercado === "brasil" ? toursBrasil : mergedTours;
+  const activeTraslados =
+    idioma === "en" ? (trasladosEn.length > 0 ? trasladosEn : mergedTraslados) :
+    idioma === "pt" ? (trasladosPt.length > 0 ? trasladosPt : mergedTraslados) :
+    mercado === "brasil" ? trasladosBrasil : mergedTraslados;
 
   const [toast, setToast] = useState<{
     msg: string;
@@ -262,30 +285,37 @@ export default function CotizadorPage() {
     setLoading(true);
     setError(null);
     try {
-      const [h, t, tr, ds, info, brasilInfo] = await Promise.all([
+      const [h, t, tr, ds, allInfo, brasilInfo] = await Promise.all([
         api.hoteles(),
         api.tours(),
         api.traslados(),
         api.descriptivos().catch(() => [] as Descriptivo[]),
-        api.catalogInfo().catch(() => null),
+        api.catalogInfoAll().catch(() => null),
         api.catalogInfoBrasil().catch(() => null),
       ]);
       setHoteles(h);
       setTours(t);
       setTraslados(tr);
       setDescriptivos(ds);
-      setFileInfo(info);
+      setFileInfo(allInfo?.es ?? null);
+      setFileInfoEn(allInfo?.en ?? null);
+      setFileInfoPt(allInfo?.pt ?? null);
       setFileInfoBrasil(brasilInfo);
-      if (brasilInfo?.counts && brasilInfo.counts.hoteles > 0) {
-        const [hb, tb, trb] = await Promise.all([
-          api.hotelesBrasil(),
-          api.toursBrasil(),
-          api.trasladosBrasil(),
-        ]);
-        setHotelesBrasil(hb);
-        setToursBrasil(tb);
-        setTrasladosBrasil(trb);
-      }
+
+      const fetchLang = async (info: { counts?: { hoteles: number } | null } | null, lang: "en" | "pt", setH: (v: Hotel[]) => void, setT: (v: Tour[]) => void, setTr: (v: Traslado[]) => void) => {
+        if (info?.counts && info.counts.hoteles > 0) {
+          const [lh, lt, ltr] = await Promise.all([api.hotelesLang(lang), api.toursLang(lang), api.trasladosLang(lang)]);
+          setH(lh); setT(lt); setTr(ltr);
+        }
+      };
+
+      await Promise.all([
+        brasilInfo?.counts && brasilInfo.counts.hoteles > 0
+          ? Promise.all([api.hotelesBrasil(), api.toursBrasil(), api.trasladosBrasil()]).then(([hb, tb, trb]) => { setHotelesBrasil(hb); setToursBrasil(tb); setTrasladosBrasil(trb); })
+          : Promise.resolve(),
+        fetchLang(allInfo?.en ?? null, "en", setHotelesEn, setToursEn, setTrasladosEn),
+        fetchLang(allInfo?.pt ?? null, "pt", setHotelesPt, setToursPt, setTrasladosPt),
+      ]);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -386,6 +416,38 @@ export default function CotizadorPage() {
       throw e;
     }
   };
+
+  const makeLangReloadHandler = (lang: LangCode, setH: (v: Hotel[]) => void, setT: (v: Tour[]) => void, setTr: (v: Traslado[]) => void, setInfo: (v: CatalogInfo) => void) => async () => {
+    try {
+      const { hoteles: h, tours: t, traslados: tr, loadedAt } = await api.reloadAllLang(lang);
+      setH(h); setT(t); setTr(tr);
+      setInfo({ filename: `TARIFARIO_${lang.toUpperCase()}.xlsx`, loadedAt, counts: { hoteles: h.length, tours: t.length, traslados: tr.length } });
+      showToast(`Tarifario ${lang.toUpperCase()} actualizado · ${h.length} hoteles · ${t.length} tours`);
+    } catch (e) {
+      console.error(`[Recargar tarifario ${lang}]`, e);
+      showToast(`Error al recargar el tarifario ${lang.toUpperCase()}`, "error");
+      throw e;
+    }
+  };
+
+  const makeLangUploadHandler = (lang: LangCode, setH: (v: Hotel[]) => void, setT: (v: Tour[]) => void, setTr: (v: Traslado[]) => void, setInfo: (v: CatalogInfo) => void) => async (file: File) => {
+    try {
+      const result = await api.uploadTarifarioLang(lang, file);
+      const [h, t, tr] = await Promise.all([api.hotelesLang(lang), api.toursLang(lang), api.trasladosLang(lang)]);
+      setH(h); setT(t); setTr(tr);
+      setInfo({ filename: result.filename, loadedAt: result.loadedAt, counts: result.counts });
+      showToast(`Tarifario ${lang.toUpperCase()} cargado · ${result.counts.hoteles} hoteles · ${result.counts.tours} tours`);
+    } catch (e) {
+      console.error(`[Subir tarifario ${lang}]`, e);
+      showToast((e as Error).message || `Error al subir el tarifario ${lang.toUpperCase()}`, "error");
+      throw e;
+    }
+  };
+
+  const handleTarifarioReloadEn = makeLangReloadHandler("en", setHotelesEn, setToursEn, setTrasladosEn, setFileInfoEn as (v: CatalogInfo) => void);
+  const handleUploadEn = makeLangUploadHandler("en", setHotelesEn, setToursEn, setTrasladosEn, setFileInfoEn as (v: CatalogInfo) => void);
+  const handleTarifarioReloadPt = makeLangReloadHandler("pt", setHotelesPt, setToursPt, setTrasladosPt, setFileInfoPt as (v: CatalogInfo) => void);
+  const handleUploadPt = makeLangUploadHandler("pt", setHotelesPt, setToursPt, setTrasladosPt, setFileInfoPt as (v: CatalogInfo) => void);
 
   useEffect(() => {
     fetchAll();
@@ -835,6 +897,12 @@ export default function CotizadorPage() {
                 fileInfoBrasil={fileInfoBrasil}
                 onReloadBrasil={handleTarifarioReloadBrasil}
                 onUploadBrasil={handleUploadBrasil}
+                fileInfoEn={fileInfoEn}
+                onReloadEn={handleTarifarioReloadEn}
+                onUploadEn={handleUploadEn}
+                fileInfoPt={fileInfoPt}
+                onReloadPt={handleTarifarioReloadPt}
+                onUploadPt={handleUploadPt}
               />
             </div>
           ) : view === "respaldos" ? (
@@ -864,6 +932,12 @@ export default function CotizadorPage() {
                   acomodaciones={acomodaciones}
                   onAcomodacionesChange={setAcomodaciones}
                 />
+                {langFallback && (
+                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+                    <span className="text-base shrink-0">⚠️</span>
+                    <span>No hay tarifario cargado para este idioma. Se usará el tarifario español como respaldo.</span>
+                  </div>
+                )}
                 <ServiceSearchBar
                   hoteles={activeHoteles}
                   tours={activeTours}
@@ -871,8 +945,8 @@ export default function CotizadorPage() {
                   globalFechaInicio={cliente.fechaInicio}
                   globalFechaFin={cliente.fechaFin}
                   onPick={handleQuickAdd}
-                  mercado={mercado}
-                  onMercadoChange={setMercado}
+                  mercado={idioma === "es" ? mercado : "general"}
+                  onMercadoChange={idioma === "es" ? setMercado : () => {}}
                 />
                 <ServiciosSeleccionados
                   servicios={servicios}

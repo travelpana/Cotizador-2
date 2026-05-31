@@ -61,9 +61,13 @@ export interface Catalog {
 
 let cache: Catalog | null = null;
 let brasilCache: Catalog | null = null;
+let enCache: Catalog | null = null;
+let ptCache: Catalog | null = null;
 
 const EXCEL_PATH = resolveExcelPath("TARIFARIO_PATH", "TARIFARIO.xlsx");
 const BRASIL_EXCEL_PATH = resolveExcelPath("TARIFARIO_BRASIL_PATH", "TARIFARIO_BRASIL.xlsx");
+const EN_EXCEL_PATH = resolveExcelPath("TARIFARIO_EN_PATH", "TARIFARIO_EN.xlsx");
+const PT_EXCEL_PATH = resolveExcelPath("TARIFARIO_PT_PATH", "TARIFARIO_PT.xlsx");
 
 function num(v: unknown): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -254,6 +258,73 @@ export function replaceAndReload(buffer: Buffer): Catalog {
   fs.writeFileSync(EXCEL_PATH, buffer);
   return reloadCatalog();
 }
+
+/* ─── English catalog ─── */
+
+function makeEmptyCatalog(): Catalog {
+  return { hoteles: [], tours: [], traslados: [], loadedAt: new Date().toISOString() };
+}
+
+function loadOptionalCatalog(
+  filePath: string,
+  cacheRef: { value: Catalog | null },
+): Catalog {
+  if (cacheRef.value) return cacheRef.value;
+  if (!fs.existsSync(filePath)) {
+    cacheRef.value = makeEmptyCatalog();
+    return cacheRef.value;
+  }
+  try {
+    const wb = XLSX.readFile(filePath);
+    cacheRef.value = parseCatalogFromWorkbook(wb);
+    return cacheRef.value;
+  } catch {
+    cacheRef.value = makeEmptyCatalog();
+    return cacheRef.value;
+  }
+}
+
+function replaceAndReloadOptional(filePath: string, buffer: Buffer, cacheRef: { value: Catalog | null }): Catalog {
+  let wb: XLSX.WorkBook;
+  try {
+    wb = XLSX.read(buffer, { type: "buffer" });
+  } catch {
+    throw new Error("El archivo no es un Excel válido (.xlsx)");
+  }
+  for (const sheet of REQUIRED_SHEETS) {
+    if (!wb.SheetNames.includes(sheet)) {
+      throw new Error(`El archivo no contiene la hoja requerida: "${sheet}"`);
+    }
+  }
+  fs.writeFileSync(filePath, buffer);
+  cacheRef.value = parseCatalogFromWorkbook(wb);
+  return cacheRef.value;
+}
+
+function getOptionalFileInfo(filePath: string, cacheRef: { value: Catalog | null }): { filename: string; loadedAt: string | null; exists: boolean } {
+  const exists = fs.existsSync(filePath);
+  if (cacheRef.value) return { filename: path.basename(filePath), loadedAt: cacheRef.value.loadedAt, exists };
+  if (!exists) return { filename: path.basename(filePath), loadedAt: null, exists: false };
+  try {
+    const stat = fs.statSync(filePath);
+    return { filename: path.basename(filePath), loadedAt: stat.mtime.toISOString(), exists: true };
+  } catch {
+    return { filename: path.basename(filePath), loadedAt: null, exists: false };
+  }
+}
+
+const enCacheRef = { value: enCache };
+const ptCacheRef = { value: ptCache };
+
+export function loadEnCatalog(): Catalog { return loadOptionalCatalog(EN_EXCEL_PATH, enCacheRef); }
+export function reloadEnCatalog(): Catalog { enCacheRef.value = null; return loadOptionalCatalog(EN_EXCEL_PATH, enCacheRef); }
+export function getEnFileInfo() { return getOptionalFileInfo(EN_EXCEL_PATH, enCacheRef); }
+export function replaceAndReloadEn(buffer: Buffer): Catalog { return replaceAndReloadOptional(EN_EXCEL_PATH, buffer, enCacheRef); }
+
+export function loadPtCatalog(): Catalog { return loadOptionalCatalog(PT_EXCEL_PATH, ptCacheRef); }
+export function reloadPtCatalog(): Catalog { ptCacheRef.value = null; return loadOptionalCatalog(PT_EXCEL_PATH, ptCacheRef); }
+export function getPtFileInfo() { return getOptionalFileInfo(PT_EXCEL_PATH, ptCacheRef); }
+export function replaceAndReloadPt(buffer: Buffer): Catalog { return replaceAndReloadOptional(PT_EXCEL_PATH, buffer, ptCacheRef); }
 
 /* ─── Brasil catalog ─── */
 

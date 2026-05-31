@@ -8,79 +8,133 @@ import {
   reloadBrasilCatalog,
   getBrasilFileInfo,
   replaceAndReloadBrasil,
+  loadEnCatalog,
+  reloadEnCatalog,
+  getEnFileInfo,
+  replaceAndReloadEn,
+  loadPtCatalog,
+  reloadPtCatalog,
+  getPtFileInfo,
+  replaceAndReloadPt,
 } from "../lib/excel";
 
 const router: IRouter = Router();
+
+type Lang = "es" | "en" | "pt";
+
+function getLang(req: express.Request): Lang {
+  const lang = req.query["lang"];
+  if (lang === "en") return "en";
+  if (lang === "pt") return "pt";
+  return "es";
+}
 
 function isBrasil(req: express.Request): boolean {
   return req.query["mercado"] === "brasil";
 }
 
+function loadCatalogForLang(lang: Lang) {
+  if (lang === "en") return loadEnCatalog();
+  if (lang === "pt") return loadPtCatalog();
+  return loadCatalog();
+}
+
 router.get("/hoteles", (req, res) => {
-  const c = isBrasil(req) ? loadBrasilCatalog() : loadCatalog();
-  res.json(c.hoteles);
+  if (isBrasil(req)) { res.json(loadBrasilCatalog().hoteles); return; }
+  res.json(loadCatalogForLang(getLang(req)).hoteles);
 });
 
 router.get("/tours", (req, res) => {
-  const c = isBrasil(req) ? loadBrasilCatalog() : loadCatalog();
-  res.json(c.tours);
+  if (isBrasil(req)) { res.json(loadBrasilCatalog().tours); return; }
+  res.json(loadCatalogForLang(getLang(req)).tours);
 });
 
 router.get("/traslados", (req, res) => {
-  const c = isBrasil(req) ? loadBrasilCatalog() : loadCatalog();
-  res.json(c.traslados);
+  if (isBrasil(req)) { res.json(loadBrasilCatalog().traslados); return; }
+  res.json(loadCatalogForLang(getLang(req)).traslados);
 });
 
 router.get("/catalog", (req, res) => {
-  const c = isBrasil(req) ? loadBrasilCatalog() : loadCatalog();
-  res.json(c);
+  if (isBrasil(req)) { res.json(loadBrasilCatalog()); return; }
+  res.json(loadCatalogForLang(getLang(req)));
+});
+
+router.get("/catalog/info/all", (_req, res) => {
+  const esInfo = getFileInfo();
+  const esC = loadCatalog();
+  const enInfo = getEnFileInfo();
+  const enC = loadEnCatalog();
+  const ptInfo = getPtFileInfo();
+  const ptC = loadPtCatalog();
+  res.json({
+    es: {
+      lang: "es",
+      filename: esInfo.filename,
+      loadedAt: esInfo.loadedAt,
+      exists: true,
+      counts: { hoteles: esC.hoteles.length, tours: esC.tours.length, traslados: esC.traslados.length },
+    },
+    en: {
+      lang: "en",
+      filename: enInfo.filename,
+      loadedAt: enInfo.loadedAt,
+      exists: enInfo.exists,
+      counts: { hoteles: enC.hoteles.length, tours: enC.tours.length, traslados: enC.traslados.length },
+    },
+    pt: {
+      lang: "pt",
+      filename: ptInfo.filename,
+      loadedAt: ptInfo.loadedAt,
+      exists: ptInfo.exists,
+      counts: { hoteles: ptC.hoteles.length, tours: ptC.tours.length, traslados: ptC.traslados.length },
+    },
+  });
 });
 
 router.get("/catalog/info", (req, res) => {
   if (isBrasil(req)) {
     const info = getBrasilFileInfo();
     const c = loadBrasilCatalog();
-    res.json({
-      filename: info.filename,
-      loadedAt: info.loadedAt,
-      exists: info.exists,
-      counts: {
-        hoteles: c.hoteles.length,
-        tours: c.tours.length,
-        traslados: c.traslados.length,
-      },
-    });
+    res.json({ filename: info.filename, loadedAt: info.loadedAt, exists: info.exists, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
+    return;
+  }
+  const lang = getLang(req);
+  if (lang === "en") {
+    const info = getEnFileInfo();
+    const c = loadEnCatalog();
+    res.json({ filename: info.filename, loadedAt: info.loadedAt, exists: info.exists, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
+    return;
+  }
+  if (lang === "pt") {
+    const info = getPtFileInfo();
+    const c = loadPtCatalog();
+    res.json({ filename: info.filename, loadedAt: info.loadedAt, exists: info.exists, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
     return;
   }
   const info = getFileInfo();
   const c = loadCatalog();
-  res.json({
-    filename: info.filename,
-    loadedAt: info.loadedAt,
-    counts: {
-      hoteles: c.hoteles.length,
-      tours: c.tours.length,
-      traslados: c.traslados.length,
-    },
-  });
+  res.json({ filename: info.filename, loadedAt: info.loadedAt, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
 });
 
 router.post("/reload", (req, res) => {
   if (isBrasil(req)) {
     const c = reloadBrasilCatalog();
-    res.json({
-      ok: true,
-      counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length },
-      loadedAt: c.loadedAt,
-    });
+    res.json({ ok: true, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length }, loadedAt: c.loadedAt });
+    return;
+  }
+  const lang = getLang(req);
+  if (lang === "en") {
+    const c = reloadEnCatalog();
+    res.json({ ok: true, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length }, loadedAt: c.loadedAt });
+    return;
+  }
+  if (lang === "pt") {
+    const c = reloadPtCatalog();
+    res.json({ ok: true, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length }, loadedAt: c.loadedAt });
     return;
   }
   const c = reloadCatalog();
-  res.json({
-    ok: true,
-    counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length },
-    loadedAt: c.loadedAt,
-  });
+  res.json({ ok: true, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length }, loadedAt: c.loadedAt });
 });
 
 router.post(
@@ -96,22 +150,25 @@ router.post(
       if (isBrasil(req)) {
         const c = replaceAndReloadBrasil(buffer);
         const info = getBrasilFileInfo();
-        res.json({
-          ok: true,
-          filename: info.filename,
-          loadedAt: c.loadedAt,
-          counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length },
-        });
+        res.json({ ok: true, filename: info.filename, loadedAt: c.loadedAt, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
+        return;
+      }
+      const lang = getLang(req);
+      if (lang === "en") {
+        const c = replaceAndReloadEn(buffer);
+        const info = getEnFileInfo();
+        res.json({ ok: true, filename: info.filename, loadedAt: c.loadedAt, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
+        return;
+      }
+      if (lang === "pt") {
+        const c = replaceAndReloadPt(buffer);
+        const info = getPtFileInfo();
+        res.json({ ok: true, filename: info.filename, loadedAt: c.loadedAt, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
         return;
       }
       const c = replaceAndReload(buffer);
       const info = getFileInfo();
-      res.json({
-        ok: true,
-        filename: info.filename,
-        loadedAt: c.loadedAt,
-        counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length },
-      });
+      res.json({ ok: true, filename: info.filename, loadedAt: c.loadedAt, counts: { hoteles: c.hoteles.length, tours: c.tours.length, traslados: c.traslados.length } });
     } catch (e) {
       res.status(400).json({ ok: false, error: (e as Error).message });
     }

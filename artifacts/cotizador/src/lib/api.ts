@@ -26,11 +26,19 @@ async function getFresh<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export type LangCode = "es" | "en" | "pt";
+
 export interface CatalogInfo {
   filename: string;
   loadedAt: string | null;
   exists?: boolean;
   counts: { hoteles: number; tours: number; traslados: number } | null;
+}
+
+export interface CatalogInfoAll {
+  es: CatalogInfo & { lang: LangCode };
+  en: CatalogInfo & { lang: LangCode };
+  pt: CatalogInfo & { lang: LangCode };
 }
 
 export interface UploadResult {
@@ -46,11 +54,16 @@ export const api = {
   traslados: () => get<Traslado[]>("/traslados"),
   descriptivos: () => get<Descriptivo[]>("/descriptivos"),
   catalogInfo: () => get<CatalogInfo>("/catalog/info"),
+  catalogInfoAll: () => get<CatalogInfoAll>("/catalog/info/all"),
 
   hotelesBrasil: () => get<Hotel[]>("/hoteles?mercado=brasil"),
   toursBrasil: () => get<Tour[]>("/tours?mercado=brasil"),
   trasladosBrasil: () => get<Traslado[]>("/traslados?mercado=brasil"),
   catalogInfoBrasil: () => get<CatalogInfo>("/catalog/info?mercado=brasil"),
+
+  hotelesLang: (lang: LangCode) => lang === "es" ? get<Hotel[]>("/hoteles") : get<Hotel[]>(`/hoteles?lang=${lang}`),
+  toursLang: (lang: LangCode) => lang === "es" ? get<Tour[]>("/tours") : get<Tour[]>(`/tours?lang=${lang}`),
+  trasladosLang: (lang: LangCode) => lang === "es" ? get<Traslado[]>("/traslados") : get<Traslado[]>(`/traslados?lang=${lang}`),
 
   reloadAll: async (): Promise<{
     hoteles: Hotel[];
@@ -84,6 +97,25 @@ export const api = {
     return { hoteles, tours, traslados, loadedAt: reload.loadedAt };
   },
 
+  reloadAllLang: async (lang: LangCode): Promise<{
+    hoteles: Hotel[];
+    tours: Tour[];
+    traslados: Traslado[];
+    loadedAt: string;
+  }> => {
+    if (lang === "es") {
+      const r = await api.reloadAll();
+      return { hoteles: r.hoteles, tours: r.tours, traslados: r.traslados, loadedAt: r.loadedAt };
+    }
+    const reload = await post<{ ok: boolean; loadedAt: string }>(`/reload?lang=${lang}`, {});
+    const [hoteles, tours, traslados] = await Promise.all([
+      getFresh<Hotel[]>(`/hoteles?lang=${lang}`),
+      getFresh<Tour[]>(`/tours?lang=${lang}`),
+      getFresh<Traslado[]>(`/traslados?lang=${lang}`),
+    ]);
+    return { hoteles, tours, traslados, loadedAt: reload.loadedAt };
+  },
+
   uploadTarifario: async (file: File): Promise<UploadResult> => {
     const buffer = await file.arrayBuffer();
     const res = await fetch(`${API_BASE}/upload`, {
@@ -101,6 +133,21 @@ export const api = {
   uploadTarifarioBrasil: async (file: File): Promise<UploadResult> => {
     const buffer = await file.arrayBuffer();
     const res = await fetch(`${API_BASE}/upload?mercado=brasil`, {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: buffer,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Error desconocido" })) as { error?: string };
+      throw new Error(err.error ?? `Error al subir archivo: ${res.status}`);
+    }
+    return res.json() as Promise<UploadResult>;
+  },
+
+  uploadTarifarioLang: async (lang: LangCode, file: File): Promise<UploadResult> => {
+    if (lang === "es") return api.uploadTarifario(file);
+    const buffer = await file.arrayBuffer();
+    const res = await fetch(`${API_BASE}/upload?lang=${lang}`, {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream" },
       body: buffer,
