@@ -149,7 +149,7 @@ function HotelesTab({ apiHoteles, apiHotelesBrasil, importMercado, onChanged }: 
             </button>
           )}
         </div>
-        <button onClick={() => setEditing(newHotelLocal())} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+        <button onClick={() => setEditing(newHotelLocal())} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors shadow-sm" style={{ backgroundColor: "#004fbb" }} onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")} onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}>
           <Plus className="w-4 h-4" /> Nuevo hotel
         </button>
       </div>
@@ -598,7 +598,7 @@ function EmptyState({ icon, msg, onNew, newLabel }: { icon: React.ReactNode; msg
       <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto">{icon}</div>
       <p className="text-sm font-medium text-slate-600">{msg}</p>
       <p className="text-xs text-slate-400">Los datos del tarifario Excel siguen disponibles en el cotizador.</p>
-      <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors">
+      <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors shadow-sm" style={{ backgroundColor: "#004fbb" }} onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")} onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}>
         <Plus className="w-4 h-4" />{newLabel}
       </button>
     </div>

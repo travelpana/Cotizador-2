@@ -178,9 +178,9 @@ function SectionHeading({
 }
 
 const colorMap: Record<string, string> = {
-  blue: "bg-blue-600 hover:bg-blue-700 text-white",
-  purple: "bg-violet-600 hover:bg-violet-700 text-white",
-  slate: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50",
+  blue: "bg-[#004fbb] hover:bg-[#003f96] text-white",
+  purple: "bg-[#004fbb] hover:bg-[#003f96] text-white",
+  slate: "bg-[#001851] hover:bg-[#002682] text-white",
 };
 
 function ActionCard({
