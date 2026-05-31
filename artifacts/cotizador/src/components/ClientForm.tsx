@@ -46,8 +46,8 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
     on ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "";
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+    <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
+      <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
         <UserRound className="w-4 h-4" style={{ color: "#1495ff" }} />
         <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>Datos del cliente</h3>
       </div>

@@ -558,6 +558,8 @@ export default function CotizadorPage() {
     setGuardadas((prev) => {
       const idx = prev.findIndex((g) => g.numeroCotizacion === numero);
 
+      const isSend = tipo === "whatsapp_enviado" || tipo === "correo_enviado" || tipo === "pdf_enviado";
+
       if (idx === -1) {
         const nuevaBase: CotizacionGuardada = {
           id: `${Date.now()}`,
@@ -567,8 +569,8 @@ export default function CotizadorPage() {
           servicios,
           acomodaciones,
           modoCotizacion: modo,
-          estadoCRM: "esperando_cliente",
-          sentAt: now,
+          estadoCRM: isSend ? "esperando_cliente" : "nueva",
+          sentAt: isSend ? now : undefined,
           prioridad: autoPriority,
           valorCotizacion: total,
           ultimoSeguimiento: now,
@@ -579,7 +581,7 @@ export default function CotizadorPage() {
               : undefined,
           observacionManual: observacionManual.trim() || undefined,
         };
-        const nueva = { ...nuevaBase, estadoCRM: computeAutoEstado(nuevaBase) };
+        const nueva = { ...nuevaBase, estadoCRM: isSend ? computeAutoEstado(nuevaBase) : "nueva" };
         const next = [nueva, ...prev].slice(0, 50);
         saveGuardadas(next);
         return next;
@@ -600,7 +602,7 @@ export default function CotizadorPage() {
         if (item.numeroCotizacion !== numero) return item;
         const updated = {
           ...item,
-          sentAt: item.sentAt ?? now,
+          sentAt: isSend ? (item.sentAt ?? now) : item.sentAt,
           ultimoSeguimiento: now,
           prioridad: finalPriority,
           valorCotizacion: total,

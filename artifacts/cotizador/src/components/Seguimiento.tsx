@@ -104,6 +104,7 @@ const ACTIVIDAD_LABELS: Record<ActividadTipo, string> = {
   pdf_enviado:      "PDF enviado",
   whatsapp_enviado: "WhatsApp enviado",
   correo_enviado:   "Correo enviado",
+  guardado_manual:  "Guardado manualmente",
   duplicada:        "Cotización duplicada",
   confirmada:       "Cotización confirmada",
   nota_agregada:    "Nota interna agregada",
@@ -455,7 +456,12 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
   const openMenu = () => {
     const rect = menuBtnRef.current?.getBoundingClientRect();
     if (rect) {
-      setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+      const MENU_HEIGHT = 240;
+      const openUp = rect.bottom + 6 + MENU_HEIGHT > window.innerHeight;
+      setMenuPos({
+        top: openUp ? rect.top - MENU_HEIGHT : rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      });
       setMenuOpen(true);
     }
   };
@@ -472,22 +478,24 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
 
   const close = () => setMenuOpen(false);
 
-  const agency = agencyName(g);
-  const initials = getInitials(agency);
+  const clientName = g.cliente.nombre?.trim() || "Sin nombre";
+  const agencyLabel = agencyName(g);
+  const initials = getInitials(agencyLabel || clientName);
   const valor = g.valorCotizacion;
   const sinActividad = daysSince(g.ultimoSeguimiento ?? g.fechaCreacion);
   const showSinActividad = col.id === "requiere_accion" && sinActividad >= 3;
 
   return (
     <div className="bg-white rounded-xl ring-1 ring-slate-100 p-3 hover:ring-slate-200 hover:shadow-sm transition-all">
-      {/* Logo + Agency info */}
+      {/* Logo + Client / Agency info */}
       <div className="flex items-start gap-2 mb-2.5">
         <LogoOrInitials agencia={agencia} initials={initials} color={col.initialsColor} size={36} />
         <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-bold text-slate-900 truncate leading-tight">{agency}</div>
-          <div className="flex items-center gap-1 flex-wrap mt-0.5">
-            {g.numeroCotizacion && <span className="text-[10px] text-slate-400 font-mono">{g.numeroCotizacion}</span>}
-            {valor != null && valor > 0 && <span className="text-[10px] text-slate-500 font-semibold">· {fmtMoney(valor)}</span>}
+          <div className="text-[12px] font-bold text-slate-900 truncate leading-tight">{clientName}</div>
+          <div className="text-[10px] text-slate-500 truncate leading-tight mt-0.5">
+            {agencyLabel && <span>{agencyLabel}</span>}
+            {g.numeroCotizacion && <span className="text-slate-400 font-mono"> · {g.numeroCotizacion}</span>}
+            {valor != null && valor > 0 && <span className="font-semibold"> · {fmtMoney(valor)}</span>}
           </div>
           {showSinActividad && (
             <div className="text-[10px] font-semibold mt-0.5" style={{ color: sinActividad >= 7 ? "#991b1b" : "#b45309" }}>
@@ -509,8 +517,7 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
 
       {/* Portal menu */}
       {menuOpen && menuPos && createPortal(
-        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[190px] z-[500]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0" }}>
-          <MenuItem icon={<Eye className="w-3.5 h-3.5" />} label="Abrir cotización" onClick={() => { onView(); close(); }} />
+        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[200px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
           <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar" onClick={() => { onEdit(); close(); }} />
           {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
           <MenuItem icon={<MessageSquare className="w-3.5 h-3.5" />} label="Seguimiento / CRM" onClick={() => { onCRM(); close(); }} />
