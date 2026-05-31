@@ -441,7 +441,7 @@ export function Section({
             {icon}
           </div>
           <div>
-            <h2 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
+            <h2 className="leading-tight" style={{ fontSize: 18, fontWeight: 700, color: "#07152f" }}>
               {title}
             </h2>
             {subtitle && (
