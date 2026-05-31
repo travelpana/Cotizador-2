@@ -17,6 +17,7 @@ import {
   FileText,
   Check,
   AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
 import type { Hotel, Tour, Traslado } from "@/lib/types";
 import type { CatalogInfo } from "@/lib/api";
@@ -40,6 +41,25 @@ import {
   trasladoFromApi,
 } from "@/lib/tarifas";
 import { fmt } from "@/lib/calc";
+
+/* ─── Language detection helpers ─── */
+
+type DetectedLang = "es" | "en" | "pt";
+
+function detectFileLang(filename: string): DetectedLang | null {
+  const n = filename.toLowerCase().replace(/[-\s]/g, "_");
+  const base = n.replace(/\.(xlsx|xls)$/, "");
+  if (/_en$|_en_|english/.test(base)) return "en";
+  if (/_pt$|_pt_|portugu|brasil/.test(base)) return "pt";
+  if (/_es$|_es_|espa[nñ]/.test(base)) return "es";
+  return null;
+}
+
+const LANG_LABELS: Record<DetectedLang, string> = {
+  es: "Español 🇪🇸",
+  en: "English 🇺🇸",
+  pt: "Português 🇧🇷",
+};
 
 /* ─── Constants ─── */
 
@@ -660,6 +680,12 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
   const [reloadStatusBrasil, setReloadStatusBrasil] = useState<ReloadStatus>("idle");
   const [reloadStatusEn, setReloadStatusEn] = useState<ReloadStatus>("idle");
   const [reloadStatusPt, setReloadStatusPt] = useState<ReloadStatus>("idle");
+  const [pendingUpload, setPendingUpload] = useState<{
+    file: File;
+    slot: DetectedLang;
+    detectedLang: DetectedLang;
+    handler: (f: File) => Promise<void>;
+  } | null>(null);
 
   const lsCounts = useMemo(() => ({
     hoteles: loadHotelesLS().length,
@@ -667,15 +693,24 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
     traslados: loadTrasladosLS().length,
   }), []);
 
-  const handleUploadClick = () => {
+  const openFilePicker = (slot: DetectedLang, handler: (f: File) => Promise<void>) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".xlsx,.xls";
-    input.onchange = async () => {
-      if (input.files?.[0]) await onUpload(input.files[0]);
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const detected = detectFileLang(file.name);
+      if (detected !== null && detected !== slot) {
+        setPendingUpload({ file, slot, detectedLang: detected, handler });
+      } else {
+        void handler(file);
+      }
     };
     input.click();
   };
+
+  const handleUploadClick = () => openFilePicker("es", onUpload);
 
   const handleReload = async () => {
     if (!onReload || reloadStatus === "loading") return;
@@ -718,15 +753,6 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
     input.click();
   };
 
-  const makeUploadClick = (handler?: (f: File) => Promise<void>) => () => {
-    if (!handler) return;
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".xlsx,.xls";
-    input.onchange = async () => { if (input.files?.[0]) await handler(input.files[0]); };
-    input.click();
-  };
-
   const makeReloadHandler = (reloader: (() => Promise<void>) | undefined, setStatus: (s: ReloadStatus) => void) => async () => {
     if (!reloader) return;
     setStatus("loading");
@@ -742,8 +768,8 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
 
   const handleReloadEn = makeReloadHandler(onReloadEn, setReloadStatusEn);
   const handleReloadPt = makeReloadHandler(onReloadPt, setReloadStatusPt);
-  const handleUploadEnClick = makeUploadClick(onUploadEn);
-  const handleUploadPtClick = makeUploadClick(onUploadPt);
+  const handleUploadEnClick = () => onUploadEn && openFilePicker("en", onUploadEn);
+  const handleUploadPtClick = () => onUploadPt && openFilePicker("pt", onUploadPt);
 
   const reloadLabelBrasil = { idle: "Recargar tarifario", loading: "Actualizando...", success: "Actualizado", error: "Error al recargar" }[reloadStatusBrasil];
   const reloadIconBrasil = reloadStatusBrasil === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatusBrasil === "success" ? <Check className="w-4 h-4" /> : reloadStatusBrasil === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
@@ -757,6 +783,7 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
   }
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
@@ -940,5 +967,49 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
       {tab === "tours" && <ToursTab apiTours={apiTours} apiToursBrasil={apiToursBrasil} importMercado={importMercado} onChanged={onChanged} />}
       {tab === "traslados" && <TrasladosTab apiTraslados={apiTraslados} apiTrasladosBrasil={apiTrasladosBrasil} importMercado={importMercado} onChanged={onChanged} />}
     </div>
+
+    {pendingUpload && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="flex items-start gap-4 p-6 border-b border-amber-100 bg-amber-50">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 text-base">Posible idioma incorrecto</h3>
+              <p className="text-sm text-slate-600 mt-1">
+                El archivo <span className="font-medium text-slate-900">"{pendingUpload.file.name}"</span> parece ser un tarifario en{" "}
+                <span className="font-semibold text-amber-700">{LANG_LABELS[pendingUpload.detectedLang]}</span>, pero se está cargando en el slot de{" "}
+                <span className="font-semibold text-slate-800">{LANG_LABELS[pendingUpload.slot]}</span>.
+              </p>
+            </div>
+          </div>
+          <div className="p-6">
+            <p className="text-sm text-slate-500 mb-5">
+              Si el archivo es correcto, haz clic en <strong>Cargar de todas formas</strong>. De lo contrario, cancela y selecciona el archivo adecuado.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setPendingUpload(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  const { file, handler } = pendingUpload;
+                  setPendingUpload(null);
+                  await handler(file);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 transition-colors"
+              >
+                Cargar de todas formas
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
