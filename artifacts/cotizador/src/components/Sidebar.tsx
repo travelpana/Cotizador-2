@@ -148,18 +148,6 @@ function NavItem({
           {icon}
           {label}
         </span>
-        {badge !== undefined && badge > 0 && (
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-            style={
-              active
-                ? { backgroundColor: "rgba(238,199,116,0.2)", color: "#EEC774" }
-                : { backgroundColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }
-            }
-          >
-            {badge}
-          </span>
-        )}
       </button>
     </div>
   );

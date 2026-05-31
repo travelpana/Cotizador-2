@@ -49,7 +49,7 @@ const CATEGORIAS: { value: Categoria; label: string }[] = [
 ];
 
 const MERCADOS: { value: Mercado; label: string }[] = [
-  { value: "general", label: "General" },
+  { value: "general", label: "Tarifario general" },
   { value: "brasil", label: "Brasil" },
 ];
 
@@ -301,7 +301,7 @@ export default function ServiceSearchBar({
               style={
                 mercado !== "general"
                   ? { backgroundColor: "#004fbb", border: "1px solid #004fbb", color: "#fff", boxShadow: "0 2px 8px rgba(0,79,187,0.35)" }
-                  : { backgroundColor: "#fff", border: "1px solid #004fbb", color: "#07152f", boxShadow: "0 1px 4px rgba(0,79,187,0.12)" }
+                  : { backgroundColor: "#fff", border: "1px solid #004fbb", color: "#004fbb", boxShadow: "0 1px 4px rgba(0,79,187,0.12)" }
               }
             >
               <span>{MERCADOS.find((m) => m.value === mercado)?.label ?? "General"}</span>

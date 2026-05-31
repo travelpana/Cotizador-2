@@ -355,11 +355,24 @@ function NumberInput({
   return (
     <label
       title={label}
-      className="flex items-center gap-2 rounded-full px-3 py-1.5 cursor-text flex-shrink-0"
-      style={{ backgroundColor: "rgba(0,20,70,0.55)", border: "1px solid rgba(147,197,253,0.3)" }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        height: 42,
+        padding: "0 14px",
+        minWidth: 0,
+        whiteSpace: "nowrap",
+        backgroundColor: "rgba(0,20,70,0.55)",
+        border: "1px solid rgba(147,197,253,0.3)",
+        borderRadius: 9999,
+        cursor: "text",
+        flexShrink: 0,
+      }}
     >
-      {icon && <span className="flex-shrink-0">{icon}</span>}
-      <span className="text-[9px] font-bold tracking-wider uppercase text-white/70 leading-none select-none whitespace-nowrap">{label}</span>
+      {icon && <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>{icon}</span>}
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", lineHeight: 1, color: "rgba(255,255,255,0.7)", userSelect: "none", whiteSpace: "nowrap" }}>{label}</span>
       <input
         type="text"
         inputMode="numeric"
@@ -385,7 +398,8 @@ function NumberInput({
           }
         }}
         aria-label={label}
-        className="w-7 bg-transparent border-0 p-0 text-sm font-semibold text-white text-center focus:outline-none tabular-nums"
+        style={{ width: 20, minWidth: 16, textAlign: "center", fontSize: 18, fontWeight: 800, lineHeight: 1, color: "#fff", background: "transparent", border: 0, padding: 0, outline: "none", fontVariantNumeric: "tabular-nums" }}
+        className="focus:outline-none"
       />
     </label>
   );
