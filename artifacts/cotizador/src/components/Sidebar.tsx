@@ -133,10 +133,14 @@ function NavItem({
       )}
       <button
         onClick={onClick}
-        className={`w-full flex items-center justify-between gap-2 pl-4 pr-3 rounded-md text-sm transition-colors outline-none focus:outline-none focus-visible:outline-none ${sub ? "py-1.5" : "py-2"}`}
-        style={active
-          ? { color: "#EEC774", backgroundColor: "rgba(238,199,116,0.08)" }
-          : { color: "rgba(255,255,255,0.7)", backgroundColor: "transparent" }}
+        className={`w-full flex items-center justify-between gap-2 pl-4 pr-3 rounded-md transition-colors outline-none focus:outline-none focus-visible:outline-none ${sub ? "py-1.5" : "py-2"}`}
+        style={{
+          fontSize: sub ? 14 : 15,
+          fontWeight: 600,
+          ...(active
+            ? { color: "#EEC774", backgroundColor: "rgba(238,199,116,0.08)" }
+            : { color: "rgba(255,255,255,0.7)", backgroundColor: "transparent" }),
+        }}
         onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)"; }}
         onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
       >

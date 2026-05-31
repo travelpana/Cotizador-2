@@ -265,7 +265,7 @@ export function AlojamientoBar({
         className="relative"
         style={{
           display: "grid",
-          gridTemplateColumns: "18px 1px 94px 72px 82px 1px 1fr 1fr 1fr 1fr",
+          gridTemplateColumns: "18px 1px 104px 116px 92px 1px 1fr 1fr 1fr 1fr",
           columnGap: 8,
           alignItems: "center",
           padding: "11px 16px",
@@ -286,7 +286,7 @@ export function AlojamientoBar({
           min={0}
         />
         <NumberInput
-          label="PAX"
+          label="PASAJEROS"
           icon={<Users className="w-3 h-3" style={{ color: "#eec774" }} />}
           value={cliente.pasajeros}
           onChange={(v) => updateNum({ pasajeros: v })}
@@ -313,7 +313,7 @@ export function AlojamientoBar({
               onClick={() => togglePill(p)}
               style={{
                 width: "100%",
-                padding: "6px 4px",
+                padding: "6px 2px",
                 borderRadius: 9999,
                 fontSize: 11,
                 fontWeight: 700,
@@ -355,7 +355,7 @@ function NumberInput({
   return (
     <label
       title={label}
-      className="flex items-center gap-1 rounded-full px-2 py-1.5 cursor-text flex-shrink-0"
+      className="flex items-center gap-2 rounded-full px-3 py-1.5 cursor-text flex-shrink-0"
       style={{ backgroundColor: "rgba(0,20,70,0.55)", border: "1px solid rgba(147,197,253,0.3)" }}
     >
       {icon && <span className="flex-shrink-0">{icon}</span>}
@@ -385,7 +385,7 @@ function NumberInput({
           }
         }}
         aria-label={label}
-        className="w-5 bg-transparent border-0 p-0 text-sm font-semibold text-white text-center focus:outline-none tabular-nums"
+        className="w-7 bg-transparent border-0 p-0 text-sm font-semibold text-white text-center focus:outline-none tabular-nums"
       />
     </label>
   );
