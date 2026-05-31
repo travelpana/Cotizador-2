@@ -9,6 +9,7 @@ import {
   loadTrasladosLS,
   saveTrasladosLS,
 } from "@/lib/tarifas";
+import { loadAgencias, saveAgencias } from "@/lib/agencias";
 
 export type BackupType = "full" | "plantillas";
 
@@ -24,6 +25,7 @@ export interface RgeBackup {
     tours: ReturnType<typeof loadToursLS>;
     traslados: ReturnType<typeof loadTrasladosLS>;
   };
+  agencias?: ReturnType<typeof loadAgencias>;
 }
 
 function todayString(): string {
@@ -61,6 +63,7 @@ export function exportarRespaldoCompleto(): void {
       tours: loadToursLS(),
       traslados: loadTrasladosLS(),
     },
+    agencias: loadAgencias(),
   };
   downloadJson(backup, `RGE_Backup_${todayString()}.json`);
 }
@@ -112,6 +115,9 @@ export async function importarRespaldo(file: File): Promise<ImportResult> {
         saveHotelesLS(data.tarifas.hoteles ?? []);
         saveToursLS(data.tarifas.tours ?? []);
         saveTrasladosLS(data.tarifas.traslados ?? []);
+      }
+      if (data.agencias !== undefined) {
+        saveAgencias(data.agencias);
       }
     }
 

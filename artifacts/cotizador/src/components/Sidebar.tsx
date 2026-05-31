@@ -14,7 +14,7 @@ import { useState } from "react";
 
 export type View = "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
 
-const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "respaldos"];
+const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "agencias", "respaldos"];
 
 interface Props {
   view: View;
@@ -47,12 +47,6 @@ export default function Sidebar({ view, onView }: Props) {
           onClick={() => onView("seguimiento")}
           icon={<ListChecks className="w-4 h-4" />}
           label="Seguimiento"
-        />
-        <NavItem
-          active={view === "agencias"}
-          onClick={() => onView("agencias")}
-          icon={<Building2 className="w-4 h-4" />}
-          label="Agencias"
         />
 
         <div className="pt-5">
@@ -97,6 +91,13 @@ export default function Sidebar({ view, onView }: Props) {
                 onClick={() => onView("tarifas")}
                 icon={<Tag className="w-4 h-4" />}
                 label="Tarifas"
+                sub
+              />
+              <NavItem
+                active={view === "agencias"}
+                onClick={() => onView("agencias")}
+                icon={<Building2 className="w-4 h-4" />}
+                label="Agencias"
                 sub
               />
               <NavItem

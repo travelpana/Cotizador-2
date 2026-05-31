@@ -75,7 +75,7 @@ export default function Respaldos({ onImported }: { onImported?: () => void }) {
         <SectionHeading
           icon={<HardDrive className="w-4 h-4" />}
           title="Respaldo completo"
-          description="Incluye plantillas, descriptivos, observaciones rápidas y tarifas modificadas."
+          description="Incluye plantillas, descriptivos, observaciones rápidas, tarifas modificadas, agencias y logos."
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

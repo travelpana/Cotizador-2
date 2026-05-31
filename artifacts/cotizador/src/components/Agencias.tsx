@@ -11,6 +11,8 @@ import {
   Mail,
   User,
   ImageOff,
+  Search,
+  Star,
 } from "lucide-react";
 import {
   loadAgencias,
@@ -77,6 +79,7 @@ function AgenciaModal({
   const [contacto, setContacto] = useState(initial?.contacto ?? "");
   const [telefono, setTelefono] = useState(initial?.telefono ?? "");
   const [correo, setCorreo] = useState(initial?.correo ?? "");
+  const [predeterminada, setPredeterminada] = useState(initial?.predeterminada ?? false);
   const [logoError, setLogoError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -101,6 +104,7 @@ function AgenciaModal({
       contacto: contacto.trim() || undefined,
       telefono: telefono.trim() || undefined,
       correo: correo.trim() || undefined,
+      predeterminada,
     });
   };
 
@@ -246,6 +250,25 @@ function AgenciaModal({
               </div>
             </div>
           </div>
+
+          {/* Predeterminada */}
+          <label className="flex items-center gap-3 cursor-pointer select-none group">
+            <div
+              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                predeterminada
+                  ? "border-[#E6AE33] bg-[#E6AE33]"
+                  : "border-slate-300 bg-white group-hover:border-[#E6AE33]"
+              }`}
+              onClick={() => setPredeterminada((v) => !v)}
+            >
+              {predeterminada && (
+                <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+            <span className="text-sm text-slate-700 font-medium">Agencia predeterminada</span>
+          </label>
         </div>
 
         {/* Footer */}
@@ -278,6 +301,7 @@ export default function Agencias() {
   const [agencias, setAgencias] = useState<Agencia[]>([]);
   const [modal, setModal] = useState<{ open: boolean; editing?: Agencia }>({ open: false });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setAgencias(loadAgencias());
@@ -289,12 +313,15 @@ export default function Agencias() {
   };
 
   const handleSave = (a: Agencia) => {
-    const existing = agencias.findIndex((x) => x.id === a.id);
-    if (existing >= 0) {
-      persistAndSet(agencias.map((x) => (x.id === a.id ? a : x)));
-    } else {
-      persistAndSet([...agencias, a]);
+    let updated = agencias.map((x) => (x.id === a.id ? a : x));
+    if (agencias.findIndex((x) => x.id === a.id) < 0) {
+      updated = [...agencias, a];
     }
+    // Enforce single predeterminada: unmark others if new one is marked
+    if (a.predeterminada) {
+      updated = updated.map((x) => (x.id === a.id ? x : { ...x, predeterminada: false }));
+    }
+    persistAndSet(updated);
     setModal({ open: false });
   };
 
@@ -302,6 +329,16 @@ export default function Agencias() {
     persistAndSet(agencias.filter((a) => a.id !== id));
     setDeleteConfirm(null);
   };
+
+  const filteredAgencias = agencias.filter((a) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return (
+      a.nombre.toLowerCase().includes(q) ||
+      (a.contacto?.toLowerCase().includes(q) ?? false) ||
+      (a.correo?.toLowerCase().includes(q) ?? false)
+    );
+  });
 
   return (
     <div className="space-y-4">
@@ -331,6 +368,20 @@ export default function Agencias() {
         </button>
       </div>
 
+      {/* Search */}
+      {agencias.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar agencia..."
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 shadow-sm"
+          />
+        </div>
+      )}
+
       {/* List */}
       {agencias.length === 0 ? (
         <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
@@ -349,16 +400,32 @@ export default function Agencias() {
             Agregar primera agencia
           </button>
         </div>
+      ) : filteredAgencias.length === 0 ? (
+        <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-10 text-center">
+          <Search className="w-8 h-8 mx-auto text-slate-200 mb-2" />
+          <div className="text-sm font-medium text-slate-500">Sin resultados para "{search}"</div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {agencias.map((a) => (
+          {filteredAgencias.map((a) => (
             <div
               key={a.id}
               className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm p-4 flex items-start gap-3"
             >
               <LogoAvatar agencia={a} size={48} />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-slate-900 truncate">{a.nombre}</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="text-sm font-bold text-slate-900 truncate">{a.nombre}</div>
+                  {a.predeterminada && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
+                      style={{ backgroundColor: "#FEF3C7", color: "#E6AE33", border: "1px solid #E6AE33" }}
+                    >
+                      <Star className="w-2.5 h-2.5" />
+                      Predeterminada
+                    </span>
+                  )}
+                </div>
                 {a.contacto && (
                   <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 truncate">
                     <User className="w-3 h-3 shrink-0" />

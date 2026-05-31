@@ -5,6 +5,7 @@ export interface Agencia {
   contacto?: string;
   telefono?: string;
   correo?: string;
+  predeterminada?: boolean;
 }
 
 const STORAGE_KEY = "rge.agencias";
@@ -26,4 +27,8 @@ export function getAgenciaByNombre(nombre: string): Agencia | undefined {
   if (!nombre?.trim()) return undefined;
   const q = nombre.trim().toLowerCase();
   return loadAgencias().find((a) => a.nombre.toLowerCase() === q);
+}
+
+export function getAgenciaPredeterminada(): Agencia | undefined {
+  return loadAgencias().find((a) => a.predeterminada === true);
 }
