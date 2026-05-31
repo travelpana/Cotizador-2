@@ -33,11 +33,11 @@ export default function Sidebar({ view, onView }: Props) {
       <aside
         className="flex-1 flex flex-col overflow-hidden"
         style={{
-          background: "rgba(255, 255, 255, 0.88)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.88), rgba(236,244,255,0.82))",
           backdropFilter: "blur(18px)",
           WebkitBackdropFilter: "blur(18px)",
-          border: "1px solid rgba(255, 255, 255, 0.6)",
-          boxShadow: "0 12px 40px rgba(4, 25, 65, 0.08)",
+          border: "1px solid rgba(255,255,255,0.65)",
+          boxShadow: "0 18px 45px rgba(4,25,65,0.12), inset 0 1px 0 rgba(255,255,255,0.65)",
           borderRadius: 24,
         }}
       >
@@ -48,7 +48,7 @@ export default function Sidebar({ view, onView }: Props) {
             justifyContent: "center",
             alignItems: "center",
             padding: "22px 20px 18px",
-            borderBottom: "1px solid rgba(4, 25, 65, 0.07)",
+            borderBottom: "1px solid rgba(4,25,65,0.07)",
           }}
         >
           <img
@@ -76,7 +76,7 @@ export default function Sidebar({ view, onView }: Props) {
           </div>
 
           <div className="pt-4">
-            <div className="mb-2" style={{ borderTop: "1px solid rgba(4, 25, 65, 0.07)" }} />
+            <div className="mb-2" style={{ borderTop: "1px solid rgba(4,25,65,0.07)" }} />
             <button
               onClick={() => {
                 setConfigOpen((o) => !o);
@@ -84,11 +84,16 @@ export default function Sidebar({ view, onView }: Props) {
                   onView("plantillas");
                 }
               }}
-              className="w-full flex items-center justify-between gap-2 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all duration-200 outline-none focus:outline-none"
+              className="w-full flex items-center justify-between gap-2 rounded-xl outline-none focus:outline-none"
               style={{
                 color: "#64748b",
                 padding: "6px 12px",
                 background: "transparent",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                transition: "color 0.2s ease",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.color = "#004fbb";
@@ -109,7 +114,7 @@ export default function Sidebar({ view, onView }: Props) {
             {configOpen && (
               <div
                 className="mt-1 space-y-0.5"
-                style={{ paddingLeft: 8, marginLeft: 12, borderLeft: "1px solid rgba(4, 25, 65, 0.08)" }}
+                style={{ paddingLeft: 8, marginLeft: 12, borderLeft: "1px solid rgba(4,25,65,0.08)" }}
               >
                 <NavItem
                   active={view === "plantillas"}
@@ -169,50 +174,55 @@ function NavItem({
   sub?: boolean;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 rounded-2xl outline-none focus:outline-none focus-visible:outline-none"
-      style={{
-        fontSize: sub ? 13 : 14,
-        fontWeight: 600,
-        padding: sub ? "7px 12px" : "9px 12px",
-        transition: "all 0.2s ease",
-        borderLeft: active ? "4px solid #004fbb" : "4px solid transparent",
-        ...(active
-          ? {
-              background: "#edf4ff",
-              color: "#004fbb",
-            }
-          : {
-              background: "transparent",
-              color: "#07152f",
-            }),
-      }}
-      onMouseEnter={(e) => {
-        if (!active) {
-          const el = e.currentTarget as HTMLButtonElement;
-          el.style.background = "rgba(0, 79, 187, 0.06)";
-          el.style.color = "#004fbb";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!active) {
-          const el = e.currentTarget as HTMLButtonElement;
-          el.style.background = "transparent";
-          el.style.color = "#07152f";
-        }
-      }}
-    >
-      <span
+    <div className="relative">
+      {/* Vertical "palito" indicator */}
+      {active && (
+        <span
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 4,
+            height: 26,
+            borderRadius: 999,
+            background: "#E6AE33",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <button
+        onClick={onClick}
+        className="w-full flex items-center gap-3 outline-none focus:outline-none focus-visible:outline-none"
         style={{
-          color: active ? "#004fbb" : "inherit",
-          display: "flex",
-          alignItems: "center",
+          fontSize: sub ? 13 : 14,
+          fontWeight: 600,
+          padding: sub ? "7px 12px 7px 16px" : "9px 12px 9px 16px",
+          borderRadius: 14,
+          transition: "background 0.2s ease, color 0.2s ease",
+          background: active ? "rgba(0,79,187,0.08)" : "transparent",
+          color: active ? "#004FBB" : "#07152f",
+        }}
+        onMouseEnter={(e) => {
+          if (!active) {
+            const el = e.currentTarget as HTMLButtonElement;
+            el.style.background = "rgba(0,79,187,0.05)";
+            el.style.color = "#004FBB";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!active) {
+            const el = e.currentTarget as HTMLButtonElement;
+            el.style.background = "transparent";
+            el.style.color = "#07152f";
+          }
         }}
       >
-        {icon}
-      </span>
-      {label}
-    </button>
+        <span style={{ color: active ? "#004FBB" : "inherit", display: "flex", alignItems: "center" }}>
+          {icon}
+        </span>
+        {label}
+      </button>
+    </div>
   );
 }
