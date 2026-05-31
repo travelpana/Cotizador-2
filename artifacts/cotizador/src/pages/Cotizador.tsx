@@ -1047,7 +1047,7 @@ function ModuleRibbon({
       style={{ backgroundColor: "#00247e" }}
     >
       <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
-      <span style={{ color: "#ffffff", fontSize: 22, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase" }}>{title}</span>
+      <span style={{ color: "#ffffff", fontSize: 20, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase" }}>{title}</span>
       {rightSlot && <div className="ml-auto">{rightSlot}</div>}
     </div>
   );
