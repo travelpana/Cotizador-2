@@ -129,7 +129,7 @@ function NavItem({
         onClick={onClick}
         className={`w-full flex items-center gap-2 pl-4 pr-3 rounded-md transition-colors outline-none focus:outline-none focus-visible:outline-none ${sub ? "py-1.5" : "py-2"}`}
         style={{
-          fontSize: sub ? 14 : 20,
+          fontSize: sub ? 14 : 15,
           fontWeight: 600,
           ...(active
             ? { color: "#EEC774", backgroundColor: "rgba(238,199,116,0.08)" }
