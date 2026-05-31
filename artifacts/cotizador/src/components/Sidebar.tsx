@@ -48,19 +48,26 @@ export default function Sidebar({ view, onView }: Props) {
             justifyContent: "center",
             alignItems: "center",
             padding: "22px 20px 18px",
-            borderBottom: "1px solid rgba(4,25,65,0.07)",
+            borderBottom: "1px solid rgba(4,25,65,0.08)",
           }}
         >
           <img
             src={logoRge}
             alt="RGE Style Travel"
-            style={{ display: "block", maxWidth: 150, maxHeight: 82, width: "auto", objectFit: "contain" }}
+            style={{
+              display: "block",
+              maxWidth: 150,
+              height: "auto",
+              width: "auto",
+              objectFit: "contain",
+              imageRendering: "auto",
+            }}
           />
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto" style={{ padding: "12px 10px" }}>
-          <div className="space-y-0.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <NavItem
               active={view === "cotizador"}
               onClick={() => onView("cotizador")}
@@ -76,7 +83,7 @@ export default function Sidebar({ view, onView }: Props) {
           </div>
 
           <div className="pt-4">
-            <div className="mb-2" style={{ borderTop: "1px solid rgba(4,25,65,0.07)" }} />
+            <div className="mb-2" style={{ borderTop: "1px solid rgba(4,25,65,0.08)" }} />
             <button
               onClick={() => {
                 setConfigOpen((o) => !o);
@@ -93,7 +100,7 @@ export default function Sidebar({ view, onView }: Props) {
                 fontWeight: 700,
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                transition: "color 0.2s ease",
+                transition: "color 0.18s ease",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.color = "#004fbb";
@@ -113,8 +120,15 @@ export default function Sidebar({ view, onView }: Props) {
 
             {configOpen && (
               <div
-                className="mt-1 space-y-0.5"
-                style={{ paddingLeft: 8, marginLeft: 12, borderLeft: "1px solid rgba(4,25,65,0.08)" }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  marginTop: 4,
+                  paddingLeft: 8,
+                  marginLeft: 12,
+                  borderLeft: "1px solid rgba(4,25,65,0.08)",
+                }}
               >
                 <NavItem
                   active={view === "plantillas"}
@@ -175,12 +189,12 @@ function NavItem({
 }) {
   return (
     <div className="relative">
-      {/* Vertical "palito" indicator */}
+      {/* Vertical palito indicator */}
       {active && (
         <span
           style={{
             position: "absolute",
-            left: 0,
+            left: 14,
             top: "50%",
             transform: "translateY(-50%)",
             width: 4,
@@ -188,6 +202,7 @@ function NavItem({
             borderRadius: 999,
             background: "#E6AE33",
             pointerEvents: "none",
+            zIndex: 1,
           }}
         />
       )}
@@ -197,28 +212,38 @@ function NavItem({
         style={{
           fontSize: sub ? 13 : 14,
           fontWeight: 600,
-          padding: sub ? "7px 12px 7px 16px" : "9px 12px 9px 16px",
+          padding: sub ? "7px 12px 7px 18px" : "8px 12px 8px 18px",
           borderRadius: 14,
-          transition: "background 0.2s ease, color 0.2s ease",
+          transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease",
           background: active ? "rgba(0,79,187,0.08)" : "transparent",
           color: active ? "#004FBB" : "#07152f",
+          transform: "translateX(0)",
         }}
         onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLButtonElement;
           if (!active) {
-            const el = e.currentTarget as HTMLButtonElement;
             el.style.background = "rgba(0,79,187,0.05)";
             el.style.color = "#004FBB";
           }
+          el.style.transform = "translateX(2px)";
         }}
         onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLButtonElement;
           if (!active) {
-            const el = e.currentTarget as HTMLButtonElement;
             el.style.background = "transparent";
             el.style.color = "#07152f";
           }
+          el.style.transform = "translateX(0)";
         }}
       >
-        <span style={{ color: active ? "#004FBB" : "inherit", display: "flex", alignItems: "center" }}>
+        <span
+          style={{
+            color: active ? "#004FBB" : "#07152f",
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
           {icon}
         </span>
         {label}
