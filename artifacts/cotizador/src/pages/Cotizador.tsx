@@ -1136,8 +1136,14 @@ function ModuleRibbon({
 }) {
   return (
     <div
-      className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm"
-      style={{ backgroundColor: "#00247e" }}
+      className="flex items-center gap-3 px-5 py-3 rounded-2xl"
+      style={{
+        backgroundColor: "rgba(0,36,126,0.92)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 2px 12px rgba(0,36,126,0.18)",
+      }}
     >
       <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
       <span style={{ color: "#ffffff", fontSize: 20, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>{title}</span>

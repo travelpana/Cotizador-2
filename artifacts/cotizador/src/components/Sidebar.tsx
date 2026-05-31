@@ -33,9 +33,12 @@ export default function Sidebar({ view, onView }: Props) {
       <aside
         className="flex-1 flex flex-col text-white overflow-hidden"
         style={{
-          backgroundColor: "#041941",
+          backgroundColor: "rgba(4,25,65,0.93)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
           borderRadius: 20,
-          boxShadow: "0 8px 32px rgba(4,25,65,0.32), inset 0 1px 0 rgba(255,255,255,0.07)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 4px 24px rgba(4,25,65,0.22), inset 0 1px 0 rgba(255,255,255,0.07)",
         }}
       >
         {/* Logo */}
