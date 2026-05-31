@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Copy,
   Download,
@@ -14,10 +14,10 @@ import {
   Bus,
   RefreshCw,
   Upload,
-  FileText,
   Check,
   AlertCircle,
   AlertTriangle,
+  FileSpreadsheet,
 } from "lucide-react";
 import type { Hotel, Tour, Traslado } from "@/lib/types";
 import type { CatalogInfo } from "@/lib/api";
@@ -137,7 +137,14 @@ function RowActions({ onEdit, onDuplicate, onToggle, activo }: { onEdit: () => v
    HOTELES TAB
 ══════════════════════════════════════════════════════ */
 
-function HotelesTab({ apiHoteles, apiHotelesBrasil, importMercado, onChanged }: { apiHoteles: Hotel[]; apiHotelesBrasil?: Hotel[]; importMercado?: "general" | "brasil"; onChanged: () => void }) {
+function HotelesTab({
+  apiHoteles, apiHotelesBrasil, importMercado, onChanged,
+  importRef, newRef,
+}: {
+  apiHoteles: Hotel[]; apiHotelesBrasil?: Hotel[]; importMercado?: "general" | "brasil"; onChanged: () => void;
+  importRef?: React.MutableRefObject<() => void>;
+  newRef?: React.MutableRefObject<() => void>;
+}) {
   const activeApiHoteles = importMercado === "brasil" ? (apiHotelesBrasil ?? []) : apiHoteles;
   const [items, setItems] = useState<HotelLocal[]>(loadHotelesLS);
   const [editing, setEditing] = useState<HotelLocal | null>(null);
@@ -159,21 +166,11 @@ function HotelesTab({ apiHoteles, apiHotelesBrasil, importMercado, onChanged }: 
     persist([...toImport.map(hotelFromApi), ...items]);
   };
 
+  if (importRef) importRef.current = handleImport;
+  if (newRef) newRef.current = () => setEditing(newHotelLocal());
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          {activeApiHoteles.length > 0 && (
-            <button onClick={handleImport} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors">
-              <Download className="w-4 h-4" /> {importMercado === "brasil" ? "Importar del tarifario Brasil" : "Importar del tarifario general"} ({activeApiHoteles.length})
-            </button>
-          )}
-        </div>
-        <button onClick={() => setEditing(newHotelLocal())} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors shadow-sm" style={{ backgroundColor: "#004fbb" }} onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")} onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}>
-          <Plus className="w-4 h-4" /> Nuevo hotel
-        </button>
-      </div>
-
       {items.length === 0 ? (
         <EmptyState icon={<HotelIcon className="w-8 h-8 text-emerald-400" />} msg="Sin hoteles locales" onNew={() => setEditing(newHotelLocal())} newLabel="Crear hotel" />
       ) : (
@@ -294,7 +291,14 @@ function HotelForm({ hotel: h, onChange }: { hotel: HotelLocal; onChange: (h: Ho
    TOURS TAB
 ══════════════════════════════════════════════════════ */
 
-function ToursTab({ apiTours, apiToursBrasil, importMercado, onChanged }: { apiTours: Tour[]; apiToursBrasil?: Tour[]; importMercado?: "general" | "brasil"; onChanged: () => void }) {
+function ToursTab({
+  apiTours, apiToursBrasil, importMercado, onChanged,
+  importRef, newRef,
+}: {
+  apiTours: Tour[]; apiToursBrasil?: Tour[]; importMercado?: "general" | "brasil"; onChanged: () => void;
+  importRef?: React.MutableRefObject<() => void>;
+  newRef?: React.MutableRefObject<() => void>;
+}) {
   const activeApiTours = importMercado === "brasil" ? (apiToursBrasil ?? []) : apiTours;
   const [items, setItems] = useState<TourLocal[]>(loadToursLS);
   const [editing, setEditing] = useState<TourLocal | null>(null);
@@ -316,21 +320,11 @@ function ToursTab({ apiTours, apiToursBrasil, importMercado, onChanged }: { apiT
     persist([...toImport.map(tourFromApi), ...items]);
   };
 
+  if (importRef) importRef.current = handleImport;
+  if (newRef) newRef.current = () => setEditing(newTourLocal());
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          {activeApiTours.length > 0 && (
-            <button onClick={handleImport} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors">
-              <Download className="w-4 h-4" /> {importMercado === "brasil" ? "Importar del tarifario Brasil" : "Importar del tarifario general"} ({activeApiTours.length})
-            </button>
-          )}
-        </div>
-        <button onClick={() => setEditing(newTourLocal())} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
-          <Plus className="w-4 h-4" /> Nuevo tour
-        </button>
-      </div>
-
       {items.length === 0 ? (
         <EmptyState icon={<MapPin className="w-8 h-8 text-purple-400" />} msg="Sin tours locales" onNew={() => setEditing(newTourLocal())} newLabel="Crear tour" />
       ) : (
@@ -452,7 +446,14 @@ function TourForm({ tour: t, onChange }: { tour: TourLocal; onChange: (t: TourLo
    TRASLADOS TAB
 ══════════════════════════════════════════════════════ */
 
-function TrasladosTab({ apiTraslados, apiTrasladosBrasil, importMercado, onChanged }: { apiTraslados: Traslado[]; apiTrasladosBrasil?: Traslado[]; importMercado?: "general" | "brasil"; onChanged: () => void }) {
+function TrasladosTab({
+  apiTraslados, apiTrasladosBrasil, importMercado, onChanged,
+  importRef, newRef,
+}: {
+  apiTraslados: Traslado[]; apiTrasladosBrasil?: Traslado[]; importMercado?: "general" | "brasil"; onChanged: () => void;
+  importRef?: React.MutableRefObject<() => void>;
+  newRef?: React.MutableRefObject<() => void>;
+}) {
   const activeApiTraslados = importMercado === "brasil" ? (apiTrasladosBrasil ?? []) : apiTraslados;
   const [items, setItems] = useState<TrasladoLocal[]>(loadTrasladosLS);
   const [editing, setEditing] = useState<TrasladoLocal | null>(null);
@@ -474,21 +475,11 @@ function TrasladosTab({ apiTraslados, apiTrasladosBrasil, importMercado, onChang
     persist([...toImport.map(trasladoFromApi), ...items]);
   };
 
+  if (importRef) importRef.current = handleImport;
+  if (newRef) newRef.current = () => setEditing(newTrasladoLocal());
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          {activeApiTraslados.length > 0 && (
-            <button onClick={handleImport} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors">
-              <Download className="w-4 h-4" /> {importMercado === "brasil" ? "Importar del tarifario Brasil" : "Importar del tarifario general"} ({activeApiTraslados.length})
-            </button>
-          )}
-        </div>
-        <button onClick={() => setEditing(newTrasladoLocal())} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
-          <Plus className="w-4 h-4" /> Nuevo traslado
-        </button>
-      </div>
-
       {items.length === 0 ? (
         <EmptyState icon={<Bus className="w-8 h-8 text-orange-400" />} msg="Sin traslados locales" onNew={() => setEditing(newTrasladoLocal())} newLabel="Crear traslado" />
       ) : (
@@ -617,10 +608,114 @@ function EmptyState({ icon, msg, onNew, newLabel }: { icon: React.ReactNode; msg
     <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center space-y-3">
       <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto">{icon}</div>
       <p className="text-sm font-medium text-slate-600">{msg}</p>
-      <p className="text-xs text-slate-400">Los datos del tarifario Excel siguen disponibles en el cotizador.</p>
+      <p className="text-xs text-slate-400">Los datos del tarifario Excel siguen disponibles en el cotizador para generar propuestas.</p>
       <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors shadow-sm" style={{ backgroundColor: "#004fbb" }} onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")} onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}>
         <Plus className="w-4 h-4" />{newLabel}
       </button>
+    </div>
+  );
+}
+
+/* ─── Language Card ─── */
+
+type ReloadStatus = "idle" | "loading" | "success" | "error";
+
+function formatRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "hace un momento";
+  if (mins < 60) return `hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `hace ${hrs} h`;
+  const days = Math.floor(hrs / 24);
+  return `hace ${days} día${days !== 1 ? "s" : ""}`;
+}
+
+function statusIcon(s: ReloadStatus) {
+  return s === "loading" ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : s === "success" ? <Check className="w-3.5 h-3.5" /> : s === "error" ? <AlertCircle className="w-3.5 h-3.5" /> : <RefreshCw className="w-3.5 h-3.5" />;
+}
+function reloadBtnCls(s: ReloadStatus) {
+  return s === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : s === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
+}
+
+interface LangCardProps {
+  flag: string;
+  lang: string;
+  filename: string;
+  loaded: boolean;
+  counts?: { hoteles: number; tours: number; traslados: number } | null;
+  loadedAt?: string | null;
+  reloadStatus: ReloadStatus;
+  onReload?: () => void;
+  onUpload: () => void;
+}
+
+function LangCard({ flag, lang, filename, loaded, counts, loadedAt, reloadStatus, onReload, onUpload }: LangCardProps) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+      <div className="px-5 pt-5 pb-4 flex-1">
+        <div className="flex items-center gap-2.5 mb-4">
+          <span className="text-2xl leading-none">{flag}</span>
+          <div>
+            <p className="text-sm font-bold text-slate-900">{lang}</p>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold mt-0.5 ${loaded ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"}`}>
+              {loaded ? <><Check className="w-2.5 h-2.5" /> Cargado</> : "Sin archivo"}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-xs text-slate-500 truncate font-medium">{filename}</span>
+          </div>
+
+          {loaded && counts ? (
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <div className="text-center bg-slate-50 rounded-lg py-2">
+                <div className="text-sm font-bold text-slate-800">{counts.hoteles}</div>
+                <div className="text-[10px] text-slate-400 font-medium">Hoteles</div>
+              </div>
+              <div className="text-center bg-slate-50 rounded-lg py-2">
+                <div className="text-sm font-bold text-slate-800">{counts.tours}</div>
+                <div className="text-[10px] text-slate-400 font-medium">Tours</div>
+              </div>
+              <div className="text-center bg-slate-50 rounded-lg py-2">
+                <div className="text-sm font-bold text-slate-800">{counts.traslados}</div>
+                <div className="text-[10px] text-slate-400 font-medium">Traslados</div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-2 text-xs text-slate-400">Sin archivo cargado</div>
+          )}
+
+          {loaded && loadedAt && (
+            <p className="text-[11px] text-slate-400">Actualizado {formatRelativeTime(loadedAt)}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex gap-2">
+        {loaded && onReload ? (
+          <button
+            onClick={onReload}
+            disabled={reloadStatus === "loading"}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadBtnCls(reloadStatus)}`}
+          >
+            {statusIcon(reloadStatus)}
+            {reloadStatus === "loading" ? "Actualizando..." : reloadStatus === "success" ? "Actualizado" : reloadStatus === "error" ? "Error" : "Recargar"}
+          </button>
+        ) : null}
+        <button
+          onClick={onUpload}
+          disabled={reloadStatus === "loading"}
+          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold bg-white hover:bg-slate-50 transition-colors disabled:opacity-60"
+        >
+          <Upload className="w-3.5 h-3.5" />
+          {loaded ? "Reemplazar" : "Subir tarifario"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -659,21 +754,20 @@ const TABS: { key: TarifasTab; label: string; icon: React.ReactNode }[] = [
   { key: "traslados", label: "Traslados", icon: <Bus className="w-3.5 h-3.5" /> },
 ];
 
-type ReloadStatus = "idle" | "loading" | "success" | "error";
+const TAB_LABELS: Record<TarifasTab, { singular: string; plural: string }> = {
+  hoteles:   { singular: "hotel",    plural: "hoteles" },
+  tours:     { singular: "tour",     plural: "tours" },
+  traslados: { singular: "traslado", plural: "traslados" },
+};
 
-function formatRelativeTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "hace un momento";
-  if (mins < 60) return `hace ${mins} min`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `hace ${hrs} h`;
-  const days = Math.floor(hrs / 24);
-  return `hace ${days} día${days !== 1 ? "s" : ""}`;
-}
-
-export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHotelesBrasil = [], apiToursBrasil = [], apiTrasladosBrasil = [], onChanged, onUpload, fileInfo, onReload, fileInfoBrasil, onReloadBrasil, onUploadBrasil, fileInfoEn, onReloadEn, onUploadEn, fileInfoPt, onReloadPt, onUploadPt }: Props) {
+export default function Tarifas({
+  apiHoteles, apiTours, apiTraslados,
+  apiHotelesBrasil = [], apiToursBrasil = [], apiTrasladosBrasil = [],
+  onChanged, onUpload, fileInfo, onReload,
+  fileInfoBrasil, onReloadBrasil, onUploadBrasil,
+  fileInfoEn, onReloadEn, onUploadEn,
+  fileInfoPt, onReloadPt, onUploadPt,
+}: Props) {
   const [tab, setTab] = useState<TarifasTab>("hoteles");
   const [importMercado, setImportMercado] = useState<"general" | "brasil">("general");
   const [reloadStatus, setReloadStatus] = useState<ReloadStatus>("idle");
@@ -687,11 +781,32 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
     handler: (f: File) => Promise<void>;
   } | null>(null);
 
+  // Refs exposed by each tab so parent can trigger new/import
+  const hotelImportRef = useRef<() => void>(() => {});
+  const hotelNewRef = useRef<() => void>(() => {});
+  const tourImportRef = useRef<() => void>(() => {});
+  const tourNewRef = useRef<() => void>(() => {});
+  const trasladoImportRef = useRef<() => void>(() => {});
+  const trasladoNewRef = useRef<() => void>(() => {});
+
   const lsCounts = useMemo(() => ({
     hoteles: loadHotelesLS().length,
     tours: loadToursLS().length,
     traslados: loadTrasladosLS().length,
   }), []);
+
+  // Active API count for the import bar
+  const activeApiCount = useMemo(() => {
+    const mercadoCounts = {
+      hoteles:   importMercado === "brasil" ? apiHotelesBrasil.length : apiHoteles.length,
+      tours:     importMercado === "brasil" ? apiToursBrasil.length   : apiTours.length,
+      traslados: importMercado === "brasil" ? apiTrasladosBrasil.length : apiTraslados.length,
+    };
+    return mercadoCounts[tab];
+  }, [tab, importMercado, apiHoteles, apiTours, apiTraslados, apiHotelesBrasil, apiToursBrasil, apiTrasladosBrasil]);
+
+  const activeImportRef = tab === "hoteles" ? hotelImportRef : tab === "tours" ? tourImportRef : trasladoImportRef;
+  const activeNewRef    = tab === "hoteles" ? hotelNewRef    : tab === "tours" ? tourNewRef    : trasladoNewRef;
 
   const openFilePicker = (slot: DetectedLang, handler: (f: File) => Promise<void>) => {
     const input = document.createElement("input");
@@ -712,47 +827,6 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
 
   const handleUploadClick = () => openFilePicker("es", onUpload);
 
-  const handleReload = async () => {
-    if (!onReload || reloadStatus === "loading") return;
-    setReloadStatus("loading");
-    try {
-      await onReload();
-      setReloadStatus("success");
-      window.setTimeout(() => setReloadStatus("idle"), 2800);
-    } catch {
-      setReloadStatus("error");
-      window.setTimeout(() => setReloadStatus("idle"), 3500);
-    }
-  };
-
-  const reloadLabel = { idle: "Recargar tarifario", loading: "Actualizando...", success: "Actualizado", error: "Error al recargar" }[reloadStatus];
-  const reloadIcon = reloadStatus === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatus === "success" ? <Check className="w-4 h-4" /> : reloadStatus === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
-  const reloadCls = reloadStatus === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : reloadStatus === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
-
-  const handleReloadBrasil = async () => {
-    if (!onReloadBrasil || reloadStatusBrasil === "loading") return;
-    setReloadStatusBrasil("loading");
-    try {
-      await onReloadBrasil();
-      setReloadStatusBrasil("success");
-      window.setTimeout(() => setReloadStatusBrasil("idle"), 2800);
-    } catch {
-      setReloadStatusBrasil("error");
-      window.setTimeout(() => setReloadStatusBrasil("idle"), 3500);
-    }
-  };
-
-  const handleUploadBrasilClick = () => {
-    if (!onUploadBrasil) return;
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".xlsx,.xls";
-    input.onchange = async () => {
-      if (input.files?.[0]) await onUploadBrasil(input.files[0]);
-    };
-    input.click();
-  };
-
   const makeReloadHandler = (reloader: (() => Promise<void>) | undefined, setStatus: (s: ReloadStatus) => void) => async () => {
     if (!reloader) return;
     setStatus("loading");
@@ -766,208 +840,210 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, apiHoteles
     }
   };
 
+  const handleReload = makeReloadHandler(onReload, setReloadStatus);
+  const handleReloadBrasil = makeReloadHandler(onReloadBrasil, setReloadStatusBrasil);
   const handleReloadEn = makeReloadHandler(onReloadEn, setReloadStatusEn);
   const handleReloadPt = makeReloadHandler(onReloadPt, setReloadStatusPt);
+
   const handleUploadEnClick = () => onUploadEn && openFilePicker("en", onUploadEn);
   const handleUploadPtClick = () => onUploadPt && openFilePicker("pt", onUploadPt);
 
-  const reloadLabelBrasil = { idle: "Recargar tarifario", loading: "Actualizando...", success: "Actualizado", error: "Error al recargar" }[reloadStatusBrasil];
-  const reloadIconBrasil = reloadStatusBrasil === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatusBrasil === "success" ? <Check className="w-4 h-4" /> : reloadStatusBrasil === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
-  const reloadClsBrasil = reloadStatusBrasil === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : reloadStatusBrasil === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
-
-  function statusIcon(s: ReloadStatus) {
-    return s === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : s === "success" ? <Check className="w-4 h-4" /> : s === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
-  }
-  function statusCls(s: ReloadStatus) {
-    return s === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : s === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
-  }
+  const handleUploadBrasilClick = () => {
+    if (!onUploadBrasil) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+    input.onchange = async () => {
+      if (input.files?.[0]) await onUploadBrasil(input.files[0]);
+    };
+    input.click();
+  };
 
   return (
     <>
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+    <div className="space-y-8">
+
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Gestión de tarifas</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Tarifas locales con prioridad sobre el Excel · El tarifario Excel sigue como respaldo
+          <h2 className="text-lg font-bold text-slate-900">Tarifas</h2>
+          <p className="text-sm text-slate-400 mt-0.5">
+            Gestiona tus tarifarios y base de datos local de servicios.
           </p>
         </div>
-        <button onClick={exportarRespaldo} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors">
-          <Download className="w-4 h-4" /> Exportar respaldo
+        <button
+          onClick={exportarRespaldo}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium transition-colors hover:bg-slate-50 shadow-sm"
+          style={{ color: "#07152f" }}
+        >
+          <Download className="w-4 h-4 text-slate-400" />
+          Exportar respaldo
         </button>
       </div>
 
-      {/* Tarifarios por idioma */}
+      {/* ── TARIFARIOS POR IDIOMA ── */}
       <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Tarifarios por Idioma</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-          {/* ES */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <div className="flex items-start gap-2 mb-3">
-              <span className="text-sm shrink-0 mt-0.5">🇪🇸</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Tarifario Español</p>
-                <p className="text-sm font-medium text-slate-800 truncate">{fileInfo?.filename ?? "TARIFARIO.xlsx"}</p>
-                <p className="text-xs text-slate-400 mt-0.5">Cargado {formatRelativeTime(fileInfo?.loadedAt)}</p>
-                {fileInfo?.counts && (
-                  <p className="text-xs text-slate-400 mt-0.5">{fileInfo.counts.hoteles} hoteles · {fileInfo.counts.tours} tours · {fileInfo.counts.traslados} traslados</p>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-2 pt-3 border-t border-slate-100">
-              <button onClick={handleReload} disabled={reloadStatus === "loading" || !onReload} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${statusCls(reloadStatus)}`}>
-                {statusIcon(reloadStatus)}
-                {reloadStatus === "loading" ? "Actualizando..." : reloadStatus === "success" ? "Actualizado" : reloadStatus === "error" ? "Error" : "Recargar"}
-              </button>
-              <button onClick={handleUploadClick} disabled={reloadStatus === "loading"} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60">
-                <Upload className="w-3.5 h-3.5" /> Reemplazar
-              </button>
-            </div>
-          </div>
-
-          {/* EN */}
-          <div className={`border rounded-xl p-4 ${fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 ? "bg-white border-slate-200" : "bg-slate-50/60 border-slate-200"}`}>
-            <div className="flex items-start gap-2 mb-3">
-              <span className="text-sm shrink-0 mt-0.5">🇺🇸</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Tarifario English</p>
-                <p className="text-sm font-medium text-slate-800 truncate">{fileInfoEn?.filename ?? "TARIFARIO_EN.xlsx"}</p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0
-                    ? `Cargado ${formatRelativeTime(fileInfoEn.loadedAt)}`
-                    : "Sin archivo cargado"}
-                </p>
-                {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 && (
-                  <p className="text-xs text-slate-400 mt-0.5">{fileInfoEn.counts.hoteles} hoteles · {fileInfoEn.counts.tours} tours · {fileInfoEn.counts.traslados} traslados</p>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-2 pt-3 border-t border-slate-100">
-              {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 && (
-                <button onClick={handleReloadEn} disabled={reloadStatusEn === "loading" || !onReloadEn} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${statusCls(reloadStatusEn)}`}>
-                  {statusIcon(reloadStatusEn)}
-                  {reloadStatusEn === "loading" ? "Updating..." : reloadStatusEn === "success" ? "Updated" : reloadStatusEn === "error" ? "Error" : "Reload"}
-                </button>
-              )}
-              <button onClick={handleUploadEnClick} disabled={reloadStatusEn === "loading" || !onUploadEn} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60">
-                <Upload className="w-3.5 h-3.5" /> {fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0 ? "Replace" : "Upload"}
-              </button>
-            </div>
-          </div>
-
-          {/* PT */}
-          <div className={`border rounded-xl p-4 ${fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 ? "bg-white border-slate-200" : "bg-slate-50/60 border-slate-200"}`}>
-            <div className="flex items-start gap-2 mb-3">
-              <span className="text-sm shrink-0 mt-0.5">🇧🇷</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Tarifario Português</p>
-                <p className="text-sm font-medium text-slate-800 truncate">{fileInfoPt?.filename ?? "TARIFARIO_PT.xlsx"}</p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0
-                    ? `Cargado ${formatRelativeTime(fileInfoPt.loadedAt)}`
-                    : "Sem arquivo carregado"}
-                </p>
-                {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 && (
-                  <p className="text-xs text-slate-400 mt-0.5">{fileInfoPt.counts.hoteles} hotéis · {fileInfoPt.counts.tours} tours · {fileInfoPt.counts.traslados} translados</p>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-2 pt-3 border-t border-slate-100">
-              {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 && (
-                <button onClick={handleReloadPt} disabled={reloadStatusPt === "loading" || !onReloadPt} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${statusCls(reloadStatusPt)}`}>
-                  {statusIcon(reloadStatusPt)}
-                  {reloadStatusPt === "loading" ? "Atualizando..." : reloadStatusPt === "success" ? "Atualizado" : reloadStatusPt === "error" ? "Erro" : "Recarregar"}
-                </button>
-              )}
-              <button onClick={handleUploadPtClick} disabled={reloadStatusPt === "loading" || !onUploadPt} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs bg-white hover:bg-slate-50 transition-colors disabled:opacity-60">
-                <Upload className="w-3.5 h-3.5" /> {fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0 ? "Substituir" : "Carregar"}
-              </button>
-            </div>
-          </div>
-
+        <div className="mb-4">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tarifarios por idioma</p>
+          <p className="text-xs text-slate-400 mt-1">Gestiona y actualiza tus tarifarios Excel por idioma.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <LangCard
+            flag="🇪🇸"
+            lang="Español"
+            filename={fileInfo?.filename ?? "TARIFARIO.xlsx"}
+            loaded={true}
+            counts={fileInfo?.counts}
+            loadedAt={fileInfo?.loadedAt}
+            reloadStatus={reloadStatus}
+            onReload={onReload ? handleReload : undefined}
+            onUpload={handleUploadClick}
+          />
+          <LangCard
+            flag="🇺🇸"
+            lang="English"
+            filename={fileInfoEn?.filename ?? "TARIFARIO_EN.xlsx"}
+            loaded={!!(fileInfoEn?.counts && fileInfoEn.counts.hoteles > 0)}
+            counts={fileInfoEn?.counts}
+            loadedAt={fileInfoEn?.loadedAt}
+            reloadStatus={reloadStatusEn}
+            onReload={onReloadEn ? handleReloadEn : undefined}
+            onUpload={handleUploadEnClick}
+          />
+          <LangCard
+            flag="🇧🇷"
+            lang="Português"
+            filename={fileInfoPt?.filename ?? "TARIFARIO_PT.xlsx"}
+            loaded={!!(fileInfoPt?.counts && fileInfoPt.counts.hoteles > 0)}
+            counts={fileInfoPt?.counts}
+            loadedAt={fileInfoPt?.loadedAt}
+            reloadStatus={reloadStatusPt}
+            onReload={onReloadPt ? handleReloadPt : undefined}
+            onUpload={handleUploadPtClick}
+          />
         </div>
       </div>
 
-      {/* Brasil (market tarifario) */}
+      {/* ── GESTIÓN LOCAL ── */}
       <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Tarifario Brasil</p>
-        <div className="max-w-sm">
-          <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4">
-            <div className="flex items-start gap-2 mb-3">
-              <FileText className="w-3.5 h-3.5 mt-0.5 text-emerald-400 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-800 truncate">{fileInfoBrasil?.filename ?? "TARIFARIO_BRASIL.xlsx"}</p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0
-                    ? `Cargado ${formatRelativeTime(fileInfoBrasil.loadedAt)}`
-                    : "Sin archivo cargado"}
-                </p>
-                {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
-                  <p className="text-xs text-slate-400 mt-0.5">{fileInfoBrasil.counts.hoteles} hoteles · {fileInfoBrasil.counts.tours} tours · {fileInfoBrasil.counts.traslados} traslados</p>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-2 pt-3 border-t border-emerald-100">
-              {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
-                <button onClick={handleReloadBrasil} disabled={reloadStatusBrasil === "loading" || !onReloadBrasil} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadClsBrasil}`}>
-                  {reloadIconBrasil}
-                  {reloadStatusBrasil === "loading" ? "Actualizando..." : reloadStatusBrasil === "success" ? "Actualizado" : reloadStatusBrasil === "error" ? "Error" : "Recargar"}
+        <div className="mb-4">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Gestión local</p>
+          <p className="text-xs text-slate-400 mt-1">Administra tu base de datos local e importa datos desde los tarifarios Excel.</p>
+        </div>
+
+        {/* Tab row + mercado toggle */}
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+            {TABS.map(({ key, label, icon }) => {
+              const active = tab === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                  style={active
+                    ? { backgroundColor: "#004FBB", color: "#fff", boxShadow: "0 1px 4px rgba(0,79,187,0.3)" }
+                    : { color: "#64748b" }
+                  }
+                >
+                  {icon}
+                  {label}
+                  {lsCounts[key] > 0 && (
+                    <span
+                      className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                      style={active
+                        ? { backgroundColor: "rgba(255,255,255,0.2)", color: "#fff" }
+                        : { backgroundColor: "#dbeafe", color: "#004FBB" }
+                      }
+                    >
+                      {lsCounts[key]}
+                    </span>
+                  )}
                 </button>
-              )}
-              <button onClick={handleUploadBrasilClick} disabled={reloadStatusBrasil === "loading" || !onUploadBrasil} className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg border border-emerald-300 text-emerald-800 bg-emerald-100 text-xs font-semibold hover:bg-emerald-200 transition-colors disabled:opacity-60">
-                <RefreshCw className="w-3.5 h-3.5" /> Reemplazar
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-medium">Importar desde:</span>
+            <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setImportMercado("general")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${importMercado === "general" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+              >
+                General
+              </button>
+              <button
+                onClick={() => setImportMercado("brasil")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${importMercado === "brasil" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+              >
+                Brasil
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Tabs + import mercado toggle */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-fit">
-          {TABS.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                tab === key ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              {icon}
-              {label}
-              {lsCounts[key] > 0 && (
-                <span className="ml-1 text-[10px] bg-primary/10 text-primary font-semibold px-1.5 py-0.5 rounded-full">
-                  {lsCounts[key]}
-                </span>
-              )}
-            </button>
-          ))}
+        {/* Import bar + New button */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          {activeApiCount > 0 && (
+            <div className="flex-1 min-w-0 bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3 shadow-sm">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800">
+                  Importar {TAB_LABELS[tab].plural} desde {importMercado === "brasil" ? "Brasil" : "General"}
+                  <span className="ml-1.5 text-xs font-normal text-slate-400">({activeApiCount} registros)</span>
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">Se agregarán solo los nuevos registros o se actualizarán los existentes.</p>
+              </div>
+              <button
+                onClick={() => activeImportRef.current()}
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors shadow-sm"
+                style={{ backgroundColor: "#004FBB" }}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003F96")}
+                onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004FBB")}
+              >
+                <Download className="w-4 h-4" />
+                Importar {TAB_LABELS[tab].plural}
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => activeNewRef.current()}
+            className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors shadow-sm"
+            style={{ backgroundColor: "#004FBB" }}
+            onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003F96")}
+            onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004FBB")}
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo {TAB_LABELS[tab].singular}
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium">Importar desde:</span>
-          <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setImportMercado("general")}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${importMercado === "general" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
-            >
-              General
-            </button>
-            <button
-              onClick={() => setImportMercado("brasil")}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${importMercado === "brasil" ? "bg-white shadow-sm text-emerald-700" : "text-slate-500 hover:text-slate-700"}`}
-            >
-              Brasil
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {tab === "hoteles" && <HotelesTab apiHoteles={apiHoteles} apiHotelesBrasil={apiHotelesBrasil} importMercado={importMercado} onChanged={onChanged} />}
-      {tab === "tours" && <ToursTab apiTours={apiTours} apiToursBrasil={apiToursBrasil} importMercado={importMercado} onChanged={onChanged} />}
-      {tab === "traslados" && <TrasladosTab apiTraslados={apiTraslados} apiTrasladosBrasil={apiTrasladosBrasil} importMercado={importMercado} onChanged={onChanged} />}
+        {/* Tab content */}
+        {tab === "hoteles" && (
+          <HotelesTab
+            apiHoteles={apiHoteles} apiHotelesBrasil={apiHotelesBrasil}
+            importMercado={importMercado} onChanged={onChanged}
+            importRef={hotelImportRef} newRef={hotelNewRef}
+          />
+        )}
+        {tab === "tours" && (
+          <ToursTab
+            apiTours={apiTours} apiToursBrasil={apiToursBrasil}
+            importMercado={importMercado} onChanged={onChanged}
+            importRef={tourImportRef} newRef={tourNewRef}
+          />
+        )}
+        {tab === "traslados" && (
+          <TrasladosTab
+            apiTraslados={apiTraslados} apiTrasladosBrasil={apiTrasladosBrasil}
+            importMercado={importMercado} onChanged={onChanged}
+            importRef={trasladoImportRef} newRef={trasladoNewRef}
+          />
+        )}
+      </div>
     </div>
 
+    {/* Wrong-language upload warning modal */}
     {pendingUpload && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
