@@ -829,10 +829,10 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged,
               <button
                 onClick={handleUploadBrasilClick}
                 disabled={reloadStatusBrasil === "loading" || !onUploadBrasil}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-200 text-emerald-700 bg-white text-sm hover:bg-emerald-50 transition-colors disabled:opacity-60"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-emerald-300 text-emerald-800 bg-emerald-100 text-sm font-semibold hover:bg-emerald-200 active:bg-emerald-300 transition-colors disabled:opacity-60 shadow-sm"
               >
-                <Upload className="w-4 h-4" />
-                {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 ? "Reemplazar / Subir nuevo" : "Subir tarifario Brasil"}
+                <RefreshCw className="w-4 h-4" />
+                Reemplazar tarifario Brasil
               </button>
             </div>
           </div>
