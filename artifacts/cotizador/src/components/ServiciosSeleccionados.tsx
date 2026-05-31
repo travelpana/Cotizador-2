@@ -179,7 +179,7 @@ export default function ServiciosSeleccionados({
       subtitle={
         servicios.length
           ? `${servicios.length} ítem${servicios.length !== 1 ? "s" : ""} en la cotización`
-          : "Busca un servicio arriba para agregarlo al instante"
+          : undefined
       }
       action={
         (onAddCustom || onCargarPlantilla) && (
@@ -220,9 +220,6 @@ export default function ServiciosSeleccionados({
           />
           <div className="font-semibold text-slate-700 text-sm">
             Aún no has agregado servicios
-          </div>
-          <div className="text-xs text-slate-500 max-w-[260px] leading-relaxed">
-            Usa el buscador para encontrar hoteles, traslados o tours.
           </div>
         </div>
       ) : (
@@ -349,8 +346,8 @@ function ObsPanel({
   return (
     <div className="mt-5 pt-5 border-t border-slate-100">
       <div className="flex items-center gap-2 mb-3">
-        <List className="w-3.5 h-3.5 text-slate-400" />
-        <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
+        <List className="w-3.5 h-3.5" style={{ color: "#07152f" }} />
+        <span className="text-[11px] uppercase tracking-wider font-bold" style={{ color: "#07152f" }}>
           Observaciones
         </span>
       </div>

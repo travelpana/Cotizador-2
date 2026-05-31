@@ -311,22 +311,36 @@ export default function ServiceSearchBar({
               />
             </button>
             {mercadoOpen && (
-              <div className="absolute z-40 mt-1.5 left-0 min-w-[140px] rounded-xl bg-white shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-                {MERCADOS.map((m) => (
-                  <button
-                    key={m.value}
-                    onClick={() => {
-                      onMercadoChange(m.value);
-                      setMercadoOpen(false);
-                      inputRef.current?.focus();
-                    }}
-                    className={`w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 transition-colors ${
-                      mercado === m.value ? "text-primary font-semibold" : "text-slate-700"
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+              <div className="absolute z-40 mt-2 left-0 min-w-[160px] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150" style={{ backgroundColor: "#fff", border: "1.5px solid #004fbb", borderRadius: 16, boxShadow: "0 8px 24px rgba(0,79,187,0.14), 0 2px 6px rgba(0,79,187,0.08)", padding: "6px" }}>
+                {MERCADOS.map((m) => {
+                  const active = mercado === m.value;
+                  return (
+                    <button
+                      key={m.value}
+                      onClick={() => {
+                        onMercadoChange(m.value);
+                        setMercadoOpen(false);
+                        inputRef.current?.focus();
+                      }}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "8px 14px",
+                        borderRadius: 10,
+                        fontSize: 14,
+                        fontWeight: active ? 700 : 500,
+                        color: active ? "#fff" : "#07152f",
+                        backgroundColor: active ? "#004fbb" : "transparent",
+                        transition: "all 0.12s",
+                      }}
+                      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#eef5ff"; if (!active) (e.currentTarget as HTMLButtonElement).style.color = "#004fbb"; }}
+                      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; if (!active) (e.currentTarget as HTMLButtonElement).style.color = "#07152f"; }}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
