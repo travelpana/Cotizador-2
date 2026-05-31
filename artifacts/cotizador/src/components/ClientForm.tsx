@@ -260,63 +260,77 @@ export function AlojamientoBar({
       {/* Subtle inner curve shine */}
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
-      <div className="relative px-3 py-2.5 flex items-center justify-between gap-3">
-        {/* Left: icon + counters */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Building icon */}
-          <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: "#eec774" }} />
-          {/* Divider 1 */}
-          <span className="w-px h-5 flex-shrink-0" style={{ backgroundColor: "rgba(147,197,253,0.4)" }} />
-          {/* Counters */}
-          <div className="flex items-center gap-1.5">
-            <NumberInput
-              label="NOCHES"
-              icon={<MoonStar className="w-3 h-3" style={{ color: "#eec774" }} />}
-              value={cliente.noches}
-              onChange={(v) => updateNum({ noches: v })}
-              min={0}
-            />
-            <NumberInput
-              label="PAX"
-              icon={<Users className="w-3 h-3" style={{ color: "#eec774" }} />}
-              value={cliente.pasajeros}
-              onChange={(v) => updateNum({ pasajeros: v })}
-              min={1}
-            />
-            <NumberInput
-              label="NIÑOS"
-              icon={<Baby className="w-3 h-3" style={{ color: "#eec774" }} />}
-              value={cliente.ninos}
-              onChange={(v) => updateNum({ ninos: v })}
-              min={0}
-            />
-          </div>
-          {/* Divider 2 */}
-          <span className="w-px h-5 flex-shrink-0" style={{ backgroundColor: "rgba(147,197,253,0.4)" }} />
-        </div>
+      {/* Flat grid row — no groups, no space-between, no center gap */}
+      <div
+        className="relative"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "18px 1px 94px 72px 82px 1px 1fr 1fr 1fr 1fr",
+          columnGap: 8,
+          alignItems: "center",
+          padding: "11px 16px",
+        }}
+      >
+        {/* 1. Building icon */}
+        <Building2 style={{ width: 18, height: 18, color: "#eec774", flexShrink: 0 }} />
 
-        {/* Right: Pills */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {PILLS.map((p) => {
-            const active = acomodaciones.includes(p);
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => togglePill(p)}
-                className="min-w-[48px] px-2.5 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all text-white text-center"
-                style={
-                  active
-                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
-                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }
-                }
-                data-testid={`acomodacion-${p}`}
-              >
-                {p}
-              </button>
-            );
-          })}
-        </div>
+        {/* 2. Divider 1 */}
+        <span style={{ width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.25)", display: "block", justifySelf: "center" }} />
+
+        {/* 3–5. Counters */}
+        <NumberInput
+          label="NOCHES"
+          icon={<MoonStar className="w-3 h-3" style={{ color: "#eec774" }} />}
+          value={cliente.noches}
+          onChange={(v) => updateNum({ noches: v })}
+          min={0}
+        />
+        <NumberInput
+          label="PAX"
+          icon={<Users className="w-3 h-3" style={{ color: "#eec774" }} />}
+          value={cliente.pasajeros}
+          onChange={(v) => updateNum({ pasajeros: v })}
+          min={1}
+        />
+        <NumberInput
+          label="NIÑOS"
+          icon={<Baby className="w-3 h-3" style={{ color: "#eec774" }} />}
+          value={cliente.ninos}
+          onChange={(v) => updateNum({ ninos: v })}
+          min={0}
+        />
+
+        {/* 6. Divider 2 */}
+        <span style={{ width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.25)", display: "block", justifySelf: "center" }} />
+
+        {/* 7–10. Pills — each fills its 1fr cell */}
+        {PILLS.map((p) => {
+          const active = acomodaciones.includes(p);
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => togglePill(p)}
+              style={{
+                width: "100%",
+                padding: "6px 4px",
+                borderRadius: 9999,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                color: "#fff",
+                textTransform: "uppercase",
+                textAlign: "center",
+                ...(active
+                  ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
+                  : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
+              }}
+              data-testid={`acomodacion-${p}`}
+            >
+              {p}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
