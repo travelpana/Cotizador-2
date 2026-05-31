@@ -350,7 +350,7 @@ function NumberInput({
   min?: number;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
-  const display = draft ?? String(value).padStart(2, "0");
+  const display = draft ?? String(value);
 
   return (
     <label

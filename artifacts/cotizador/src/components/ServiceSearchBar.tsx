@@ -300,7 +300,7 @@ export default function ServiceSearchBar({
               className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl text-sm font-medium transition-all"
               style={
                 mercado !== "general"
-                  ? { backgroundColor: "#e6ae33", borderColor: "#e6ae33", border: "1px solid #e6ae33", color: "#fff", boxShadow: "0 2px 8px rgba(230,174,51,0.35)" }
+                  ? { backgroundColor: "#004fbb", border: "1px solid #004fbb", color: "#fff", boxShadow: "0 2px 8px rgba(0,79,187,0.35)" }
                   : { backgroundColor: "#fff", border: "1px solid #004fbb", color: "#07152f", boxShadow: "0 1px 4px rgba(0,79,187,0.12)" }
               }
             >
