@@ -267,19 +267,22 @@ export default function CotizadorPage() {
     return fresh;
   };
 
-  const handleAutoSave = () => {
-    const numero = getOrCreateNumero();
-    const { saved, items } = guardarEnSeguimiento({
-      cliente,
-      servicios,
-      acomodaciones,
-      modo,
-      numeroCotizacion: numero,
-      observacionesSeleccionadas: observacionesSeleccionadas.length > 0 ? [...observacionesSeleccionadas] : undefined,
-      observacionManual: observacionManual.trim() || undefined,
-    });
-    setGuardadas(items);
-    if (saved) showToast("Cotización guardada en seguimiento");
+  const handleActionComplete = (tipo: ActividadTipo) => {
+    try {
+      handleRegisterActivity(tipo);
+      showToast("Cotización guardada y lista para seguimiento.");
+      setCliente(makeDefaultCliente());
+      setValidationErrors({});
+      setAcomodaciones(["DBL"]);
+      setServicios([]);
+      setModo("tarifas");
+      setCurrentNumero(null);
+      setSavedId(null);
+      setObservacionesSeleccionadas([]);
+      setObservacionManual("");
+    } catch {
+      showToast("Error al guardar la cotización", "error");
+    }
   };
 
   const fetchAll = async () => {
@@ -1010,18 +1013,15 @@ export default function CotizadorPage() {
                   descriptivos={mergedDescriptivos}
                   actividadesOverride={actividadesOverride}
                   observaciones={resolvedObservaciones}
-                  onSave={handleSave}
-                  isSaved={savedId !== null}
                   onClear={handleClear}
                   onPreview={() => {
                     getOrCreateNumero();
                     setPreviewQuote(null);
                     setPreviewOpen(true);
                   }}
-                  onAutoSave={handleAutoSave}
+                  onActionComplete={handleActionComplete}
                   validateBeforeAction={validateBeforeAction}
                   getNumeroCotizacion={getOrCreateNumero}
-                  onRegisterActivity={handleRegisterActivity}
                   idioma={idioma}
                 />
                 {servicios.length > 0 && (

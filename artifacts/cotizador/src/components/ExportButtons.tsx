@@ -37,15 +37,12 @@ interface Props {
   incluirDescriptivoCompleto: boolean;
   descriptivos: Descriptivo[];
   actividadesOverride?: Record<number, string>;
-  onSave: () => void;
-  isSaved?: boolean;
   onClear: () => void;
   onPreview: () => void;
-  onAutoSave?: () => void;
+  onActionComplete?: (tipo: ActividadTipo) => void;
   validateBeforeAction: () => boolean;
   getNumeroCotizacion: () => string;
   observaciones?: string[];
-  onRegisterActivity?: (tipo: ActividadTipo) => void;
   idioma?: Idioma;
 }
 
@@ -74,14 +71,11 @@ export default function ExportButtons({
   descriptivos,
   actividadesOverride,
   observaciones,
-  onSave,
-  isSaved,
   onClear,
   onPreview,
-  onAutoSave,
+  onActionComplete,
   validateBeforeAction,
   getNumeroCotizacion,
-  onRegisterActivity,
   idioma = "es",
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
@@ -411,8 +405,7 @@ export default function ExportButtons({
       await navigator.clipboard.writeText(buildText());
       setWaCopied(true);
       setTimeout(() => setWaCopied(false), 2000);
-      onAutoSave?.();
-      onRegisterActivity?.("whatsapp_enviado");
+      onActionComplete?.("whatsapp_enviado");
     } catch {
       // noop
     }
@@ -464,8 +457,7 @@ export default function ExportButtons({
       if (copied) {
         setMailCopied(true);
         setTimeout(() => setMailCopied(false), 2000);
-        onAutoSave?.();
-        onRegisterActivity?.("correo_enviado");
+        onActionComplete?.("correo_enviado");
       }
     } catch (err) {
       console.error("Copy email failed:", err);
@@ -536,8 +528,7 @@ export default function ExportButtons({
         .from(target)
         .save();
 
-      onAutoSave?.();
-      onRegisterActivity?.("pdf_enviado");
+      onActionComplete?.("pdf_enviado");
     } catch (err) {
       console.error("PDF generation failed:", err);
       setPdfError(true);
@@ -607,17 +598,15 @@ export default function ExportButtons({
               if (saving) return;
               if (!validateBeforeAction()) return;
               setSaving(true);
-              try { onSave(); } finally {
+              try { onActionComplete?.("guardado_manual"); } finally {
                 setTimeout(() => setSaving(false), 1200);
               }
             }}
-            title={isSaved ? "Actualizar" : "Guardar"}
+            title="Guardar"
             disabled={saving}
           >
             {saving ? (
               <><Loader2 className="w-4 h-4 animate-spin" />Guardando…</>
-            ) : isSaved ? (
-              <><RefreshCw className="w-4 h-4" />Actualizar</>
             ) : (
               <><Save className="w-4 h-4" />Guardar</>
             )}

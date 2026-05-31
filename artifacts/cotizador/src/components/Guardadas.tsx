@@ -38,6 +38,7 @@ export type ActividadTipo =
   | "pdf_enviado"
   | "whatsapp_enviado"
   | "correo_enviado"
+  | "guardado_manual"
   | "duplicada"
   | "confirmada"
   | "nota_agregada"
