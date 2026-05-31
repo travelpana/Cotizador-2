@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check, UserRound, MoonStar, Users, Baby } from "lucide-react";
+import { ChevronDown, Check, UserRound, MoonStar, Users, Baby, Building2 } from "lucide-react";
 import {
   AGENTES,
   type Acomodacion,
@@ -247,36 +247,63 @@ export function AlojamientoBar({
 
   return (
     <section
-      className="rounded-2xl shadow-sm px-5 py-3.5 text-white"
-      style={{ backgroundColor: "#002682" }}
+      className="relative rounded-2xl overflow-hidden text-white"
+      style={{
+        background: "linear-gradient(135deg, #0034b8 0%, #004ed8 45%, #006eff 100%)",
+        boxShadow: "0 4px 20px rgba(0,52,184,0.35)",
+      }}
     >
-      <div className="flex items-center gap-4 flex-wrap justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-[0.18em] whitespace-nowrap flex-shrink-0">
-          Alojamiento
-        </h2>
+      {/* Decorative blobs */}
+      <span className="pointer-events-none absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #60a5fa 0%, transparent 70%)" }} />
+      <span className="pointer-events-none absolute bottom-0 left-1/3 w-24 h-24 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #93c5fd 0%, transparent 70%)" }} />
+      <span className="pointer-events-none absolute -bottom-4 right-1/4 w-20 h-20 rounded-full opacity-15" style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
+
+      <div className="relative px-4 py-3 flex items-center gap-2 flex-nowrap">
+        {/* Left: icon badge + title */}
+        <div className="flex items-center gap-2.5 flex-shrink-0 mr-1">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(147,197,253,0.35)" }}
+          >
+            <Building2 style={{ color: "#bfdbfe", width: 16, height: 16 }} />
+          </div>
+          <h2 className="text-sm font-bold uppercase tracking-[0.15em] whitespace-nowrap">
+            Alojamiento
+          </h2>
+        </div>
+
+        {/* Divider */}
+        <span className="w-px h-6 flex-shrink-0 mx-1" style={{ backgroundColor: "rgba(147,197,253,0.25)" }} />
+
+        {/* Middle: counters */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <NumberInput
             label="Noches"
-            icon={<MoonStar className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
+            icon={<MoonStar className="w-3 h-3" style={{ color: "#eec774" }} />}
             value={cliente.noches}
             onChange={(v) => updateNum({ noches: v })}
             min={0}
           />
           <NumberInput
             label="Pasajeros"
-            icon={<Users className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
+            icon={<Users className="w-3 h-3" style={{ color: "#eec774" }} />}
             value={cliente.pasajeros}
             onChange={(v) => updateNum({ pasajeros: v })}
             min={1}
           />
           <NumberInput
             label="Niños"
-            icon={<Baby className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
+            icon={<Baby className="w-3 h-3" style={{ color: "#eec774" }} />}
             value={cliente.ninos}
             onChange={(v) => updateNum({ ninos: v })}
             min={0}
           />
         </div>
+
+        {/* Divider */}
+        <span className="w-px h-6 flex-shrink-0 mx-1" style={{ backgroundColor: "rgba(147,197,253,0.25)" }} />
+
+        {/* Right: accommodation pills */}
         <div className="flex flex-nowrap gap-1.5 flex-shrink-0">
           {PILLS.map((p) => {
             const active = acomodaciones.includes(p);
@@ -285,8 +312,12 @@ export function AlojamientoBar({
                 key={p}
                 type="button"
                 onClick={() => togglePill(p)}
-                className="min-w-[52px] px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
-                style={active ? { backgroundColor: "rgba(255,255,255,0.25)", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.6)" } : { backgroundColor: "#001851" }}
+                className="min-w-[46px] px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
+                style={
+                  active
+                    ? { backgroundColor: "#0a8cff", boxShadow: "0 2px 8px rgba(10,140,255,0.5)" }
+                    : { backgroundColor: "rgba(0,30,90,0.4)", border: "1px solid rgba(147,197,253,0.35)" }
+                }
                 data-testid={`acomodacion-${p}`}
               >
                 {p}
@@ -316,9 +347,12 @@ function NumberInput({
   const display = draft ?? String(value);
 
   return (
-    <label className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 cursor-text" style={{ backgroundColor: "#001851" }}>
+    <label
+      className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 cursor-text flex-shrink-0"
+      style={{ backgroundColor: "rgba(0,20,70,0.45)", border: "1px solid rgba(147,197,253,0.25)" }}
+    >
       {icon && <span className="flex-shrink-0">{icon}</span>}
-      <span className="text-[10px] uppercase tracking-wider font-semibold select-none" style={{ color: "rgba(255,255,255,0.65)" }}>
+      <span className="text-[10px] uppercase tracking-wide font-semibold select-none whitespace-nowrap" style={{ color: "rgba(191,219,254,0.8)" }}>
         {label}
       </span>
       <input
@@ -346,7 +380,7 @@ function NumberInput({
           }
         }}
         aria-label={label}
-        className="w-8 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
+        className="w-6 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
       />
     </label>
   );
