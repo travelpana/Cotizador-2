@@ -302,8 +302,32 @@ export function replaceAndReloadBrasil(buffer: Buffer): Catalog {
   } catch {
     throw new Error("El archivo no es un Excel válido (.xlsx)");
   }
+
+  console.log("\n====================");
+  console.log("HOJAS DETECTADAS");
+  console.log("====================");
+  wb.SheetNames.forEach((name) => console.log(`- ${name}`));
+
+  console.log("\n====================");
+  console.log("HOJAS REQUERIDAS");
+  console.log("====================");
+  REQUIRED_SHEETS.forEach((name) => console.log(`- ${name}`));
+  console.log("");
+
   for (const sheet of REQUIRED_SHEETS) {
     if (!wb.SheetNames.includes(sheet)) {
+      console.log(`\n[FALLO DE VALIDACIÓN]`);
+      console.log(`  Hoja requerida : "${sheet}"`);
+      const closest = wb.SheetNames.find(
+        (s) => s.toLowerCase().replace(/\s+/g, "") === sheet.toLowerCase().replace(/\s+/g, "")
+      );
+      if (closest) {
+        console.log(`  Hoja detectada : "${closest}"`);
+        console.log(`  → Diferencia   : "${closest}" ≠ "${sheet}"`);
+      } else {
+        console.log(`  No se encontró ninguna hoja similar.`);
+        console.log(`  Hojas disponibles: ${wb.SheetNames.map((s) => `"${s}"`).join(", ")}`);
+      }
       throw new Error(`El archivo no contiene la hoja requerida: "${sheet}"`);
     }
   }
