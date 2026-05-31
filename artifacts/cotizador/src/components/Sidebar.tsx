@@ -1,5 +1,4 @@
 import {
-  Plane,
   FileSpreadsheet,
   ListChecks,
   LayoutTemplate,
@@ -9,6 +8,7 @@ import {
   Settings2,
   ChevronDown,
 } from "lucide-react";
+import logoRge from "@assets/style-travel-blue__1780204454850.png";
 import { useState } from "react";
 
 export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
@@ -28,16 +28,12 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
 
   return (
     <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col text-white" style={{ backgroundColor: "#041941" }}>
-      <div className="p-6" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(238,199,116,0.18)", color: "#eec774" }}>
-            <Plane className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="font-semibold tracking-tight text-white">RGE Style Travel</div>
-            <div className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Cotizador 2026</div>
-          </div>
-        </div>
+      <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <img
+          src={logoRge}
+          alt="RGE Style Travel"
+          style={{ height: 70, width: "auto", objectFit: "contain", display: "block" }}
+        />
       </div>
 
       <nav className="p-4 flex-1 space-y-1 overflow-y-auto">
