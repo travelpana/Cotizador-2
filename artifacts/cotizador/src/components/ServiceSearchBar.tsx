@@ -7,6 +7,8 @@ import {
   ChevronDown,
   Loader2,
   X,
+  Plus,
+  Check,
 } from "lucide-react";
 import type {
   Hotel,
@@ -16,7 +18,7 @@ import type {
 } from "@/lib/types";
 import { fmt } from "@/lib/calc";
 
-type Categoria = "todos" | "hotel" | "traslado" | "tour" | "vuelo";
+type Categoria = "todos" | "hotel" | "traslado" | "tour";
 type Mercado = "general" | "brasil";
 
 interface Props {
@@ -35,23 +37,30 @@ interface Resultado {
   raw: Hotel | Tour | Traslado;
   nombre: string;
   codigo: string;
-  rango?: string;
+  vigencia?: string;
+  categoria?: string;
   rating?: string;
   precios: { primario: { label: string; value: number }; secundario?: { label: string; value: number } };
 }
-
-const CATEGORIAS: { value: Categoria; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  { value: "hotel", label: "Hotelería" },
-  { value: "traslado", label: "Traslados" },
-  { value: "tour", label: "Tours" },
-  { value: "vuelo", label: "Vuelos" },
-];
 
 const MERCADOS: { value: Mercado; label: string }[] = [
   { value: "general", label: "Tarifario general" },
   { value: "brasil", label: "Brasil" },
 ];
+
+const FILTROS: { value: Categoria; label: string }[] = [
+  { value: "todos", label: "Todos" },
+  { value: "hotel", label: "Hoteles" },
+  { value: "tour", label: "Tours" },
+  { value: "traslado", label: "Traslados" },
+];
+
+const TIPO_LABEL: Record<Categoria, string> = {
+  todos: "Todos",
+  hotel: "Hoteles",
+  tour: "Tours",
+  traslado: "Traslados",
+};
 
 export default function ServiceSearchBar({
   hoteles,
@@ -64,7 +73,6 @@ export default function ServiceSearchBar({
   onMercadoChange,
 }: Props) {
   const [categoria, setCategoria] = useState<Categoria>("todos");
-  const [catOpen, setCatOpen] = useState(false);
   const [mercadoOpen, setMercadoOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -96,18 +104,16 @@ export default function ServiceSearchBar({
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
-        setCatOpen(false);
+        setMercadoOpen(false);
       }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
-        setCatOpen(false);
+        setMercadoOpen(false);
+        inputRef.current?.blur();
       }
     };
     document.addEventListener("mousedown", onClick);
@@ -123,23 +129,18 @@ export default function ServiceSearchBar({
     if (q.length < 2) return [];
 
     const matches = (text: string) => text.toLowerCase().includes(q);
-
     const out: Resultado[] = [];
 
     if (categoria === "todos" || categoria === "hotel") {
       for (const h of hoteles) {
-        if (
-          matches(h.nombre) ||
-          matches(h.id) ||
-          matches(h.ubicacion ?? "") ||
-          matches(h.categoria ?? "")
-        ) {
+        if (matches(h.nombre) || matches(h.id) || matches(h.ubicacion ?? "") || matches(h.categoria ?? "")) {
           out.push({
             tipo: "hotel",
             raw: h,
             nombre: h.nombre,
             codigo: h.id,
-            rango: h.vigencia,
+            vigencia: h.vigencia,
+            categoria: h.ubicacion || h.categoria,
             rating: h.estrellas,
             precios: {
               primario: { label: "DBL", value: h.precios.DBL },
@@ -158,7 +159,8 @@ export default function ServiceSearchBar({
             raw: t,
             nombre: t.nombre,
             codigo: t.id,
-            rango: t.tipo,
+            vigencia: undefined,
+            categoria: t.tipo,
             precios: {
               primario: { label: "2-5 pax", value: t.precios.p2_5 },
               secundario: { label: "1 pax", value: t.precios.p1 },
@@ -170,18 +172,14 @@ export default function ServiceSearchBar({
 
     if (categoria === "todos" || categoria === "tour") {
       for (const t of tours) {
-        if (
-          matches(t.nombre) ||
-          matches(t.id) ||
-          matches(t.categoria ?? "") ||
-          matches(t.seccion ?? "")
-        ) {
+        if (matches(t.nombre) || matches(t.id) || matches(t.categoria ?? "") || matches(t.seccion ?? "")) {
           out.push({
             tipo: "tour",
             raw: t,
             nombre: t.nombre,
             codigo: t.id,
-            rango: t.horario,
+            vigencia: t.horario,
+            categoria: t.categoria || t.seccion,
             precios: {
               primario: { label: "2-5 pax", value: t.precios.p2_5 },
               secundario: { label: "1 pax", value: t.precios.p1 },
@@ -191,31 +189,38 @@ export default function ServiceSearchBar({
       }
     }
 
-    return out.slice(0, 50);
+    return out.slice(0, 80);
   }, [debounced, categoria, hoteles, tours, traslados]);
 
   useEffect(() => {
     setActiveIndex(0);
   }, [resultados.length, debounced, categoria]);
 
+  // Scroll active item into view
+  useEffect(() => {
+    if (!listRef.current) return;
+    const active = listRef.current.querySelector("[data-active='true']");
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
+
+  const grouped = useMemo(() => {
+    const groups: { tipo: Resultado["tipo"]; label: string; items: Resultado[] }[] = [];
+    const order: Resultado["tipo"][] = ["hotel", "tour", "traslado"];
+    for (const tipo of order) {
+      const items = resultados.filter((r) => r.tipo === tipo);
+      if (items.length > 0) groups.push({ tipo, label: TIPO_LABEL[tipo], items });
+    }
+    return groups;
+  }, [resultados]);
+
   const buildServicio = (r: Resultado): ServicioSeleccionado => {
     const uid = `${r.tipo}-${r.codigo}-${Date.now()}`;
     if (r.tipo === "hotel") {
       const h = r.raw as Hotel;
       return {
-        id: uid,
-        codigo: h.id,
-        tipo: "hotel",
-        nombre: h.nombre,
-        precios: {
-          SGL: h.precios.SGL,
-          DBL: h.precios.DBL,
-          TPL: h.precios.TPL,
-          CHD: h.precios.CHD,
-        },
-        ubicacion: h.ubicacion,
-        estrellas: h.estrellas,
-        vigencia: h.vigencia,
+        id: uid, codigo: h.id, tipo: "hotel", nombre: h.nombre,
+        precios: { SGL: h.precios.SGL, DBL: h.precios.DBL, TPL: h.precios.TPL, CHD: h.precios.CHD },
+        ubicacion: h.ubicacion, estrellas: h.estrellas, vigencia: h.vigencia,
         tipoHabitacion: h.tipoHabitacion,
         fechaInicio: globalFechaInicio || undefined,
         fechaFin: globalFechaFin || undefined,
@@ -224,34 +229,16 @@ export default function ServiceSearchBar({
     if (r.tipo === "tour") {
       const t = r.raw as Tour;
       return {
-        id: uid,
-        codigo: t.id,
-        tipo: "tour",
-        nombre: t.nombre,
-        precios: {
-          p1: t.precios.p1,
-          p2_5: t.precios.p2_5,
-          p6_10: t.precios.p6_10,
-          chd: t.precios.chd,
-        },
-        usarFecha: false,
-        horario: t.horario || undefined,
+        id: uid, codigo: t.id, tipo: "tour", nombre: t.nombre,
+        precios: { p1: t.precios.p1, p2_5: t.precios.p2_5, p6_10: t.precios.p6_10, chd: t.precios.chd },
+        usarFecha: false, horario: t.horario || undefined,
       };
     }
     const tr = r.raw as Traslado;
     return {
-      id: uid,
-      codigo: tr.id,
-      tipo: "traslado",
-      nombre: tr.nombre,
-      precios: {
-        p1: tr.precios.p1,
-        p2_5: tr.precios.p2_5,
-        p6_10: tr.precios.p6_10,
-        chd: tr.precios.chd,
-      },
-      usarFecha: false,
-      tipoServicio: tr.tipo,
+      id: uid, codigo: tr.id, tipo: "traslado", nombre: tr.nombre,
+      precios: { p1: tr.precios.p1, p2_5: tr.precios.p2_5, p6_10: tr.precios.p6_10, chd: tr.precios.chd },
+      usarFecha: false, tipoServicio: tr.tipo,
     };
   };
 
@@ -259,18 +246,16 @@ export default function ServiceSearchBar({
     onPick(buildServicio(r));
     const key = `${r.tipo}-${r.codigo}`;
     setJustAdded(key);
-    window.setTimeout(() => {
-      setJustAdded((curr) => (curr === key ? null : curr));
-    }, 900);
+    window.setTimeout(() => setJustAdded((curr) => (curr === key ? null : curr)), 1000);
     setQuery("");
     setDebounced("");
     setOpen(false);
-    setCatOpen(false);
-    inputRef.current?.blur();
+    setMercadoOpen(false);
+    inputRef.current?.focus();
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open || resultados.length === 0) return;
+    if (!open) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setActiveIndex((i) => Math.min(i + 1, resultados.length - 1));
@@ -285,8 +270,6 @@ export default function ServiceSearchBar({
   };
 
   const showDropdown = open && (loading || debounced.length >= 2);
-  const currentCatLabel =
-    CATEGORIAS.find((c) => c.value === categoria)?.label ?? "Todos";
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -317,25 +300,10 @@ export default function ServiceSearchBar({
                   return (
                     <button
                       key={m.value}
-                      onClick={() => {
-                        onMercadoChange(m.value);
-                        setMercadoOpen(false);
-                        inputRef.current?.focus();
-                      }}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        textAlign: "left",
-                        padding: "8px 14px",
-                        borderRadius: 10,
-                        fontSize: 14,
-                        fontWeight: active ? 700 : 500,
-                        color: active ? "#fff" : "#07152f",
-                        backgroundColor: active ? "#004fbb" : "transparent",
-                        transition: "all 0.12s",
-                      }}
-                      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#eef5ff"; if (!active) (e.currentTarget as HTMLButtonElement).style.color = "#004fbb"; }}
-                      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; if (!active) (e.currentTarget as HTMLButtonElement).style.color = "#07152f"; }}
+                      onClick={() => { onMercadoChange(m.value); setMercadoOpen(false); inputRef.current?.focus(); }}
+                      style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 14px", borderRadius: 10, fontSize: 14, fontWeight: active ? 700 : 500, color: active ? "#fff" : "#07152f", backgroundColor: active ? "#004fbb" : "transparent", transition: "all 0.12s" }}
+                      onMouseEnter={(e) => { if (!active) { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#eef5ff"; (e.currentTarget as HTMLButtonElement).style.color = "#004fbb"; } }}
+                      onMouseLeave={(e) => { if (!active) { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "#07152f"; } }}
                     >
                       {m.label}
                     </button>
@@ -346,74 +314,28 @@ export default function ServiceSearchBar({
           </div>
         )}
 
-        {/* Category dropdown */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setCatOpen((v) => !v)}
-            className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl text-sm font-medium transition-all"
-            data-testid="button-category"
-            style={
-              categoria !== "todos"
-                ? { backgroundColor: "#e6ae33", border: "1px solid #e6ae33", color: "#fff", boxShadow: "0 2px 8px rgba(230,174,51,0.35)" }
-                : { backgroundColor: "#fff", border: "1px solid #004fbb", color: "#07152f", boxShadow: "0 1px 4px rgba(0,79,187,0.12)" }
-            }
-          >
-            <span>{currentCatLabel}</span>
-            <ChevronDown
-              className={`w-4 h-4 transition-transform ${catOpen ? "rotate-180" : ""}`}
-              style={{ color: categoria !== "todos" ? "#fff" : "#004fbb", opacity: 0.8 }}
-            />
-          </button>
-          {catOpen && (
-            <div className="absolute z-40 mt-1.5 left-0 min-w-[160px] rounded-xl bg-white shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-              {CATEGORIAS.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => {
-                    setCategoria(c.value);
-                    setCatOpen(false);
-                    inputRef.current?.focus();
-                  }}
-                  className={`w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 transition-colors ${
-                    categoria === c.value
-                      ? "text-primary font-semibold"
-                      : "text-slate-700"
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Search input */}
         <div className="relative flex-1 min-w-0">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#004fbb" }} />
           <input
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(true);
-            }}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKey}
-            placeholder="Buscar hotel, traslado, tour..."
+            placeholder="Nombre, código RGE o texto parcial…"
             className="w-full h-11 pl-10 pr-10 rounded-xl bg-white text-sm placeholder:text-slate-400 focus:outline-none transition-all"
-            style={{ border: "1px solid #004fbb", boxShadow: "0 1px 4px rgba(0,79,187,0.12)", color: "#07152f" }}
+            style={{ border: "1.5px solid #004fbb", boxShadow: "0 1px 6px rgba(0,79,187,0.12)", color: "#07152f" }}
             data-testid="input-service-search"
           />
-          {query && (
+          {loading && (
+            <Loader2 className="w-4 h-4 animate-spin absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          )}
+          {query && !loading && (
             <button
               type="button"
-              onClick={() => {
-                setQuery("");
-                setDebounced("");
-                inputRef.current?.focus();
-              }}
+              onClick={() => { setQuery(""); setDebounced(""); inputRef.current?.focus(); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded"
               aria-label="Limpiar búsqueda"
             >
@@ -423,37 +345,89 @@ export default function ServiceSearchBar({
         </div>
       </div>
 
-      {/* Floating dropdown */}
+      {/* Smart dropdown */}
       {showDropdown && (
         <div
-          ref={listRef}
-          className="absolute z-30 left-0 right-0 mt-2 rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+          className="absolute z-30 left-0 right-0 mt-2 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+          style={{ backgroundColor: "#fff", border: "1.5px solid #004fbb", borderRadius: 20, boxShadow: "0 16px 48px rgba(0,79,187,0.16), 0 4px 12px rgba(0,79,187,0.08)" }}
         >
+          {/* Filter tabs */}
+          {!loading && resultados.length > 0 && (
+            <div className="flex items-center gap-1.5 px-4 pt-3 pb-2 border-b border-slate-100">
+              {FILTROS.map((f) => {
+                const count = f.value === "todos"
+                  ? resultados.length
+                  : resultados.filter((r) => r.tipo === f.value).length;
+                if (f.value !== "todos" && count === 0) return null;
+                const active = categoria === f.value;
+                return (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => { setCategoria(f.value); setActiveIndex(0); inputRef.current?.focus(); }}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                    style={
+                      active
+                        ? { backgroundColor: "#004fbb", color: "#fff" }
+                        : { backgroundColor: "#f0f4fa", color: "#495280" }
+                    }
+                  >
+                    {f.label}
+                    <span
+                      className="rounded-full px-1 py-0.5 text-[10px] leading-none font-bold tabular-nums"
+                      style={active ? { backgroundColor: "rgba(255,255,255,0.25)", color: "#fff" } : { backgroundColor: "#dde4f0", color: "#495280" }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {loading ? (
-            <div className="px-4 py-8 flex items-center justify-center gap-2 text-sm text-slate-500">
+            <div className="px-4 py-10 flex items-center justify-center gap-2 text-sm text-slate-500">
               <Loader2 className="w-4 h-4 animate-spin" />
               Buscando…
             </div>
           ) : resultados.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-slate-500">
-              <div className="font-medium text-slate-700">Sin resultados</div>
-              <div className="text-xs mt-1">
-                Intenta con otra palabra o cambia la categoría.
-              </div>
+            <div className="px-4 py-10 text-center">
+              <div className="text-sm font-semibold" style={{ color: "#07152f" }}>Sin resultados</div>
+              <div className="text-xs mt-1 text-slate-500">Intenta con otra palabra, código o cambia el filtro.</div>
             </div>
           ) : (
-            <div className="max-h-[420px] overflow-y-auto py-1">
-              {resultados.map((r, idx) => (
-                <ResultRow
-                  key={`${r.tipo}-${r.codigo}-${idx}`}
-                  r={r}
-                  query={debounced}
-                  active={idx === activeIndex}
-                  added={justAdded === `${r.tipo}-${r.codigo}`}
-                  onClick={() => pick(r)}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                />
-              ))}
+            <div ref={listRef} className="max-h-[440px] overflow-y-auto py-2">
+              {grouped.map((group) => {
+                const groupStart = resultados.indexOf(group.items[0]);
+                return (
+                  <div key={group.tipo}>
+                    {/* Group header */}
+                    <div className="flex items-center gap-2 px-4 py-1.5 sticky top-0 bg-white z-10">
+                      <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: "#004fbb" }}>
+                        {group.label}
+                      </span>
+                      <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#eef5ff", color: "#004fbb" }}>
+                        {group.items.length}
+                      </span>
+                      <div className="flex-1 h-px bg-slate-100" />
+                    </div>
+                    {group.items.map((r, localIdx) => {
+                      const flatIdx = groupStart + localIdx;
+                      return (
+                        <ResultRow
+                          key={`${r.tipo}-${r.codigo}-${flatIdx}`}
+                          r={r}
+                          query={debounced}
+                          active={flatIdx === activeIndex}
+                          added={justAdded === `${r.tipo}-${r.codigo}`}
+                          onClick={() => pick(r)}
+                          onMouseEnter={() => setActiveIndex(flatIdx)}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -469,23 +443,21 @@ function iconForTipo(tipo: "hotel" | "tour" | "traslado") {
   return <Bus className={cls} />;
 }
 
-function colorsForTipo(tipo: "hotel" | "tour" | "traslado") {
-  if (tipo === "hotel")
-    return { bg: "bg-amber-50", text: "text-amber-600" };
-  if (tipo === "tour")
-    return { bg: "bg-emerald-50", text: "text-emerald-600" };
-  return { bg: "bg-sky-50", text: "text-sky-600" };
+function colorsForTipo(tipo: "hotel" | "tour" | "traslado"): { bg: string; text: string; border: string } {
+  if (tipo === "hotel") return { bg: "#fff8ed", text: "#b45309", border: "#fde68a" };
+  if (tipo === "tour") return { bg: "#f0fdf4", text: "#15803d", border: "#bbf7d0" };
+  return { bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe" };
 }
 
 function highlight(text: string, q: string) {
-  if (!q) return text;
+  if (!q || q.length < 2) return <>{text}</>;
   const lower = text.toLowerCase();
   const idx = lower.indexOf(q.toLowerCase());
-  if (idx === -1) return text;
+  if (idx === -1) return <>{text}</>;
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-primary/15 text-primary rounded px-0.5">
+      <mark style={{ backgroundColor: "rgba(0,79,187,0.12)", color: "#004fbb", borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>
         {text.slice(idx, idx + q.length)}
       </mark>
       {text.slice(idx + q.length)}
@@ -509,60 +481,77 @@ function ResultRow({
   onMouseEnter: () => void;
 }) {
   const colors = colorsForTipo(r.tipo);
+  const bgColor = added ? "#f0fdf4" : active ? "#f0f5ff" : "transparent";
+
   return (
     <button
       type="button"
       onClick={onClick}
       onMouseEnter={onMouseEnter}
-      className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${
-        added
-          ? "bg-emerald-50"
-          : active
-            ? "bg-slate-50"
-            : "hover:bg-slate-50"
-      }`}
+      data-active={active}
       data-testid={`result-${r.tipo}-${r.codigo}`}
+      className="w-full text-left transition-colors"
+      style={{ backgroundColor: bgColor, padding: "9px 16px", display: "flex", alignItems: "center", gap: 12 }}
     >
+      {/* Icon */}
       <div
-        className={`w-9 h-9 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center flex-shrink-0`}
+        className="flex items-center justify-center flex-shrink-0"
+        style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}` }}
       >
         {iconForTipo(r.tipo)}
       </div>
+
+      {/* Main info */}
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-slate-900 truncate">
-          {highlight(r.nombre, query)}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm font-semibold truncate" style={{ color: "#07152f", maxWidth: "100%" }}>
+            {highlight(r.nombre, query)}
+          </span>
+          {r.rating && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#fff8ed", color: "#b45309" }}>
+              {r.rating}
+            </span>
+          )}
         </div>
-        <div className="text-[11px] text-slate-500 truncate mt-0.5 flex items-center gap-1.5">
-          <span className="font-mono text-slate-600">{r.codigo}</span>
-          {r.rango && (
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <span className="text-[11px] font-mono font-semibold" style={{ color: "#004fbb" }}>
+            {highlight(r.codigo, query)}
+          </span>
+          {r.categoria && (
             <>
-              <span className="text-slate-300">·</span>
-              <span className="truncate">{r.rango}</span>
+              <span className="text-slate-300 text-[10px]">·</span>
+              <span className="text-[11px] text-slate-500 truncate">{r.categoria}</span>
             </>
           )}
-          {r.rating && (
+          {r.vigencia && (
             <>
-              <span className="text-slate-300">·</span>
-              <span className="text-amber-500">{r.rating}</span>
+              <span className="text-slate-300 text-[10px]">·</span>
+              <span className="text-[11px] text-slate-400 truncate">{r.vigencia}</span>
             </>
           )}
         </div>
       </div>
-      <div className="text-right flex-shrink-0 pl-2">
-        <div className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
-          {fmt(r.precios.primario.value)}
-          <span className="text-[10px] font-medium text-slate-400 ml-1">
-            /{r.precios.primario.label.toLowerCase()}
-          </span>
-        </div>
-        {r.precios.secundario && (
-          <div className="text-[11px] text-slate-500 tabular-nums leading-tight mt-0.5">
-            {fmt(r.precios.secundario.value)}
-            <span className="text-[10px] text-slate-400 ml-1">
-              /{r.precios.secundario.label.toLowerCase()}
-            </span>
+
+      {/* Price + action */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="text-right">
+          <div className="text-sm font-bold tabular-nums leading-tight" style={{ color: "#07152f" }}>
+            {fmt(r.precios.primario.value)}
+            <span className="text-[10px] font-medium text-slate-400 ml-0.5">/{r.precios.primario.label.toLowerCase()}</span>
           </div>
-        )}
+          {r.precios.secundario && (
+            <div className="text-[11px] tabular-nums text-slate-400 leading-tight mt-0.5">
+              {fmt(r.precios.secundario.value)}
+              <span className="text-[10px] ml-0.5">/{r.precios.secundario.label.toLowerCase()}</span>
+            </div>
+          )}
+        </div>
+        <div
+          className="flex items-center justify-center flex-shrink-0 transition-all"
+          style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: added ? "#dcfce7" : active ? "#004fbb" : "#f0f5ff", color: added ? "#16a34a" : active ? "#fff" : "#004fbb" }}
+        >
+          {added ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+        </div>
       </div>
     </button>
   );
