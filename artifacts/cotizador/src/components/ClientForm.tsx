@@ -461,7 +461,7 @@ function NumberInput({
         cursor: "text",
       }}
     >
-      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", lineHeight: 1, color: "rgba(255,255,255,0.65)", userSelect: "none", whiteSpace: "nowrap" }}>{label}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", lineHeight: 1, color: "rgba(255,255,255,0.65)", userSelect: "none", whiteSpace: "nowrap", flexShrink: 0 }}>{label}</span>
       <input
         type="text"
         inputMode="numeric"
@@ -487,7 +487,7 @@ function NumberInput({
           }
         }}
         aria-label={label}
-        style={{ width: 20, minWidth: 16, textAlign: "center", fontSize: 18, fontWeight: 800, lineHeight: 1, color: "#fff", background: "transparent", border: 0, padding: 0, outline: "none", fontVariantNumeric: "tabular-nums" }}
+        style={{ width: 34, minWidth: 34, flexShrink: 0, textAlign: "right", fontSize: 18, fontWeight: 800, lineHeight: 1, color: "#fff", background: "transparent", border: 0, padding: 0, outline: "none", fontVariantNumeric: "tabular-nums" }}
         className="focus:outline-none"
       />
     </label>
