@@ -20,6 +20,15 @@ export type EstadoCRM =
 
 export type Prioridad = "alta" | "media" | "baja";
 
+export type TipoProximaAccion =
+  | "llamar"
+  | "whatsapp"
+  | "correo"
+  | "esperar"
+  | "confirmarPago"
+  | "reenviar"
+  | "recordatorio";
+
 export type ActividadTipo =
   | "creada"
   | "editada"
@@ -62,6 +71,13 @@ export interface CotizacionGuardada {
   fechaRecordatorio?: string;
   notaInterna?: string;
   historial?: ActividadEntry[];
+  tipoProximaAccion?: TipoProximaAccion;
+  fechaProximaAccion?: string;
+  observacionSeguimiento?: string;
+  // Future fields (architecture ready)
+  agenteSeguimiento?: string;
+  destinoSeguimiento?: string;
+  esFavorito?: boolean;
 }
 
 const STORAGE_KEY = "cotizador.guardadas";

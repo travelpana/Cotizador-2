@@ -12,6 +12,7 @@ import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
 import Seguimiento from "@/components/Seguimiento";
+import NotificationBell from "@/components/NotificationBell";
 import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
@@ -739,6 +740,14 @@ export default function CotizadorPage() {
   const previewNumero =
     previewQuote?.numeroCotizacion ?? currentNumero ?? "";
 
+  const bellSlot = (
+    <NotificationBell
+      items={guardadas}
+      onView={seguimientoView}
+      onUpdateCRM={seguimientoUpdateCRM}
+    />
+  );
+
   return (
     <div className="flex min-h-screen">
       <Sidebar
@@ -774,7 +783,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "seguimiento" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="SEGUIMIENTO" />
+              <ModuleRibbon title="SEGUIMIENTO" rightSlot={bellSlot} />
               <Seguimiento
                 items={guardadas}
                 onView={seguimientoView}
@@ -786,7 +795,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "plantillas" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="PLANTILLAS" />
+              <ModuleRibbon title="PLANTILLAS" rightSlot={bellSlot} />
               <Plantillas
                 hoteles={mergedHoteles}
                 tours={mergedTours}
@@ -799,7 +808,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "descriptivos" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="DESCRIPTIVOS" />
+              <ModuleRibbon title="DESCRIPTIVOS" rightSlot={bellSlot} />
               <Descriptivos
                 apiDescriptivos={descriptivos}
                 onChanged={handleDescriptivosChanged}
@@ -807,7 +816,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "tarifas" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="TARIFAS" />
+              <ModuleRibbon title="TARIFAS" rightSlot={bellSlot} />
               <Tarifas
                 apiHoteles={hoteles}
                 apiTours={tours}
@@ -826,7 +835,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "respaldos" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="RESPALDOS" />
+              <ModuleRibbon title="RESPALDOS" rightSlot={bellSlot} />
               <Respaldos
                 onImported={() => {
                   handleTarifasChanged();
@@ -837,13 +846,7 @@ export default function CotizadorPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <div
-                className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm"
-                style={{ backgroundColor: "#00247e" }}
-              >
-                <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
-                <span className="text-white font-bold tracking-[0.15em] text-sm">COTIZADOR</span>
-              </div>
+              <ModuleRibbon title="COTIZADOR" rightSlot={bellSlot} />
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
                 <ClientForm
@@ -1033,7 +1036,13 @@ export default function CotizadorPage() {
   );
 }
 
-function ModuleRibbon({ title }: { title: string }) {
+function ModuleRibbon({
+  title,
+  rightSlot,
+}: {
+  title: string;
+  rightSlot?: React.ReactNode;
+}) {
   return (
     <div
       className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm"
@@ -1041,6 +1050,7 @@ function ModuleRibbon({ title }: { title: string }) {
     >
       <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
       <span className="text-white font-bold tracking-[0.15em] text-sm">{title}</span>
+      {rightSlot && <div className="ml-auto">{rightSlot}</div>}
     </div>
   );
 }
