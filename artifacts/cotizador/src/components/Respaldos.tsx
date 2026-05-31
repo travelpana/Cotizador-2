@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import {
+  Upload,
   Download,
-  FolderOpen,
   LayoutTemplate,
   HardDrive,
   CheckCircle2,
@@ -80,14 +80,14 @@ export default function Respaldos({ onImported }: { onImported?: () => void }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <ActionCard
-            icon={<Download className="w-5 h-5" />}
+            icon={<Upload className="w-5 h-5" />}
             label="Exportar respaldo"
             color="blue"
             onClick={exportarRespaldoCompleto}
           />
 
           <ActionCard
-            icon={<FolderOpen className="w-5 h-5" />}
+            icon={<Download className="w-5 h-5" />}
             label="Importar respaldo"
             color="slate"
             loading={importFull.status === "loading"}
@@ -117,14 +117,14 @@ export default function Respaldos({ onImported }: { onImported?: () => void }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <ActionCard
-            icon={<Download className="w-5 h-5" />}
+            icon={<Upload className="w-5 h-5" />}
             label="Exportar plantillas"
             color="purple"
             onClick={exportarRespaldoPlantillas}
           />
 
           <ActionCard
-            icon={<FolderOpen className="w-5 h-5" />}
+            icon={<Download className="w-5 h-5" />}
             label="Importar plantillas"
             color="slate"
             loading={importPlt.status === "loading"}
@@ -166,12 +166,12 @@ function SectionHeading({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-9 h-9 rounded-xl bg-slate-900/8 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+      <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0 mt-0.5">
         {icon}
       </div>
       <div>
-        <p className="font-semibold text-slate-900 text-base leading-tight">{title}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+        <p className="font-bold text-slate-900 text-base leading-tight tracking-tight">{title}</p>
+        <p className="text-sm text-slate-600 mt-0.5 leading-snug">{description}</p>
       </div>
     </div>
   );
