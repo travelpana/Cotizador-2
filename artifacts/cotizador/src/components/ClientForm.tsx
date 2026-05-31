@@ -260,74 +260,93 @@ export function AlojamientoBar({
       {/* Subtle inner curve shine */}
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
-      {/* Flat grid row — no groups, no space-between, no center gap */}
+      {/* Two-block row */}
       <div
         className="relative"
         style={{
           display: "grid",
-          gridTemplateColumns: "1px 104px 116px 92px 1px 1fr 1fr 1fr 1fr",
-          columnGap: 8,
-          alignItems: "center",
-          padding: "11px 16px",
+          gridTemplateColumns: "3fr 1px 2fr",
+          gap: 0,
+          alignItems: "stretch",
+          padding: "10px 20px",
         }}
       >
-        {/* 1. Divider 1 */}
-        <span style={{ width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.25)", display: "block", justifySelf: "center" }} />
+        {/* BLOQUE 1 — Contadores */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-evenly",
+            gap: 8,
+            paddingRight: 16,
+          }}
+        >
+          <NumberInput
+            label="NOCHES"
+            value={cliente.noches}
+            onChange={(v) => updateNum({ noches: v })}
+            min={0}
+          />
+          <NumberInput
+            label="PASAJEROS"
+            value={cliente.pasajeros}
+            onChange={(v) => updateNum({ pasajeros: v })}
+            min={1}
+          />
+          <NumberInput
+            label="NIÑOS"
+            value={cliente.ninos}
+            onChange={(v) => updateNum({ ninos: v })}
+            min={0}
+          />
+        </div>
 
-        {/* 3–5. Counters */}
-        <NumberInput
-          label="NOCHES"
-          icon={<MoonStar className="w-3 h-3" style={{ color: "#eec774" }} />}
-          value={cliente.noches}
-          onChange={(v) => updateNum({ noches: v })}
-          min={0}
-        />
-        <NumberInput
-          label="PASAJEROS"
-          icon={<Users className="w-3 h-3" style={{ color: "#eec774" }} />}
-          value={cliente.pasajeros}
-          onChange={(v) => updateNum({ pasajeros: v })}
-          min={1}
-        />
-        <NumberInput
-          label="NIÑOS"
-          icon={<Baby className="w-3 h-3" style={{ color: "#eec774" }} />}
-          value={cliente.ninos}
-          onChange={(v) => updateNum({ ninos: v })}
-          min={0}
-        />
+        {/* Separador central */}
+        <span style={{ width: 1, backgroundColor: "rgba(255,255,255,0.2)", display: "block", margin: "4px 0" }} />
 
-        {/* 6. Divider 2 */}
-        <span style={{ width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.25)", display: "block", justifySelf: "center" }} />
-
-        {/* 7–10. Pills — each fills its 1fr cell */}
-        {PILLS.map((p) => {
-          const active = acomodaciones.includes(p);
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => togglePill(p)}
-              style={{
-                width: "100%",
-                padding: "6px 2px",
-                borderRadius: 9999,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                color: "#fff",
-                textTransform: "uppercase",
-                textAlign: "center",
-                ...(active
-                  ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
-                  : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
-              }}
-              data-testid={`acomodacion-${p}`}
-            >
-              {p}
-            </button>
-          );
-        })}
+        {/* BLOQUE 2 — Tipos de habitación */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-evenly",
+            gap: 8,
+            paddingLeft: 16,
+          }}
+        >
+          {PILLS.map((p) => {
+            const active = acomodaciones.includes(p);
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => togglePill(p)}
+                style={{
+                  flex: 1,
+                  height: 44,
+                  minWidth: 0,
+                  borderRadius: 9999,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  color: "#fff",
+                  textTransform: "uppercase",
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s",
+                  ...(active
+                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
+                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
+                }}
+                data-testid={`acomodacion-${p}`}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -355,21 +374,19 @@ function NumberInput({
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         gap: 8,
-        height: 42,
+        height: 44,
         padding: "0 14px",
+        flex: 1,
         minWidth: 0,
-        whiteSpace: "nowrap",
         backgroundColor: "rgba(0,20,70,0.55)",
         border: "1px solid rgba(147,197,253,0.3)",
         borderRadius: 9999,
         cursor: "text",
-        flexShrink: 0,
       }}
     >
-      {icon && <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>{icon}</span>}
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", lineHeight: 1, color: "rgba(255,255,255,0.7)", userSelect: "none", whiteSpace: "nowrap" }}>{label}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", lineHeight: 1, color: "rgba(255,255,255,0.65)", userSelect: "none", whiteSpace: "nowrap" }}>{label}</span>
       <input
         type="text"
         inputMode="numeric"
