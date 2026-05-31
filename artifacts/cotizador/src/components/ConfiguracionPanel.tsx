@@ -6,8 +6,12 @@ import {
   Tag,
   Calculator,
   Check,
+  Globe,
+  ChevronDown,
 } from "lucide-react";
 import type { ModoCotizacion } from "./Guardadas";
+import { type Idioma, IDIOMA_LABELS } from "@/lib/i18n";
+import { useRef, useState } from "react";
 
 interface Props {
   modo: ModoCotizacion;
@@ -18,6 +22,8 @@ interface Props {
   onToggleDescriptivos: () => void;
   incluirDescriptivoCompleto: boolean;
   onToggleDescriptivoCompleto: () => void;
+  idioma: Idioma;
+  onIdiomaChange: (i: Idioma) => void;
 }
 
 export default function ConfiguracionPanel({
@@ -29,6 +35,8 @@ export default function ConfiguracionPanel({
   onToggleDescriptivos,
   incluirDescriptivoCompleto,
   onToggleDescriptivoCompleto,
+  idioma,
+  onIdiomaChange,
 }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -62,6 +70,13 @@ export default function ConfiguracionPanel({
 
         <section>
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
+            Idioma
+          </div>
+          <IdiomaSelector idioma={idioma} onChange={onIdiomaChange} />
+        </section>
+
+        <section>
+          <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
             Opciones
           </div>
           <div className="rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
@@ -86,6 +101,63 @@ export default function ConfiguracionPanel({
           </div>
         </section>
       </div>
+    </div>
+  );
+}
+
+const IDIOMAS: Idioma[] = ["es", "en", "pt"];
+
+function IdiomaSelector({ idioma, onChange }: { idioma: Idioma; onChange: (i: Idioma) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition-all text-sm"
+      >
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: "rgba(0,67,187,0.1)", color: "#0043BB" }}
+        >
+          <Globe className="w-4 h-4" />
+        </div>
+        <span className="flex-1 text-left font-semibold text-slate-800">
+          {IDIOMA_LABELS[idioma]}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden"
+          onMouseLeave={() => setOpen(false)}
+        >
+          {IDIOMAS.map((lang) => (
+            <button
+              key={lang}
+              type="button"
+              onClick={() => {
+                onChange(lang);
+                setOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                lang === idioma
+                  ? "bg-[#0043BB]/5 text-[#0043BB] font-semibold"
+                  : "text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              {lang === idioma && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
+              {lang !== idioma && <span className="w-3.5 h-3.5 flex-shrink-0" />}
+              {IDIOMA_LABELS[lang]}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

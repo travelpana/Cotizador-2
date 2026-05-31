@@ -33,7 +33,6 @@ export interface Traslado {
   precios: { p1: number; p2_5: number; p6_10: number; chd: number };
 }
 
-/** Tour-only manual add-on for entrance tickets. */
 export interface TourTickets {
   enabled: boolean;
   label: string;
@@ -43,17 +42,12 @@ export interface TourTickets {
 
 export interface ServicioSeleccionado {
   id: string;
-  /** External code shown in the document, defaults to id. */
   codigo?: string;
   tipo: "hotel" | "tour" | "traslado" | "vuelo" | "catamaran";
   nombre: string;
-  /** Vuelo-only: airport / city of origin. */
   origen?: string;
-  /** Vuelo-only: airport / city of destination. */
   destino?: string;
-  /** Tour-only: optional manual ticket add-on (e.g. museum entry). */
   tickets?: TourTickets;
-  /** Tour-only: schedule label captured from catalog (days · time · duration). */
   horario?: string;
   precios: {
     p1?: number;
@@ -65,44 +59,44 @@ export interface ServicioSeleccionado {
     TPL?: number;
     CHD?: number;
   };
-  /** Manual override of the tier picked for tours/traslados. */
   tarifaOverride?: Tier;
-  /** Manual override of the unit price (total p/p) for tours/traslados.
-   * When defined, sobrescribe la tarifa automática y NO cambia aunque cambie el rango. */
   unitOverride?: number;
-  /** Override of pax count used when computing this service. */
   paxOverride?: number;
-  /** Tour/traslado: whether to display a service date. */
   usarFecha?: boolean;
-  /** Tour/traslado date (single day). */
   fecha?: string;
-  /** Hotel check-in. */
   fechaInicio?: string;
-  /** Hotel check-out. */
   fechaFin?: string;
-  /** Free notes shown in the document. */
   notas?: string;
-  /** Hotel-only meta inherited when picked from catalog. */
   ubicacion?: string;
   estrellas?: string;
   vigencia?: string;
   tipoHabitacion?: string;
-  /** Hotel-only: meal plan / régimen (e.g. "Desayuno buffet incluido"). */
   desayuno?: string;
   manual?: boolean;
-  /** For traslados: whether the service is Regular or Privado. */
   tipoServicio?: "Regular" | "Privado";
 }
 
 export interface Descriptivo {
   codigo: string;
   titulo: string;
+  titulo_en?: string;
+  titulo_pt?: string;
   info?: string;
   parrafos?: string[];
+  parrafos_en?: string[];
+  parrafos_pt?: string[];
   incluye?: string;
+  incluye_en?: string;
+  incluye_pt?: string;
   observaciones?: string;
-  notaImportante?: string;
+  observaciones_en?: string;
+  observaciones_pt?: string;
   recomendaciones?: string;
+  recomendaciones_en?: string;
+  recomendaciones_pt?: string;
+  notaImportante?: string;
+  notaImportante_en?: string;
+  notaImportante_pt?: string;
   horarioExtra?: string;
 }
 
@@ -162,18 +156,13 @@ export interface ServicioCalculado {
   estrellas?: string;
   vigencia?: string;
   tipoHabitacion?: string;
-  /** Hotel-only: meal plan displayed under hotel name in proposals. */
   desayuno?: string;
   noches?: number;
   paxAplicados?: number;
-  /** For tours/traslados: which tier was applied. */
   tierAplicado?: Tier;
   unitAplicado?: number;
-  /** Tour-only: surfaced ticket add-on for display. */
   tickets?: TourTickets;
-  /** Tour-only: schedule label surfaced for display. */
   horario?: string;
-  /** For traslados/tours: Regular or Privado. */
   tipoServicio?: "Regular" | "Privado";
 }
 

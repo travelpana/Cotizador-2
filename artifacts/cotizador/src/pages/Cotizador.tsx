@@ -62,6 +62,7 @@ import type {
   Tour,
   Traslado,
 } from "@/lib/types";
+import type { Idioma } from "@/lib/i18n";
 import { validateCliente } from "@/lib/types";
 import { api, type CatalogInfo } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
@@ -115,6 +116,7 @@ export default function CotizadorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [idioma, setIdioma] = useState<Idioma>("es");
   const [mercado, setMercado] = useState<"general" | "brasil">("general");
   const [hotelesBrasil, setHotelesBrasil] = useState<Hotel[]>([]);
   const [toursBrasil, setToursBrasil] = useState<Tour[]>([]);
@@ -909,6 +911,8 @@ export default function CotizadorPage() {
                   onToggleDescriptivoCompleto={() =>
                     setIncluirDescriptivoCompleto((v) => !v)
                   }
+                  idioma={idioma}
+                  onIdiomaChange={setIdioma}
                 />
                 <ExportButtons
                   cliente={cliente}
@@ -933,6 +937,7 @@ export default function CotizadorPage() {
                   validateBeforeAction={validateBeforeAction}
                   getNumeroCotizacion={getOrCreateNumero}
                   onRegisterActivity={handleRegisterActivity}
+                  idioma={idioma}
                 />
                 {servicios.length > 0 && (
                   <button
@@ -1001,6 +1006,7 @@ export default function CotizadorPage() {
         actividadesOverride={actividadesOverride}
         onActividadesOverrideChange={setActividadesOverride}
         numeroCotizacion={previewNumero}
+        idioma={idioma}
         observaciones={previewQuote
           ? resolveObservaciones(
               observacionesCatalog,

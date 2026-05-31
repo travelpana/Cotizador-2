@@ -7,6 +7,7 @@ import type {
 } from "@/lib/types";
 import type { ModoCotizacion } from "./Guardadas";
 import { buildPropuestaBody, buildPropuestaData } from "@/lib/propuesta";
+import type { Idioma } from "@/lib/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
@@ -28,6 +29,8 @@ interface Props {
   numeroCotizacion: string;
   /** Resolved observation strings to show in the proposal */
   observaciones?: string[];
+  /** Output language for all section labels */
+  idioma?: Idioma;
 }
 
 export default function VistaPreviaModal({
@@ -45,6 +48,7 @@ export default function VistaPreviaModal({
   onActividadesOverrideChange,
   numeroCotizacion,
   observaciones,
+  idioma,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const overrideRef = useRef(actividadesOverride);
@@ -107,6 +111,7 @@ export default function VistaPreviaModal({
       observaciones,
       editable: true,
       numeroCotizacion,
+      idioma,
     });
   }, [
     cliente,
@@ -119,6 +124,7 @@ export default function VistaPreviaModal({
     descriptivosEffective,
     actividadesOverride,
     numeroCotizacion,
+    idioma,
   ]);
 
   const bodyHtml = useMemo(() => buildPropuestaBody(data), [data]);

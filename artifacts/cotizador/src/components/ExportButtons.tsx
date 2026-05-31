@@ -25,6 +25,7 @@ import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
 import { formatRegimen } from "@/lib/regimen";
+import { tr, type Idioma } from "@/lib/i18n";
 
 interface Props {
   cliente: Cliente;
@@ -41,29 +42,25 @@ interface Props {
   onClear: () => void;
   onPreview: () => void;
   onAutoSave?: () => void;
-  /** Returns true when the form is valid; otherwise it should highlight the invalid fields and surface a message. */
   validateBeforeAction: () => boolean;
-  /**
-   * Returns the cotización number to use for every export (PDF, email, WhatsApp,
-   * preview). The same value is reused across actions so the code shown in the
-   * preview, the PDF header and the Seguimiento table all match.
-   */
   getNumeroCotizacion: () => string;
-  /** Resolved observation strings to include in all exports */
   observaciones?: string[];
-  /** Called after a successful export action to register CRM activity */
   onRegisterActivity?: (tipo: ActividadTipo) => void;
+  idioma?: Idioma;
 }
 
-const EMAIL_INTRO =
-  "Hola,\n\nUn gusto saludarte. Conforme a lo solicitado, te comparto la cotización de los servicios de su interés:";
-
-/** Formats an ISO date (YYYY-MM-DD) as DD-MM-YYYY (e.g. 28-05-2026). */
+/** Formats an ISO date (YYYY-MM-DD) as DD-MM-YYYY. */
 function fmtDMA(iso: string): string {
   if (!iso) return "";
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
   return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
+}
+
+/** Capitalize: "DÍA" → "Día", "DAY" → "Day", "DIA" → "Dia" */
+function cap(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
 export default function ExportButtons({
@@ -85,12 +82,15 @@ export default function ExportButtons({
   validateBeforeAction,
   getNumeroCotizacion,
   onRegisterActivity,
+  idioma = "es",
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const T = tr(idioma);
 
   const acoms = result.acomodaciones;
   const primary = acoms[0];
@@ -104,33 +104,33 @@ export default function ExportButtons({
     const lines: string[] = [];
 
     // ── Encabezado ──────────────────────────────────────────────
-    lines.push("A continuación comparto los detalles de su cotización:");
+    lines.push(T.waIntro);
     lines.push("");
 
     if (cliente.fechaInicio) {
       const inicio = fmtDMA(cliente.fechaInicio);
       const fin = cliente.fechaFin ? fmtDMA(cliente.fechaFin) : "";
-      lines.push(`📅 *Fechas:* ${inicio}${fin ? ` al ${fin}` : ""}`);
+      lines.push(`📅 *${T.fechasDeEstadia}:* ${inicio}${fin ? ` al ${fin}` : ""}`);
     }
-    const pasajerosStr = `${cliente.pasajeros} adulto${cliente.pasajeros === 1 ? "" : "s"}${
-      cliente.ninos ? ` + ${cliente.ninos} niño${cliente.ninos === 1 ? "" : "s"}` : ""
+    const pax = cliente.pasajeros;
+    const ninos = cliente.ninos ?? 0;
+    const pasajerosStr = `${pax} ${pax === 1 ? T.adulto : T.adultos}${
+      ninos ? ` + ${ninos} ${ninos === 1 ? T.nino : T.ninoPlural}` : ""
     }`;
-    lines.push(`👥 *Pasajeros:* ${pasajerosStr}`);
+    lines.push(`👥 *${T.pasajeros}:* ${pasajerosStr}`);
 
     // ── Alojamiento ──────────────────────────────────────────────
     if (hoteles.length) {
       lines.push("");
       lines.push(SEP);
-      lines.push("🏨 *ALOJAMIENTO*");
+      lines.push(`🏨 *${T.alojamiento}*`);
       lines.push(SEP);
       lines.push("");
 
-      // Group hotels by location maintaining insertion order
       const hotelGroups: { ubicacion: string; items: typeof hoteles }[] = [];
       const hotelGroupMap = new Map<string, number>();
       for (const s of hoteles) {
-        const key =
-          (s.ubicacion ?? "").trim().toUpperCase() || "SIN UBICACIÓN";
+        const key = (s.ubicacion ?? "").trim().toUpperCase() || "SIN UBICACIÓN";
         if (hotelGroupMap.has(key)) {
           hotelGroups[hotelGroupMap.get(key)!].items.push(s);
         } else {
@@ -149,9 +149,7 @@ export default function ExportButtons({
           lines.push(`• *${s.nombre}*${starsLabel}${tipoLabel}`);
 
           const regimenWa = formatRegimen(s.desayuno);
-          if (regimenWa) {
-            lines.push(`🍽 ${regimenWa}`);
-          }
+          if (regimenWa) lines.push(`🍽 ${regimenWa}`);
 
           for (const a of acoms) {
             if (isCalc) {
@@ -161,16 +159,13 @@ export default function ExportButtons({
             }
           }
 
-          if (s.notas) {
-            lines.push(`📝 ${s.notas}`);
-          }
-
+          if (s.notas) lines.push(`📝 ${s.notas}`);
           lines.push("");
         }
       }
 
-      lines.push("ℹ️ Tarifas netas por persona y por noche.");
-      lines.push("ℹ️ Disponibilidad sujeta al momento de la reserva.");
+      lines.push(`ℹ️ ${T.waTarifaNetaPP}`);
+      lines.push(`ℹ️ ${T.waDisponibilidad}`);
     }
 
     const traslados = adicionales.filter((s) => s.tipo === "traslado");
@@ -182,7 +177,7 @@ export default function ExportButtons({
     if (traslados.length) {
       lines.push("");
       lines.push(SEP);
-      lines.push("🚐 *TRASLADOS*");
+      lines.push(`🚐 *${T.traslados}*`);
       lines.push(SEP);
       lines.push("");
 
@@ -191,11 +186,11 @@ export default function ExportButtons({
         const modalidad = s.tipoServicio
           ? s.tipoServicio
           : s.detalle?.toLowerCase().includes("privado")
-            ? "Privado"
-            : "Regular";
-        lines.push(`🚐 Modalidad: ${modalidad}`);
+            ? T.privado
+            : T.regular;
+        lines.push(`🚐 ${T.waModoLabel}: ${modalidad}`);
         lines.push(
-          `💲 Tarifa: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} por persona`}`,
+          `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
         if (s.notas) lines.push(`ℹ️ ${s.notas}`);
         lines.push("");
@@ -206,27 +201,27 @@ export default function ExportButtons({
     if (tours.length) {
       lines.push("");
       lines.push(SEP);
-      lines.push("🌴 *TOURS Y EXPERIENCIAS*");
+      lines.push(`🌴 *${T.toursYExperiencias}*`);
       lines.push(SEP);
       lines.push("");
 
       for (const s of tours) {
         lines.push(`• *${s.nombre}*`);
-        if (s.horario) {
+        if (incluirDescriptivos && s.horario) {
           lines.push(`🕒 ${s.horario}`);
         }
         if (s.tickets?.enabled && s.tickets.adultPrice > 0) {
-          const label = s.tickets.label || "Entradas";
+          const label = s.tickets.label || T.incluye;
           const childPart =
             s.tickets.childPrice && s.tickets.childPrice > 0
-              ? ` · Niños ${fmt(s.tickets.childPrice)} p/p`
+              ? ` · ${T.ninosCap} ${fmt(s.tickets.childPrice)} p/p`
               : "";
-          lines.push(`🎟 Costo adicional entradas: ${label} ${fmt(s.tickets.adultPrice)} p/p${childPart}`);
+          lines.push(`🎟 ${T.waAdicional}: ${label} ${fmt(s.tickets.adultPrice)} p/p${childPart}`);
         } else {
-          lines.push("🎟 No incluye entradas");
+          lines.push(`🎟 ${T.noIncluyeEntradas}`);
         }
         lines.push(
-          `💲 Tarifa: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} por persona`}`,
+          `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
         if (s.notas) lines.push(`ℹ️ ${s.notas}`);
         lines.push("");
@@ -237,14 +232,14 @@ export default function ExportButtons({
     if (catamarans.length) {
       lines.push("");
       lines.push(SEP);
-      lines.push("⛵ *CATAMARÁN Y NAVEGACIÓN*");
+      lines.push(`⛵ *${T.catamaranYNavegacion}*`);
       lines.push(SEP);
       lines.push("");
 
       for (const s of catamarans) {
         lines.push(`• *${s.nombre}*`);
         lines.push(
-          `💲 Tarifa: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} por persona`}`,
+          `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
         if (s.notas) lines.push(`ℹ️ ${s.notas}`);
         lines.push("");
@@ -255,29 +250,29 @@ export default function ExportButtons({
     if (vuelos.length) {
       lines.push("");
       lines.push(SEP);
-      lines.push("✈️ *VUELOS*");
+      lines.push(`✈️ *${T.vuelos}*`);
       lines.push(SEP);
       lines.push("");
 
       for (const s of vuelos) {
         lines.push(`• ${s.nombre}`);
         lines.push(
-          `💲 Tarifa: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} por persona`}`,
+          `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
         if (s.notas) lines.push(`ℹ️ ${s.notas}`);
         lines.push("");
       }
     }
 
-    // ── Resumen de costos (modo cálculo) ─────────────────────────
+    // ── Resumen de costos ─────────────────────────────────────────
     if (isCalc) {
       lines.push("");
       lines.push(SEP);
-      lines.push("💰 *RESUMEN DE COSTOS*");
+      lines.push(`💰 *${T.resumenDeCostos}*`);
       lines.push(SEP);
       lines.push("");
       for (const a of acoms) {
-        lines.push(`• ${a}: *${fmt(result.totalesPorAcomodacion[a])}* por persona`);
+        lines.push(`• ${a}: *${fmt(result.totalesPorAcomodacion[a])}* ${T.waPorPersona}`);
       }
     }
 
@@ -293,12 +288,12 @@ export default function ExportButtons({
     if (it.length > 0) {
       lines.push("");
       lines.push(SEP);
-      lines.push("🗓 *ITINERARIO SUGERIDO*");
+      lines.push(`🗓 *${T.itinerarioSugerido}*`);
       lines.push(SEP);
       lines.push("");
       for (const d of it) {
         const fechaLabel = d.fecha ? ` · ${d.fecha}` : "";
-        lines.push(`*Día ${d.dia}*${fechaLabel}`);
+        lines.push(`*${cap(T.dia)} ${d.dia}*${fechaLabel}`);
         lines.push(d.actividad);
         lines.push("");
       }
@@ -320,38 +315,51 @@ export default function ExportButtons({
       if (tourDescs.length) {
         lines.push("");
         lines.push(SEP);
-        lines.push("📋 *DESCRIPTIVOS*");
+        lines.push(`📋 *${T.descriptivos}*`);
         lines.push(SEP);
-        for (const t of tourDescs) {
+        for (const desc of tourDescs) {
+          const titulo =
+            (idioma === "en" ? desc.titulo_en : idioma === "pt" ? desc.titulo_pt : null) || desc.titulo;
+          const parrafos =
+            (idioma === "en" ? desc.parrafos_en : idioma === "pt" ? desc.parrafos_pt : null)?.filter(Boolean).length
+              ? (idioma === "en" ? desc.parrafos_en : desc.parrafos_pt)!
+              : desc.parrafos ?? [];
+          const incluye =
+            (idioma === "en" ? desc.incluye_en : idioma === "pt" ? desc.incluye_pt : null) || desc.incluye;
+          const obsText =
+            (idioma === "en" ? desc.observaciones_en : idioma === "pt" ? desc.observaciones_pt : null) || desc.observaciones;
+          const recText =
+            (idioma === "en" ? desc.recomendaciones_en : idioma === "pt" ? desc.recomendaciones_pt : null) || desc.recomendaciones;
+          const nota =
+            (idioma === "en" ? desc.notaImportante_en : idioma === "pt" ? desc.notaImportante_pt : null) || desc.notaImportante;
+
           lines.push("");
-          lines.push(`*${t.titulo}*`);
+          lines.push(`*${titulo}*`);
           const infoBits: string[] = [];
-          if (t.info) infoBits.push(t.info);
-          if (t.horarioExtra) infoBits.push(t.horarioExtra);
+          if (desc.info) infoBits.push(desc.info);
+          if (desc.horarioExtra) infoBits.push(desc.horarioExtra);
           if (infoBits.length) lines.push(`_${infoBits.join(" · ")}_`);
           lines.push("");
-          for (const p of t.parrafos ?? []) {
-            lines.push(p);
-          }
-          if (t.incluye) {
+          for (const p of parrafos) { lines.push(p); }
+          if (incluye) {
             lines.push("");
-            lines.push(`*✅ Incluye:*`);
-            lines.push(t.incluye);
+            lines.push(`*✅ ${T.incluye}:*`);
+            lines.push(incluye);
           }
-          if (t.observaciones) {
+          if (obsText) {
             lines.push("");
-            lines.push(`*⚠️ Observaciones:*`);
-            lines.push(t.observaciones);
+            lines.push(`*⚠️ ${T.observacionesSub}:*`);
+            lines.push(obsText);
           }
-          if (t.recomendaciones) {
+          if (recText) {
             lines.push("");
-            lines.push(`*💡 Recomendaciones:*`);
-            lines.push(t.recomendaciones);
+            lines.push(`*💡 ${T.recomendaciones}:*`);
+            lines.push(recText);
           }
-          if (t.notaImportante) {
+          if (nota) {
             lines.push("");
-            lines.push(`*🔴 Nota importante:*`);
-            lines.push(t.notaImportante);
+            lines.push(`*🔴 ${T.notaImportante}:*`);
+            lines.push(nota);
           }
         }
       }
@@ -361,7 +369,7 @@ export default function ExportButtons({
     if (observaciones && observaciones.length > 0) {
       lines.push("");
       lines.push(SEP);
-      lines.push("📋 *OBSERVACIONES*");
+      lines.push(`📋 *${T.observaciones}*`);
       lines.push(SEP);
       lines.push("");
       for (const o of observaciones) {
@@ -369,9 +377,7 @@ export default function ExportButtons({
       }
     }
 
-    // Trim trailing blank lines
     while (lines.length && lines[lines.length - 1] === "") lines.pop();
-
     return lines.join("\n");
   };
 
@@ -389,6 +395,7 @@ export default function ExportButtons({
       observaciones,
       numeroCotizacion,
       intro,
+      idioma,
     });
 
   const sanitizeForFilename = (s: string) =>
@@ -415,18 +422,13 @@ export default function ExportButtons({
     if (!validateBeforeAction()) return;
     try {
       const numero = getNumeroCotizacion();
-      const html = buildHtml(numero, EMAIL_INTRO);
-      const text = `${EMAIL_INTRO}\n\n${buildText()}`;
+      const emailIntro = T.emailIntro;
+      const html = buildHtml(numero, emailIntro);
+      const text = `${emailIntro}\n\n${buildText()}`;
 
       let copied = false;
-      const w = window as unknown as {
-        ClipboardItem?: typeof ClipboardItem;
-      };
-      if (
-        w.ClipboardItem &&
-        navigator.clipboard &&
-        "write" in navigator.clipboard
-      ) {
+      const w = window as unknown as { ClipboardItem?: typeof ClipboardItem };
+      if (w.ClipboardItem && navigator.clipboard && "write" in navigator.clipboard) {
         try {
           const item = new w.ClipboardItem({
             "text/html": new Blob([html], { type: "text/html" }),
@@ -435,7 +437,7 @@ export default function ExportButtons({
           await navigator.clipboard.write([item]);
           copied = true;
         } catch {
-          // fall through to legacy method
+          // fall through
         }
       }
 
@@ -502,9 +504,8 @@ export default function ExportButtons({
       doc.close();
 
       await new Promise<void>((resolve) => {
-        if (doc.readyState === "complete") {
-          resolve();
-        } else {
+        if (doc.readyState === "complete") resolve();
+        else {
           iframe!.onload = () => resolve();
           setTimeout(() => resolve(), 1500);
         }
@@ -528,12 +529,7 @@ export default function ExportButtons({
           margin: [10, 10, 10, 10],
           filename,
           image: { type: "jpeg", quality: 0.95 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff",
-            windowWidth: 816,
-          },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 816 },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"] },
         })
@@ -547,9 +543,7 @@ export default function ExportButtons({
       setPdfError(true);
       setTimeout(() => setPdfError(false), 3000);
     } finally {
-      if (iframe && iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-      }
+      if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
       setPdfLoading(false);
     }
   };
@@ -561,110 +555,78 @@ export default function ExportButtons({
         <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>Acciones</h3>
       </div>
       <div className="p-5 space-y-2">
-      <button
-        onClick={() => onPreview()}
-        style={{ backgroundColor: "#041433" }}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110"
-      >
-        <Eye className="w-4 h-4" />
-        Vista previa
-      </button>
-      <button
-        onClick={copyWhatsapp}
-        style={{ backgroundColor: "#03a04e" }}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
-      >
-        {waCopied ? (
-          <>
-            <Check className="w-4 h-4" />
-            ¡Copiado!
-          </>
-        ) : (
-          <>
-            <MessageCircle className="w-4 h-4" />
-            Copiar WhatsApp
-          </>
-        )}
-      </button>
-      <button
-        onClick={copyEmail}
-        style={{ backgroundColor: "#044b9e" }}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
-        title="Copia el correo (mismo diseño que el PDF) listo para pegar en tu cliente de email"
-      >
-        {mailCopied ? (
-          <>
-            <Check className="w-4 h-4" />
-            ¡Copiado!
-          </>
-        ) : (
-          <>
-            <Mail className="w-4 h-4" />
-            Copiar correo
-          </>
-        )}
-      </button>
-      <button
-        onClick={handlePdf}
-        disabled={pdfLoading}
-        style={{ backgroundColor: pdfError ? "#b91c1c" : "#e6ae33" }}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110 disabled:opacity-70 disabled:cursor-wait"
-      >
-        {pdfLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Generando PDF…
-          </>
-        ) : pdfError ? (
-          <>
-            <Printer className="w-4 h-4" />
-            Error al generar PDF
-          </>
-        ) : (
-          <>
-            <Printer className="w-4 h-4" />
-            Descargar PDF
-          </>
-        )}
-      </button>
-
-      <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
-        <IconBtn
-          onClick={() => {
-            if (saving) return;
-            if (!validateBeforeAction()) return;
-            setSaving(true);
-            try {
-              onSave();
-            } finally {
-              setTimeout(() => setSaving(false), 1200);
-            }
-          }}
-          title={isSaved ? "Actualizar" : "Guardar"}
-          disabled={saving}
+        <button
+          onClick={() => onPreview()}
+          style={{ backgroundColor: "#041433" }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110"
         >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Guardando…
-            </>
-          ) : isSaved ? (
-            <>
-              <RefreshCw className="w-4 h-4" />
-              Actualizar
-            </>
+          <Eye className="w-4 h-4" />
+          Vista previa
+        </button>
+        <button
+          onClick={copyWhatsapp}
+          style={{ backgroundColor: "#03a04e" }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
+        >
+          {waCopied ? (
+            <><Check className="w-4 h-4" />¡Copiado!</>
           ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Guardar
-            </>
+            <><MessageCircle className="w-4 h-4" />Copiar WhatsApp</>
           )}
-        </IconBtn>
-        <IconBtn onClick={onClear} title="Limpiar" danger>
-          <Eraser className="w-4 h-4" />
-          Limpiar
-        </IconBtn>
-      </div>
+        </button>
+        <button
+          onClick={copyEmail}
+          style={{ backgroundColor: "#044b9e" }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-95"
+          title="Copia el correo (mismo diseño que el PDF) listo para pegar en tu cliente de email"
+        >
+          {mailCopied ? (
+            <><Check className="w-4 h-4" />¡Copiado!</>
+          ) : (
+            <><Mail className="w-4 h-4" />Copiar correo</>
+          )}
+        </button>
+        <button
+          onClick={handlePdf}
+          disabled={pdfLoading}
+          style={{ backgroundColor: pdfError ? "#b91c1c" : "#e6ae33" }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-medium transition-colors hover:brightness-110 disabled:opacity-70 disabled:cursor-wait"
+        >
+          {pdfLoading ? (
+            <><Loader2 className="w-4 h-4 animate-spin" />Generando PDF…</>
+          ) : pdfError ? (
+            <><Printer className="w-4 h-4" />Error al generar PDF</>
+          ) : (
+            <><Printer className="w-4 h-4" />Descargar PDF</>
+          )}
+        </button>
+
+        <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
+          <IconBtn
+            onClick={() => {
+              if (saving) return;
+              if (!validateBeforeAction()) return;
+              setSaving(true);
+              try { onSave(); } finally {
+                setTimeout(() => setSaving(false), 1200);
+              }
+            }}
+            title={isSaved ? "Actualizar" : "Guardar"}
+            disabled={saving}
+          >
+            {saving ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />Guardando…</>
+            ) : isSaved ? (
+              <><RefreshCw className="w-4 h-4" />Actualizar</>
+            ) : (
+              <><Save className="w-4 h-4" />Guardar</>
+            )}
+          </IconBtn>
+          <IconBtn onClick={onClear} title="Limpiar" danger>
+            <Eraser className="w-4 h-4" />
+            Limpiar
+          </IconBtn>
+        </div>
       </div>
     </div>
   );
@@ -685,13 +647,14 @@ function IconBtn({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      title={title}
       disabled={disabled}
-      className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+      title={title}
+      className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
         danger
-          ? "border-red-200 text-red-600 hover:bg-red-50"
-          : "border-slate-200 text-slate-700 hover:bg-slate-50"
+          ? "border border-red-200 text-red-600 hover:bg-red-50"
+          : "border border-slate-200 text-slate-700 hover:bg-slate-50"
       }`}
     >
       {children}

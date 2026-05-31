@@ -4,14 +4,26 @@ export interface DescriptivoLocal {
   id: string;
   codigo: string;
   titulo: string;
+  titulo_en?: string;
+  titulo_pt?: string;
   horario?: string;
   duracion?: string;
   categoria?: string;
   parrafos: string[];
+  parrafos_en?: string[];
+  parrafos_pt?: string[];
   incluyeItems: string[];
+  incluyeItems_en?: string[];
+  incluyeItems_pt?: string[];
   observacionesItems: string[];
+  observacionesItems_en?: string[];
+  observacionesItems_pt?: string[];
   recomendacionesItems: string[];
+  recomendacionesItems_en?: string[];
+  recomendacionesItems_pt?: string[];
   notaImportante?: string;
+  notaImportante_en?: string;
+  notaImportante_pt?: string;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -44,14 +56,26 @@ export function newDescriptivoLocal(partial?: Partial<DescriptivoLocal>): Descri
     id: `desc_${uid()}`,
     codigo: "",
     titulo: "",
+    titulo_en: "",
+    titulo_pt: "",
     horario: "",
     duracion: "",
     categoria: "",
     parrafos: [],
+    parrafos_en: [],
+    parrafos_pt: [],
     incluyeItems: [],
+    incluyeItems_en: [],
+    incluyeItems_pt: [],
     observacionesItems: [],
+    observacionesItems_en: [],
+    observacionesItems_pt: [],
     recomendacionesItems: [],
+    recomendacionesItems_en: [],
+    recomendacionesItems_pt: [],
     notaImportante: "",
+    notaImportante_en: "",
+    notaImportante_pt: "",
     activo: true,
     createdAt: now,
     updatedAt: now,
@@ -76,12 +100,24 @@ export function toDescriptivo(d: DescriptivoLocal): Descriptivo {
   return {
     codigo: d.codigo.trim().toUpperCase(),
     titulo: d.titulo,
+    titulo_en: d.titulo_en?.trim() || undefined,
+    titulo_pt: d.titulo_pt?.trim() || undefined,
     info: infoBits.join(" · ") || undefined,
     parrafos: d.parrafos.filter(Boolean),
+    parrafos_en: d.parrafos_en?.filter(Boolean).length ? d.parrafos_en.filter(Boolean) : undefined,
+    parrafos_pt: d.parrafos_pt?.filter(Boolean).length ? d.parrafos_pt.filter(Boolean) : undefined,
     incluye: d.incluyeItems.filter(Boolean).join("\n") || undefined,
+    incluye_en: d.incluyeItems_en?.filter(Boolean).join("\n") || undefined,
+    incluye_pt: d.incluyeItems_pt?.filter(Boolean).join("\n") || undefined,
     observaciones: d.observacionesItems.filter(Boolean).join("\n") || undefined,
+    observaciones_en: d.observacionesItems_en?.filter(Boolean).join("\n") || undefined,
+    observaciones_pt: d.observacionesItems_pt?.filter(Boolean).join("\n") || undefined,
     recomendaciones: d.recomendacionesItems.filter(Boolean).join("\n") || undefined,
+    recomendaciones_en: d.recomendacionesItems_en?.filter(Boolean).join("\n") || undefined,
+    recomendaciones_pt: d.recomendacionesItems_pt?.filter(Boolean).join("\n") || undefined,
     notaImportante: d.notaImportante?.trim() || undefined,
+    notaImportante_en: d.notaImportante_en?.trim() || undefined,
+    notaImportante_pt: d.notaImportante_pt?.trim() || undefined,
     horarioExtra: d.horario?.trim() || undefined,
   };
 }
@@ -92,14 +128,26 @@ export function fromDescriptivo(d: Descriptivo): DescriptivoLocal {
     id: `desc_${uid()}`,
     codigo: d.codigo ?? "",
     titulo: d.titulo ?? "",
+    titulo_en: d.titulo_en ?? "",
+    titulo_pt: d.titulo_pt ?? "",
     horario: d.horarioExtra ?? d.info ?? "",
     duracion: "",
     categoria: "",
     parrafos: Array.isArray(d.parrafos) ? d.parrafos : [],
+    parrafos_en: Array.isArray(d.parrafos_en) ? d.parrafos_en : [],
+    parrafos_pt: Array.isArray(d.parrafos_pt) ? d.parrafos_pt : [],
     incluyeItems: d.incluye ? d.incluye.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    incluyeItems_en: d.incluye_en ? d.incluye_en.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    incluyeItems_pt: d.incluye_pt ? d.incluye_pt.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
     observacionesItems: d.observaciones ? d.observaciones.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    observacionesItems_en: d.observaciones_en ? d.observaciones_en.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    observacionesItems_pt: d.observaciones_pt ? d.observaciones_pt.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
     recomendacionesItems: d.recomendaciones ? d.recomendaciones.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    recomendacionesItems_en: d.recomendaciones_en ? d.recomendaciones_en.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
+    recomendacionesItems_pt: d.recomendaciones_pt ? d.recomendaciones_pt.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [],
     notaImportante: d.notaImportante ?? "",
+    notaImportante_en: d.notaImportante_en ?? "",
+    notaImportante_pt: d.notaImportante_pt ?? "",
     activo: true,
     createdAt: now,
     updatedAt: now,
