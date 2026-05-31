@@ -220,7 +220,7 @@ export default function NotificationBell({ items, onView, onUpdateCRM }: Props) 
         className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white"
         aria-label={`Notificaciones${count > 0 ? ` (${count})` : ""}`}
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-5 h-5" style={{ color: "#E6AE33" }} />
         {count > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 shadow-sm">
             {count > 99 ? "99+" : count}
