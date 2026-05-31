@@ -8,7 +8,7 @@ import {
   Settings2,
   ChevronDown,
 } from "lucide-react";
-import logoRge from "@assets/rge-whit_1780206082076.png";
+import logoRge from "@assets/style-travel-white_1780208517991.png";
 import { useState } from "react";
 
 export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
@@ -28,11 +28,11 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
 
   return (
     <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col text-white" style={{ backgroundColor: "#041941" }}>
-      <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "24px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <img
           src={logoRge}
           alt="RGE Style Travel"
-          style={{ height: 70, width: "auto", objectFit: "contain", display: "block" }}
+          style={{ display: "block", maxHeight: 90, width: "auto", objectFit: "contain" }}
         />
       </div>
 
