@@ -835,7 +835,7 @@ export default function CotizadorPage() {
 
       <main className="flex-1 overflow-x-hidden bg-[#e8eef6]">
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8">
+        <div className="px-5 py-7 max-w-[1400px]">
           {loading ? (
             <div className="bg-white rounded-2xl shadow-md p-12 flex flex-col items-center justify-center gap-3 text-slate-600">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />

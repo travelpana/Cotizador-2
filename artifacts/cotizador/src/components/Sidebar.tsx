@@ -27,7 +27,7 @@ export default function Sidebar({ view, onView }: Props) {
 
   return (
     <div
-      className="w-[230px] shrink-0 h-screen sticky top-0 flex flex-col"
+      className="w-[220px] shrink-0 h-screen sticky top-0 flex flex-col"
       style={{ padding: "12px 0 12px 12px" }}
     >
       <aside
