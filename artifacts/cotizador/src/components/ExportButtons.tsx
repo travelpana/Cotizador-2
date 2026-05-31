@@ -9,6 +9,7 @@ import {
   Check,
   Loader2,
   RefreshCw,
+  Send,
 } from "lucide-react";
 import html2pdfImport from "html2pdf.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -554,10 +555,12 @@ export default function ExportButtons({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-5 space-y-2">
-      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">
-        Acciones
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+        <Send className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-semibold text-slate-900">Acciones</h3>
       </div>
+      <div className="p-5 space-y-2">
       <button
         onClick={() => onPreview()}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors"
@@ -660,6 +663,7 @@ export default function ExportButtons({
           <Eraser className="w-4 h-4" />
           Limpiar
         </IconBtn>
+      </div>
       </div>
     </div>
   );

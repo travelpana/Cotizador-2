@@ -751,7 +751,7 @@ export default function CotizadorPage() {
         plantillasCount={plantillasCount}
       />
 
-      <main className="flex-1 overflow-x-hidden">
+      <main className="flex-1 overflow-x-hidden bg-[#e8eef6]">
         {view !== "cotizador" && (
           <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -835,6 +835,9 @@ export default function CotizadorPage() {
               apiHoteles={hoteles}
               apiTours={tours}
               apiTraslados={traslados}
+              apiHotelesBrasil={hotelesBrasil}
+              apiToursBrasil={toursBrasil}
+              apiTrasladosBrasil={trasladosBrasil}
               onChanged={handleTarifasChanged}
               onUpload={handleUpload}
               fileInfo={fileInfo}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, UserRound } from "lucide-react";
 import {
   AGENTES,
   type Acomodacion,
@@ -45,7 +45,12 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
     on ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "";
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 p-5">
+    <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+        <UserRound className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-semibold text-slate-900">Datos del cliente</h3>
+      </div>
+      <div className="p-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Field label="Nombre">
           <input
@@ -111,6 +116,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             allowPast
           />
         </Field>
+      </div>
       </div>
     </section>
   );
