@@ -620,7 +620,10 @@ export default function CustomItemModal({
           </button>
           <button
             type="submit"
-            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary/90 shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-sm font-semibold text-white shadow-sm transition-colors"
+            style={{ backgroundColor: "#004fbb" }}
+            onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")}
+            onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}
           >
             <Plus className="w-4 h-4" />
             {isEdit ? "Guardar" : "Agregar"}

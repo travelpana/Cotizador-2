@@ -34,7 +34,7 @@ export default function ConfiguracionPanel({
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
         <Settings2 className="w-4 h-4 flex-shrink-0" style={{ color: "#1495ff" }} />
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
           Configuración de cotización
         </h3>
       </div>

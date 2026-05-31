@@ -233,7 +233,7 @@ export default function ServiciosSeleccionados({
                 type="button"
                 onClick={onAddCustom}
                 className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 whitespace-nowrap"
-                style={{ background: "linear-gradient(135deg, #005be8 0%, #1495ff 100%)" }}
+                style={{ backgroundColor: "#004fbb" }}
               >
                 <Plus className="w-4 h-4" />
                 Ítem personalizado

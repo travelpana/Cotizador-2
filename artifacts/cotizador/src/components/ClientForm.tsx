@@ -48,7 +48,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
     <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
       <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
         <UserRound className="w-4 h-4" style={{ color: "#1495ff" }} />
-        <h3 className="text-sm font-semibold text-slate-900">Datos del cliente</h3>
+        <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>Datos del cliente</h3>
       </div>
       <div className="p-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -261,7 +261,7 @@ export function AlojamientoBar({
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
       <div className="relative px-3 py-2 flex items-center justify-between gap-2">
-        {/* Counters */}
+        {/* Counters + divider grouped together */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <NumberInput
             label="NOCHES"
@@ -284,10 +284,9 @@ export function AlojamientoBar({
             onChange={(v) => updateNum({ ninos: v })}
             min={0}
           />
+          {/* Divider inside the left group → single justify-between gap in center */}
+          <span className="w-px h-6 ml-1 flex-shrink-0" style={{ backgroundColor: "rgba(147,197,253,0.4)" }} />
         </div>
-
-        {/* Divider */}
-        <span className="w-px h-6 flex-shrink-0" style={{ backgroundColor: "rgba(147,197,253,0.4)" }} />
 
         {/* Pills */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -393,7 +392,7 @@ export function Section({
             {icon}
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 leading-tight">
+            <h2 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
               {title}
             </h2>
             {subtitle && (

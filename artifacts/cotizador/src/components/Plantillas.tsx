@@ -165,7 +165,10 @@ export default function Plantillas({
         </div>
         <button
           onClick={() => setEditor({ tipo: "nuevo" })}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors shadow-sm"
+          style={{ backgroundColor: "#004fbb" }}
+          onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")}
+          onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}
         >
           <Plus className="w-4 h-4" />
           Nueva plantilla
@@ -401,7 +404,10 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       </div>
       <button
         onClick={onNew}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-colors shadow-sm"
+        style={{ backgroundColor: "#004fbb" }}
+        onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")}
+        onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}
       >
         <Plus className="w-4 h-4" />
         Crear primera plantilla
