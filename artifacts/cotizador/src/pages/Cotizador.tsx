@@ -813,6 +813,7 @@ export default function CotizadorPage() {
       items={guardadas}
       onView={seguimientoView}
       onUpdateCRM={seguimientoUpdateCRM}
+      onGoToSeguimiento={() => setView("seguimiento")}
     />
   );
 
