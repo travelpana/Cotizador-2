@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Bell,
   X,
@@ -82,7 +83,6 @@ function buildFlatAlerts(items: CotizacionGuardada[]): FlatAlert[] {
     const diasHastaVigencia = daysUntil(g.cliente.vigencia);
     const valor = g.valorCotizacion ?? 0;
 
-    // 1. Vence mañana (highest priority)
     if (diasHastaVigencia === 1) {
       alerts.push({
         g,
@@ -94,7 +94,6 @@ function buildFlatAlerts(items: CotizacionGuardada[]): FlatAlert[] {
       continue;
     }
 
-    // 2. Vence en 2–5 días
     if (diasHastaVigencia !== null && diasHastaVigencia >= 2 && diasHastaVigencia <= 5) {
       alerts.push({
         g,
@@ -105,7 +104,6 @@ function buildFlatAlerts(items: CotizacionGuardada[]): FlatAlert[] {
       });
     }
 
-    // 3. Recordatorio de hoy/mañana
     if (g.recordatorio) {
       const rd = daysUntil(g.recordatorio);
       if (rd !== null && rd <= 1) {
@@ -119,7 +117,6 @@ function buildFlatAlerts(items: CotizacionGuardada[]): FlatAlert[] {
       }
     }
 
-    // 4. Sin seguimiento hace 3+ días
     if (sinActividad >= 3) {
       const alreadyAdded = alerts.some(
         (a) => a.g.id === g.id && a.kind === "vence_manana",
@@ -139,7 +136,6 @@ function buildFlatAlerts(items: CotizacionGuardada[]): FlatAlert[] {
     }
   }
 
-  // Deduplicate by quote id — keep highest priority per quote
   const byId = new Map<string, FlatAlert>();
   for (const a of alerts) {
     const existing = byId.get(a.g.id);
@@ -147,6 +143,120 @@ function buildFlatAlerts(items: CotizacionGuardada[]): FlatAlert[] {
   }
 
   return Array.from(byId.values()).sort((a, b) => b.priority - a.priority);
+}
+
+// ─── Portal Panel ─────────────────────────────────────────────────────────────
+
+interface PanelPosition {
+  top: number;
+  right: number;
+}
+
+function NotificationPanel({
+  open,
+  anchorRef,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const [pos, setPos] = useState<PanelPosition | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  const updatePos = useCallback(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + 12,
+      right: window.innerWidth - rect.right,
+    });
+  }, [anchorRef]);
+
+  useEffect(() => {
+    if (open) {
+      updatePos();
+      setMounted(true);
+      // Trigger animation on next frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+    } else {
+      setVisible(false);
+      const t = setTimeout(() => setMounted(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [open, updatePos]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, [open, updatePos]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      const target = e.target as Node;
+      if (anchorRef.current?.contains(target)) return;
+      const panel = document.getElementById("notification-panel-portal");
+      if (panel && panel.contains(target)) return;
+      onClose();
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open, onClose, anchorRef]);
+
+  if (!mounted || !pos) return null;
+
+  return createPortal(
+    <>
+      {/* Invisible overlay to capture outside clicks — below the panel */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9998,
+          background: "transparent",
+        }}
+        onMouseDown={onClose}
+      />
+      {/* Panel */}
+      <div
+        id="notification-panel-portal"
+        style={{
+          position: "fixed",
+          top: pos.top,
+          right: pos.right,
+          zIndex: 9999,
+          width: "min(440px, calc(100vw - 24px))",
+          maxHeight: "min(540px, 90vh)",
+          display: "flex",
+          flexDirection: "column",
+          background: "#ffffff",
+          borderRadius: 24,
+          boxShadow: "0 20px 60px rgba(4,25,65,0.18), 0 4px 16px rgba(4,25,65,0.08)",
+          border: "1px solid rgba(4,25,65,0.07)",
+          overflow: "hidden",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0) scale(1)" : "translateY(-8px) scale(0.98)",
+          transition: "opacity 0.2s ease, transform 0.2s ease",
+          pointerEvents: visible ? "auto" : "none",
+        }}
+      >
+        {children}
+      </div>
+    </>,
+    document.body,
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -166,30 +276,20 @@ export default function NotificationBell({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
-  const containerRef = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   const allAlerts = buildFlatAlerts(items);
   const totalBadge = allAlerts.length;
   const visible = allAlerts.slice(0, 5);
   const hasMore = allAlerts.length > 5;
 
-  // Mark visible as read when dropdown opens
   useEffect(() => {
     if (open && visible.length > 0) {
       setReadIds((prev) => new Set([...prev, ...visible.map((a) => a.g.id)]));
     }
   }, [open]);
 
-  // Close on outside click
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
 
   const markAtendida = (g: CotizacionGuardada) => {
     onUpdateCRM(g.id, {
@@ -226,9 +326,10 @@ export default function NotificationBell({
   };
 
   return (
-    <div className="relative" ref={containerRef}>
+    <>
       {/* Bell Button */}
       <button
+        ref={bellRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
@@ -251,89 +352,89 @@ export default function NotificationBell({
         )}
       </button>
 
-      {/* Compact Dropdown */}
-      {open && (
-        <div
-          className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-2xl ring-1 ring-slate-100 z-[200] flex flex-col overflow-hidden"
-          style={{ width: "min(390px, 95vw)", maxHeight: "min(520px, 90vh)" }}
-        >
-          {/* Header */}
-          <div className="flex items-start justify-between px-4 py-3 border-b border-slate-100 shrink-0">
-            <div>
-              <div className="text-sm font-bold text-slate-900">Notificaciones</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                Alertas que requieren atención
-              </div>
+      {/* Portal Panel */}
+      <NotificationPanel open={open} anchorRef={bellRef} onClose={close}>
+        {/* Header */}
+        <div className="flex items-start justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+          <div>
+            <div className="text-sm font-bold text-slate-900">Notificaciones</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Alertas que requieren atención
             </div>
-            <div className="flex items-center gap-3 ml-2">
-              {totalBadge > 0 && (
-                <button
-                  type="button"
-                  onClick={markAllRead}
-                  className="text-[11px] text-slate-400 hover:text-slate-700 transition-colors whitespace-nowrap"
-                >
-                  Marcar todas como leídas
-                </button>
-              )}
+          </div>
+          <div className="flex items-center gap-3 ml-2">
+            {totalBadge > 0 && (
               <button
                 type="button"
-                onClick={() => setOpen(false)}
-                className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors shrink-0"
+                onClick={markAllRead}
+                className="text-[11px] text-slate-400 hover:text-slate-700 transition-colors whitespace-nowrap"
               >
-                <X className="w-3.5 h-3.5" />
+                Marcar todas como leídas
               </button>
-            </div>
-          </div>
-
-          {/* Alert list */}
-          <div className="overflow-y-auto flex-1">
-            {visible.length === 0 ? (
-              <div className="flex flex-col items-center py-12 gap-2">
-                <CheckCircle2 className="w-9 h-9 text-emerald-400" />
-                <div className="text-sm font-semibold text-slate-700">Todo al día</div>
-                <div className="text-xs text-slate-400">
-                  No tienes cotizaciones pendientes
-                </div>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-50">
-                {visible.map((alert) => (
-                  <AlertDropdownItem
-                    key={alert.g.id + alert.kind}
-                    alert={alert}
-                    isRead={readIds.has(alert.g.id)}
-                    onView={() => {
-                      onView(alert.g);
-                      setOpen(false);
-                    }}
-                    onAtender={() => markAtendida(alert.g)}
-                    onPosponer={() => posponer(alert.g)}
-                  />
-                ))}
-              </div>
             )}
-          </div>
-
-          {/* Footer */}
-          <div className="border-t border-slate-100 px-4 py-2.5 shrink-0">
             <button
               type="button"
-              onClick={() => {
-                setOpen(false);
-                onGoToSeguimiento?.();
-              }}
-              className="flex items-center justify-center gap-1 text-xs font-semibold w-full py-0.5 transition-colors hover:opacity-80"
-              style={{ color: "#004FBB" }}
+              onClick={close}
+              className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors shrink-0"
             >
-              {hasMore
-                ? `Ver todas en Seguimiento (${allAlerts.length - 5} más)`
-                : "Ver todas en Seguimiento"}
-              <ChevronRight className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Alert list */}
+        <div className="overflow-y-auto flex-1">
+          {visible.length === 0 ? (
+            <div className="flex flex-col items-center py-10 gap-2">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center mb-1"
+                style={{ background: "rgba(16,185,129,0.1)" }}
+              >
+                <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+              </div>
+              <div className="text-sm font-semibold text-slate-800">✓ Todo al día</div>
+              <div className="text-xs text-slate-400">
+                No tienes cotizaciones pendientes.
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {visible.map((alert) => (
+                <AlertDropdownItem
+                  key={alert.g.id + alert.kind}
+                  alert={alert}
+                  isRead={readIds.has(alert.g.id)}
+                  onView={() => {
+                    onView(alert.g);
+                    close();
+                  }}
+                  onAtender={() => markAtendida(alert.g)}
+                  onPosponer={() => posponer(alert.g)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-slate-100 px-4 py-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              close();
+              onGoToSeguimiento?.();
+            }}
+            className="flex items-center justify-center gap-1 text-xs font-semibold w-full py-0.5 transition-colors hover:opacity-80"
+            style={{ color: "#004FBB" }}
+          >
+            {hasMore
+              ? `Ver todas en Seguimiento (${allAlerts.length - 5} más)`
+              : "Ver todas en Seguimiento"}
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </NotificationPanel>
+    </>
   );
 }
 
@@ -384,7 +485,6 @@ function AlertDropdownItem({
 
   return (
     <div className="px-4 py-3 hover:bg-slate-50/70 transition-colors relative">
-      {/* Unread dot */}
       {!isRead && (
         <span
           className="absolute left-1.5 top-4 w-1.5 h-1.5 rounded-full"
@@ -395,7 +495,6 @@ function AlertDropdownItem({
       <div className="flex items-start gap-2.5">
         <div className="mt-0.5 shrink-0">{cfg.icon}</div>
         <div className="flex-1 min-w-0">
-          {/* Agency + amount */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-slate-900 truncate">
               {agencia}
@@ -407,7 +506,6 @@ function AlertDropdownItem({
             )}
           </div>
 
-          {/* Code + time */}
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             {alert.g.numeroCotizacion && (
               <span className="text-[11px] text-slate-400 font-mono">
@@ -419,12 +517,10 @@ function AlertDropdownItem({
             )}
           </div>
 
-          {/* Alert label */}
           <div className="text-[11px] font-semibold mt-0.5" style={{ color: cfg.color }}>
             {alert.label}
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-1.5 mt-2">
             <button
               type="button"
