@@ -75,3 +75,9 @@ externalPort = 3001
 [[ports]]
 localPort = 26005
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+PORT = "5000"
+BASE_PATH = "/"
