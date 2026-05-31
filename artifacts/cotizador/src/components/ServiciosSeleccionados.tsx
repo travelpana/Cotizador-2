@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { PriceInput } from "@/components/ui/price-input";
 import { Section } from "./ClientForm";
 import type {
@@ -33,8 +33,11 @@ import {
   LayoutTemplate,
   ChevronDown,
   Building2,
+  List,
+  X,
 } from "lucide-react";
 import { loadPlantillas, type Plantilla } from "@/lib/plantillas";
+import { loadObservaciones } from "@/lib/observaciones";
 
 interface Props {
   servicios: ServicioSeleccionado[];
@@ -45,6 +48,8 @@ interface Props {
   onEdit: (s: ServicioSeleccionado) => void;
   onAddCustom?: () => void;
   onCargarPlantilla?: (id: string) => void;
+  observaciones?: string;
+  onObservacionesChange?: (v: string) => void;
 }
 
 function plantillaResumen(p: Plantilla) {
@@ -88,6 +93,8 @@ export default function ServiciosSeleccionados({
   onEdit,
   onAddCustom,
   onCargarPlantilla,
+  observaciones = "",
+  onObservacionesChange,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
@@ -288,7 +295,159 @@ export default function ServiciosSeleccionados({
           ))}
         </div>
       )}
+      <ObsPanel observaciones={observaciones} onObservacionesChange={onObservacionesChange} />
     </Section>
+  );
+}
+
+/* ───────────────────────── ObsPanel ───────────────────────── */
+
+const PRIORITY_IDS = [
+  "precios_netos_pp",
+  "sujeto_disponibilidad",
+  "suplemento_sgl",
+  "suplemento_vuelo_nocturno",
+];
+
+function ObsPanel({
+  observaciones,
+  onObservacionesChange,
+}: {
+  observaciones: string;
+  onObservacionesChange?: (v: string) => void;
+}) {
+  const [inputVal, setInputVal] = useState("");
+  const [quickOpen, setQuickOpen] = useState(false);
+  const catalog = useMemo(() => loadObservaciones(), []);
+
+  const bullets = useMemo(
+    () => observaciones.split("\n").map((l) => l.trim()).filter(Boolean),
+    [observaciones],
+  );
+
+  const addObs = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || !onObservacionesChange) return;
+    const next = bullets.length > 0 ? bullets.join("\n") + "\n" + trimmed : trimmed;
+    onObservacionesChange(next);
+  };
+
+  const removeObs = (idx: number) => {
+    if (!onObservacionesChange) return;
+    onObservacionesChange(bullets.filter((_, i) => i !== idx).join("\n"));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addObs(inputVal);
+      setInputVal("");
+    }
+  };
+
+  const priorityObs = catalog.filter((o) => PRIORITY_IDS.includes(o.id));
+  const otherObs = catalog.filter((o) => !PRIORITY_IDS.includes(o.id));
+  const existingTexts = new Set(bullets.map((b) => b.toLowerCase()));
+
+  return (
+    <div className="mt-5 pt-5 border-t border-slate-100">
+      <div className="flex items-center gap-2 mb-3">
+        <List className="w-3.5 h-3.5 text-slate-400" />
+        <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
+          Observaciones
+        </span>
+      </div>
+
+      {bullets.length > 0 && (
+        <ul className="space-y-1.5 mb-3">
+          {bullets.map((b, i) => (
+            <li key={i} className="flex items-start gap-2 group">
+              <span className="text-slate-400 mt-0.5 shrink-0 leading-snug">•</span>
+              <span className="text-sm text-slate-700 flex-1 leading-snug">{b}</span>
+              {onObservacionesChange && (
+                <button
+                  type="button"
+                  onClick={() => removeObs(i)}
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0 mt-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {onObservacionesChange && (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Escribir observación y presionar Enter…"
+            className="flex-1 px-3 h-9 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
+          />
+          <Popover open={quickOpen} onOpenChange={setQuickOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 ring-1 ring-slate-200 transition-colors"
+              >
+                <List className="w-3.5 h-3.5" />
+                Rápidas
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 p-1.5 z-[60]">
+              <div className="space-y-0.5">
+                {priorityObs.map((o) => {
+                  const already = existingTexts.has(o.texto.toLowerCase());
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      disabled={already}
+                      onClick={() => {
+                        addObs(o.texto);
+                        setQuickOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {o.texto}
+                    </button>
+                  );
+                })}
+                {otherObs.length > 0 && (
+                  <>
+                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                      Otras cláusulas
+                    </div>
+                    {otherObs.map((o) => {
+                      const already = existingTexts.has(o.texto.toLowerCase());
+                      return (
+                        <button
+                          key={o.id}
+                          type="button"
+                          disabled={already}
+                          onClick={() => {
+                            addObs(o.texto);
+                            setQuickOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {o.texto}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+    </div>
   );
 }
 

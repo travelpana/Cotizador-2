@@ -16,7 +16,6 @@ import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
 import Respaldos from "@/components/Respaldos";
-import ObservacionesPanel from "@/components/ObservacionesPanel";
 import { loadObservaciones, resolveObservaciones } from "@/lib/observaciones";
 import {
   loadGuardadas,
@@ -685,9 +684,6 @@ export default function CotizadorPage() {
         }}
         seguimientoCount={guardadas.length}
         plantillasCount={plantillasCount}
-        fileInfo={fileInfo}
-        onReload={handleTarifarioReload}
-        onUpload={handleUpload}
       />
 
       <main className="flex-1 overflow-x-hidden">
@@ -776,6 +772,8 @@ export default function CotizadorPage() {
               apiTraslados={traslados}
               onChanged={handleTarifasChanged}
               onUpload={handleUpload}
+              fileInfo={fileInfo}
+              onReload={handleTarifarioReload}
             />
           ) : view === "respaldos" ? (
             <Respaldos
@@ -816,13 +814,8 @@ export default function CotizadorPage() {
                   onEdit={openEdit}
                   onAddCustom={() => setCustomOpen(true)}
                   onCargarPlantilla={handleCargarPlantillaEnCotizacion}
-                />
-                <ObservacionesPanel
-                  servicios={servicios}
-                  seleccionadas={observacionesSeleccionadas}
-                  onSeleccionadasChange={setObservacionesSeleccionadas}
-                  manual={observacionManual}
-                  onManualChange={setObservacionManual}
+                  observaciones={observacionManual}
+                  onObservacionesChange={setObservacionManual}
                 />
                 {incluirItinerario && (
                   <Itinerario

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import {
   Download,
-  Upload,
+  FolderOpen,
   LayoutTemplate,
   HardDrive,
   CheckCircle2,
@@ -87,7 +87,7 @@ export default function Respaldos({ onImported }: { onImported?: () => void }) {
           />
 
           <ActionCard
-            icon={<Upload className="w-5 h-5" />}
+            icon={<FolderOpen className="w-5 h-5" />}
             label="Importar respaldo"
             color="slate"
             loading={importFull.status === "loading"}
@@ -124,7 +124,7 @@ export default function Respaldos({ onImported }: { onImported?: () => void }) {
           />
 
           <ActionCard
-            icon={<Upload className="w-5 h-5" />}
+            icon={<FolderOpen className="w-5 h-5" />}
             label="Importar plantillas"
             color="slate"
             loading={importPlt.status === "loading"}

@@ -12,8 +12,14 @@ import {
   Trash2,
   X,
   Bus,
+  RefreshCw,
+  Upload,
+  FileText,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import type { Hotel, Tour, Traslado } from "@/lib/types";
+import type { CatalogInfo } from "@/lib/api";
 import type { HotelLocal, TourLocal, TrasladoLocal } from "@/lib/tarifas";
 import {
   duplicarHotel,
@@ -608,6 +614,8 @@ interface Props {
   apiTraslados: Traslado[];
   onChanged: () => void;
   onUpload: (file: File) => Promise<void>;
+  fileInfo?: CatalogInfo | null;
+  onReload?: () => Promise<void>;
 }
 
 const TABS: { key: TarifasTab; label: string; icon: React.ReactNode }[] = [
@@ -616,8 +624,23 @@ const TABS: { key: TarifasTab; label: string; icon: React.ReactNode }[] = [
   { key: "traslados", label: "Traslados", icon: <Bus className="w-3.5 h-3.5" /> },
 ];
 
-export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged, onUpload }: Props) {
+type ReloadStatus = "idle" | "loading" | "success" | "error";
+
+function formatRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "hace un momento";
+  if (mins < 60) return `hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `hace ${hrs} h`;
+  const days = Math.floor(hrs / 24);
+  return `hace ${days} día${days !== 1 ? "s" : ""}`;
+}
+
+export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged, onUpload, fileInfo, onReload }: Props) {
   const [tab, setTab] = useState<TarifasTab>("hoteles");
+  const [reloadStatus, setReloadStatus] = useState<ReloadStatus>("idle");
 
   const lsCounts = useMemo(() => ({
     hoteles: loadHotelesLS().length,
@@ -635,8 +658,25 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged,
     input.click();
   };
 
+  const handleReload = async () => {
+    if (!onReload || reloadStatus === "loading") return;
+    setReloadStatus("loading");
+    try {
+      await onReload();
+      setReloadStatus("success");
+      window.setTimeout(() => setReloadStatus("idle"), 2800);
+    } catch {
+      setReloadStatus("error");
+      window.setTimeout(() => setReloadStatus("idle"), 3500);
+    }
+  };
+
+  const reloadLabel = { idle: "Recargar tarifario", loading: "Actualizando...", success: "Actualizado", error: "Error al recargar" }[reloadStatus];
+  const reloadIcon = reloadStatus === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatus === "success" ? <Check className="w-4 h-4" /> : reloadStatus === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
+  const reloadCls = reloadStatus === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : reloadStatus === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Gestión de tarifas</h2>
@@ -650,6 +690,34 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged,
           </button>
           <button onClick={exportarRespaldo} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors">
             <Download className="w-4 h-4" /> Exportar respaldo
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+        <div className="flex items-start gap-2">
+          <FileText className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-slate-800 truncate">{fileInfo?.filename ?? "TARIFARIO.xlsx"}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Cargado {formatRelativeTime(fileInfo?.loadedAt)}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleReload}
+            disabled={reloadStatus === "loading" || !onReload}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadCls}`}
+          >
+            {reloadIcon}
+            {reloadLabel}
+          </button>
+          <button
+            onClick={handleUploadClick}
+            disabled={reloadStatus === "loading"}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors disabled:opacity-60"
+          >
+            <Upload className="w-4 h-4" />
+            Subir nuevo
           </button>
         </div>
       </div>
