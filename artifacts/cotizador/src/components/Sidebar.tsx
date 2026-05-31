@@ -9,7 +9,7 @@ import {
   ChevronDown,
   Building2,
 } from "lucide-react";
-import logoRge from "@assets/style-travel-white_1780208517991.png";
+import logoRge from "@assets/style-travel-blue__1780204454850.png";
 import { useState } from "react";
 
 export type View = "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
@@ -27,18 +27,18 @@ export default function Sidebar({ view, onView }: Props) {
 
   return (
     <div
-      className="w-[220px] shrink-0 h-screen sticky top-0 flex flex-col"
+      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col"
       style={{ padding: "12px 0 12px 12px" }}
     >
       <aside
-        className="flex-1 flex flex-col text-white overflow-hidden"
+        className="flex-1 flex flex-col overflow-hidden"
         style={{
-          backgroundColor: "rgba(4,25,65,0.93)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          borderRadius: 20,
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 4px 24px rgba(4,25,65,0.22), inset 0 1px 0 rgba(255,255,255,0.07)",
+          background: "rgba(255, 255, 255, 0.88)",
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+          border: "1px solid rgba(255, 255, 255, 0.6)",
+          boxShadow: "0 12px 40px rgba(4, 25, 65, 0.08)",
+          borderRadius: 24,
         }}
       >
         {/* Logo */}
@@ -48,33 +48,35 @@ export default function Sidebar({ view, onView }: Props) {
             justifyContent: "center",
             alignItems: "center",
             padding: "22px 20px 18px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(4, 25, 65, 0.07)",
           }}
         >
           <img
             src={logoRge}
             alt="RGE Style Travel"
-            style={{ display: "block", maxHeight: 82, width: "auto", objectFit: "contain" }}
+            style={{ display: "block", maxWidth: 150, maxHeight: 82, width: "auto", objectFit: "contain" }}
           />
         </div>
 
         {/* Nav */}
-        <nav className="p-3 flex-1 space-y-0.5 overflow-y-auto">
-          <NavItem
-            active={view === "cotizador"}
-            onClick={() => onView("cotizador")}
-            icon={<FileSpreadsheet className="w-4 h-4" />}
-            label="Cotizador"
-          />
-          <NavItem
-            active={view === "seguimiento"}
-            onClick={() => onView("seguimiento")}
-            icon={<ListChecks className="w-4 h-4" />}
-            label="Seguimiento"
-          />
+        <nav className="flex-1 overflow-y-auto" style={{ padding: "12px 10px" }}>
+          <div className="space-y-0.5">
+            <NavItem
+              active={view === "cotizador"}
+              onClick={() => onView("cotizador")}
+              icon={<FileSpreadsheet className="w-4 h-4" />}
+              label="Cotizador"
+            />
+            <NavItem
+              active={view === "seguimiento"}
+              onClick={() => onView("seguimiento")}
+              icon={<ListChecks className="w-4 h-4" />}
+              label="Seguimiento"
+            />
+          </div>
 
           <div className="pt-4">
-            <div className="mb-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
+            <div className="mb-2" style={{ borderTop: "1px solid rgba(4, 25, 65, 0.07)" }} />
             <button
               onClick={() => {
                 setConfigOpen((o) => !o);
@@ -82,8 +84,18 @@ export default function Sidebar({ view, onView }: Props) {
                   onView("plantillas");
                 }
               }}
-              className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-widest transition-colors"
-              style={{ color: isConfigView ? "#eec774" : "rgba(255,255,255,0.4)" }}
+              className="w-full flex items-center justify-between gap-2 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all duration-200 outline-none focus:outline-none"
+              style={{
+                color: "#64748b",
+                padding: "6px 12px",
+                background: "transparent",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "#004fbb";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
+              }}
             >
               <span className="flex items-center gap-2">
                 <Settings2 className="w-3.5 h-3.5" />
@@ -95,7 +107,10 @@ export default function Sidebar({ view, onView }: Props) {
             </button>
 
             {configOpen && (
-              <div className="mt-1 space-y-0.5 pl-2 ml-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
+              <div
+                className="mt-1 space-y-0.5"
+                style={{ paddingLeft: 8, marginLeft: 12, borderLeft: "1px solid rgba(4, 25, 65, 0.08)" }}
+              >
                 <NavItem
                   active={view === "plantillas"}
                   onClick={() => onView("plantillas")}
@@ -140,32 +155,64 @@ export default function Sidebar({ view, onView }: Props) {
   );
 }
 
-function NavItem({ active, onClick, icon, label, sub }: {
-  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; sub?: boolean;
+function NavItem({
+  active,
+  onClick,
+  icon,
+  label,
+  sub,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  sub?: boolean;
 }) {
   return (
-    <div className="relative">
-      {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ backgroundColor: "#EEC774" }} />
-      )}
-      <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-2 pl-4 pr-3 rounded-xl transition-colors outline-none focus:outline-none focus-visible:outline-none ${sub ? "py-1.5" : "py-2"}`}
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 rounded-2xl outline-none focus:outline-none focus-visible:outline-none"
+      style={{
+        fontSize: sub ? 13 : 14,
+        fontWeight: 600,
+        padding: sub ? "7px 12px" : "9px 12px",
+        transition: "all 0.2s ease",
+        borderLeft: active ? "4px solid #004fbb" : "4px solid transparent",
+        ...(active
+          ? {
+              background: "#edf4ff",
+              color: "#004fbb",
+            }
+          : {
+              background: "transparent",
+              color: "#07152f",
+            }),
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          const el = e.currentTarget as HTMLButtonElement;
+          el.style.background = "rgba(0, 79, 187, 0.06)";
+          el.style.color = "#004fbb";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          const el = e.currentTarget as HTMLButtonElement;
+          el.style.background = "transparent";
+          el.style.color = "#07152f";
+        }
+      }}
+    >
+      <span
         style={{
-          fontSize: sub ? 13 : 14,
-          fontWeight: 600,
-          ...(active
-            ? { color: "#EEC774", backgroundColor: "rgba(238,199,116,0.10)" }
-            : { color: "rgba(255,255,255,0.7)", backgroundColor: "transparent" }),
+          color: active ? "#004fbb" : "inherit",
+          display: "flex",
+          alignItems: "center",
         }}
-        onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)"; }}
-        onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
       >
-        <span className="flex items-center gap-3">
-          {icon}
-          {label}
-        </span>
-      </button>
-    </div>
+        {icon}
+      </span>
+      {label}
+    </button>
   );
 }
