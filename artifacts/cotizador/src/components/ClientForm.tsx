@@ -47,7 +47,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
   return (
     <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
       <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
-        <UserRound className="w-4 h-4 text-primary" />
+        <UserRound className="w-4 h-4" style={{ color: "#1495ff" }} />
         <h3 className="text-sm font-semibold text-slate-900">Datos del cliente</h3>
       </div>
       <div className="p-5">
@@ -249,45 +249,36 @@ export function AlojamientoBar({
     <section
       className="relative rounded-2xl overflow-hidden text-white"
       style={{
-        background: "linear-gradient(135deg, #0034b8 0%, #004ed8 45%, #006eff 100%)",
+        background: "linear-gradient(135deg, #0034b8 0%, #005be8 50%, #0a7eff 100%)",
         boxShadow: "0 4px 20px rgba(0,52,184,0.35)",
       }}
     >
       {/* Decorative blobs */}
-      <span className="pointer-events-none absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #60a5fa 0%, transparent 70%)" }} />
-      <span className="pointer-events-none absolute bottom-0 left-1/3 w-24 h-24 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #93c5fd 0%, transparent 70%)" }} />
-      <span className="pointer-events-none absolute -bottom-4 right-1/4 w-20 h-20 rounded-full opacity-15" style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
+      <span className="pointer-events-none absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-15" style={{ background: "radial-gradient(circle, #60a5fa 0%, transparent 70%)" }} />
+      <span className="pointer-events-none absolute bottom-0 left-1/3 w-28 h-28 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #93c5fd 0%, transparent 70%)" }} />
+      <span className="pointer-events-none absolute -bottom-4 right-1/4 w-20 h-20 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
+      {/* Subtle inner curve shine */}
+      <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
-      <div className="relative px-4 py-2.5 flex items-center gap-1.5 flex-nowrap">
-        {/* Icon badge */}
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(147,197,253,0.35)" }}
-        >
-          <Building2 style={{ color: "#bfdbfe", width: 16, height: 16 }} />
-        </div>
-
-        {/* Divider */}
-        <span className="w-px h-5 flex-shrink-0 mx-0.5" style={{ backgroundColor: "rgba(147,197,253,0.3)" }} />
-
+      <div className="relative px-4 py-2.5 flex items-center gap-2 flex-nowrap">
         {/* Counters */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <NumberInput
-            label="Noch."
+            label="NOCHES"
             icon={<MoonStar className="w-3 h-3" style={{ color: "#eec774" }} />}
             value={cliente.noches}
             onChange={(v) => updateNum({ noches: v })}
             min={0}
           />
           <NumberInput
-            label="Pasaj."
+            label="PASAJEROS"
             icon={<Users className="w-3 h-3" style={{ color: "#eec774" }} />}
             value={cliente.pasajeros}
             onChange={(v) => updateNum({ pasajeros: v })}
             min={1}
           />
           <NumberInput
-            label="Niños"
+            label="NIÑOS"
             icon={<Baby className="w-3 h-3" style={{ color: "#eec774" }} />}
             value={cliente.ninos}
             onChange={(v) => updateNum({ ninos: v })}
@@ -296,7 +287,7 @@ export function AlojamientoBar({
         </div>
 
         {/* Divider */}
-        <span className="w-px h-5 flex-shrink-0 mx-0.5" style={{ backgroundColor: "rgba(147,197,253,0.3)" }} />
+        <span className="w-px h-7 flex-shrink-0 mx-1" style={{ backgroundColor: "rgba(147,197,253,0.35)" }} />
 
         {/* Pills */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -307,11 +298,11 @@ export function AlojamientoBar({
                 key={p}
                 type="button"
                 onClick={() => togglePill(p)}
-                className="min-w-[44px] px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
+                className="min-w-[46px] px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
                 style={
                   active
-                    ? { backgroundColor: "#0a8cff", boxShadow: "0 2px 8px rgba(10,140,255,0.5)" }
-                    : { backgroundColor: "rgba(0,30,90,0.4)", border: "1px solid rgba(147,197,253,0.35)" }
+                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
+                    : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.35)" }
                 }
                 data-testid={`acomodacion-${p}`}
               >
@@ -344,37 +335,40 @@ function NumberInput({
   return (
     <label
       title={label}
-      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 cursor-text flex-shrink-0"
+      className="flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 cursor-text flex-shrink-0"
       style={{ backgroundColor: "rgba(0,20,70,0.45)", border: "1px solid rgba(147,197,253,0.25)" }}
     >
-      {icon && <span className="flex-shrink-0">{icon}</span>}
-      <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={display}
-        onFocus={() => setDraft("")}
-        onChange={(e) => {
-          const raw = e.target.value.replace(/[^0-9]/g, "");
-          setDraft(raw);
-          if (raw === "") return;
-          const n = parseInt(raw, 10);
-          if (Number.isFinite(n)) onChange(Math.max(min, n));
-        }}
-        onBlur={() => {
-          if (draft === "" || draft === null) {
-            onChange(min);
-          }
-          setDraft(null);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        aria-label={label}
-        className="w-5 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
-      />
+      <div className="flex items-center gap-1.5">
+        {icon && <span className="flex-shrink-0">{icon}</span>}
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={display}
+          onFocus={() => setDraft("")}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^0-9]/g, "");
+            setDraft(raw);
+            if (raw === "") return;
+            const n = parseInt(raw, 10);
+            if (Number.isFinite(n)) onChange(Math.max(min, n));
+          }}
+          onBlur={() => {
+            if (draft === "" || draft === null) {
+              onChange(min);
+            }
+            setDraft(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          aria-label={label}
+          className="w-5 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
+        />
+      </div>
+      <span className="text-[9px] font-bold tracking-widest uppercase text-white/60 leading-none select-none">{label}</span>
     </label>
   );
 }
@@ -397,7 +391,7 @@ export function Section({
     <section className="bg-white rounded-2xl shadow-md p-6">
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(8,70,161,0.1)", color: "#0846A1" }}>
+          <div className="flex-shrink-0 mt-0.5" style={{ color: "#1495ff" }}>
             {icon}
           </div>
           <div>

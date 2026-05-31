@@ -186,7 +186,7 @@ export default function ServiciosSeleccionados({
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                    className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
                     style={{ backgroundColor: "#001851" }}
                   >
                     <LayoutTemplate className="w-4 h-4" />
@@ -232,8 +232,8 @@ export default function ServiciosSeleccionados({
               <button
                 type="button"
                 onClick={onAddCustom}
-                className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
-                style={{ backgroundColor: "#0846A1" }}
+                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 whitespace-nowrap"
+                style={{ background: "linear-gradient(135deg, #005be8 0%, #1495ff 100%)" }}
               >
                 <Plus className="w-4 h-4" />
                 Ítem personalizado
