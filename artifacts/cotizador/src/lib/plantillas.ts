@@ -54,6 +54,42 @@ export interface PlantillaLoadResult {
 }
 
 const LS_KEY = "rge_plantillas_v1";
+const LS_RECIENTES_KEY = "rge_plantillas_recientes_v1";
+const LS_FAVORITAS_KEY = "rge_plantillas_favoritas_v1";
+const MAX_RECIENTES = 5;
+
+export function loadRecientes(): string[] {
+  try {
+    const raw = localStorage.getItem(LS_RECIENTES_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function pushReciente(id: string): void {
+  const prev = loadRecientes().filter((x) => x !== id);
+  const next = [id, ...prev].slice(0, MAX_RECIENTES);
+  localStorage.setItem(LS_RECIENTES_KEY, JSON.stringify(next));
+}
+
+export function loadFavoritas(): string[] {
+  try {
+    const raw = localStorage.getItem(LS_FAVORITAS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function toggleFavorita(id: string): string[] {
+  const prev = loadFavoritas();
+  const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+  localStorage.setItem(LS_FAVORITAS_KEY, JSON.stringify(next));
+  return next;
+}
 
 export function loadPlantillas(): Plantilla[] {
   try {

@@ -36,8 +36,9 @@ import {
   List,
   X,
 } from "lucide-react";
-import { loadPlantillas, type Plantilla } from "@/lib/plantillas";
+import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
 import { loadObservaciones } from "@/lib/observaciones";
+import PlantillaSelectorModal from "./PlantillaSelectorModal";
 
 interface Props {
   servicios: ServicioSeleccionado[];
@@ -48,6 +49,7 @@ interface Props {
   onEdit: (s: ServicioSeleccionado) => void;
   onAddCustom?: () => void;
   onCargarPlantilla?: (id: string) => void;
+  onEditarPlantilla?: (p: Plantilla) => void;
   observaciones?: string;
   onObservacionesChange?: (v: string) => void;
 }
@@ -93,31 +95,30 @@ export default function ServiciosSeleccionados({
   onEdit,
   onAddCustom,
   onCargarPlantilla,
+  onEditarPlantilla,
   observaciones = "",
   onObservacionesChange,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
-  const [plantillaMenuOpen, setPlantillaMenuOpen] = useState(false);
+  const [plantillaModalOpen, setPlantillaModalOpen] = useState(false);
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
 
-  const handleOpenPlantillaMenu = (open: boolean) => {
-    if (open) setPlantillas(loadPlantillas());
-    setPlantillaMenuOpen(open);
+  const handleOpenPlantillaModal = () => {
+    setPlantillas(loadPlantillas());
+    setPlantillaModalOpen(true);
   };
 
-  const handleSeleccionarPlantilla = (p: Plantilla) => {
-    setPlantillaMenuOpen(false);
+  const handleUsarPlantilla = (p: Plantilla) => {
+    setPlantillaModalOpen(false);
     if (!onCargarPlantilla) return;
-    if (
-      servicios.length > 0 &&
-      !window.confirm(
-        `Esta acción agregará los servicios de "${p.nombre}" a la cotización actual. ¿Continuar?`,
-      )
-    ) {
-      return;
-    }
+    pushReciente(p.id);
     onCargarPlantilla(p.id);
+  };
+
+  const handleEditarPlantilla = (p: Plantilla) => {
+    setPlantillaModalOpen(false);
+    onEditarPlantilla?.(p);
   };
 
   const remove = (s: ServicioSeleccionado) => {
@@ -170,6 +171,7 @@ export default function ServiciosSeleccionados({
   })).filter((g) => g.items.length > 0);
 
   return (
+  <>
     <Section
       icon={<ListChecks className="w-4 h-4" />}
       title="Servicios seleccionados"
@@ -182,51 +184,15 @@ export default function ServiciosSeleccionados({
         (onAddCustom || onCargarPlantilla) && (
           <div className="flex items-center gap-2">
             {onCargarPlantilla && (
-              <Popover open={plantillaMenuOpen} onOpenChange={handleOpenPlantillaMenu}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
-                    style={{ backgroundColor: "#001851" }}
-                  >
-                    <LayoutTemplate className="w-4 h-4" />
-                    Plantilla
-                    <ChevronDown className="w-3 h-3 opacity-70" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 p-1.5">
-                  {plantillas.length === 0 ? (
-                    <div className="px-3 py-4 text-center text-sm text-slate-500">
-                      <LayoutTemplate className="w-6 h-6 mx-auto mb-1.5 opacity-40" />
-                      <p className="font-medium text-slate-600">Sin plantillas</p>
-                      <p className="text-xs mt-0.5">Crea plantillas desde la sección Plantillas</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-0.5">
-                      {plantillas.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => handleSeleccionarPlantilla(p)}
-                          className="w-full text-left px-3 py-2.5 rounded-md hover:bg-slate-50 transition-colors group"
-                        >
-                          <div className="flex items-start gap-2">
-                            <Building2 className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-800 truncate group-hover:text-primary transition-colors">
-                                {p.nombre}
-                              </div>
-                              <div className="text-xs text-slate-500 mt-0.5">
-                                {plantillaResumen(p)}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
+              <button
+                type="button"
+                onClick={handleOpenPlantillaModal}
+                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
+                style={{ backgroundColor: "#001851" }}
+              >
+                <LayoutTemplate className="w-4 h-4" />
+                Plantilla
+              </button>
             )}
             {onAddCustom && (
               <button
@@ -340,6 +306,16 @@ export default function ServiciosSeleccionados({
       )}
       <ObsPanel observaciones={observaciones} onObservacionesChange={onObservacionesChange} />
     </Section>
+    <PlantillaSelectorModal
+      open={plantillaModalOpen}
+      plantillas={plantillas}
+      tieneServicios={servicios.length > 0}
+      onClose={() => setPlantillaModalOpen(false)}
+      onUsar={handleUsarPlantilla}
+      onEditar={handleEditarPlantilla}
+      onCrearNueva={() => { setPlantillaModalOpen(false); onEditarPlantilla?.({ id: "__new__", nombre: "", bloques: [], createdAt: "", updatedAt: "" }); }}
+    />
+  </>
   );
 }
 

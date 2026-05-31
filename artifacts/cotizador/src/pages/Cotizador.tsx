@@ -876,6 +876,10 @@ export default function CotizadorPage() {
                   onEdit={openEdit}
                   onAddCustom={() => setCustomOpen(true)}
                   onCargarPlantilla={handleCargarPlantillaEnCotizacion}
+                  onEditarPlantilla={() => {
+                    refreshPlantillasCount();
+                    setView("plantillas");
+                  }}
                   observaciones={observacionManual}
                   onObservacionesChange={setObservacionManual}
                 />
