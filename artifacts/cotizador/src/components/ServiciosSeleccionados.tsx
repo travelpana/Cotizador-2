@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import emptyStateImg from "@assets/SCR-20260531-dddl_(1)_1780213506931.png";
 import { PriceInput } from "@/components/ui/price-input";
 import { Section } from "./ClientForm";
 import type {
@@ -211,50 +212,12 @@ export default function ServiciosSeleccionados({
     >
       {servicios.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center flex flex-col items-center gap-3" style={{ backgroundColor: "#f4f7fb" }}>
-          <svg width="140" height="100" viewBox="0 0 140 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            {/* Sky */}
-            <rect width="140" height="100" rx="12" fill="#edf2fb"/>
-            {/* Ground */}
-            <ellipse cx="70" cy="93" rx="55" ry="7" fill="#c9d9f0" opacity="0.5"/>
-            {/* Palm trunk */}
-            <path d="M90 90 Q88 70 93 55 Q95 45 91 35" stroke="#8b6914" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-            {/* Palm leaves */}
-            <path d="M91 35 Q80 25 68 28" stroke="#2a7a3b" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <path d="M91 35 Q85 22 92 14" stroke="#2a7a3b" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <path d="M91 35 Q100 24 110 27" stroke="#2a7a3b" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <path d="M91 35 Q103 32 112 38" stroke="#2a7a3b" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <path d="M91 35 Q82 38 76 45" stroke="#2a7a3b" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            {/* Coconuts */}
-            <circle cx="86" cy="38" r="3" fill="#c8922a"/>
-            <circle cx="92" cy="36" r="2.5" fill="#c8922a"/>
-            {/* Suitcase body */}
-            <rect x="22" y="52" width="38" height="30" rx="4" fill="#002682"/>
-            <rect x="22" y="52" width="38" height="30" rx="4" fill="none" stroke="#0a7eed" strokeWidth="1.5"/>
-            {/* Suitcase handle */}
-            <path d="M32 52 L32 46 Q32 43 35 43 L47 43 Q50 43 50 46 L50 52" stroke="#0a7eed" strokeWidth="2" fill="none" strokeLinecap="round"/>
-            {/* Suitcase stripe */}
-            <rect x="22" y="63" width="38" height="4" fill="#0a7eed" opacity="0.5"/>
-            {/* Suitcase latch */}
-            <rect x="38" y="58" width="6" height="8" rx="2" fill="#e6ae33"/>
-            {/* Suitcase wheels */}
-            <circle cx="30" cy="83" r="2.5" fill="#041941"/>
-            <circle cx="52" cy="83" r="2.5" fill="#041941"/>
-            {/* Sign post */}
-            <rect x="62" y="48" width="3" height="42" rx="1.5" fill="#8b6914"/>
-            {/* Sign board */}
-            <rect x="65" y="48" width="36" height="18" rx="3" fill="#e6ae33"/>
-            <text x="83" y="61" textAnchor="middle" fontFamily="sans-serif" fontSize="7.5" fontWeight="700" fill="#002682">TOURS</text>
-            {/* Sun */}
-            <circle cx="118" cy="20" r="9" fill="#eec774" opacity="0.85"/>
-            <line x1="118" y1="6" x2="118" y2="2" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="118" y1="34" x2="118" y2="38" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="104" y1="20" x2="100" y2="20" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="132" y1="20" x2="136" y2="20" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="108" y1="10" x2="105" y2="7" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="128" y1="30" x2="131" y2="33" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="128" y1="10" x2="131" y2="7" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="108" y1="30" x2="105" y2="33" stroke="#eec774" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <img
+            src={emptyStateImg}
+            alt=""
+            aria-hidden="true"
+            style={{ maxWidth: 170, maxHeight: 170, width: "100%", objectFit: "contain", display: "block" }}
+          />
           <div className="font-semibold text-slate-700 text-sm">
             Aún no has agregado servicios
           </div>
