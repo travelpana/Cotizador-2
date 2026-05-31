@@ -7,8 +7,6 @@ import {
   ChevronDown,
   Loader2,
   X,
-  Plus,
-  Check,
 } from "lucide-react";
 import type {
   Hotel,
@@ -45,7 +43,7 @@ interface Resultado {
 
 const MERCADOS: { value: Mercado; label: string }[] = [
   { value: "general", label: "Tarifario general" },
-  { value: "brasil", label: "Brasil" },
+  { value: "brasil", label: "Tarifario Brasil" },
 ];
 
 const FILTROS: { value: Categoria; label: string }[] = [
@@ -532,26 +530,18 @@ function ResultRow({
         </div>
       </div>
 
-      {/* Price + action */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="text-right">
-          <div className="text-sm font-bold tabular-nums leading-tight" style={{ color: "#07152f" }}>
-            {fmt(r.precios.primario.value)}
-            <span className="text-[10px] font-medium text-slate-400 ml-0.5">/{r.precios.primario.label.toLowerCase()}</span>
+      {/* Price */}
+      <div className="text-right flex-shrink-0">
+        <div className="text-sm font-bold tabular-nums leading-tight" style={{ color: "#07152f" }}>
+          {fmt(r.precios.primario.value)}
+          <span className="text-[10px] font-medium text-slate-400 ml-0.5">/{r.precios.primario.label.toLowerCase()}</span>
+        </div>
+        {r.precios.secundario && (
+          <div className="text-[11px] tabular-nums text-slate-400 leading-tight mt-0.5">
+            {fmt(r.precios.secundario.value)}
+            <span className="text-[10px] ml-0.5">/{r.precios.secundario.label.toLowerCase()}</span>
           </div>
-          {r.precios.secundario && (
-            <div className="text-[11px] tabular-nums text-slate-400 leading-tight mt-0.5">
-              {fmt(r.precios.secundario.value)}
-              <span className="text-[10px] ml-0.5">/{r.precios.secundario.label.toLowerCase()}</span>
-            </div>
-          )}
-        </div>
-        <div
-          className="flex items-center justify-center flex-shrink-0 transition-all"
-          style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: added ? "#dcfce7" : active ? "#004fbb" : "#f0f5ff", color: added ? "#16a34a" : active ? "#fff" : "#004fbb" }}
-        >
-          {added ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-        </div>
+        )}
       </div>
     </button>
   );
