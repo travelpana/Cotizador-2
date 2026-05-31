@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check, UserRound, MoonStar, Users, Baby, Building2 } from "lucide-react";
+import { loadAgencias, type Agencia } from "@/lib/agencias";
 import {
   AGENTES,
   type Acomodacion,
@@ -63,13 +64,10 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
           />
         </Field>
         <Field label="Agencia" required error={errors?.agencia}>
-          <input
-            type="text"
+          <AgenciaCombobox
             value={cliente.correo}
-            onChange={(e) => update({ correo: e.target.value.toUpperCase() })}
-            placeholder=""
-            className={`${inputCls} ${errCls(errors?.agencia)}`}
-            data-testid="input-agencia"
+            onChange={(v) => update({ correo: v })}
+            error={errors?.agencia}
           />
         </Field>
         <Field label="Agente" required error={errors?.agente}>
@@ -124,6 +122,83 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
 
 const inputCls =
   "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] placeholder:text-slate-400";
+
+// ─── Agency Combobox ──────────────────────────────────────────────────────────
+
+function AgenciaCombobox({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [agencias, setAgencias] = useState<Agencia[]>([]);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setAgencias(loadAgencias());
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const q = value.trim().toLowerCase();
+  const suggestions = agencias.filter((a) => !q || a.nombre.toLowerCase().includes(q)).slice(0, 8);
+
+  const errBorder = error ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "border-slate-200";
+
+  return (
+    <div ref={ref} className="relative" data-testid="input-agencia">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Seleccionar o escribir agencia"
+        className={`${inputCls} ${errBorder} pr-8`}
+      />
+      {agencias.length > 0 && (
+        <button type="button" tabIndex={-1} onClick={() => setOpen((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      )}
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+          {suggestions.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(a.nombre); setOpen(false); }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be] transition-colors"
+            >
+              {a.logoUrl ? (
+                <div className="w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                  <img src={a.logoUrl} alt="" className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+              )}
+              <span className="font-medium">{a.nombre}</span>
+              {value.toLowerCase() === a.nombre.toLowerCase() && (
+                <Check className="w-3.5 h-3.5 text-[#2596be] ml-auto shrink-0" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function AgentSelect({
   value,

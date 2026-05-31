@@ -17,6 +17,7 @@ import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
 import Respaldos from "@/components/Respaldos";
+import Agencias from "@/components/Agencias";
 import { loadObservaciones, resolveObservaciones } from "@/lib/observaciones";
 import {
   loadGuardadas,
@@ -859,6 +860,11 @@ export default function CotizadorPage() {
                 onDuplicate={seguimientoDuplicate}
                 onUpdateCRM={seguimientoUpdateCRM}
               />
+            </div>
+          ) : view === "agencias" ? (
+            <div className="space-y-6">
+              <ModuleRibbon title="AGENCIAS" rightSlot={bellSlot} />
+              <Agencias />
             </div>
           ) : view === "plantillas" ? (
             <div className="space-y-6">

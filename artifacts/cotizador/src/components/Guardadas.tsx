@@ -82,6 +82,10 @@ export interface CotizacionGuardada {
   agenteSeguimiento?: string;
   destinoSeguimiento?: string;
   esFavorito?: boolean;
+  /** Soft-delete: hidden from active view, shown in Anuladas tab */
+  anulada?: boolean;
+  fechaAnulacion?: string;
+  motivoAnulacion?: string;
 }
 
 const STORAGE_KEY = "cotizador.guardadas";

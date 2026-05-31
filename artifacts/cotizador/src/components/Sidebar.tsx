@@ -7,11 +7,12 @@ import {
   HardDrive,
   Settings2,
   ChevronDown,
+  Building2,
 } from "lucide-react";
 import logoRge from "@assets/style-travel-white_1780208517991.png";
 import { useState } from "react";
 
-export type View = "cotizador" | "seguimiento" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
+export type View = "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
 
 const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "respaldos"];
 
@@ -46,6 +47,12 @@ export default function Sidebar({ view, onView }: Props) {
           onClick={() => onView("seguimiento")}
           icon={<ListChecks className="w-4 h-4" />}
           label="Seguimiento"
+        />
+        <NavItem
+          active={view === "agencias"}
+          onClick={() => onView("agencias")}
+          icon={<Building2 className="w-4 h-4" />}
+          label="Agencias"
         />
 
         <div className="pt-5">
@@ -107,18 +114,8 @@ export default function Sidebar({ view, onView }: Props) {
   );
 }
 
-function NavItem({
-  active,
-  onClick,
-  icon,
-  label,
-  sub,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  sub?: boolean;
+function NavItem({ active, onClick, icon, label, sub }: {
+  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; sub?: boolean;
 }) {
   return (
     <div className="relative">
