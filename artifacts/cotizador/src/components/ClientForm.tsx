@@ -265,16 +265,13 @@ export function AlojamientoBar({
         className="relative"
         style={{
           display: "grid",
-          gridTemplateColumns: "18px 1px 104px 116px 92px 1px 1fr 1fr 1fr 1fr",
+          gridTemplateColumns: "1px 104px 116px 92px 1px 1fr 1fr 1fr 1fr",
           columnGap: 8,
           alignItems: "center",
           padding: "11px 16px",
         }}
       >
-        {/* 1. Building icon */}
-        <Building2 style={{ width: 18, height: 18, color: "#eec774", flexShrink: 0 }} />
-
-        {/* 2. Divider 1 */}
+        {/* 1. Divider 1 */}
         <span style={{ width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.25)", display: "block", justifySelf: "center" }} />
 
         {/* 3–5. Counters */}
