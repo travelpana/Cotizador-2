@@ -206,7 +206,7 @@ function Field({
 }) {
   return (
     <div style={span ? { gridColumn: `span ${span}` } : undefined}>
-      <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
+      <label className="block text-[11px] font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#07152f" }}>
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
         {error && (
@@ -260,7 +260,7 @@ export function AlojamientoBar({
       {/* Subtle inner curve shine */}
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
-      <div className="relative px-4 py-2.5 flex items-center gap-2 flex-nowrap">
+      <div className="relative px-3 py-2 flex items-center justify-between gap-2">
         {/* Counters */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <NumberInput
@@ -287,7 +287,7 @@ export function AlojamientoBar({
         </div>
 
         {/* Divider */}
-        <span className="w-px h-7 flex-shrink-0 mx-1" style={{ backgroundColor: "rgba(147,197,253,0.35)" }} />
+        <span className="w-px h-6 flex-shrink-0" style={{ backgroundColor: "rgba(147,197,253,0.4)" }} />
 
         {/* Pills */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -298,11 +298,11 @@ export function AlojamientoBar({
                 key={p}
                 type="button"
                 onClick={() => togglePill(p)}
-                className="min-w-[46px] px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
+                className="min-w-[40px] px-2.5 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
                 style={
                   active
                     ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
-                    : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.35)" }
+                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }
                 }
                 data-testid={`acomodacion-${p}`}
               >
@@ -335,40 +335,38 @@ function NumberInput({
   return (
     <label
       title={label}
-      className="flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 cursor-text flex-shrink-0"
-      style={{ backgroundColor: "rgba(0,20,70,0.45)", border: "1px solid rgba(147,197,253,0.25)" }}
+      className="flex items-center gap-1 rounded-full px-2.5 py-1.5 cursor-text flex-shrink-0"
+      style={{ backgroundColor: "rgba(0,20,70,0.5)", border: "1px solid rgba(147,197,253,0.3)" }}
     >
-      <div className="flex items-center gap-1.5">
-        {icon && <span className="flex-shrink-0">{icon}</span>}
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={display}
-          onFocus={() => setDraft("")}
-          onChange={(e) => {
-            const raw = e.target.value.replace(/[^0-9]/g, "");
-            setDraft(raw);
-            if (raw === "") return;
-            const n = parseInt(raw, 10);
-            if (Number.isFinite(n)) onChange(Math.max(min, n));
-          }}
-          onBlur={() => {
-            if (draft === "" || draft === null) {
-              onChange(min);
-            }
-            setDraft(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              (e.target as HTMLInputElement).blur();
-            }
-          }}
-          aria-label={label}
-          className="w-5 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
-        />
-      </div>
-      <span className="text-[9px] font-bold tracking-widest uppercase text-white/60 leading-none select-none">{label}</span>
+      {icon && <span className="flex-shrink-0">{icon}</span>}
+      <span className="text-[9px] font-bold tracking-wider uppercase text-white/70 leading-none select-none whitespace-nowrap">{label}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={display}
+        onFocus={() => setDraft("")}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9]/g, "");
+          setDraft(raw);
+          if (raw === "") return;
+          const n = parseInt(raw, 10);
+          if (Number.isFinite(n)) onChange(Math.max(min, n));
+        }}
+        onBlur={() => {
+          if (draft === "" || draft === null) {
+            onChange(min);
+          }
+          setDraft(null);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        aria-label={label}
+        className="w-4 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
+      />
     </label>
   );
 }

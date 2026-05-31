@@ -181,7 +181,7 @@ function Toggle({
         onClick={() => !disabled && onChange()}
         disabled={disabled}
         className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${disabled ? "cursor-not-allowed" : ""}`}
-        style={{ backgroundColor: checked && !disabled ? "#e6ae33" : "#cbd5e1" }}
+        style={{ backgroundColor: checked && !disabled ? "#0047c7" : "#cbd5e1" }}
       >
         <span
           className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
