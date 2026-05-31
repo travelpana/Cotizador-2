@@ -186,11 +186,12 @@ export default function ServiciosSeleccionados({
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 ring-1 ring-slate-200 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                    style={{ backgroundColor: "#001851" }}
                   >
                     <LayoutTemplate className="w-4 h-4" />
                     Plantilla
-                    <ChevronDown className="w-3 h-3 opacity-60" />
+                    <ChevronDown className="w-3 h-3 opacity-70" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-72 p-1.5">
@@ -231,7 +232,8 @@ export default function ServiciosSeleccionados({
               <button
                 type="button"
                 onClick={onAddCustom}
-                className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/15 ring-1 ring-primary/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                style={{ backgroundColor: "#0846A1" }}
               >
                 <Plus className="w-4 h-4" />
                 Ítem personalizado

@@ -752,40 +752,6 @@ export default function CotizadorPage() {
       />
 
       <main className="flex-1 overflow-x-hidden bg-[#e8eef6]">
-        {view !== "cotizador" && (
-          <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border px-6 lg:px-10 py-5">
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                  {view === "seguimiento"
-                    ? "Seguimiento"
-                    : view === "plantillas"
-                      ? "Plantillas"
-                      : view === "descriptivos"
-                        ? "Descriptivos"
-                        : view === "respaldos"
-                          ? "Respaldos"
-                          : "Tarifas"}
-                </h1>
-                <p className="text-xs text-muted-foreground">
-                  {view === "seguimiento"
-                    ? "Cotizaciones guardadas en este equipo"
-                    : view === "plantillas"
-                      ? "Estructuras reutilizables para circuitos y multi-destino"
-                      : view === "descriptivos"
-                        ? "Biblioteca de descriptivos turísticos vinculados al tarifario"
-                        : view === "respaldos"
-                          ? "Exporta e importa tu información sin internet ni servidor"
-                          : "Administra hoteles, tours y traslados · localStorage + Excel"}
-                </p>
-              </div>
-              <div className="text-xs text-muted-foreground hidden md:block">
-                {mergedHoteles.length} hoteles · {mergedTours.length} tours ·{" "}
-                {mergedTraslados.length} traslados
-              </div>
-            </div>
-          </header>
-        )}
 
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8">
           {loading ? (
@@ -807,61 +773,76 @@ export default function CotizadorPage() {
               </button>
             </div>
           ) : view === "seguimiento" ? (
-            <Seguimiento
-              items={guardadas}
-              onView={seguimientoView}
-              onEdit={seguimientoEdit}
-              onDelete={seguimientoDelete}
-              onDuplicate={seguimientoDuplicate}
-              onUpdateCRM={seguimientoUpdateCRM}
-            />
+            <div className="space-y-6">
+              <ModuleRibbon title="SEGUIMIENTO" />
+              <Seguimiento
+                items={guardadas}
+                onView={seguimientoView}
+                onEdit={seguimientoEdit}
+                onDelete={seguimientoDelete}
+                onDuplicate={seguimientoDuplicate}
+                onUpdateCRM={seguimientoUpdateCRM}
+              />
+            </div>
           ) : view === "plantillas" ? (
-            <Plantillas
-              hoteles={mergedHoteles}
-              tours={mergedTours}
-              traslados={mergedTraslados}
-              onUsarPlantilla={(result) => {
-                handleUsarPlantilla(result);
-                refreshPlantillasCount();
-              }}
-            />
+            <div className="space-y-6">
+              <ModuleRibbon title="PLANTILLAS" />
+              <Plantillas
+                hoteles={mergedHoteles}
+                tours={mergedTours}
+                traslados={mergedTraslados}
+                onUsarPlantilla={(result) => {
+                  handleUsarPlantilla(result);
+                  refreshPlantillasCount();
+                }}
+              />
+            </div>
           ) : view === "descriptivos" ? (
-            <Descriptivos
-              apiDescriptivos={descriptivos}
-              onChanged={handleDescriptivosChanged}
-            />
+            <div className="space-y-6">
+              <ModuleRibbon title="DESCRIPTIVOS" />
+              <Descriptivos
+                apiDescriptivos={descriptivos}
+                onChanged={handleDescriptivosChanged}
+              />
+            </div>
           ) : view === "tarifas" ? (
-            <Tarifas
-              apiHoteles={hoteles}
-              apiTours={tours}
-              apiTraslados={traslados}
-              apiHotelesBrasil={hotelesBrasil}
-              apiToursBrasil={toursBrasil}
-              apiTrasladosBrasil={trasladosBrasil}
-              onChanged={handleTarifasChanged}
-              onUpload={handleUpload}
-              fileInfo={fileInfo}
-              onReload={handleTarifarioReload}
-              fileInfoBrasil={fileInfoBrasil}
-              onReloadBrasil={handleTarifarioReloadBrasil}
-              onUploadBrasil={handleUploadBrasil}
-            />
+            <div className="space-y-6">
+              <ModuleRibbon title="TARIFAS" />
+              <Tarifas
+                apiHoteles={hoteles}
+                apiTours={tours}
+                apiTraslados={traslados}
+                apiHotelesBrasil={hotelesBrasil}
+                apiToursBrasil={toursBrasil}
+                apiTrasladosBrasil={trasladosBrasil}
+                onChanged={handleTarifasChanged}
+                onUpload={handleUpload}
+                fileInfo={fileInfo}
+                onReload={handleTarifarioReload}
+                fileInfoBrasil={fileInfoBrasil}
+                onReloadBrasil={handleTarifarioReloadBrasil}
+                onUploadBrasil={handleUploadBrasil}
+              />
+            </div>
           ) : view === "respaldos" ? (
-            <Respaldos
-              onImported={() => {
-                handleTarifasChanged();
-                handleDescriptivosChanged();
-                refreshPlantillasCount();
-              }}
-            />
+            <div className="space-y-6">
+              <ModuleRibbon title="RESPALDOS" />
+              <Respaldos
+                onImported={() => {
+                  handleTarifasChanged();
+                  handleDescriptivosChanged();
+                  refreshPlantillasCount();
+                }}
+              />
+            </div>
           ) : (
             <div className="space-y-6">
               <div
                 className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm"
                 style={{ backgroundColor: "#00247e" }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e6ae33" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span className="text-white font-semibold tracking-wide text-sm">Cotizador</span>
+                <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
+                <span className="text-white font-bold tracking-[0.15em] text-sm">COTIZADOR</span>
               </div>
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
               <div className="space-y-6 min-w-0">
@@ -1044,6 +1025,18 @@ export default function CotizadorPage() {
           {toast.msg}
         </div>
       )}
+    </div>
+  );
+}
+
+function ModuleRibbon({ title }: { title: string }) {
+  return (
+    <div
+      className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm"
+      style={{ backgroundColor: "#00247e" }}
+    >
+      <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
+      <span className="text-white font-bold tracking-[0.15em] text-sm">{title}</span>
     </div>
   );
 }

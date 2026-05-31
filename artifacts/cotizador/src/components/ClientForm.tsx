@@ -247,14 +247,14 @@ export function AlojamientoBar({
 
   return (
     <section
-      className="rounded-2xl shadow-sm px-5 py-4 text-white"
+      className="rounded-2xl shadow-sm px-5 py-3.5 text-white"
       style={{ backgroundColor: "#002682" }}
     >
-      <div className="flex items-center justify-between gap-4 flex-nowrap">
+      <div className="flex items-center gap-4 flex-wrap justify-between">
         <h2 className="text-sm font-bold uppercase tracking-[0.18em] whitespace-nowrap flex-shrink-0">
           Alojamiento
         </h2>
-        <div className="flex items-center gap-2 bg-white/10 rounded-xl p-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <NumberInput
             label="Noches"
             icon={<MoonStar className="w-3.5 h-3.5" style={{ color: "#eec774" }} />}
@@ -285,12 +285,8 @@ export function AlojamientoBar({
                 key={p}
                 type="button"
                 onClick={() => togglePill(p)}
-                className={`min-w-[58px] px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-all ${
-                  active
-                    ? "bg-white shadow-sm"
-                    : "text-white hover:brightness-110"
-                }`}
-                style={active ? { color: "#002682" } : { backgroundColor: "#0a7eed" }}
+                className="min-w-[52px] px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-white"
+                style={active ? { backgroundColor: "rgba(255,255,255,0.25)", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.6)" } : { backgroundColor: "#001851" }}
                 data-testid={`acomodacion-${p}`}
               >
                 {p}
@@ -320,9 +316,9 @@ function NumberInput({
   const display = draft ?? String(value);
 
   return (
-    <label className="flex items-center gap-2 bg-white rounded-lg px-2.5 py-1.5 ring-1 ring-white/40 shadow-sm cursor-text">
+    <label className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 cursor-text" style={{ backgroundColor: "#001851" }}>
       {icon && <span className="flex-shrink-0">{icon}</span>}
-      <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 select-none">
+      <span className="text-[10px] uppercase tracking-wider font-semibold select-none" style={{ color: "rgba(255,255,255,0.65)" }}>
         {label}
       </span>
       <input
@@ -350,7 +346,7 @@ function NumberInput({
           }
         }}
         aria-label={label}
-        className="w-9 bg-transparent border-0 p-0 text-sm font-bold text-slate-900 text-center focus:outline-none tabular-nums"
+        className="w-8 bg-transparent border-0 p-0 text-sm font-bold text-white text-center focus:outline-none tabular-nums"
       />
     </label>
   );
@@ -374,7 +370,7 @@ export function Section({
     <section className="bg-white rounded-2xl shadow-md p-6">
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(8,70,161,0.1)", color: "#0846A1" }}>
             {icon}
           </div>
           <div>
@@ -382,7 +378,7 @@ export function Section({
               {title}
             </h2>
             {subtitle && (
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+              <p className="text-xs mt-0.5" style={{ color: "#283165" }}>{subtitle}</p>
             )}
           </div>
         </div>

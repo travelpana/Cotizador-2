@@ -131,33 +131,34 @@ function NavItem({
   sub?: boolean;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors ${sub ? "py-1.5" : ""}`}
-      style={
-        active
-          ? { backgroundColor: "rgba(230,174,51,0.15)", color: "#e6ae33" }
-          : { color: "rgba(255,255,255,0.7)" }
-      }
-      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)"; }}
-      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
-    >
-      <span className="flex items-center gap-3">
-        {icon}
-        {label}
-      </span>
-      {badge !== undefined && badge > 0 && (
-        <span
-          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-          style={
-            active
-              ? { backgroundColor: "rgba(230,174,51,0.25)", color: "#e6ae33" }
-              : { backgroundColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }
-          }
-        >
-          {badge}
-        </span>
+    <div className="relative">
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ backgroundColor: "#EEC774" }} />
       )}
-    </button>
+      <button
+        onClick={onClick}
+        className={`w-full flex items-center justify-between gap-2 pl-4 pr-3 rounded-md text-sm transition-colors ${sub ? "py-1.5" : "py-2"}`}
+        style={active ? { color: "#EEC774" } : { color: "rgba(255,255,255,0.7)" }}
+        onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)"; }}
+        onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+      >
+        <span className="flex items-center gap-3">
+          {icon}
+          {label}
+        </span>
+        {badge !== undefined && badge > 0 && (
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+            style={
+              active
+                ? { backgroundColor: "rgba(238,199,116,0.2)", color: "#EEC774" }
+                : { backgroundColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }
+            }
+          >
+            {badge}
+          </span>
+        )}
+      </button>
+    </div>
   );
 }

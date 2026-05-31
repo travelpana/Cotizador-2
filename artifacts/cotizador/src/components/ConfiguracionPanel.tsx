@@ -32,8 +32,10 @@ export default function ConfiguracionPanel({
 }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-        <Settings2 className="w-4 h-4 text-primary" />
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(8,70,161,0.1)", color: "#0846A1" }}>
+          <Settings2 className="w-4 h-4" />
+        </div>
         <h3 className="text-sm font-semibold text-slate-900">
           Configuración de cotización
         </h3>
@@ -109,29 +111,25 @@ function ModeCard({
       onClick={onClick}
       className={`relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
         active
-          ? "border-primary bg-primary/5 shadow-sm"
+          ? "border-[#0043BB] bg-[#0043BB]/5 shadow-sm"
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
       }`}
       data-testid={`mode-card-${title.toLowerCase().replace(/\s+/g, "-")}`}
     >
       {active && (
-        <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-          <Check className="w-2.5 h-2.5" strokeWidth={3} />
+        <span className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0043BB" }}>
+          <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
         </span>
       )}
       <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-          active
-            ? "bg-primary text-primary-foreground"
-            : "bg-slate-100 text-slate-500"
-        }`}
+        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+        style={active ? { backgroundColor: "rgba(0,67,187,0.12)", color: "#0043BB" } : { backgroundColor: "#f1f5f9", color: "#64748b" }}
       >
         {icon}
       </div>
       <div
-        className={`text-sm font-semibold leading-tight ${
-          active ? "text-primary" : "text-slate-900"
-        }`}
+        className="text-sm font-semibold leading-tight"
+        style={{ color: active ? "#0043BB" : "#1e293b" }}
       >
         {title}
       </div>
@@ -163,11 +161,8 @@ function Toggle({
       }`}
     >
       <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-          checked && !disabled
-            ? "bg-primary/10 text-primary"
-            : "bg-slate-100 text-slate-500"
-        }`}
+        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+        style={checked && !disabled ? { backgroundColor: "rgba(0,67,187,0.1)", color: "#0043BB" } : { backgroundColor: "#f1f5f9", color: "#64748b" }}
       >
         {icon}
       </div>

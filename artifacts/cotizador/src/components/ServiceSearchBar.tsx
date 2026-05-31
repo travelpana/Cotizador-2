@@ -297,11 +297,8 @@ export default function ServiceSearchBar({
             <button
               type="button"
               onClick={() => setMercadoOpen((v) => !v)}
-              className={`h-11 inline-flex items-center gap-2 px-3.5 rounded-xl border text-sm font-medium transition-colors shadow-sm ${
-                mercado === "brasil"
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                  : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
-              }`}
+              className="h-11 inline-flex items-center gap-2 px-3.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors shadow-sm"
+            style={mercado === "brasil" ? { borderColor: "#0043BB", color: "#0043BB", backgroundColor: "rgba(0,67,187,0.04)" } : undefined}
             >
               <span>{MERCADOS.find((m) => m.value === mercado)?.label ?? "General"}</span>
               <ChevronDown
