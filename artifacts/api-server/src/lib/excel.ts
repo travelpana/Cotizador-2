@@ -306,32 +306,97 @@ export function replaceAndReloadBrasil(buffer: Buffer): Catalog {
   console.log("\n====================");
   console.log("HOJAS DETECTADAS");
   console.log("====================");
-  wb.SheetNames.forEach((name) => console.log(`- ${name}`));
+  wb.SheetNames.forEach((name) => {
+    const ws = wb.Sheets[name];
+    const rawRows = ws ? XLSX.utils.sheet_to_json(ws, { defval: null }) : [];
+    console.log(`- "${name}"  →  ${rawRows.length} filas brutas`);
+  });
 
   console.log("\n====================");
   console.log("HOJAS REQUERIDAS");
   console.log("====================");
-  REQUIRED_SHEETS.forEach((name) => console.log(`- ${name}`));
+  REQUIRED_SHEETS.forEach((name) => console.log(`- "${name}"`));
   console.log("");
 
   for (const sheet of REQUIRED_SHEETS) {
     if (!wb.SheetNames.includes(sheet)) {
-      console.log(`\n[FALLO DE VALIDACIÓN]`);
-      console.log(`  Hoja requerida : "${sheet}"`);
+      console.log(`\n[FALLO DE VALIDACIÓN — hoja ausente]`);
+      console.log(`  Requerida  : "${sheet}"`);
       const closest = wb.SheetNames.find(
         (s) => s.toLowerCase().replace(/\s+/g, "") === sheet.toLowerCase().replace(/\s+/g, "")
       );
       if (closest) {
-        console.log(`  Hoja detectada : "${closest}"`);
-        console.log(`  → Diferencia   : "${closest}" ≠ "${sheet}"`);
+        console.log(`  Detectada  : "${closest}"`);
+        console.log(`  Diferencia : "${closest}" ≠ "${sheet}"`);
       } else {
-        console.log(`  No se encontró ninguna hoja similar.`);
-        console.log(`  Hojas disponibles: ${wb.SheetNames.map((s) => `"${s}"`).join(", ")}`);
+        console.log(`  Disponibles: ${wb.SheetNames.map((s) => `"${s}"`).join(", ")}`);
       }
       throw new Error(`El archivo no contiene la hoja requerida: "${sheet}"`);
     }
   }
+
+  console.log("\n====================");
+  console.log("PROCESANDO HOJAS");
+  console.log("====================");
+
+  let hoteles: Hotel[] = [];
+  try {
+    const rows = rowsOf(wb, "Hotelería");
+    console.log(`[Hotelería]  filas brutas: ${rows.length}`);
+    hoteles = parseHoteles(rows);
+    console.log(`[Hotelería]  registros importados: ${hoteles.length}`);
+  } catch (e) {
+    console.log(`[FALLO]  Hotelería  →  ${(e as Error).message}`);
+    throw new Error(`Error procesando hoja "Hotelería": ${(e as Error).message}`);
+  }
+
+  let tours: Tour[] = [];
+  try {
+    const rows = rowsOf(wb, "Tours");
+    console.log(`[Tours]      filas brutas: ${rows.length}`);
+    tours = parseTours(rows);
+    console.log(`[Tours]      registros importados: ${tours.length}`);
+  } catch (e) {
+    console.log(`[FALLO]  Tours  →  ${(e as Error).message}`);
+    throw new Error(`Error procesando hoja "Tours": ${(e as Error).message}`);
+  }
+
+  let trasladosReg: Traslado[] = [];
+  try {
+    const rows = rowsOf(wb, "Traslados Regulares");
+    console.log(`[Traslados Regulares]  filas brutas: ${rows.length}`);
+    trasladosReg = parseTraslados(rows, "Regular");
+    console.log(`[Traslados Regulares]  registros importados: ${trasladosReg.length}`);
+  } catch (e) {
+    console.log(`[FALLO]  Traslados Regulares  →  ${(e as Error).message}`);
+    throw new Error(`Error procesando hoja "Traslados Regulares": ${(e as Error).message}`);
+  }
+
+  let trasladosPriv: Traslado[] = [];
+  try {
+    const rows = rowsOf(wb, "Traslados Privados");
+    console.log(`[Traslados Privados]  filas brutas: ${rows.length}`);
+    trasladosPriv = parseTraslados(rows, "Privado");
+    console.log(`[Traslados Privados]  registros importados: ${trasladosPriv.length}`);
+  } catch (e) {
+    console.log(`[FALLO]  Traslados Privados  →  ${(e as Error).message}`);
+    throw new Error(`Error procesando hoja "Traslados Privados": ${(e as Error).message}`);
+  }
+
+  console.log("\n====================");
+  console.log("RESUMEN");
+  console.log("====================");
+  console.log(`  Hoteles   : ${hoteles.length}`);
+  console.log(`  Tours     : ${tours.length}`);
+  console.log(`  Traslados : ${trasladosReg.length + trasladosPriv.length}  (${trasladosReg.length} regulares + ${trasladosPriv.length} privados)`);
+  console.log("");
+
   fs.writeFileSync(BRASIL_EXCEL_PATH, buffer);
-  brasilCache = null;
-  return reloadBrasilCatalog();
+  brasilCache = {
+    hoteles,
+    tours,
+    traslados: [...trasladosReg, ...trasladosPriv],
+    loadedAt: new Date().toISOString(),
+  };
+  return brasilCache;
 }
