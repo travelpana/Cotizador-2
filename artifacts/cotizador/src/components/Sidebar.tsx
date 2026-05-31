@@ -18,11 +18,9 @@ const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "respaldo
 interface Props {
   view: View;
   onView: (v: View) => void;
-  seguimientoCount: number;
-  plantillasCount: number;
 }
 
-export default function Sidebar({ view, onView, seguimientoCount, plantillasCount }: Props) {
+export default function Sidebar({ view, onView }: Props) {
   const isConfigView = CONFIG_VIEWS.includes(view);
   const [configOpen, setConfigOpen] = useState(isConfigView);
 
@@ -48,7 +46,6 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
           onClick={() => onView("seguimiento")}
           icon={<ListChecks className="w-4 h-4" />}
           label="Seguimiento"
-          badge={seguimientoCount}
         />
 
         <div className="pt-5">
@@ -79,7 +76,6 @@ export default function Sidebar({ view, onView, seguimientoCount, plantillasCoun
                 onClick={() => onView("plantillas")}
                 icon={<LayoutTemplate className="w-4 h-4" />}
                 label="Plantillas"
-                badge={plantillasCount}
                 sub
               />
               <NavItem
@@ -116,14 +112,12 @@ function NavItem({
   onClick,
   icon,
   label,
-  badge,
   sub,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
-  badge?: number;
   sub?: boolean;
 }) {
   return (
@@ -133,7 +127,7 @@ function NavItem({
       )}
       <button
         onClick={onClick}
-        className={`w-full flex items-center justify-between gap-2 pl-4 pr-3 rounded-md transition-colors outline-none focus:outline-none focus-visible:outline-none ${sub ? "py-1.5" : "py-2"}`}
+        className={`w-full flex items-center gap-2 pl-4 pr-3 rounded-md transition-colors outline-none focus:outline-none focus-visible:outline-none ${sub ? "py-1.5" : "py-2"}`}
         style={{
           fontSize: sub ? 14 : 15,
           fontWeight: 600,

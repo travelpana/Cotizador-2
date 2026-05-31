@@ -756,8 +756,6 @@ export default function CotizadorPage() {
           if (v === "plantillas") refreshPlantillasCount();
           setView(v);
         }}
-        seguimientoCount={guardadas.length}
-        plantillasCount={plantillasCount}
       />
 
       <main className="flex-1 overflow-x-hidden bg-[#e8eef6]">
