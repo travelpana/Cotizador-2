@@ -19,7 +19,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function getFresh<T>(path: string): Promise<T> {
-  const url = `${API_BASE}${path}?ts=${Date.now()}`;
+  const sep = path.includes("?") ? "&" : "?";
+  const url = `${API_BASE}${path}${sep}ts=${Date.now()}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return res.json() as Promise<T>;
@@ -28,6 +29,7 @@ async function getFresh<T>(path: string): Promise<T> {
 export interface CatalogInfo {
   filename: string;
   loadedAt: string | null;
+  exists?: boolean;
   counts: { hoteles: number; tours: number; traslados: number } | null;
 }
 
@@ -43,13 +45,13 @@ export const api = {
   tours: () => get<Tour[]>("/tours"),
   traslados: () => get<Traslado[]>("/traslados"),
   descriptivos: () => get<Descriptivo[]>("/descriptivos"),
-
   catalogInfo: () => get<CatalogInfo>("/catalog/info"),
 
-  /**
-   * Tells the server to re-parse TARIFARIO.xlsx, then re-fetches all catalog
-   * data with cache-busting timestamps so the browser never serves stale data.
-   */
+  hotelesBrasil: () => get<Hotel[]>("/hoteles?mercado=brasil"),
+  toursBrasil: () => get<Tour[]>("/tours?mercado=brasil"),
+  trasladosBrasil: () => get<Traslado[]>("/traslados?mercado=brasil"),
+  catalogInfoBrasil: () => get<CatalogInfo>("/catalog/info?mercado=brasil"),
+
   reloadAll: async (): Promise<{
     hoteles: Hotel[];
     tours: Tour[];
@@ -67,13 +69,38 @@ export const api = {
     return { hoteles, tours, traslados, descriptivos, loadedAt: reload.loadedAt };
   },
 
-  /**
-   * Uploads a new XLSX file to replace the current TARIFARIO, validates it
-   * server-side, then returns the fresh catalog counts and metadata.
-   */
+  reloadAllBrasil: async (): Promise<{
+    hoteles: Hotel[];
+    tours: Tour[];
+    traslados: Traslado[];
+    loadedAt: string;
+  }> => {
+    const reload = await post<{ ok: boolean; loadedAt: string }>("/reload?mercado=brasil", {});
+    const [hoteles, tours, traslados] = await Promise.all([
+      getFresh<Hotel[]>("/hoteles?mercado=brasil"),
+      getFresh<Tour[]>("/tours?mercado=brasil"),
+      getFresh<Traslado[]>("/traslados?mercado=brasil"),
+    ]);
+    return { hoteles, tours, traslados, loadedAt: reload.loadedAt };
+  },
+
   uploadTarifario: async (file: File): Promise<UploadResult> => {
     const buffer = await file.arrayBuffer();
     const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: buffer,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Error desconocido" })) as { error?: string };
+      throw new Error(err.error ?? `Error al subir archivo: ${res.status}`);
+    }
+    return res.json() as Promise<UploadResult>;
+  },
+
+  uploadTarifarioBrasil: async (file: File): Promise<UploadResult> => {
+    const buffer = await file.arrayBuffer();
+    const res = await fetch(`${API_BASE}/upload?mercado=brasil`, {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream" },
       body: buffer,

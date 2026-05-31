@@ -6,13 +6,13 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function resolveExcelPath(): string {
-  if (process.env["TARIFARIO_PATH"]) return process.env["TARIFARIO_PATH"];
+function resolveExcelPath(envKey: string, filename: string): string {
+  if (process.env[envKey]) return process.env[envKey]!;
   const candidates = [
-    path.resolve(__dirname, "..", "..", "TARIFARIO.xlsx"),
-    path.resolve(__dirname, "..", "TARIFARIO.xlsx"),
-    path.resolve(process.cwd(), "TARIFARIO.xlsx"),
-    path.resolve(process.cwd(), "artifacts/api-server/TARIFARIO.xlsx"),
+    path.resolve(__dirname, "..", "..", filename),
+    path.resolve(__dirname, "..", filename),
+    path.resolve(process.cwd(), filename),
+    path.resolve(process.cwd(), "artifacts/api-server", filename),
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
@@ -60,8 +60,10 @@ export interface Catalog {
 }
 
 let cache: Catalog | null = null;
+let brasilCache: Catalog | null = null;
 
-const EXCEL_PATH = resolveExcelPath();
+const EXCEL_PATH = resolveExcelPath("TARIFARIO_PATH", "TARIFARIO.xlsx");
+const BRASIL_EXCEL_PATH = resolveExcelPath("TARIFARIO_BRASIL_PATH", "TARIFARIO_BRASIL.xlsx");
 
 function num(v: unknown): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -96,7 +98,6 @@ function parseHoteles(rows: Row[]): Hotel[] {
     const code = str(vals[0]);
     if (!code) continue;
     if (!isCode(code)) {
-      // Section header (e.g. "CIUDAD DE PANAMÁ")
       const restEmpty = vals
         .slice(1)
         .every((v) => v == null || String(v).trim() === "");
@@ -193,6 +194,21 @@ function parseTraslados(rows: Row[], tipo: "Regular" | "Privado"): Traslado[] {
   return items;
 }
 
+function parseCatalogFromWorkbook(wb: XLSX.WorkBook): Catalog {
+  const hoteles = parseHoteles(rowsOf(wb, "Hotelería"));
+  const tours = parseTours(rowsOf(wb, "Tours"));
+  const trasladosReg = parseTraslados(rowsOf(wb, "Traslados Regulares"), "Regular");
+  const trasladosPriv = parseTraslados(rowsOf(wb, "Traslados Privados"), "Privado");
+  return {
+    hoteles,
+    tours,
+    traslados: [...trasladosReg, ...trasladosPriv],
+    loadedAt: new Date().toISOString(),
+  };
+}
+
+/* ─── General catalog ─── */
+
 export function loadCatalog(): Catalog {
   if (cache) return cache;
   return reloadCatalog();
@@ -200,22 +216,7 @@ export function loadCatalog(): Catalog {
 
 export function reloadCatalog(): Catalog {
   const wb = XLSX.readFile(EXCEL_PATH);
-  const hoteles = parseHoteles(rowsOf(wb, "Hotelería"));
-  const tours = parseTours(rowsOf(wb, "Tours"));
-  const trasladosReg = parseTraslados(
-    rowsOf(wb, "Traslados Regulares"),
-    "Regular",
-  );
-  const trasladosPriv = parseTraslados(
-    rowsOf(wb, "Traslados Privados"),
-    "Privado",
-  );
-  cache = {
-    hoteles,
-    tours,
-    traslados: [...trasladosReg, ...trasladosPriv],
-    loadedAt: new Date().toISOString(),
-  };
+  cache = parseCatalogFromWorkbook(wb);
   return cache;
 }
 
@@ -225,10 +226,7 @@ export function getFileInfo(): { filename: string; loadedAt: string | null } {
   }
   try {
     const stat = fs.statSync(EXCEL_PATH);
-    return {
-      filename: path.basename(EXCEL_PATH),
-      loadedAt: stat.mtime.toISOString(),
-    };
+    return { filename: path.basename(EXCEL_PATH), loadedAt: stat.mtime.toISOString() };
   } catch {
     return { filename: path.basename(EXCEL_PATH), loadedAt: null };
   }
@@ -255,4 +253,61 @@ export function replaceAndReload(buffer: Buffer): Catalog {
   }
   fs.writeFileSync(EXCEL_PATH, buffer);
   return reloadCatalog();
+}
+
+/* ─── Brasil catalog ─── */
+
+const EMPTY_BRASIL: Catalog = { hoteles: [], tours: [], traslados: [], loadedAt: new Date().toISOString() };
+
+export function loadBrasilCatalog(): Catalog {
+  if (brasilCache) return brasilCache;
+  return reloadBrasilCatalog();
+}
+
+export function reloadBrasilCatalog(): Catalog {
+  if (!fs.existsSync(BRASIL_EXCEL_PATH)) {
+    brasilCache = { ...EMPTY_BRASIL, loadedAt: new Date().toISOString() };
+    return brasilCache;
+  }
+  try {
+    const wb = XLSX.readFile(BRASIL_EXCEL_PATH);
+    brasilCache = parseCatalogFromWorkbook(wb);
+    return brasilCache;
+  } catch {
+    brasilCache = { ...EMPTY_BRASIL, loadedAt: new Date().toISOString() };
+    return brasilCache;
+  }
+}
+
+export function getBrasilFileInfo(): { filename: string; loadedAt: string | null; exists: boolean } {
+  const exists = fs.existsSync(BRASIL_EXCEL_PATH);
+  if (brasilCache) {
+    return { filename: path.basename(BRASIL_EXCEL_PATH), loadedAt: brasilCache.loadedAt, exists };
+  }
+  if (!exists) {
+    return { filename: path.basename(BRASIL_EXCEL_PATH), loadedAt: null, exists: false };
+  }
+  try {
+    const stat = fs.statSync(BRASIL_EXCEL_PATH);
+    return { filename: path.basename(BRASIL_EXCEL_PATH), loadedAt: stat.mtime.toISOString(), exists: true };
+  } catch {
+    return { filename: path.basename(BRASIL_EXCEL_PATH), loadedAt: null, exists: false };
+  }
+}
+
+export function replaceAndReloadBrasil(buffer: Buffer): Catalog {
+  let wb: XLSX.WorkBook;
+  try {
+    wb = XLSX.read(buffer, { type: "buffer" });
+  } catch {
+    throw new Error("El archivo no es un Excel válido (.xlsx)");
+  }
+  for (const sheet of REQUIRED_SHEETS) {
+    if (!wb.SheetNames.includes(sheet)) {
+      throw new Error(`El archivo no contiene la hoja requerida: "${sheet}"`);
+    }
+  }
+  fs.writeFileSync(BRASIL_EXCEL_PATH, buffer);
+  brasilCache = null;
+  return reloadBrasilCatalog();
 }

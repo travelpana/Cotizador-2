@@ -616,6 +616,9 @@ interface Props {
   onUpload: (file: File) => Promise<void>;
   fileInfo?: CatalogInfo | null;
   onReload?: () => Promise<void>;
+  fileInfoBrasil?: CatalogInfo | null;
+  onReloadBrasil?: () => Promise<void>;
+  onUploadBrasil?: (file: File) => Promise<void>;
 }
 
 const TABS: { key: TarifasTab; label: string; icon: React.ReactNode }[] = [
@@ -638,9 +641,10 @@ function formatRelativeTime(iso: string | null | undefined): string {
   return `hace ${days} día${days !== 1 ? "s" : ""}`;
 }
 
-export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged, onUpload, fileInfo, onReload }: Props) {
+export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged, onUpload, fileInfo, onReload, fileInfoBrasil, onReloadBrasil, onUploadBrasil }: Props) {
   const [tab, setTab] = useState<TarifasTab>("hoteles");
   const [reloadStatus, setReloadStatus] = useState<ReloadStatus>("idle");
+  const [reloadStatusBrasil, setReloadStatusBrasil] = useState<ReloadStatus>("idle");
 
   const lsCounts = useMemo(() => ({
     hoteles: loadHotelesLS().length,
@@ -675,6 +679,34 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged,
   const reloadIcon = reloadStatus === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatus === "success" ? <Check className="w-4 h-4" /> : reloadStatus === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
   const reloadCls = reloadStatus === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : reloadStatus === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
 
+  const handleReloadBrasil = async () => {
+    if (!onReloadBrasil || reloadStatusBrasil === "loading") return;
+    setReloadStatusBrasil("loading");
+    try {
+      await onReloadBrasil();
+      setReloadStatusBrasil("success");
+      window.setTimeout(() => setReloadStatusBrasil("idle"), 2800);
+    } catch {
+      setReloadStatusBrasil("error");
+      window.setTimeout(() => setReloadStatusBrasil("idle"), 3500);
+    }
+  };
+
+  const handleUploadBrasilClick = () => {
+    if (!onUploadBrasil) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+    input.onchange = async () => {
+      if (input.files?.[0]) await onUploadBrasil(input.files[0]);
+    };
+    input.click();
+  };
+
+  const reloadLabelBrasil = { idle: "Recargar tarifario", loading: "Actualizando...", success: "Actualizado", error: "Error al recargar" }[reloadStatusBrasil];
+  const reloadIconBrasil = reloadStatusBrasil === "loading" ? <RefreshCw className="w-4 h-4 animate-spin" /> : reloadStatusBrasil === "success" ? <Check className="w-4 h-4" /> : reloadStatusBrasil === "error" ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />;
+  const reloadClsBrasil = reloadStatusBrasil === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : reloadStatusBrasil === "error" ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50";
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -694,31 +726,75 @@ export default function Tarifas({ apiHoteles, apiTours, apiTraslados, onChanged,
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-        <div className="flex items-start gap-2">
-          <FileText className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-slate-800 truncate">{fileInfo?.filename ?? "TARIFARIO.xlsx"}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Cargado {formatRelativeTime(fileInfo?.loadedAt)}</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <FileText className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Tarifario General</p>
+              <p className="text-sm font-medium text-slate-800 truncate">{fileInfo?.filename ?? "TARIFARIO.xlsx"}</p>
+              <p className="text-xs text-slate-400 mt-0.5">Cargado {formatRelativeTime(fileInfo?.loadedAt)}</p>
+              {fileInfo?.counts && (
+                <p className="text-xs text-slate-400">{fileInfo.counts.hoteles} hoteles · {fileInfo.counts.tours} tours · {fileInfo.counts.traslados} traslados</p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleReload}
+              disabled={reloadStatus === "loading" || !onReload}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadCls}`}
+            >
+              {reloadIcon}
+              {reloadLabel}
+            </button>
+            <button
+              onClick={handleUploadClick}
+              disabled={reloadStatus === "loading"}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors disabled:opacity-60"
+            >
+              <Upload className="w-4 h-4" />
+              Subir nuevo
+            </button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleReload}
-            disabled={reloadStatus === "loading" || !onReload}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadCls}`}
-          >
-            {reloadIcon}
-            {reloadLabel}
-          </button>
-          <button
-            onClick={handleUploadClick}
-            disabled={reloadStatus === "loading"}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors disabled:opacity-60"
-          >
-            <Upload className="w-4 h-4" />
-            Subir nuevo
-          </button>
+
+        <div className="bg-white border border-emerald-100 rounded-xl p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <FileText className="w-3.5 h-3.5 mt-0.5 text-emerald-400 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-emerald-500 uppercase tracking-wide mb-0.5">Tarifario Brasil</p>
+              <p className="text-sm font-medium text-slate-800 truncate">{fileInfoBrasil?.filename ?? "TARIFARIO_BRASIL.xlsx"}</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0
+                  ? `Cargado ${formatRelativeTime(fileInfoBrasil.loadedAt)}`
+                  : "Sin archivo cargado"}
+              </p>
+              {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
+                <p className="text-xs text-slate-400">{fileInfoBrasil.counts.hoteles} hoteles · {fileInfoBrasil.counts.tours} tours · {fileInfoBrasil.counts.traslados} traslados</p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 && (
+              <button
+                onClick={handleReloadBrasil}
+                disabled={reloadStatusBrasil === "loading" || !onReloadBrasil}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${reloadClsBrasil}`}
+              >
+                {reloadIconBrasil}
+                {reloadLabelBrasil}
+              </button>
+            )}
+            <button
+              onClick={handleUploadBrasilClick}
+              disabled={reloadStatusBrasil === "loading" || !onUploadBrasil}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 text-sm hover:bg-emerald-100 transition-colors disabled:opacity-60"
+            >
+              <Upload className="w-4 h-4" />
+              {fileInfoBrasil?.counts && fileInfoBrasil.counts.hoteles > 0 ? "Subir nuevo" : "Subir tarifario Brasil"}
+            </button>
+          </div>
         </div>
       </div>
 

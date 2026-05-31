@@ -337,6 +337,8 @@ function ObsPanel({
     onObservacionesChange(bullets.filter((_, i) => i !== idx).join("\n"));
   };
 
+  const existingTexts = new Set(bullets.map((b) => b.toLowerCase()));
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -345,9 +347,22 @@ function ObsPanel({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text");
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length <= 1) return;
+    e.preventDefault();
+    if (!onObservacionesChange) return;
+    const newLines = lines.filter((l) => !existingTexts.has(l.toLowerCase()));
+    if (newLines.length > 0) {
+      const next = [...bullets, ...newLines].join("\n");
+      onObservacionesChange(next);
+    }
+    setInputVal("");
+  };
+
   const priorityObs = catalog.filter((o) => PRIORITY_IDS.includes(o.id));
   const otherObs = catalog.filter((o) => !PRIORITY_IDS.includes(o.id));
-  const existingTexts = new Set(bullets.map((b) => b.toLowerCase()));
 
   return (
     <div className="mt-5 pt-5 border-t border-slate-100">
@@ -385,6 +400,7 @@ function ObsPanel({
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder="Escribir observación y presionar Enter…"
             className="flex-1 px-3 h-9 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
           />

@@ -17,6 +17,7 @@ import type {
 import { fmt } from "@/lib/calc";
 
 type Categoria = "todos" | "hotel" | "traslado" | "tour" | "vuelo";
+type Mercado = "general" | "brasil";
 
 interface Props {
   hoteles: Hotel[];
@@ -25,6 +26,8 @@ interface Props {
   globalFechaInicio: string;
   globalFechaFin: string;
   onPick: (s: ServicioSeleccionado) => void;
+  mercado?: Mercado;
+  onMercadoChange?: (m: Mercado) => void;
 }
 
 interface Resultado {
@@ -45,6 +48,11 @@ const CATEGORIAS: { value: Categoria; label: string }[] = [
   { value: "vuelo", label: "Vuelos" },
 ];
 
+const MERCADOS: { value: Mercado; label: string }[] = [
+  { value: "general", label: "General" },
+  { value: "brasil", label: "Brasil" },
+];
+
 export default function ServiceSearchBar({
   hoteles,
   tours,
@@ -52,9 +60,12 @@ export default function ServiceSearchBar({
   globalFechaInicio,
   globalFechaFin,
   onPick,
+  mercado = "general",
+  onMercadoChange,
 }: Props) {
   const [categoria, setCategoria] = useState<Categoria>("todos");
   const [catOpen, setCatOpen] = useState(false);
+  const [mercadoOpen, setMercadoOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [loading, setLoading] = useState(false);
@@ -280,6 +291,45 @@ export default function ServiceSearchBar({
   return (
     <div ref={wrapperRef} className="relative">
       <div className="flex items-stretch gap-2">
+        {/* Mercado dropdown */}
+        {onMercadoChange && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMercadoOpen((v) => !v)}
+              className={`h-11 inline-flex items-center gap-2 px-3.5 rounded-xl border text-sm font-medium transition-colors shadow-sm ${
+                mercado === "brasil"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                  : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              <span>{MERCADOS.find((m) => m.value === mercado)?.label ?? "General"}</span>
+              <ChevronDown
+                className={`w-4 h-4 opacity-60 transition-transform ${mercadoOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {mercadoOpen && (
+              <div className="absolute z-40 mt-1.5 left-0 min-w-[140px] rounded-xl bg-white shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                {MERCADOS.map((m) => (
+                  <button
+                    key={m.value}
+                    onClick={() => {
+                      onMercadoChange(m.value);
+                      setMercadoOpen(false);
+                      inputRef.current?.focus();
+                    }}
+                    className={`w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 transition-colors ${
+                      mercado === m.value ? "text-primary font-semibold" : "text-slate-700"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Category dropdown */}
         <div className="relative">
           <button

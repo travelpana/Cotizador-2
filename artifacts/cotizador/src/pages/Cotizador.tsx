@@ -114,6 +114,12 @@ export default function CotizadorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [mercado, setMercado] = useState<"general" | "brasil">("general");
+  const [hotelesBrasil, setHotelesBrasil] = useState<Hotel[]>([]);
+  const [toursBrasil, setToursBrasil] = useState<Tour[]>([]);
+  const [trasladosBrasil, setTrasladosBrasil] = useState<Traslado[]>([]);
+  const [fileInfoBrasil, setFileInfoBrasil] = useState<CatalogInfo | null>(null);
+
   const [view, setView] = useState<View>("cotizador");
   const [cliente, setCliente] = useState<Cliente>(DEFAULT_CLIENTE);
   const [validationErrors, setValidationErrors] =
@@ -196,6 +202,10 @@ export default function CotizadorPage() {
     [traslados, lsTarifasVersion],
   );
 
+  const activeHoteles = mercado === "brasil" ? hotelesBrasil : mergedHoteles;
+  const activeTours = mercado === "brasil" ? toursBrasil : mergedTours;
+  const activeTraslados = mercado === "brasil" ? trasladosBrasil : mergedTraslados;
+
   const [toast, setToast] = useState<{
     msg: string;
     tone: "info" | "error";
@@ -248,18 +258,30 @@ export default function CotizadorPage() {
     setLoading(true);
     setError(null);
     try {
-      const [h, t, tr, ds, info] = await Promise.all([
+      const [h, t, tr, ds, info, brasilInfo] = await Promise.all([
         api.hoteles(),
         api.tours(),
         api.traslados(),
         api.descriptivos().catch(() => [] as Descriptivo[]),
         api.catalogInfo().catch(() => null),
+        api.catalogInfoBrasil().catch(() => null),
       ]);
       setHoteles(h);
       setTours(t);
       setTraslados(tr);
       setDescriptivos(ds);
       setFileInfo(info);
+      setFileInfoBrasil(brasilInfo);
+      if (brasilInfo?.counts && brasilInfo.counts.hoteles > 0) {
+        const [hb, tb, trb] = await Promise.all([
+          api.hotelesBrasil(),
+          api.toursBrasil(),
+          api.trasladosBrasil(),
+        ]);
+        setHotelesBrasil(hb);
+        setToursBrasil(tb);
+        setTrasladosBrasil(trb);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -309,11 +331,54 @@ export default function CotizadorPage() {
         counts: result.counts,
       });
       showToast(
-        `Nuevo tarifario cargado correctamente · ${result.counts.hoteles} hoteles · ${result.counts.tours} tours`,
+        `Tarifario General actualizado · ${result.counts.hoteles} hoteles · ${result.counts.tours} tours`,
       );
     } catch (e) {
       console.error("[Subir tarifario]", e);
       showToast((e as Error).message || "Error al subir el tarifario", "error");
+      throw e;
+    }
+  };
+
+  const handleTarifarioReloadBrasil = async () => {
+    try {
+      const { hoteles: h, tours: t, traslados: tr, loadedAt } = await api.reloadAllBrasil();
+      setHotelesBrasil(h);
+      setToursBrasil(t);
+      setTrasladosBrasil(tr);
+      setFileInfoBrasil((prev) => ({
+        filename: prev?.filename ?? "TARIFARIO_BRASIL.xlsx",
+        loadedAt,
+        counts: { hoteles: h.length, tours: t.length, traslados: tr.length },
+      }));
+      showToast(`Tarifario Brasil actualizado · ${h.length} hoteles · ${t.length} tours`);
+    } catch (e) {
+      console.error("[Recargar tarifario Brasil]", e);
+      showToast("Error al recargar el tarifario Brasil", "error");
+      throw e;
+    }
+  };
+
+  const handleUploadBrasil = async (file: File) => {
+    try {
+      const result = await api.uploadTarifarioBrasil(file);
+      const [h, t, tr] = await Promise.all([
+        api.hotelesBrasil(),
+        api.toursBrasil(),
+        api.trasladosBrasil(),
+      ]);
+      setHotelesBrasil(h);
+      setToursBrasil(t);
+      setTrasladosBrasil(tr);
+      setFileInfoBrasil({
+        filename: result.filename,
+        loadedAt: result.loadedAt,
+        counts: result.counts,
+      });
+      showToast(`Tarifario Brasil cargado · ${result.counts.hoteles} hoteles · ${result.counts.tours} tours`);
+    } catch (e) {
+      console.error("[Subir tarifario Brasil]", e);
+      showToast((e as Error).message || "Error al subir el tarifario Brasil", "error");
       throw e;
     }
   };
@@ -774,6 +839,9 @@ export default function CotizadorPage() {
               onUpload={handleUpload}
               fileInfo={fileInfo}
               onReload={handleTarifarioReload}
+              fileInfoBrasil={fileInfoBrasil}
+              onReloadBrasil={handleTarifarioReloadBrasil}
+              onUploadBrasil={handleUploadBrasil}
             />
           ) : view === "respaldos" ? (
             <Respaldos
@@ -798,12 +866,14 @@ export default function CotizadorPage() {
                   onAcomodacionesChange={setAcomodaciones}
                 />
                 <ServiceSearchBar
-                  hoteles={mergedHoteles}
-                  tours={mergedTours}
-                  traslados={mergedTraslados}
+                  hoteles={activeHoteles}
+                  tours={activeTours}
+                  traslados={activeTraslados}
                   globalFechaInicio={cliente.fechaInicio}
                   globalFechaFin={cliente.fechaFin}
                   onPick={handleQuickAdd}
+                  mercado={mercado}
+                  onMercadoChange={setMercado}
                 />
                 <ServiciosSeleccionados
                   servicios={servicios}

@@ -128,7 +128,7 @@ export interface Cliente {
   noches: number;
 }
 
-export type ClienteValidationField = "agencia" | "agente";
+export type ClienteValidationField = "agencia" | "agente" | "fechaInicio";
 
 export type ClienteValidationErrors = Partial<
   Record<ClienteValidationField, boolean>
