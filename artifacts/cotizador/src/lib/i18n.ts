@@ -18,6 +18,7 @@ export interface Traducciones {
   descriptivos: string;
   observaciones: string;
   resumenDeCostos: string;
+  detalleDeCotizacion: string;
 
   // ── Table column headers ─────────────────────────────────────────
   hotel: string;
@@ -100,6 +101,7 @@ const ES: Traducciones = {
   descriptivos: "DESCRIPTIVOS",
   observaciones: "OBSERVACIONES",
   resumenDeCostos: "RESUMEN DE COSTOS",
+  detalleDeCotizacion: "DETALLE DE COTIZACIÓN",
 
   hotel: "HOTEL",
   categoria: "CATEGORÍA",
@@ -176,6 +178,7 @@ const EN: Traducciones = {
   descriptivos: "DESCRIPTIONS",
   observaciones: "NOTES",
   resumenDeCostos: "COST SUMMARY",
+  detalleDeCotizacion: "QUOTE DETAIL",
 
   hotel: "HOTEL",
   categoria: "CATEGORY",
@@ -252,6 +255,7 @@ const PT: Traducciones = {
   descriptivos: "DESCRITIVOS",
   observaciones: "OBSERVAÇÕES",
   resumenDeCostos: "RESUMO DE CUSTOS",
+  detalleDeCotizacion: "DETALHE DA COTAÇÃO",
 
   hotel: "HOTEL",
   categoria: "CATEGORIA",

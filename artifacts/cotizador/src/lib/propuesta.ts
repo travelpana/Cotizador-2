@@ -303,6 +303,7 @@ function groupByLocation<T extends { ubicacion?: string }>(
 }
 
 function alojamientoTable(d: PropuestaData): string {
+  if (d.isCalc) return "";
   if (d.hoteles.length === 0) return "";
   const { T } = d;
 
@@ -388,6 +389,7 @@ function adicionalesTable(
   items: ServicioCalculado[],
   d: PropuestaData,
 ): string {
+  if (d.isCalc) return "";
   if (items.length === 0) return "";
   const { T } = d;
   const rows = items
@@ -691,7 +693,7 @@ function totalsBlock(d: PropuestaData): string {
   const totalRows = d.acoms
     .map(
       (a) => `<tr>
-        <td colspan="${C - 1}" style="${totalLabelStyle}">${escape(T.total)} ${escape(String(a))}</td>
+        <td colspan="${C - 1}" style="${totalLabelStyle}">${escape(T.detalleDeCotizacion)} · ${escape(String(a))}</td>
         <td style="${totalValStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
       </tr>`,
     )
@@ -699,7 +701,7 @@ function totalsBlock(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(T.resumenDeCostos)}
+    ${sectionBar(T.detalleDeCotizacion)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:1px solid ${COLOR_BORDE};">
       <tbody>${rows}</tbody>
       <tfoot>${totalRows}</tfoot>
