@@ -452,6 +452,11 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openMenu = () => {
     const rect = menuBtnRef.current?.getBoundingClientRect();
@@ -476,60 +481,165 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    hoverTimerRef.current = setTimeout(() => {
+      const rect = cardRef.current?.getBoundingClientRect();
+      if (rect) {
+        const TW = 264;
+        const TH = 220;
+        let top = rect.top - TH - 8;
+        if (top < 8) top = rect.bottom + 8;
+        let left = rect.left + (rect.width - TW) / 2;
+        if (left < 8) left = 8;
+        if (left + TW > window.innerWidth - 8) left = window.innerWidth - TW - 8;
+        setTooltipPos({ top, left });
+        setTooltipVisible(true);
+      }
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    setTooltipVisible(false);
+    setTooltipPos(null);
+  };
+
   const close = () => setMenuOpen(false);
 
   const clientName = g.cliente.nombre?.trim() || "Sin nombre";
   const agencyLabel = agencyName(g);
   const initials = getInitials(agencyLabel || clientName);
   const valor = g.valorCotizacion;
+  const destino = g.destinoSeguimiento?.trim();
   const sinActividad = daysSince(g.ultimoSeguimiento ?? g.fechaCreacion);
   const showSinActividad = col.id === "requiere_accion" && sinActividad >= 3;
 
+  const paxLabel = [
+    g.cliente.pasajeros > 0 ? `${g.cliente.pasajeros} adulto${g.cliente.pasajeros !== 1 ? "s" : ""}` : null,
+    g.cliente.ninos > 0 ? `${g.cliente.ninos} niño${g.cliente.ninos !== 1 ? "s" : ""}` : null,
+  ].filter(Boolean).join(" + ") || "—";
+
+  const hoverShadow = `0 12px 28px -4px ${col.borderColor}50, 0 4px 12px rgba(0,0,0,0.08)`;
+
   return (
-    <div className="bg-white rounded-xl ring-1 ring-slate-100 p-3 hover:ring-slate-200 hover:shadow-sm transition-all">
-      {/* Logo + Client / Agency info */}
-      <div className="flex items-start gap-2 mb-2.5">
-        <LogoOrInitials agencia={agencia} initials={initials} color={col.initialsColor} size={36} />
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-bold text-slate-900 truncate leading-tight">{clientName}</div>
-          <div className="text-[10px] text-slate-500 truncate leading-tight mt-0.5">
-            {agencyLabel && <span>{agencyLabel}</span>}
-            {g.numeroCotizacion && <span className="text-slate-400 font-mono"> · {g.numeroCotizacion}</span>}
-            {valor != null && valor > 0 && <span className="font-semibold"> · {fmtMoney(valor)}</span>}
+    <>
+      <div
+        ref={cardRef}
+        className="bg-white rounded-xl ring-1 ring-slate-100 p-3"
+        style={{
+          transform: isHovered ? "translateY(-6px) scale(1.02)" : "translateY(0) scale(1)",
+          boxShadow: isHovered ? hoverShadow : "0 1px 2px rgba(0,0,0,0.04)",
+          transition: "transform 200ms ease, box-shadow 200ms ease",
+          cursor: "default",
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Logo + Client */}
+        <div className="flex items-start gap-2 mb-2">
+          <LogoOrInitials agencia={agencia} initials={initials} color={col.initialsColor} size={34} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] font-bold text-slate-900 truncate leading-tight">{clientName}</div>
+            {destino && (
+              <div className="text-[10px] font-semibold text-slate-500 truncate leading-tight mt-0.5" style={{ letterSpacing: "0.05em" }}>
+                {destino.toUpperCase()}
+              </div>
+            )}
           </div>
-          {showSinActividad && (
-            <div className="text-[10px] font-semibold mt-0.5" style={{ color: sinActividad >= 7 ? "#991b1b" : "#b45309" }}>
-              {sinActividad} día{sinActividad !== 1 ? "s" : ""} sin actividad
-            </div>
+        </div>
+
+        {/* Total */}
+        {valor != null && valor > 0 && (
+          <div className="mb-2" style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+            USD {valor.toLocaleString("es-ES", { maximumFractionDigits: 0 })}
+          </div>
+        )}
+
+        {/* RGE code + vigencia */}
+        <div className="flex items-center justify-between mb-2.5 gap-1 min-w-0">
+          {g.numeroCotizacion && (
+            <span className="text-[11px] font-mono truncate" style={{ color: "#94A3B8" }}>{g.numeroCotizacion}</span>
+          )}
+          {g.cliente.vigencia && (
+            <span className="text-[10px] text-slate-400 shrink-0">Vig. {formatShortDate(g.cliente.vigencia)}</span>
           )}
         </div>
+
+        {/* Activity warning */}
+        {showSinActividad && (
+          <div className="text-[10px] font-semibold mb-2" style={{ color: sinActividad >= 7 ? "#991b1b" : "#b45309" }}>
+            {sinActividad} día{sinActividad !== 1 ? "s" : ""} sin actividad
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={onView} className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg text-white text-[11px] font-semibold hover:opacity-90 transition-opacity" style={{ background: "#004FBB" }}>
+            <ExternalLink className="w-3 h-3" />Abrir
+          </button>
+          <button ref={menuBtnRef} type="button" onClick={openMenu} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors" title="Más acciones">
+            <MoreHorizontal className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Portal menu */}
+        {menuOpen && menuPos && createPortal(
+          <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[200px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
+            <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar" onClick={() => { onEdit(); close(); }} />
+            {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
+            <MenuItem icon={<MessageSquare className="w-3.5 h-3.5" />} label="Seguimiento / CRM" onClick={() => { onCRM(); close(); }} />
+            <div className="h-px bg-slate-100 my-1" />
+            <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateCRM({ estadoCRM: "confirmada", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
+            <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateCRM({ estadoCRM: "perdida", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
+            <div className="h-px bg-slate-100 my-1" />
+            <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label="Anular / Eliminar" onClick={() => { onAnular(); close(); }} danger />
+          </div>,
+          document.body
+        )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1.5">
-        <button type="button" onClick={onView} className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg text-white text-[11px] font-semibold hover:opacity-90 transition-opacity" style={{ background: "#004FBB" }}>
-          <ExternalLink className="w-3 h-3" />Abrir
-        </button>
-        <button ref={menuBtnRef} type="button" onClick={openMenu} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors" title="Más acciones">
-          <MoreHorizontal className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Portal menu */}
-      {menuOpen && menuPos && createPortal(
-        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[200px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
-          <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar" onClick={() => { onEdit(); close(); }} />
-          {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
-          <MenuItem icon={<MessageSquare className="w-3.5 h-3.5" />} label="Seguimiento / CRM" onClick={() => { onCRM(); close(); }} />
-          <div className="h-px bg-slate-100 my-1" />
-          <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateCRM({ estadoCRM: "confirmada", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
-          <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateCRM({ estadoCRM: "perdida", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
-          <div className="h-px bg-slate-100 my-1" />
-          <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label="Anular / Eliminar" onClick={() => { onAnular(); close(); }} danger />
+      {/* Summary tooltip */}
+      {tooltipVisible && tooltipPos && createPortal(
+        <div style={{
+          position: "fixed",
+          top: tooltipPos.top,
+          left: tooltipPos.left,
+          zIndex: 99999,
+          pointerEvents: "none",
+          background: "#ffffff",
+          borderRadius: 12,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08)",
+          border: "1px solid #e2e8f0",
+          padding: "12px 14px",
+          width: 264,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10 }}>Vista rápida</div>
+          {([
+            ["Agencia", agencyLabel],
+            ["Cliente", clientName],
+            ["Destino", destino || "—"],
+            ["Pasajeros", paxLabel],
+            ["Vigencia", formatDate(g.cliente.vigencia)],
+          ] as [string, string][]).map(([label, val]) => (
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 5, fontSize: 12 }}>
+              <span style={{ color: "#94a3b8", fontWeight: 500, flexShrink: 0 }}>{label}</span>
+              <span style={{ color: "#1e293b", fontWeight: 600, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{val}</span>
+            </div>
+          ))}
+          {valor != null && valor > 0 && (
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>Total</span>
+              <span style={{ fontSize: 17, fontWeight: 700, color: col.borderColor, letterSpacing: "-0.02em" }}>
+                USD {valor.toLocaleString("es-ES", { maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          )}
         </div>,
         document.body
       )}
-    </div>
+    </>
   );
 }
 
