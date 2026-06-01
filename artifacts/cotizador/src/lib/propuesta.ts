@@ -331,7 +331,7 @@ function alojamientoTable(d: PropuestaData): string {
   const rows = groups
     .map(({ label, items }) => {
       const locationHeader = `<tr style="page-break-inside:avoid;">
-        <td colspan="${totalCols}" style="padding:12px 12px;background:#EEF1F8;border-top:1px solid #D8DFF0;border-bottom:1px solid #D8DFF0;">
+        <td colspan="${totalCols}" style="padding:8px 12px;background:#EEF1F8;border-top:1px solid #D8DFF0;border-bottom:1px solid #D8DFF0;">
           <div style="font-size:11px;font-weight:700;color:#363765;letter-spacing:1px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
@@ -620,7 +620,7 @@ function buildTotalesView(d: PropuestaData): string {
     let rows = "";
     for (const { label, items } of groups) {
       rows += `<tr style="page-break-inside:avoid;">
-        <td colspan="8" style="padding:12px 12px;background:#EEF1F8;border-top:1px solid #D8DFF0;border-bottom:1px solid #D8DFF0;">
+        <td colspan="8" style="padding:8px 12px;background:#EEF1F8;border-top:1px solid #D8DFF0;border-bottom:1px solid #D8DFF0;">
           <div style="font-size:11px;font-weight:700;color:#363765;letter-spacing:1px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
@@ -823,8 +823,8 @@ export function buildPropuestaBody(d: PropuestaData): string {
   return `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;">
     <tr>
-      <td align="center" style="padding:20px 0;">
-        <table cellpadding="0" cellspacing="0" border="0" width="700" align="center" style="width:700px;margin:0 auto;background:#ffffff;font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:13px;line-height:1.45;">
+      <td align="center" style="padding:20px 24px;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:13px;line-height:1.45;">
           <tbody>
 
             ${introBlock(d)}
