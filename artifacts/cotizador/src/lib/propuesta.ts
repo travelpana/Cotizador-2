@@ -402,8 +402,18 @@ function adicionalesTable(
   if (d.isCalc) return "";
   if (items.length === 0) return "";
   const { T } = d;
+  const hasCHD = d.acoms.some((a) => String(a) === "CHD");
+  const onlyCHD = hasCHD && d.acoms.length === 1;
   const rows = items
     .map((s) => {
+      const chdUnit = (s.preciosPorAcomodacion as Record<string, number>)["CHD"] ?? 0;
+      const mainUnit = onlyCHD
+        ? (chdUnit > 0 ? chdUnit : (s.unitAplicado ?? 0))
+        : (s.unitAplicado ?? 0);
+      const chdSubLine =
+        hasCHD && !onlyCHD && chdUnit > 0
+          ? `<div style="font-size:11px;color:#475569;margin-top:3px;">CHD: ${escape(fmt(chdUnit))}</div>`
+          : "";
       const tipo =
         s.tipo === "vuelo"
           ? T.tipoVuelo
@@ -460,22 +470,23 @@ function adicionalesTable(
           ${notasLine}
         </td>
         <td style="${STYLES.td};width:15%;">${escape(tipo)}</td>
-        <td style="${STYLES.tdNum};width:10%;">${escape(fmt(s.unitAplicado ?? 0))}</td>
+        <td style="${STYLES.tdNum};width:10%;">${escape(fmt(mainUnit))}${chdSubLine}</td>
         <td style="${STYLES.tdEmpty};width:10%;"></td>
       </tr>`;
     })
     .join("");
 
+  const tarifaHeader = onlyCHD ? "TARIFA CHD" : T.tarifaPP;
   const thead = d.isCalc
     ? `<tr>
         <th style="${STYLES.th};width:65%;">${escape(T.descripcion)}</th>
         <th style="${STYLES.th};width:15%;">${escape(T.modalidad)}</th>
-        <th style="${STYLES.thNum};width:20%;">${escape(T.tarifaPP)}</th>
+        <th style="${STYLES.thNum};width:20%;">${escape(tarifaHeader)}</th>
       </tr>`
     : `<tr>
         <th style="${STYLES.th};width:65%;">${escape(T.descripcion)}</th>
         <th style="${STYLES.th};width:15%;">${escape(T.tipo)}</th>
-        <th style="${STYLES.thNum};width:10%;">${escape(T.tarifaPP)}</th>
+        <th style="${STYLES.thNum};width:10%;">${escape(tarifaHeader)}</th>
         <th style="${STYLES.thEmpty};width:10%;"></th>
       </tr>`;
 
@@ -677,6 +688,9 @@ function buildTotalesView(d: PropuestaData): string {
   }
 
   // ── 2. SERVICE SECTIONS ─────────────────────────────────────────
+  const hasCHDTot = d.acoms.some((a) => String(a) === "CHD");
+  const onlyCHDTot = hasCHDTot && d.acoms.length === 1;
+
   const serviceSectionHtml = (
     color: string,
     label: string,
@@ -689,6 +703,14 @@ function buildTotalesView(d: PropuestaData): string {
     for (const s of items) {
       const pax = s.paxAplicados ?? d.result.pasajeros;
       const total = s.totalesPorAcomodacion[d.primary];
+      const chdUnit = (s.preciosPorAcomodacion as Record<string, number>)["CHD"] ?? 0;
+      const mainUnit = onlyCHDTot
+        ? (chdUnit > 0 ? chdUnit : (s.unitAplicado ?? 0))
+        : (s.unitAplicado ?? 0);
+      const chdSubLine =
+        hasCHDTot && !onlyCHDTot && chdUnit > 0
+          ? `<div style="font-size:11px;color:#475569;margin-top:3px;">CHD: ${escape(fmt(chdUnit))}</div>`
+          : "";
       const ticketsLine = (() => {
         if (s.tipo !== "tour" || !s.tickets?.enabled || s.tickets.adultPrice <= 0) return "";
         const tk = s.tickets;
@@ -706,11 +728,12 @@ function buildTotalesView(d: PropuestaData): string {
       rows += `<tr style="page-break-inside:avoid;">
         <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}</td>
         <td style="${tdBase};width:17%;">${escape(getTipo(s))}</td>
-        <td style="${tdNum};width:13%;">${escape(fmt(s.unitAplicado ?? 0))}</td>
+        <td style="${tdNum};width:13%;">${escape(fmt(mainUnit))}${chdSubLine}</td>
         <td style="${tdCtr};width:8%;">${escape(String(pax))}</td>
         <td style="${tdNum};width:14%;color:${color};">${escape(fmt(total))}</td>
       </tr>`;
     }
+    const tarifaHeaderTot = onlyCHDTot ? "TARIFA CHD" : T.tarifaPP;
     return `
     <div style="${STYLES.block}">
       ${sectionBar(label, color)}
@@ -719,7 +742,7 @@ function buildTotalesView(d: PropuestaData): string {
           <tr>
             <th style="${STYLES.th};width:48%;">${escape(T.descripcion)}</th>
             <th style="${STYLES.th};width:17%;">${escape(T.modalidad)}</th>
-            <th style="${STYLES.thNum};width:13%;">${escape(T.tarifaPP)}</th>
+            <th style="${STYLES.thNum};width:13%;">${escape(tarifaHeaderTot)}</th>
             <th style="${STYLES.thCenter};width:8%;">${escape(T.pax)}</th>
             <th style="${STYLES.thNum};width:14%;color:${color};">${escape(T.total)}</th>
           </tr>
