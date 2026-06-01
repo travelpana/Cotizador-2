@@ -268,6 +268,13 @@ export default function CotizadorPage() {
   };
 
   const handleActionComplete = (tipo: ActividadTipo) => {
+    if (tipo === "whatsapp_enviado") return;
+
+    if (tipo === "guardado_manual") {
+      handleSave();
+      return;
+    }
+
     try {
       handleRegisterActivity(tipo);
       showToast("Cotización guardada y lista para seguimiento.");
