@@ -9,7 +9,7 @@ import {
   ChevronDown,
   Building2,
 } from "lucide-react";
-import logoRge from "@assets/style-travel-blue__1780204454850.png";
+import logoRge from "@assets/style-travel-blue-2_1780272470978.png";
 import { useState } from "react";
 
 export type View = "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
@@ -47,7 +47,7 @@ export default function Sidebar({ view, onView }: Props) {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            padding: "22px 20px 18px",
+            padding: "18px 20px 12px",
             borderBottom: "1px solid rgba(4,25,65,0.08)",
           }}
         >
@@ -56,7 +56,7 @@ export default function Sidebar({ view, onView }: Props) {
             alt="RGE Style Travel"
             style={{
               display: "block",
-              maxWidth: 150,
+              maxWidth: 180,
               height: "auto",
               width: "auto",
               objectFit: "contain",
@@ -66,8 +66,8 @@ export default function Sidebar({ view, onView }: Props) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto" style={{ padding: "12px 10px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <nav className="flex-1 overflow-y-auto" style={{ padding: "10px 10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <NavItem
               active={view === "cotizador"}
               onClick={() => onView("cotizador")}
@@ -82,7 +82,7 @@ export default function Sidebar({ view, onView }: Props) {
             />
           </div>
 
-          <div className="pt-4">
+          <div className="pt-3">
             <div className="mb-2" style={{ borderTop: "1px solid rgba(4,25,65,0.08)" }} />
             <button
               onClick={() => {
@@ -94,16 +94,16 @@ export default function Sidebar({ view, onView }: Props) {
               className="w-full flex items-center justify-between gap-2 rounded-xl outline-none focus:outline-none"
               style={{
                 color: "#64748b",
-                padding: "6px 12px",
+                padding: "5px 12px",
                 background: "transparent",
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                transition: "color 0.18s ease",
+                transition: "color 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = "#004fbb";
+                (e.currentTarget as HTMLButtonElement).style.color = "#044B9E";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
@@ -123,7 +123,7 @@ export default function Sidebar({ view, onView }: Props) {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 6,
+                  gap: 4,
                   marginTop: 4,
                   paddingLeft: 8,
                   marginLeft: 12,
@@ -188,66 +188,42 @@ function NavItem({
   sub?: boolean;
 }) {
   return (
-    <div className="relative">
-      {/* Vertical palito indicator */}
-      {active && (
-        <span
-          style={{
-            position: "absolute",
-            left: 14,
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: 4,
-            height: 26,
-            borderRadius: 999,
-            background: "#E6AE33",
-            pointerEvents: "none",
-            zIndex: 1,
-          }}
-        />
-      )}
-      <button
-        onClick={onClick}
-        className="w-full flex items-center gap-3 outline-none focus:outline-none focus-visible:outline-none"
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 outline-none focus:outline-none focus-visible:outline-none"
+      style={{
+        fontSize: sub ? 13 : 14,
+        fontWeight: active ? 600 : 500,
+        padding: sub ? "7px 14px" : "8px 14px",
+        borderRadius: 18,
+        border: "none",
+        transition: "all 0.2s ease",
+        background: active ? "#EDF4FF" : "transparent",
+        color: active ? "#044B9E" : "#07152f",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          (e.currentTarget as HTMLButtonElement).style.background = "#F7FAFF";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+        }
+      }}
+    >
+      <span
         style={{
-          fontSize: sub ? 13 : 14,
-          fontWeight: 600,
-          padding: sub ? "7px 12px 7px 18px" : "8px 12px 8px 18px",
-          borderRadius: 14,
-          transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease",
-          background: active ? "rgba(0,79,187,0.08)" : "transparent",
-          color: active ? "#004FBB" : "#07152f",
-          transform: "translateX(0)",
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget as HTMLButtonElement;
-          if (!active) {
-            el.style.background = "rgba(0,79,187,0.05)";
-            el.style.color = "#004FBB";
-          }
-          el.style.transform = "translateX(2px)";
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget as HTMLButtonElement;
-          if (!active) {
-            el.style.background = "transparent";
-            el.style.color = "#07152f";
-          }
-          el.style.transform = "translateX(0)";
+          color: active ? "#044B9E" : "#07152f",
+          display: "flex",
+          alignItems: "center",
+          flexShrink: 0,
+          transition: "color 0.2s ease",
         }}
       >
-        <span
-          style={{
-            color: active ? "#004FBB" : "#07152f",
-            display: "flex",
-            alignItems: "center",
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-        </span>
-        {label}
-      </button>
-    </div>
+        {icon}
+      </span>
+      {label}
+    </button>
   );
 }
