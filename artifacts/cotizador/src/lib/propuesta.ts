@@ -348,7 +348,7 @@ function alojamientoTable(d: PropuestaData): string {
 
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
-            ? `<div style="font-size:11px;color:#E6AE33;font-weight:600;margin-top:8px;">✓ ${escape(regimenFmt)}</div>`
+            ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
             : "";
           const notasHotelLine = h.notas
             ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
@@ -636,7 +636,7 @@ function buildTotalesView(d: PropuestaData): string {
           const total = h.totalesPorAcomodacion[a];
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
-            ? `<div style="font-size:11px;color:#E6AE33;font-weight:600;margin-top:8px;">✓ ${escape(regimenFmt)}</div>`
+            ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
             : "";
           const notasLine = h.notas
             ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`

@@ -49,6 +49,9 @@ export function formatRegimen(raw: string | null | undefined): string {
     lo.includes("desayuno") ||
     lo.includes("buffet") ||
     lo.includes("continental") ||
+    lo.includes("americano") ||
+    lo.includes("latinoamericano") ||
+    lo.includes("ejecutivo") ||
     lo.includes("breakfast") ||
     lo.startsWith("incluye ") ||
     lo === "incluido" ||
