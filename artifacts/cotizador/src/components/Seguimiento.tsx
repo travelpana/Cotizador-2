@@ -361,18 +361,19 @@ function ActivityIcon({ tipo }: { tipo: ActividadTipo }) {
 
 // ─── Logo Avatar ──────────────────────────────────────────────────────────────
 
-function LogoOrInitials({ agencia, initials, color, size = 36 }: {
-  agencia?: Agencia; initials: string; color: string; size?: number;
+function LogoOrInitials({ agencia, initials, color, size = 36, radius }: {
+  agencia?: Agencia; initials: string; color: string; size?: number; radius?: number;
 }) {
+  const br = radius ?? (size >= 44 ? 14 : 10);
   if (agencia?.logoUrl) {
     return (
-      <div className="bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0" style={{ width: size, height: size, borderRadius: 10 }}>
+      <div className="bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0" style={{ width: size, height: size, borderRadius: br }}>
         <img src={agencia.logoUrl} alt="" className="w-full h-full object-contain" />
       </div>
     );
   }
   return (
-    <div className="flex items-center justify-center font-bold text-white shrink-0" style={{ width: size, height: size, borderRadius: 10, background: color, fontSize: size * 0.33 }}>
+    <div className="flex items-center justify-center font-bold text-white shrink-0" style={{ width: size, height: size, borderRadius: br, background: color, fontSize: size * 0.33 }}>
       {initials}
     </div>
   );
@@ -453,7 +454,9 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [logoHovered, setLogoHovered] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -481,16 +484,25 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setLogoHovered(false);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    setTooltipVisible(false);
+    setTooltipPos(null);
+  };
+
+  const handleLogoMouseEnter = () => {
+    setLogoHovered(true);
     hoverTimerRef.current = setTimeout(() => {
-      const rect = cardRef.current?.getBoundingClientRect();
+      const rect = logoRef.current?.getBoundingClientRect();
       if (rect) {
         const TW = 264;
         const TH = 220;
         let top = rect.top - TH - 8;
         if (top < 8) top = rect.bottom + 8;
-        let left = rect.left + (rect.width - TW) / 2;
+        let left = rect.left + (rect.width / 2) - TW / 2;
         if (left < 8) left = 8;
         if (left + TW > window.innerWidth - 8) left = window.innerWidth - TW - 8;
         setTooltipPos({ top, left });
@@ -499,8 +511,8 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
     }, 300);
   };
 
-  const handleMouseLeave = () => {
-    setIsHovered(false);
+  const handleLogoMouseLeave = () => {
+    setLogoHovered(false);
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     setTooltipVisible(false);
     setTooltipPos(null);
@@ -539,7 +551,21 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
       >
         {/* Logo + Client */}
         <div className="flex items-start gap-2 mb-2">
-          <LogoOrInitials agencia={agencia} initials={initials} color={col.initialsColor} size={34} />
+          <div
+            ref={logoRef}
+            style={{
+              cursor: "pointer",
+              flexShrink: 0,
+              transform: logoHovered ? "scale(1.04)" : "scale(1)",
+              boxShadow: logoHovered ? "0 8px 18px rgba(4,25,65,0.12)" : "none",
+              transition: "transform 150ms ease, box-shadow 150ms ease",
+              borderRadius: 14,
+            }}
+            onMouseEnter={handleLogoMouseEnter}
+            onMouseLeave={handleLogoMouseLeave}
+          >
+            <LogoOrInitials agencia={agencia} initials={initials} color={col.initialsColor} size={48} radius={14} />
+          </div>
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-bold text-slate-900 truncate leading-tight">{clientName}</div>
             {destino && (
