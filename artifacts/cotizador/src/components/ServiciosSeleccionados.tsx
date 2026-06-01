@@ -192,7 +192,7 @@ export default function ServiciosSeleccionados({
                 style={{ backgroundColor: "#001851" }}
               >
                 <LayoutTemplate className="w-4 h-4" />
-                Plantilla
+                Plantillas
               </button>
             )}
             {onAddCustom && (

@@ -29,9 +29,9 @@ interface Props {
   tieneServicios: boolean;
 }
 
-type FilterChip = "Todos" | "Panamá" | "Costa Rica" | "Brasil" | "Colombia" | "Multi destino";
+type FilterChip = "Todos" | "Panamá" | "Costa Rica" | "Brasil" | "Colombia" | "Circuitos";
 
-const CHIPS: FilterChip[] = ["Todos", "Panamá", "Costa Rica", "Brasil", "Colombia", "Multi destino"];
+const CHIPS: FilterChip[] = ["Todos", "Panamá", "Costa Rica", "Brasil", "Colombia", "Circuitos"];
 
 function normalize(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -43,7 +43,7 @@ function getDestino(nombre: string): FilterChip {
   if (n.includes("costa rica")) return "Costa Rica";
   if (n.includes("brasil") || n.includes("brazil") || n.includes("carnaval")) return "Brasil";
   if (n.includes("colombia")) return "Colombia";
-  return "Multi destino";
+  return "Circuitos";
 }
 
 function plantillaResumen(p: Plantilla) {
@@ -161,7 +161,7 @@ export default function PlantillaSelectorModal({
         <div className="px-6 pt-6 pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Seleccionar plantilla</h2>
+              <h2 className="text-lg font-bold text-slate-900">Seleccionar plantillas</h2>
               <p className="text-sm text-slate-500 mt-0.5">Busca y aplica una plantilla guardada.</p>
             </div>
             <button
@@ -178,7 +178,7 @@ export default function PlantillaSelectorModal({
             <input
               ref={searchRef}
               type="text"
-              placeholder="Buscar plantilla..."
+              placeholder="Buscar plantillas..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition"
