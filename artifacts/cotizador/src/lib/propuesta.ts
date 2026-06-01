@@ -331,8 +331,8 @@ function alojamientoTable(d: PropuestaData): string {
   const rows = groups
     .map(({ label, items }) => {
       const locationHeader = `<tr style="page-break-inside:avoid;">
-        <td colspan="${totalCols}" style="padding:4px 12px 4px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
-          <div style="font-size:11px;font-weight:700;color:${COLOR_AZUL};letter-spacing:0.8px;text-transform:uppercase;">${escape(label)}</div>
+        <td colspan="${totalCols}" style="padding:12px 12px;background:#EEF1F8;border-top:1px solid #D8DFF0;border-bottom:1px solid #D8DFF0;">
+          <div style="font-size:11px;font-weight:700;color:#363765;letter-spacing:1px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
 
@@ -620,8 +620,8 @@ function buildTotalesView(d: PropuestaData): string {
     let rows = "";
     for (const { label, items } of groups) {
       rows += `<tr style="page-break-inside:avoid;">
-        <td colspan="8" style="padding:4px 12px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
-          <div style="font-size:11px;font-weight:700;color:${C_TOT_ALOJAMIENTO};letter-spacing:0.8px;text-transform:uppercase;">${escape(label)}</div>
+        <td colspan="8" style="padding:12px 12px;background:#EEF1F8;border-top:1px solid #D8DFF0;border-bottom:1px solid #D8DFF0;">
+          <div style="font-size:11px;font-weight:700;color:#363765;letter-spacing:1px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
       for (const h of items) {
