@@ -376,7 +376,7 @@ function alojamientoTable(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(T.alojamiento)}
+    ${sectionBar(T.alojamiento, C_TOT_ALOJAMIENTO)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr>
@@ -396,6 +396,7 @@ function adicionalesTable(
   title: string,
   items: ServicioCalculado[],
   d: PropuestaData,
+  barColor = COLOR_AZUL,
 ): string {
   if (d.isCalc) return "";
   if (items.length === 0) return "";
@@ -479,7 +480,7 @@ function adicionalesTable(
 
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(title)}
+    ${sectionBar(title, barColor)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
       <thead>${thead}</thead>
       <tbody>${rows}</tbody>
@@ -487,7 +488,7 @@ function adicionalesTable(
   </div>`;
 }
 
-function itinerarioTable(d: PropuestaData, barColor = COLOR_NARANJA, barTextColor = "#ffffff"): string {
+function itinerarioTable(d: PropuestaData, barColor = C_TOT_ITINERARIO, barTextColor = "#1f2937"): string {
   if (d.itinerario.length === 0) return "";
   const { T } = d;
   const editAttrs = (dia: number) =>
@@ -528,7 +529,7 @@ function itinerarioTable(d: PropuestaData, barColor = COLOR_NARANJA, barTextColo
   </div>`;
 }
 
-function descriptivosBlock(d: PropuestaData, barColor = "#d97706"): string {
+function descriptivosBlock(d: PropuestaData, barColor = C_TOT_DESCRIPTIVOS): string {
   if (!d.incluirDescriptivoCompleto || d.descriptivosTours.length === 0) {
     return "";
   }
@@ -619,7 +620,7 @@ function buildTotalesView(d: PropuestaData): string {
     let rows = "";
     for (const { label, items } of groups) {
       rows += `<tr style="page-break-inside:avoid;">
-        <td colspan="7" style="padding:4px 12px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
+        <td colspan="8" style="padding:4px 12px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
           <div style="font-size:11px;font-weight:700;color:${C_TOT_ALOJAMIENTO};letter-spacing:0.8px;text-transform:uppercase;">${escape(label)}</div>
         </td>
       </tr>`;
@@ -640,15 +641,15 @@ function buildTotalesView(d: PropuestaData): string {
           const notasLine = h.notas
             ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
             : "";
-          const acomBadge = `<span style="display:inline-block;background:#e0e7ff;color:#3730a3;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;margin-left:6px;vertical-align:middle;">${escape(String(a))}</span>`;
           rows += `<tr style="page-break-inside:avoid;">
-            <td style="${tdBase};font-weight:600;width:33%;">${escape(h.nombre)}${acomBadge}${regimenLine}${notasLine}</td>
-            <td style="${tdCtr};width:10%;">${escape(h.estrellas || "—")}</td>
-            <td style="${tdBase};width:13%;">${escape(h.tipoHabitacion || "—")}</td>
-            <td style="${tdNum};width:13%;">${escape(fmt(tarifa))}</td>
-            <td style="${tdCtr};width:7%;">${escape(String(pax))}</td>
-            <td style="${tdCtr};width:7%;">${escape(String(hotelNoches))}</td>
-            <td style="${tdNum};width:17%;color:${C_TOT_ALOJAMIENTO};">${escape(fmt(total))}</td>
+            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${regimenLine}${notasLine}</td>
+            <td style="${tdCtr};width:9%;">${escape(h.estrellas || "—")}</td>
+            <td style="${tdBase};width:11%;">${escape(h.tipoHabitacion || "—")}</td>
+            <td style="${tdCtr};width:8%;font-weight:700;color:#475569;">${escape(String(a))}</td>
+            <td style="${tdNum};width:11%;">${escape(fmt(tarifa))}</td>
+            <td style="${tdCtr};width:6%;">${escape(String(pax))}</td>
+            <td style="${tdCtr};width:6%;">${escape(String(hotelNoches))}</td>
+            <td style="${tdNum};width:15%;color:${C_TOT_ALOJAMIENTO};">${escape(fmt(total))}</td>
           </tr>`;
         }
       }
@@ -659,13 +660,14 @@ function buildTotalesView(d: PropuestaData): string {
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
         <thead>
           <tr>
-            <th style="${STYLES.th};width:33%;">${escape(T.hotel)}</th>
-            <th style="${STYLES.thCenter};width:10%;">${escape(T.categoria)}</th>
-            <th style="${STYLES.th};width:13%;">${escape(T.tipoHab)}</th>
-            <th style="${STYLES.thNum};width:13%;">${escape(T.tarifaNoc)}</th>
-            <th style="${STYLES.thCenter};width:7%;">${escape(T.pax)}</th>
-            <th style="${STYLES.thCenter};width:7%;">${escape(T.noc)}</th>
-            <th style="${STYLES.thNum};width:17%;color:${C_TOT_ALOJAMIENTO};">${escape(T.total)}</th>
+            <th style="${STYLES.th};width:30%;">${escape(T.hotel)}</th>
+            <th style="${STYLES.thCenter};width:9%;">${escape(T.categoria)}</th>
+            <th style="${STYLES.th};width:11%;">${escape(T.tipoHab)}</th>
+            <th style="${STYLES.thCenter};width:8%;">${escape(T.acom)}</th>
+            <th style="${STYLES.thNum};width:11%;">${escape(T.tarifaNoc)}</th>
+            <th style="${STYLES.thCenter};width:6%;">${escape(T.pax)}</th>
+            <th style="${STYLES.thCenter};width:6%;">${escape(T.noc)}</th>
+            <th style="${STYLES.thNum};width:15%;color:${C_TOT_ALOJAMIENTO};">${escape(T.total)}</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -742,22 +744,13 @@ function buildTotalesView(d: PropuestaData): string {
     (s) => s.nombre,
   );
 
-  // ── 3. OBSERVACIONES ────────────────────────────────────────────
-  html += observacionesBlock(d, C_TOT_OBSERVACIONES);
-
-  // ── 4. ITINERARIO ───────────────────────────────────────────────
-  html += itinerarioTable(d, C_TOT_ITINERARIO, "#1f2937");
-
-  // ── 5. DESCRIPTIVOS ─────────────────────────────────────────────
-  html += descriptivosBlock(d, C_TOT_DESCRIPTIVOS);
-
-  // ── 6. TOTAL FINAL ──────────────────────────────────────────────
-  const totalLabelStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:13px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
+  // ── 3. TOTALES SEGÚN ACOMODACIÓN ────────────────────────────────
+  const totalLabelStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:14px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
   const totalValStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:16px;background:#f0f4ff;`;
   const totalRows = d.acoms
     .map(
       (a) => `<tr>
-        <td style="${totalLabelStyle}">${escape(T.detalleDeCotizacion)} · ${escape(String(a))}</td>
+        <td style="${totalLabelStyle}">${escape(String(a))}</td>
         <td style="${totalValStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
       </tr>`,
     )
@@ -765,16 +758,25 @@ function buildTotalesView(d: PropuestaData): string {
 
   html += `
   <div style="${STYLES.block}">
-    ${sectionBar(T.detalleDeCotizacion)}
+    ${sectionBar(T.totalesSegunAcomodacion)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:2px solid ${COLOR_AZUL};border-radius:4px;">
       <tfoot>${totalRows}</tfoot>
     </table>
   </div>`;
 
+  // ── 4. OBSERVACIONES ────────────────────────────────────────────
+  html += observacionesBlock(d, C_TOT_OBSERVACIONES);
+
+  // ── 5. ITINERARIO ───────────────────────────────────────────────
+  html += itinerarioTable(d, C_TOT_ITINERARIO, "#1f2937");
+
+  // ── 6. DESCRIPTIVOS ─────────────────────────────────────────────
+  html += descriptivosBlock(d, C_TOT_DESCRIPTIVOS);
+
   return html;
 }
 
-function observacionesBlock(d: PropuestaData, barColor = COLOR_NARANJA): string {
+function observacionesBlock(d: PropuestaData, barColor = C_TOT_OBSERVACIONES): string {
   if (!d.observaciones || d.observaciones.length === 0) return "";
   const { T } = d;
   const items = d.observaciones
@@ -868,10 +870,10 @@ export function buildPropuestaBody(d: PropuestaData): string {
             ${d.isCalc
               ? `<tr><td>${buildTotalesView(d)}</td></tr>`
               : `<tr><td>${alojamientoTable(d)}</td></tr>
-            <tr><td>${adicionalesTable(T.traslados, d.traslados, d)}</td></tr>
-            <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d)}</td></tr>
-            <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d)}</td></tr>
-            <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d)}</td></tr>
+            <tr><td>${adicionalesTable(T.traslados, d.traslados, d, C_TOT_TRASLADOS)}</td></tr>
+            <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
+            <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_TOURS)}</td></tr>
+            <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
             <tr><td>${itinerarioTable(d)}</td></tr>
             <tr><td>${descriptivosBlock(d)}</td></tr>
             <tr><td>${observacionesBlock(d)}</td></tr>`
