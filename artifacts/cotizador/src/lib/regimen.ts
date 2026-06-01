@@ -34,19 +34,6 @@ export function formatRegimen(raw: string | null | undefined): string {
     return "Desayuno incluido";
   }
 
-  // ── Already well-formed (user typed a complete phrase) ───────────
-  if (
-    lo.startsWith("incluye ") ||
-    lo.startsWith("todo incluido") ||
-    lo.startsWith("alimentación completa") ||
-    lo.startsWith("alimentacion completa") ||
-    lo.startsWith("desayuno ") ||
-    lo.startsWith("desayuno buffet") ||
-    lo.startsWith("desayuno continental")
-  ) {
-    return s;
-  }
-
   // ── All-inclusive ────────────────────────────────────────────────
   if (lo.includes("all inclusive") || lo.includes("all-inclusive") || lo === "todo incluido") {
     return "Todo incluido";
@@ -57,26 +44,17 @@ export function formatRegimen(raw: string | null | undefined): string {
     return "Alimentación completa incluida";
   }
 
-  // ── Breakfast keywords ───────────────────────────────────────────
-  if (lo.includes("buffet")) {
-    return "Incluye desayuno buffet";
-  }
-
-  if (lo.includes("continental")) {
-    return "Incluye desayuno continental";
-  }
-
-  if (lo === "desayuno" || lo === "con desayuno" || lo === "breakfast") {
+  // ── Any breakfast variant → unified label ────────────────────────
+  if (
+    lo.includes("desayuno") ||
+    lo.includes("buffet") ||
+    lo.includes("continental") ||
+    lo.includes("breakfast") ||
+    lo.startsWith("incluye ") ||
+    lo === "incluido" ||
+    lo === "con desayuno"
+  ) {
     return "Desayuno incluido";
-  }
-
-  // ── Raw value contains "desayuno" but didn't match above ─────────
-  if (lo.includes("desayuno")) {
-    // Avoid double "Incluye" prefix
-    if (lo.includes("incluye") || lo.includes("incluido")) {
-      return s;
-    }
-    return `Incluye ${s.charAt(0).toLowerCase() + s.slice(1)}`;
   }
 
   // ── Fallback: return as-is (custom free-text) ────────────────────
