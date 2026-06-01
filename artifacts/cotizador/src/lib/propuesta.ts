@@ -240,13 +240,14 @@ const COLOR_TEXTO = "#1f2937";
 const COLOR_BORDE = "#e5e7eb";
 const COLOR_LABEL = "#6b7280";
 
-const C_TOT_ALOJAMIENTO = "#363765";
+const C_TOT_ALOJAMIENTO = "#2F3D90";
 const C_TOT_TRASLADOS = "#2F3D90";
 const C_TOT_TOURS = "#2557A2";
 const C_TOT_VUELOS = "#1780C0";
-const C_TOT_OBSERVACIONES = "#EF7B15";
-const C_TOT_ITINERARIO = "#F7CB17";
-const C_TOT_DESCRIPTIVOS = "#2B4596";
+const C_TOT_OBSERVACIONES = "#F7CB17";
+const C_TOT_OBSERVACIONES_TEXT = "#041941";
+const C_TOT_ITINERARIO = "#EF7B15";
+const C_TOT_DESCRIPTIVOS = "#EF7B15";
 
 const STYLES = {
   pillBlue: `display:inline-block;background:${COLOR_AZUL};color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
@@ -488,7 +489,7 @@ function adicionalesTable(
   </div>`;
 }
 
-function itinerarioTable(d: PropuestaData, barColor = C_TOT_ITINERARIO, barTextColor = "#1f2937"): string {
+function itinerarioTable(d: PropuestaData, barColor = C_TOT_ITINERARIO, barTextColor = "#ffffff"): string {
   if (d.itinerario.length === 0) return "";
   const { T } = d;
   const editAttrs = (dia: number) =>
@@ -768,7 +769,7 @@ function buildTotalesView(d: PropuestaData): string {
   html += observacionesBlock(d, C_TOT_OBSERVACIONES);
 
   // ── 5. ITINERARIO ───────────────────────────────────────────────
-  html += itinerarioTable(d, C_TOT_ITINERARIO, "#1f2937");
+  html += itinerarioTable(d, C_TOT_ITINERARIO, "#ffffff");
 
   // ── 6. DESCRIPTIVOS ─────────────────────────────────────────────
   html += descriptivosBlock(d, C_TOT_DESCRIPTIVOS);
@@ -776,7 +777,7 @@ function buildTotalesView(d: PropuestaData): string {
   return html;
 }
 
-function observacionesBlock(d: PropuestaData, barColor = C_TOT_OBSERVACIONES): string {
+function observacionesBlock(d: PropuestaData, barColor = C_TOT_OBSERVACIONES, barTextColor = C_TOT_OBSERVACIONES_TEXT): string {
   if (!d.observaciones || d.observaciones.length === 0) return "";
   const { T } = d;
   const items = d.observaciones
@@ -787,7 +788,7 @@ function observacionesBlock(d: PropuestaData, barColor = C_TOT_OBSERVACIONES): s
     .join("");
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(T.observaciones, barColor)}
+    ${sectionBar(T.observaciones, barColor, barTextColor)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#fff8f5;">
       <tbody>${items}</tbody>
     </table>
@@ -872,7 +873,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
               : `<tr><td>${alojamientoTable(d)}</td></tr>
             <tr><td>${adicionalesTable(T.traslados, d.traslados, d, C_TOT_TRASLADOS)}</td></tr>
             <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
-            <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_TOURS)}</td></tr>
+            <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
             <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
             <tr><td>${itinerarioTable(d)}</td></tr>
             <tr><td>${descriptivosBlock(d)}</td></tr>
