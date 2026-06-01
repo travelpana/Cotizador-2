@@ -240,6 +240,14 @@ const COLOR_TEXTO = "#1f2937";
 const COLOR_BORDE = "#e5e7eb";
 const COLOR_LABEL = "#6b7280";
 
+const C_TOT_ALOJAMIENTO = "#363765";
+const C_TOT_TRASLADOS = "#2F3D90";
+const C_TOT_TOURS = "#2557A2";
+const C_TOT_VUELOS = "#1780C0";
+const C_TOT_OBSERVACIONES = "#EF7B15";
+const C_TOT_ITINERARIO = "#F7CB17";
+const C_TOT_DESCRIPTIVOS = "#2B4596";
+
 const STYLES = {
   pillBlue: `display:inline-block;background:${COLOR_AZUL};color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
   pillOrange: `display:inline-block;background:${COLOR_NARANJA};color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
@@ -272,9 +280,9 @@ const escape = (s: unknown) =>
 /** Like escape() but also converts newlines to <br /> for multi-line fields */
 const escapeML = (s: unknown) => escape(s).replace(/\n/g, "<br />");
 
-/** Full-width colored section header bar. */
-function sectionBar(title: string, color: string = COLOR_AZUL): string {
-  return `<div style="background:${color};color:#ffffff;padding:8px 14px;font-weight:700;font-size:11px;letter-spacing:0.8px;text-transform:uppercase;border-radius:4px 4px 0 0;">${escape(title)}</div>`;
+/** Full-width colored section header bar. Pass textColor="#1f2937" for light-colored bars. */
+function sectionBar(title: string, color: string = COLOR_AZUL, textColor = "#ffffff"): string {
+  return `<div style="background:${color};color:${textColor};padding:8px 14px;font-weight:700;font-size:11px;letter-spacing:0.8px;text-transform:uppercase;border-radius:4px 4px 0 0;">${escape(title)}</div>`;
 }
 
 function infoRow(label: string, value: string) {
@@ -479,7 +487,7 @@ function adicionalesTable(
   </div>`;
 }
 
-function itinerarioTable(d: PropuestaData): string {
+function itinerarioTable(d: PropuestaData, barColor = COLOR_NARANJA, barTextColor = "#ffffff"): string {
   if (d.itinerario.length === 0) return "";
   const { T } = d;
   const editAttrs = (dia: number) =>
@@ -506,7 +514,7 @@ function itinerarioTable(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(T.itinerarioSugerido, COLOR_NARANJA)}
+    ${sectionBar(T.itinerarioSugerido, barColor, barTextColor)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr>
@@ -520,7 +528,7 @@ function itinerarioTable(d: PropuestaData): string {
   </div>`;
 }
 
-function descriptivosBlock(d: PropuestaData): string {
+function descriptivosBlock(d: PropuestaData, barColor = "#d97706"): string {
   if (!d.incluirDescriptivoCompleto || d.descriptivosTours.length === 0) {
     return "";
   }
@@ -591,125 +599,182 @@ function descriptivosBlock(d: PropuestaData): string {
 
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(T.descriptivos, "#d97706")}
+    ${sectionBar(T.descriptivos, barColor)}
     <div style="margin-top:6px;">${items}</div>
   </div>`;
 }
 
-function totalsBlock(d: PropuestaData): string {
-  if (!d.isCalc) return "";
+function buildTotalesView(d: PropuestaData): string {
   const { T } = d;
 
-  const C = 6;
-  const secHdr = `padding:8px 14px;background:#eff6ff;font-weight:700;color:${COLOR_AZUL};font-size:10px;letter-spacing:0.8px;text-transform:uppercase;border-top:2px solid #dbeafe;border-bottom:1px solid ${COLOR_BORDE};`;
   const tdBase = `padding:9px 14px;border-top:1px solid ${COLOR_BORDE};color:${COLOR_TEXTO};font-size:12px;vertical-align:middle;`;
   const tdNum = `${tdBase}text-align:right;font-weight:600;`;
   const tdCtr = `${tdBase}text-align:center;`;
 
-  let rows = "";
+  let html = "";
 
-  // ── ALOJAMIENTO ──────────────────────────────────────────────────
+  // ── 1. ALOJAMIENTO ──────────────────────────────────────────────
   if (d.hoteles.length > 0) {
-    rows += `<tr><td colspan="${C}" style="${secHdr}">${escape(T.alojamiento)}</td></tr>`;
-    rows += `<tr>
-      <th style="${STYLES.th};padding:7px 14px;">${escape(T.concepto)}</th>
-      <th style="${STYLES.thCenter};padding:7px 14px;width:11%;">${escape(T.acom)}</th>
-      <th style="${STYLES.thNum};padding:7px 14px;width:13%;">${escape(T.tarifaNoc)}</th>
-      <th style="${STYLES.thCenter};padding:7px 14px;width:7%;">${escape(T.pax)}</th>
-      <th style="${STYLES.thCenter};padding:7px 14px;width:7%;">${escape(T.noc)}</th>
-      <th style="${STYLES.thNum};padding:7px 14px;width:13%;color:${COLOR_AZUL};">${escape(T.total)}</th>
-    </tr>`;
-    for (const h of d.hoteles) {
-      const hotelNoches = h.noches ?? d.cliente.noches ?? 1;
-      const validAcoms = d.acoms.filter((a) => (h.preciosPorAcomodacion[a] ?? 0) > 0);
-      for (const a of validAcoms) {
-        const tarifa = h.preciosPorAcomodacion[a];
-        const pax = String(a).toUpperCase() === "CHD"
-          ? (d.cliente.ninos ?? 0)
-          : d.result.pasajeros;
-        const total = h.totalesPorAcomodacion[a];
-        rows += `<tr>
-          <td style="${tdBase};font-weight:600;">${escape(h.nombre)}</td>
-          <td style="${tdCtr};font-weight:700;color:#475569;">${escape(String(a))}</td>
-          <td style="${tdNum}">${escape(fmt(tarifa))}</td>
-          <td style="${tdCtr}">${escape(String(pax))}</td>
-          <td style="${tdCtr}">${escape(String(hotelNoches))}</td>
-          <td style="${tdNum};color:${COLOR_AZUL};">${escape(fmt(total))}</td>
-        </tr>`;
+    const groups = groupByLocation(d.hoteles);
+    let rows = "";
+    for (const { label, items } of groups) {
+      rows += `<tr style="page-break-inside:avoid;">
+        <td colspan="7" style="padding:4px 12px;background:linear-gradient(to right,#eff6ff,#f8fafc);border-top:2px solid #e2e8f0;border-bottom:1px solid #dbeafe;">
+          <div style="font-size:11px;font-weight:700;color:${C_TOT_ALOJAMIENTO};letter-spacing:0.8px;text-transform:uppercase;">${escape(label)}</div>
+        </td>
+      </tr>`;
+      for (const h of items) {
+        const hotelNoches = h.noches ?? d.cliente.noches ?? 1;
+        const validAcoms = d.acoms.filter((a) => (h.preciosPorAcomodacion[a] ?? 0) > 0);
+        for (const a of validAcoms) {
+          const tarifa = h.preciosPorAcomodacion[a];
+          const pax =
+            String(a).toUpperCase() === "CHD"
+              ? (d.cliente.ninos ?? 0)
+              : d.result.pasajeros;
+          const total = h.totalesPorAcomodacion[a];
+          const regimenFmt = formatRegimen(h.desayuno);
+          const regimenLine = regimenFmt
+            ? `<div style="font-size:11px;color:#0369a1;font-weight:700;margin-top:2px;">${escape(regimenFmt)}</div>`
+            : "";
+          const notasLine = h.notas
+            ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
+            : "";
+          const acomBadge = `<span style="display:inline-block;background:#e0e7ff;color:#3730a3;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;margin-left:6px;vertical-align:middle;">${escape(String(a))}</span>`;
+          rows += `<tr style="page-break-inside:avoid;">
+            <td style="${tdBase};font-weight:600;width:33%;">${escape(h.nombre)}${acomBadge}${regimenLine}${notasLine}</td>
+            <td style="${tdCtr};width:10%;">${escape(h.estrellas || "—")}</td>
+            <td style="${tdBase};width:13%;">${escape(h.tipoHabitacion || "—")}</td>
+            <td style="${tdNum};width:13%;">${escape(fmt(tarifa))}</td>
+            <td style="${tdCtr};width:7%;">${escape(String(pax))}</td>
+            <td style="${tdCtr};width:7%;">${escape(String(hotelNoches))}</td>
+            <td style="${tdNum};width:17%;color:${C_TOT_ALOJAMIENTO};">${escape(fmt(total))}</td>
+          </tr>`;
+        }
       }
     }
+    html += `
+    <div style="${STYLES.block}">
+      ${sectionBar(T.alojamiento, C_TOT_ALOJAMIENTO)}
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="${STYLES.th};width:33%;">${escape(T.hotel)}</th>
+            <th style="${STYLES.thCenter};width:10%;">${escape(T.categoria)}</th>
+            <th style="${STYLES.th};width:13%;">${escape(T.tipoHab)}</th>
+            <th style="${STYLES.thNum};width:13%;">${escape(T.tarifaNoc)}</th>
+            <th style="${STYLES.thCenter};width:7%;">${escape(T.pax)}</th>
+            <th style="${STYLES.thCenter};width:7%;">${escape(T.noc)}</th>
+            <th style="${STYLES.thNum};width:17%;color:${C_TOT_ALOJAMIENTO};">${escape(T.total)}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   }
 
-  const serviceSection = (
+  // ── 2. SERVICE SECTIONS ─────────────────────────────────────────
+  const serviceSectionHtml = (
+    color: string,
     label: string,
     items: ServicioCalculado[],
     getTipo: (s: ServicioCalculado) => string,
     getName: (s: ServicioCalculado) => string,
-  ) => {
+  ): string => {
     if (items.length === 0) return "";
-    let r = `<tr><td colspan="${C}" style="${secHdr}">${escape(label)}</td></tr>`;
-    r += `<tr>
-      <th style="${STYLES.th};padding:7px 14px;" colspan="2">${escape(T.concepto)}</th>
-      <th style="${STYLES.th};padding:7px 14px;width:13%;">${escape(T.modalidad)}</th>
-      <th style="${STYLES.thNum};padding:7px 14px;width:13%;">${escape(T.tarifaPP)}</th>
-      <th style="${STYLES.thCenter};padding:7px 14px;width:7%;">${escape(T.pax)}</th>
-      <th style="${STYLES.thNum};padding:7px 14px;width:13%;color:${COLOR_AZUL};">${escape(T.total)}</th>
-    </tr>`;
+    let rows = "";
     for (const s of items) {
       const pax = s.paxAplicados ?? d.result.pasajeros;
       const total = s.totalesPorAcomodacion[d.primary];
-      r += `<tr>
-        <td style="${tdBase};font-weight:600;" colspan="2">${escape(getName(s))}</td>
-        <td style="${tdBase}">${escape(getTipo(s))}</td>
-        <td style="${tdNum}">${escape(fmt(s.unitAplicado ?? 0))}</td>
-        <td style="${tdCtr}">${escape(String(pax))}</td>
-        <td style="${tdNum};color:${COLOR_AZUL};">${escape(fmt(total))}</td>
+      const ticketsLine = (() => {
+        if (s.tipo !== "tour" || !s.tickets?.enabled || s.tickets.adultPrice <= 0) return "";
+        const tk = s.tickets;
+        const labelPart = tk.label ? `${escape(tk.label)} · ` : "";
+        const adultPart = `${T.adultosCap} ${escape(fmt(tk.adultPrice))} p/p`;
+        const childPart =
+          tk.childPrice !== undefined && tk.childPrice > 0
+            ? ` · ${T.ninosCap} ${escape(fmt(tk.childPrice))} p/p`
+            : "";
+        return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">${escape(T.costoAdicionalEntradas)}: ${labelPart}${adultPart}${childPart}</div>`;
+      })();
+      const notasLine = s.notas
+        ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>`
+        : "";
+      rows += `<tr style="page-break-inside:avoid;">
+        <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}</td>
+        <td style="${tdBase};width:17%;">${escape(getTipo(s))}</td>
+        <td style="${tdNum};width:13%;">${escape(fmt(s.unitAplicado ?? 0))}</td>
+        <td style="${tdCtr};width:8%;">${escape(String(pax))}</td>
+        <td style="${tdNum};width:14%;color:${color};">${escape(fmt(total))}</td>
       </tr>`;
     }
-    return r;
+    return `
+    <div style="${STYLES.block}">
+      ${sectionBar(label, color)}
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="${STYLES.th};width:48%;">${escape(T.descripcion)}</th>
+            <th style="${STYLES.th};width:17%;">${escape(T.modalidad)}</th>
+            <th style="${STYLES.thNum};width:13%;">${escape(T.tarifaPP)}</th>
+            <th style="${STYLES.thCenter};width:8%;">${escape(T.pax)}</th>
+            <th style="${STYLES.thNum};width:14%;color:${color};">${escape(T.total)}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   };
 
-  rows += serviceSection(
-    T.traslados,
-    d.traslados,
+  html += serviceSectionHtml(
+    C_TOT_TRASLADOS, T.traslados, d.traslados,
     (s) => s.tipoServicio ?? (s.detalle?.includes("Privado") ? T.privado : T.regular),
     (s) => formatTrasladoNombre(s.nombre),
   );
-  rows += serviceSection(
-    T.toursYExperiencias,
-    d.tours,
+  html += serviceSectionHtml(
+    C_TOT_TOURS, T.toursYExperiencias, d.tours,
     (s) => s.tipoServicio ?? T.regular,
     (s) => s.nombre,
   );
-  rows += serviceSection(
-    T.vuelos,
-    d.vuelos,
+  html += serviceSectionHtml(
+    C_TOT_VUELOS, T.vuelos, d.vuelos,
     () => T.tipoVuelo,
     (s) => s.nombre,
   );
 
-  const totalLabelStyle = `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
-  const totalValStyle = `padding:12px 14px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:700;color:${COLOR_AZUL};font-size:14px;background:#f0f4ff;`;
+  // ── 3. OBSERVACIONES ────────────────────────────────────────────
+  html += observacionesBlock(d, C_TOT_OBSERVACIONES);
+
+  // ── 4. ITINERARIO ───────────────────────────────────────────────
+  html += itinerarioTable(d, C_TOT_ITINERARIO, "#1f2937");
+
+  // ── 5. DESCRIPTIVOS ─────────────────────────────────────────────
+  html += descriptivosBlock(d, C_TOT_DESCRIPTIVOS);
+
+  // ── 6. TOTAL FINAL ──────────────────────────────────────────────
+  const totalLabelStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:13px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
+  const totalValStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:16px;background:#f0f4ff;`;
   const totalRows = d.acoms
     .map(
       (a) => `<tr>
-        <td colspan="${C - 1}" style="${totalLabelStyle}">${escape(T.detalleDeCotizacion)} · ${escape(String(a))}</td>
+        <td style="${totalLabelStyle}">${escape(T.detalleDeCotizacion)} · ${escape(String(a))}</td>
         <td style="${totalValStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
       </tr>`,
     )
     .join("");
 
-  return `
+  html += `
   <div style="${STYLES.block}">
     ${sectionBar(T.detalleDeCotizacion)}
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:1px solid ${COLOR_BORDE};">
-      <tbody>${rows}</tbody>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:2px solid ${COLOR_AZUL};border-radius:4px;">
       <tfoot>${totalRows}</tfoot>
     </table>
   </div>`;
+
+  return html;
 }
 
-function observacionesBlock(d: PropuestaData): string {
+function observacionesBlock(d: PropuestaData, barColor = COLOR_NARANJA): string {
   if (!d.observaciones || d.observaciones.length === 0) return "";
   const { T } = d;
   const items = d.observaciones
@@ -720,7 +785,7 @@ function observacionesBlock(d: PropuestaData): string {
     .join("");
   return `
   <div style="${STYLES.block}">
-    ${sectionBar(T.observaciones, COLOR_NARANJA)}
+    ${sectionBar(T.observaciones, barColor)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#fff8f5;">
       <tbody>${items}</tbody>
     </table>
@@ -800,15 +865,17 @@ export function buildPropuestaBody(d: PropuestaData): string {
               </td>
             </tr>
 
-            <tr><td>${alojamientoTable(d)}</td></tr>
+            ${d.isCalc
+              ? `<tr><td>${buildTotalesView(d)}</td></tr>`
+              : `<tr><td>${alojamientoTable(d)}</td></tr>
             <tr><td>${adicionalesTable(T.traslados, d.traslados, d)}</td></tr>
             <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d)}</td></tr>
             <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d)}</td></tr>
             <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d)}</td></tr>
             <tr><td>${itinerarioTable(d)}</td></tr>
             <tr><td>${descriptivosBlock(d)}</td></tr>
-            <tr><td>${totalsBlock(d)}</td></tr>
-            <tr><td>${observacionesBlock(d)}</td></tr>
+            <tr><td>${observacionesBlock(d)}</td></tr>`
+            }
 
             <tr>
               <td style="padding-top:24px;text-align:right;color:#9ca3af;font-size:11px;line-height:1.5;">
