@@ -242,12 +242,12 @@ const COLOR_LABEL = "#6b7280";
 
 const C_TOT_ALOJAMIENTO = "#2F3D90";
 const C_TOT_TRASLADOS = "#2F3D90";
-const C_TOT_TOURS = "#2557A2";
+const C_TOT_TOURS = "#363765";
 const C_TOT_VUELOS = "#1780C0";
 const C_TOT_OBSERVACIONES = "#F7CB17";
 const C_TOT_OBSERVACIONES_TEXT = "#041941";
 const C_TOT_ITINERARIO = "#EF7B15";
-const C_TOT_DESCRIPTIVOS = "#EF7B15";
+const C_TOT_DESCRIPTIVOS = "#363765";
 
 const STYLES = {
   pillBlue: `display:inline-block;background:${COLOR_AZUL};color:#ffffff;padding:6px 14px;border-radius:20px;font-weight:600;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;`,
@@ -783,13 +783,13 @@ function observacionesBlock(d: PropuestaData, barColor = C_TOT_OBSERVACIONES, ba
   const items = d.observaciones
     .map(
       (o) =>
-        `<tr><td style="padding:5px 14px 5px 16px;color:${COLOR_TEXTO};font-size:12px;line-height:1.6;border-left:3px solid ${COLOR_NARANJA};border-bottom:1px solid #fde8d8;">• ${escape(o)}</td></tr>`,
+        `<tr><td style="padding:7px 14px 7px 16px;color:#041941;font-size:12px;line-height:1.6;border-left:3px solid #F1D45A;border-bottom:1px solid #F1D45A;background:#FFF8D6;">• ${escape(o)}</td></tr>`,
     )
     .join("");
   return `
   <div style="${STYLES.block}">
     ${sectionBar(T.observaciones, barColor, barTextColor)}
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#fff8f5;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;background:#FFF8D6;border:1px solid #F1D45A;border-top:none;">
       <tbody>${items}</tbody>
     </table>
   </div>`;
