@@ -177,6 +177,7 @@ export default function CotizadorPage() {
   const [customEditing, setCustomEditing] =
     useState<ServicioSeleccionado | null>(null);
   const [highlightedServiceId, setHighlightedServiceId] = useState<string | null>(null);
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
   useEffect(() => {
@@ -277,16 +278,31 @@ export default function CotizadorPage() {
 
     try {
       handleRegisterActivity(tipo);
-      showToast("Cotización guardada y lista para seguimiento.");
+
+      const toastMsg =
+        tipo === "correo_enviado"
+          ? "Cotización enviada y formulario reiniciado."
+          : tipo === "pdf_enviado"
+            ? "PDF generado y formulario reiniciado."
+            : "Cotización guardada y lista para seguimiento.";
+      showToast(toastMsg);
+
       setCliente(makeDefaultCliente());
       setValidationErrors({});
       setAcomodaciones(["DBL"]);
       setServicios([]);
       setModo("tarifas");
-      setCurrentNumero(null);
-      setSavedId(null);
+      setIdioma("es");
+      setMercado("general");
+      setIncluirItinerario(false);
+      setIncluirDescriptivos(false);
+      setIncluirDescriptivoCompleto(false);
+      setActividadesOverride({});
       setObservacionesSeleccionadas([]);
       setObservacionManual("");
+      setCurrentNumero(null);
+      setSavedId(null);
+      setSearchResetKey((k) => k + 1);
     } catch {
       showToast("Error al guardar la cotización", "error");
     }
@@ -958,6 +974,7 @@ export default function CotizadorPage() {
                   </div>
                 )}
                 <ServiceSearchBar
+                  key={searchResetKey}
                   hoteles={activeHoteles}
                   tours={activeTours}
                   traslados={activeTraslados}
