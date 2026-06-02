@@ -26,6 +26,19 @@ import { fmt, pickTier, priceForTier, tierLabel } from "@/lib/calc";
 
 export type ServicioTipo = "hotel" | "tour" | "traslado";
 
+function formatNotaText(raw: string): string {
+  const lines: string[] = [];
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    for (const part of trimmed.split(/(?<=\.)\s+|(?<=;)\s+/)) {
+      const p = part.trim();
+      if (p) lines.push(p);
+    }
+  }
+  return lines.join("\n");
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -570,6 +583,21 @@ export default function ServicioFormModal(props: Props) {
           <textarea
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData("text");
+              if (!pasted) return;
+              e.preventDefault();
+              const formatted = formatNotaText(pasted);
+              const ta = e.currentTarget;
+              const start = ta.selectionStart ?? 0;
+              const end = ta.selectionEnd ?? 0;
+              const current = ta.value;
+              const before = current.slice(0, start);
+              const after = current.slice(end);
+              const sep = before && !before.endsWith("\n") ? "\n" : "";
+              const newVal = (before + sep + formatted + (after.trim() ? "\n" + after.trim() : "")).trim();
+              setNotas(newVal);
+            }}
             placeholder="Detalles, restricciones u observaciones para el cliente..."
             rows={3}
             className={`${inputCls} resize-none`}

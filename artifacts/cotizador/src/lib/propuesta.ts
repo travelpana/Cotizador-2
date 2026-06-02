@@ -80,6 +80,27 @@ function fmtFecha(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function fmtFechaCompacta(iso: string): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return `${d}-${m}-${String(y).slice(2)}`;
+}
+
+function formatNotasLineas(text: string, style: string): string {
+  if (!text.trim()) return "";
+  const lines: string[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    for (const part of trimmed.split(/(?<=\.)\s+|(?<=;)\s+/)) {
+      const p = part.trim();
+      if (p) lines.push(p);
+    }
+  }
+  return lines.map((l) => `<div style="${style}">${escape(l)}</div>`).join("");
+}
+
 function todayIso(): string {
   const t = new Date();
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
@@ -648,13 +669,16 @@ function buildTotalesView(d: PropuestaData): string {
           const total = h.totalesPorAcomodacion[a];
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
-            ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
+            ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:4px;">${escape(regimenFmt)}</div>`
             : "";
-          const notasLine = h.notas
-            ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
+          const fechaHotelLine = h.fechaInicio || h.fechaFin
+            ? `<div style="font-size:11px;color:#64748B;font-weight:500;margin-top:4px;">${h.fechaInicio ? fmtFechaCompacta(h.fechaInicio) : "?"} → ${h.fechaFin ? fmtFechaCompacta(h.fechaFin) : "?"}</div>`
+            : "";
+          const notasHotelLines = h.notas
+            ? formatNotasLineas(h.notas, STYLES.cellNote)
             : "";
           rows += `<tr style="page-break-inside:avoid;">
-            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${regimenLine}${notasLine}</td>
+            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${fechaHotelLine}${regimenLine}${notasHotelLines}</td>
             <td style="${tdCtr};width:9%;">${escape(h.estrellas || "—")}</td>
             <td style="${tdBase};width:11%;">${escape(h.tipoHabitacion || "—")}</td>
             <td style="${tdCtr};width:8%;font-weight:700;color:#475569;">${escape(String(a))}</td>
