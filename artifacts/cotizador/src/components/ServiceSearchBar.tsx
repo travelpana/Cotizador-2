@@ -247,6 +247,7 @@ export default function ServiceSearchBar({
     window.setTimeout(() => setJustAdded((curr) => (curr === key ? null : curr)), 1000);
     setQuery("");
     setDebounced("");
+    setCategoria("todos");
     setOpen(false);
     setMercadoOpen(false);
     inputRef.current?.focus();
@@ -319,7 +320,7 @@ export default function ServiceSearchBar({
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            onChange={(e) => { setQuery(e.target.value); if (e.target.value) setCategoria("todos"); setOpen(true); }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKey}
             placeholder="Nombre, código RGE o texto parcial…"
@@ -333,7 +334,7 @@ export default function ServiceSearchBar({
           {query && !loading && (
             <button
               type="button"
-              onClick={() => { setQuery(""); setDebounced(""); inputRef.current?.focus(); }}
+              onClick={() => { setQuery(""); setDebounced(""); setCategoria("todos"); inputRef.current?.focus(); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded"
               aria-label="Limpiar búsqueda"
             >
