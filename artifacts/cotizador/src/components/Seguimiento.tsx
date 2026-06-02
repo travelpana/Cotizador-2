@@ -111,20 +111,30 @@ const ACTIVIDAD_LABELS: Record<ActividadTipo, string> = {
   estado_cambiado:  "Estado actualizado",
 };
 
-// ─── Kanban column config ─────────────────────────────────────────────────────
+// ─── Urgency semáforo ─────────────────────────────────────────────────────────
 
-interface KanbanColConfig {
-  id: EstadoCRM; label: string; borderColor: string; dotColor: string;
-  bgHeader: string; badgeBg: string; badgeText: string; initialsColor: string;
+type UrgencyLevel = "red" | "yellow" | "green";
+
+function getUrgency(g: CotizacionGuardada): UrgencyLevel {
+  const days = daysSince(g.ultimoSeguimiento ?? g.fechaCreacion);
+  if (days >= 7) return "red";
+  if (days >= 4) return "yellow";
+  return "green";
 }
 
-const KANBAN_COLUMNS: KanbanColConfig[] = [
-  { id: "nueva",             label: "Nuevas",      borderColor: "#004FBB", dotColor: "#004FBB", bgHeader: "#eff6ff", badgeBg: "#dbeafe", badgeText: "#1d4ed8", initialsColor: "#004FBB" },
-  { id: "esperando_cliente", label: "Enviadas",    borderColor: "#0ea5e9", dotColor: "#0ea5e9", bgHeader: "#f0f9ff", badgeBg: "#e0f2fe", badgeText: "#0369a1", initialsColor: "#0ea5e9" },
-  { id: "requiere_accion",   label: "Seguimiento", borderColor: "#E6AE33", dotColor: "#E6AE33", bgHeader: "#fffbeb", badgeBg: "#fef3c7", badgeText: "#92400e", initialsColor: "#b45309" },
-  { id: "confirmada",        label: "Confirmadas", borderColor: "#03A04E", dotColor: "#03A04E", bgHeader: "#f0fdf4", badgeBg: "#dcfce7", badgeText: "#15803d", initialsColor: "#03A04E" },
-  { id: "perdida",           label: "Perdidas",    borderColor: "#94a3b8", dotColor: "#94a3b8", bgHeader: "#f8fafc", badgeBg: "#f1f5f9", badgeText: "#475569", initialsColor: "#94a3b8" },
-];
+function urgencySortKey(g: CotizacionGuardada): number {
+  const u = getUrgency(g);
+  const uMap: Record<UrgencyLevel, number> = { red: 1, yellow: 2, green: 3 };
+  const pMap: Record<string, number> = { alta: 0, media: 1, baja: 2 };
+  const hasPrioAlta = g.prioridad === "alta" ? 0 : 1;
+  return hasPrioAlta * 100 + uMap[u] * 10 + (pMap[g.prioridad ?? "media"] ?? 1);
+}
+
+const URGENCY_META: Record<UrgencyLevel, { label: string; color: string; bg: string; dot: string }> = {
+  red:    { label: "Urgente",              color: "#991b1b", bg: "#fee2e2", dot: "#ef4444" },
+  yellow: { label: "Requiere seguimiento", color: "#92400e", bg: "#fef3c7", dot: "#f59e0b" },
+  green:  { label: "Al día",              color: "#065f46", bg: "#d1fae5", dot: "#10b981" },
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -441,10 +451,10 @@ function MenuItem({ icon, label, onClick, danger = false }: {
   );
 }
 
-// ─── Mini Kanban card ─────────────────────────────────────────────────────────
+// ─── Opportunity Card ─────────────────────────────────────────────────────────
 
-function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, onUpdateCRM, onAnular }: {
-  g: CotizacionGuardada; col: KanbanColConfig; agencia?: Agencia;
+function OpportunityCard({ g, agencia, onView, onEdit, onDuplicate, onCRM, onUpdateCRM, onAnular }: {
+  g: CotizacionGuardada; agencia?: Agencia;
   onView: () => void; onEdit: () => void; onDuplicate?: () => void;
   onCRM: () => void; onUpdateCRM: (patch: Partial<CotizacionGuardada>) => void;
   onAnular: () => void;
@@ -453,23 +463,13 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [logoHovered, setLogoHovered] = useState(false);
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
-  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openMenu = () => {
     const rect = menuBtnRef.current?.getBoundingClientRect();
     if (rect) {
-      const MENU_HEIGHT = 240;
+      const MENU_HEIGHT = 220;
       const openUp = rect.bottom + 6 + MENU_HEIGHT > window.innerHeight;
-      setMenuPos({
-        top: openUp ? rect.top - MENU_HEIGHT : rect.bottom + 6,
-        right: window.innerWidth - rect.right,
-      });
+      setMenuPos({ top: openUp ? rect.top - MENU_HEIGHT : rect.bottom + 6, right: window.innerWidth - rect.right });
       setMenuOpen(true);
     }
   };
@@ -484,232 +484,150 @@ function MiniKanbanCard({ g, col, agencia, onView, onEdit, onDuplicate, onCRM, o
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setLogoHovered(false);
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    setTooltipVisible(false);
-    setTooltipPos(null);
-  };
-
-  const handleLogoMouseEnter = () => {
-    setLogoHovered(true);
-    hoverTimerRef.current = setTimeout(() => {
-      const rect = logoRef.current?.getBoundingClientRect();
-      if (rect) {
-        const TW = 264;
-        const TH = 220;
-        let top = rect.top - TH - 8;
-        if (top < 8) top = rect.bottom + 8;
-        let left = rect.left + (rect.width / 2) - TW / 2;
-        if (left < 8) left = 8;
-        if (left + TW > window.innerWidth - 8) left = window.innerWidth - TW - 8;
-        setTooltipPos({ top, left });
-        setTooltipVisible(true);
-      }
-    }, 300);
-  };
-
-  const handleLogoMouseLeave = () => {
-    setLogoHovered(false);
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    setTooltipVisible(false);
-    setTooltipPos(null);
-  };
-
   const close = () => setMenuOpen(false);
 
-  const clientName = g.cliente.nombre?.trim() || "Sin nombre";
-  const agencyLabel = agencyName(g);
-  const initials = getInitials(agencyLabel || clientName);
-  const valor = g.valorCotizacion;
-  const destino = g.destinoSeguimiento?.trim();
+  const urgency = getUrgency(g);
+  const uMeta = URGENCY_META[urgency];
   const sinActividad = daysSince(g.ultimoSeguimiento ?? g.fechaCreacion);
-  const showSinActividad = col.id === "requiere_accion" && sinActividad >= 3;
+  const agencyLabel = agencyName(g);
+  const cotNombre = g.cliente.cotizacionNombre?.trim() || g.cliente.nombre?.trim() || "Sin nombre";
+  const initials = getInitials(agencyLabel || cotNombre);
+  const destino = g.destinoSeguimiento?.trim();
+  const valor = g.valorCotizacion;
+  const estadoStyle = ESTADO_CRM_STYLES[g.estadoCRM ?? "nueva"];
+  const estadoLabel = ESTADO_CRM_OPTIONS.find((o) => o.value === (g.estadoCRM ?? "nueva"))?.label ?? "Nueva";
 
   const paxLabel = [
     g.cliente.pasajeros > 0 ? `${g.cliente.pasajeros} adulto${g.cliente.pasajeros !== 1 ? "s" : ""}` : null,
     g.cliente.ninos > 0 ? `${g.cliente.ninos} niño${g.cliente.ninos !== 1 ? "s" : ""}` : null,
-  ].filter(Boolean).join(" + ") || "—";
+  ].filter(Boolean).join(" + ");
 
-  const hoverShadow = `0 12px 28px -4px ${col.borderColor}50, 0 4px 12px rgba(0,0,0,0.08)`;
+  const acomLabel = g.acomodaciones?.length > 0
+    ? [...new Set(g.acomodaciones.map((a) => a.tipo))].join(" / ")
+    : null;
+
+  const isConfirmedOrLost = g.estadoCRM === "confirmada" || g.estadoCRM === "perdida";
 
   return (
-    <>
-      <div
-        ref={cardRef}
-        className="bg-white rounded-xl ring-1 ring-slate-100 p-3"
-        style={{
-          transform: isHovered ? "translateY(-6px) scale(1.02)" : "translateY(0) scale(1)",
-          boxShadow: isHovered ? hoverShadow : "0 1px 2px rgba(0,0,0,0.04)",
-          transition: "transform 200ms ease, box-shadow 200ms ease",
-          cursor: "default",
-        }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        {/* Logo + Client */}
-        <div className="flex items-start gap-2 mb-2">
-          <div
-            ref={logoRef}
-            style={{
-              cursor: "pointer",
-              flexShrink: 0,
-              transform: logoHovered ? "scale(1.04)" : "scale(1)",
-              boxShadow: logoHovered ? "0 8px 18px rgba(4,25,65,0.12)" : "none",
-              transition: "transform 150ms ease, box-shadow 150ms ease",
-              borderRadius: 14,
-            }}
-            onMouseEnter={handleLogoMouseEnter}
-            onMouseLeave={handleLogoMouseLeave}
-          >
-            <LogoOrInitials agencia={agencia} initials={initials} color={col.initialsColor} size={48} radius={14} />
+    <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <div className="flex items-stretch gap-0 px-5 py-4">
+
+        {/* ── Left: identity ─────────────────────────────────────────── */}
+        <div className="flex items-start gap-3 flex-1 min-w-0 pr-5" style={{ borderRight: "1px solid #f1f5f9" }}>
+          <div className="shrink-0 mt-0.5">
+            <LogoOrInitials agencia={agencia} initials={initials} color="#004FBB" size={44} radius={12} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-bold text-slate-900 truncate leading-tight">{clientName}</div>
-            {destino && (
-              <div className="text-[10px] font-semibold text-slate-500 truncate leading-tight mt-0.5" style={{ letterSpacing: "0.05em" }}>
-                {destino.toUpperCase()}
+            <div className="font-bold text-slate-900 truncate leading-tight" style={{ fontSize: 14 }}>{cotNombre}</div>
+            <div className="text-xs text-slate-500 truncate mt-0.5">
+              {agencyLabel}{destino ? ` · ${destino}` : ""}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              {paxLabel && (
+                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />
+                  {paxLabel}
+                </span>
+              )}
+              {acomLabel && (
+                <span className="text-[11px] text-slate-400">{acomLabel}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ring-1 ${estadoStyle.bg} ${estadoStyle.text} ${estadoStyle.ring}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${estadoStyle.dot}`} />{estadoLabel}
+              </span>
+              {g.prioridad === "alta" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 ring-1 ring-red-200">
+                  <Flame className="w-2.5 h-2.5" />Alta prioridad
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Center: value ──────────────────────────────────────────── */}
+        <div className="flex flex-col justify-center items-center px-6 shrink-0" style={{ borderRight: "1px solid #f1f5f9", minWidth: 140 }}>
+          {valor != null && valor > 0 ? (
+            <div className="text-center">
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#004FBB", letterSpacing: "-0.03em", lineHeight: 1 }}>
+                USD {valor.toLocaleString("es-ES", { maximumFractionDigits: 0 })}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Total */}
-        {valor != null && valor > 0 && (
-          <div className="mb-2" style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
-            USD {valor.toLocaleString("es-ES", { maximumFractionDigits: 0 })}
-          </div>
-        )}
-
-        {/* RGE code + vigencia */}
-        <div className="flex items-center justify-between mb-2.5 gap-1 min-w-0">
+              <div className="text-[10px] text-slate-400 mt-1">Total cotización</div>
+            </div>
+          ) : (
+            <div className="text-[11px] text-slate-400 text-center">Sin valor</div>
+          )}
           {g.numeroCotizacion && (
-            <span className="text-[11px] font-mono truncate" style={{ color: "#94A3B8" }}>{g.numeroCotizacion}</span>
+            <div className="text-[10px] font-mono text-slate-400 mt-2">{g.numeroCotizacion}</div>
           )}
-          {g.cliente.vigencia && (
-            <span className="text-[10px] text-slate-400 shrink-0">Vig. {formatShortDate(g.cliente.vigencia)}</span>
-          )}
+          <button type="button" onClick={onView} className="mt-2 text-[11px] font-semibold underline-offset-2 hover:underline transition-colors" style={{ color: "#004FBB" }}>
+            Ver cotización
+          </button>
         </div>
 
-        {/* Activity warning */}
-        {showSinActividad && (
-          <div className="text-[10px] font-semibold mb-2" style={{ color: sinActividad >= 7 ? "#991b1b" : "#b45309" }}>
-            {sinActividad} día{sinActividad !== 1 ? "s" : ""} sin actividad
+        {/* ── Right: urgency + actions ────────────────────────────────── */}
+        <div className="flex flex-col justify-between items-end pl-5 shrink-0" style={{ minWidth: 168 }}>
+          {/* Semáforo */}
+          {!isConfirmedOrLost ? (
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: uMeta.bg, color: uMeta.color }}>
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: uMeta.dot }} />
+                {uMeta.label}
+              </div>
+              <div className="text-[11px] text-slate-500 text-right">
+                {sinActividad === 0 ? "Actualizado hoy" : `${sinActividad} día${sinActividad !== 1 ? "s" : ""} sin actualización`}
+              </div>
+              {g.ultimoSeguimiento && (
+                <div className="text-[10px] text-slate-400 text-right">
+                  Últ. act.: {formatShortDate(g.ultimoSeguimiento)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-end gap-1">
+              {g.estadoCRM === "confirmada" ? (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
+                  <CheckCircle2 className="w-3 h-3" />Confirmada
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">
+                  <XCircle className="w-3 h-3" />Perdida
+                </span>
+              )}
+              {g.ultimoSeguimiento && (
+                <div className="text-[10px] text-slate-400 text-right">
+                  {formatDate(g.ultimoSeguimiento)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-1.5 mt-3">
+            <button type="button" onClick={onView} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-[12px] font-semibold hover:opacity-90 transition-opacity" style={{ background: "#004FBB" }}>
+              <ExternalLink className="w-3 h-3" />Abrir
+            </button>
+            <button ref={menuBtnRef} type="button" onClick={openMenu} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors">
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={onView} className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg text-white text-[11px] font-semibold hover:opacity-90 transition-opacity" style={{ background: "#004FBB" }}>
-            <ExternalLink className="w-3 h-3" />Abrir
-          </button>
-          <button ref={menuBtnRef} type="button" onClick={openMenu} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors" title="Más acciones">
-            <MoreHorizontal className="w-3.5 h-3.5" />
-          </button>
         </div>
-
-        {/* Portal menu */}
-        {menuOpen && menuPos && createPortal(
-          <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[200px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
-            <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar" onClick={() => { onEdit(); close(); }} />
-            {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
-            <MenuItem icon={<MessageSquare className="w-3.5 h-3.5" />} label="Seguimiento / CRM" onClick={() => { onCRM(); close(); }} />
-            <div className="h-px bg-slate-100 my-1" />
-            <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateCRM({ estadoCRM: "confirmada", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
-            <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateCRM({ estadoCRM: "perdida", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
-            <div className="h-px bg-slate-100 my-1" />
-            <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label="Anular / Eliminar" onClick={() => { onAnular(); close(); }} danger />
-          </div>,
-          document.body
-        )}
       </div>
 
-      {/* Summary tooltip */}
-      {tooltipVisible && tooltipPos && createPortal(
-        <div style={{
-          position: "fixed",
-          top: tooltipPos.top,
-          left: tooltipPos.left,
-          zIndex: 99999,
-          pointerEvents: "none",
-          background: "#ffffff",
-          borderRadius: 12,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08)",
-          border: "1px solid #e2e8f0",
-          padding: "12px 14px",
-          width: 264,
-        }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10 }}>Vista rápida</div>
-          {([
-            ["Agencia", agencyLabel],
-            ["Cliente", clientName],
-            ["Destino", destino || "—"],
-            ["Pasajeros", paxLabel],
-            ["Vigencia", formatDate(g.cliente.vigencia)],
-          ] as [string, string][]).map(([label, val]) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 5, fontSize: 12 }}>
-              <span style={{ color: "#94a3b8", fontWeight: 500, flexShrink: 0 }}>{label}</span>
-              <span style={{ color: "#1e293b", fontWeight: 600, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{val}</span>
-            </div>
-          ))}
-          {valor != null && valor > 0 && (
-            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>Total</span>
-              <span style={{ fontSize: 17, fontWeight: 700, color: col.borderColor, letterSpacing: "-0.02em" }}>
-                USD {valor.toLocaleString("es-ES", { maximumFractionDigits: 0 })}
-              </span>
-            </div>
-          )}
+      {/* Portal menu */}
+      {menuOpen && menuPos && createPortal(
+        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[200px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
+          <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar" onClick={() => { onEdit(); close(); }} />
+          {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
+          <MenuItem icon={<MessageSquare className="w-3.5 h-3.5" />} label="Seguimiento / CRM" onClick={() => { onCRM(); close(); }} />
+          <div className="h-px bg-slate-100 my-1" />
+          <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateCRM({ estadoCRM: "confirmada", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
+          <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateCRM({ estadoCRM: "perdida", ultimoSeguimiento: new Date().toISOString() }); close(); }} />
+          <div className="h-px bg-slate-100 my-1" />
+          <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label="Anular / Eliminar" onClick={() => { onAnular(); close(); }} danger />
         </div>,
         document.body
-      )}
-    </>
-  );
-}
-
-// ─── Kanban Column ────────────────────────────────────────────────────────────
-
-function KanbanColumn({ col, items, agenciasMap, onView, onEdit, onDuplicate, onCRM, onUpdateCRM, onAnular }: {
-  col: KanbanColConfig; items: CotizacionGuardada[];
-  agenciasMap: Map<string, Agencia>;
-  onView: (g: CotizacionGuardada) => void; onEdit: (g: CotizacionGuardada) => void;
-  onDuplicate?: (g: CotizacionGuardada) => void; onCRM: (g: CotizacionGuardada) => void;
-  onUpdateCRM: (id: string, patch: Partial<CotizacionGuardada>) => void;
-  onAnular: (g: CotizacionGuardada) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const PREVIEW = 5;
-  const visible = expanded ? items : items.slice(0, PREVIEW);
-  const hasMore = items.length > PREVIEW;
-
-  return (
-    <div className="flex flex-col bg-slate-50 rounded-2xl ring-1 ring-slate-200 overflow-visible min-w-[200px]" style={{ borderLeft: `3px solid ${col.borderColor}` }}>
-      <div className="flex items-center justify-between px-3 py-2.5 rounded-tl-xl rounded-tr-xl" style={{ background: col.bgHeader }}>
-        <span className="text-xs font-bold text-slate-700">{col.label}</span>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.badgeBg, color: col.badgeText }}>{items.length}</span>
-      </div>
-      <div className="flex-1 flex flex-col gap-2 p-2" style={{ minHeight: 80, maxHeight: 440, overflowY: "auto" }}>
-        {visible.length === 0 ? (
-          <div className="text-center py-6 text-[11px] text-slate-400">Sin cotizaciones</div>
-        ) : visible.map((g) => (
-          <MiniKanbanCard
-            key={g.id} g={g} col={col}
-            agencia={agenciasMap.get((g.cliente.correo || "").toLowerCase())}
-            onView={() => onView(g)} onEdit={() => onEdit(g)}
-            onDuplicate={onDuplicate ? () => onDuplicate(g) : undefined}
-            onCRM={() => onCRM(g)}
-            onUpdateCRM={(patch) => onUpdateCRM(g.id, patch)}
-            onAnular={() => onAnular(g)}
-          />
-        ))}
-      </div>
-      {hasMore && (
-        <button type="button" onClick={() => setExpanded((v) => !v)} className="flex items-center justify-center gap-1 text-[11px] font-semibold py-2 border-t border-slate-200 hover:opacity-80 transition-opacity" style={{ color: col.badgeText }}>
-          {expanded ? "Ver menos" : `Ver todas (${items.length - PREVIEW} más)`}
-          <ChevronDown className={`w-3 h-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
-        </button>
       )}
     </div>
   );
@@ -765,10 +683,14 @@ function AnuladasView({ items, agenciasMap, onRestaurar }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+type VerPor = "urgencia" | "agencia" | "estado";
+
 export default function Seguimiento({ items, onView, onEdit, onDelete, onDuplicate, onUpdateCRM }: Props) {
   const [tab, setTab] = useState<"activas" | "anuladas">("activas");
   const [query, setQuery] = useState("");
-  const [showSearch, setShowSearch] = useState(false);
+  const [verPor, setVerPor] = useState<VerPor>("urgencia");
+  const [filterEstado, setFilterEstado] = useState<EstadoCRM | "todas">("todas");
+  const [filterPrioridad, setFilterPrioridad] = useState<"todas" | "alta" | "media" | "baja">("todas");
   const [crmModal, setCrmModal] = useState<CotizacionGuardada | null>(null);
   const [agencias, setAgencias] = useState<Agencia[]>([]);
 
@@ -783,81 +705,50 @@ export default function Seguimiento({ items, onView, onEdit, onDelete, onDuplica
   const activeItems = useMemo(() => items.filter((g) => !g.anulada), [items]);
   const anuladasItems = useMemo(() => items.filter((g) => g.anulada), [items]);
 
-  // ─── KPI ──────────────────────────────────────────────────────────────────
+  // ─── Metrics ──────────────────────────────────────────────────────────────
 
-  const kpi = useMemo(() => {
-    const activas = activeItems.filter((g) => g.estadoCRM !== "confirmada" && g.estadoCRM !== "perdida").length;
-    const accionHoy = activeItems.filter((g) => {
-      if (g.estadoCRM === "confirmada" || g.estadoCRM === "perdida") return false;
-      const dateStr = g.fechaProximaAccion ?? g.fechaRecordatorio;
-      if (!dateStr) return false;
-      return isDateToday(dateStr);
-    }).length;
-    const seguimientosPendientes = activeItems.filter((g) => {
-      const estado = g.estadoCRM ?? "nueva";
-      if (estado === "confirmada" || estado === "perdida") return false;
-      return daysSince(g.ultimoSeguimiento ?? g.fechaCreacion) > 3;
-    }).length;
-    const confirmadas = activeItems.filter((g) => g.estadoCRM === "confirmada").length;
-    const now = new Date();
-    const ventasMes = activeItems.filter((g) => {
-      if (g.estadoCRM !== "confirmada") return false;
-      const d = new Date(g.ultimoSeguimiento ?? g.fechaCreacion);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length;
-    return { activas, accionHoy, seguimientosPendientes, confirmadas, ventasMes };
+  const metrics = useMemo(() => {
+    const open = activeItems.filter((g) => g.estadoCRM !== "confirmada" && g.estadoCRM !== "perdida");
+    return {
+      total: activeItems.length,
+      prioritarias: open.filter((g) => g.prioridad === "alta").length,
+      urgentes: open.filter((g) => getUrgency(g) === "red").length,
+      requierenSeg: open.filter((g) => getUrgency(g) === "yellow").length,
+      alDia: open.filter((g) => getUrgency(g) === "green").length,
+    };
   }, [activeItems]);
 
-  // ─── Attention items ──────────────────────────────────────────────────────
+  // ─── Filtered + sorted list ───────────────────────────────────────────────
 
-  const atencionItems = useMemo(() => {
-    return activeItems
-      .filter((g) => {
-        const estado = g.estadoCRM ?? "nueva";
-        if (estado === "confirmada" || estado === "perdida") return false;
-        const sinActividad = daysSince(g.ultimoSeguimiento ?? g.fechaCreacion);
-        const dv = daysUntil(g.cliente.vigencia);
-        return sinActividad >= 3 || dv === 1 || isDateToday(g.recordatorio);
-      })
-      .sort((a, b) => {
-        const getPri = (g: CotizacionGuardada) => {
-          const dv = daysUntil(g.cliente.vigencia);
-          if (dv !== null && dv <= 1) return 2000 + (g.valorCotizacion ?? 0);
-          if (isDateToday(g.recordatorio)) return 1500;
-          return daysSince(g.ultimoSeguimiento ?? g.fechaCreacion) * 10;
-        };
-        return getPri(b) - getPri(a);
-      })
-      .slice(0, 5);
-  }, [activeItems]);
-
-  // ─── Kanban buckets ───────────────────────────────────────────────────────
-
-  const kanbanBuckets = useMemo(() => {
+  const listItems = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filtered = q
-      ? activeItems.filter((g) => [agencyName(g), g.numeroCotizacion, g.cliente.agente, g.observacionSeguimiento].join(" ").toLowerCase().includes(q))
-      : activeItems;
-    const out: Record<EstadoCRM, CotizacionGuardada[]> = { nueva: [], esperando_cliente: [], requiere_accion: [], confirmada: [], perdida: [] };
-    for (const g of filtered) out[g.estadoCRM ?? "nueva"].push(g);
-    for (const col of Object.keys(out) as EstadoCRM[]) {
-      out[col].sort((a, b) => col === "requiere_accion"
-        ? daysSince(a.ultimoSeguimiento ?? a.fechaCreacion) - daysSince(b.ultimoSeguimiento ?? b.fechaCreacion)
-        : new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()
+    let filtered = activeItems;
+
+    if (q) {
+      filtered = filtered.filter((g) =>
+        [agencyName(g), g.numeroCotizacion, g.cliente.agente, g.cliente.cotizacionNombre, g.cliente.nombre, g.observacionSeguimiento, g.destinoSeguimiento]
+          .join(" ").toLowerCase().includes(q)
       );
     }
-    return out;
-  }, [activeItems, query]);
+    if (filterEstado !== "todas") {
+      filtered = filtered.filter((g) => (g.estadoCRM ?? "nueva") === filterEstado);
+    }
+    if (filterPrioridad !== "todas") {
+      filtered = filtered.filter((g) => (g.prioridad ?? "media") === filterPrioridad);
+    }
+
+    return [...filtered].sort((a, b) => {
+      if (verPor === "agencia") {
+        const cmp = agencyName(a).localeCompare(agencyName(b), "es");
+        if (cmp !== 0) return cmp;
+      }
+      const sk = urgencySortKey(a) - urgencySortKey(b);
+      if (sk !== 0) return sk;
+      return new Date(a.fechaCreacion).getTime() - new Date(b.fechaCreacion).getTime();
+    });
+  }, [activeItems, query, filterEstado, filterPrioridad, verPor]);
 
   // ─── CRM actions ──────────────────────────────────────────────────────────
-
-  const markAtendida = (g: CotizacionGuardada) => {
-    onUpdateCRM(g.id, { ultimoSeguimiento: new Date().toISOString(), recordatorio: undefined, historial: [{ fecha: new Date().toISOString(), tipo: "estado_cambiado" as ActividadTipo, detalle: "Marcado como atendido" }, ...(g.historial ?? [])].slice(0, 50) });
-  };
-
-  const posponer = (g: CotizacionGuardada) => {
-    onUpdateCRM(g.id, { ultimoSeguimiento: new Date().toISOString(), recordatorio: addDaysStr(1), historial: [{ fecha: new Date().toISOString(), tipo: "estado_cambiado" as ActividadTipo, detalle: "Pospuesto 1 día" }, ...(g.historial ?? [])].slice(0, 50) });
-  };
 
   const onAnular = (g: CotizacionGuardada) => {
     onUpdateCRM(g.id, { anulada: true, fechaAnulacion: new Date().toISOString(), historial: [{ fecha: new Date().toISOString(), tipo: "estado_cambiado" as ActividadTipo, detalle: "Cotización anulada" }, ...(g.historial ?? [])].slice(0, 50) });
@@ -867,8 +758,29 @@ export default function Seguimiento({ items, onView, onEdit, onDelete, onDuplica
     onUpdateCRM(g.id, { anulada: false, fechaAnulacion: undefined, historial: [{ fecha: new Date().toISOString(), tipo: "estado_cambiado" as ActividadTipo, detalle: "Cotización restaurada" }, ...(g.historial ?? [])].slice(0, 50) });
   };
 
+  const inputCls = "h-9 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
+  const selectCls = `${inputCls} pr-8 appearance-none`;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+
+      {/* ── Page header ────────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-bold text-slate-900" style={{ fontSize: 22, letterSpacing: "-0.02em" }}>Seguimiento de oportunidades</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Administra y da seguimiento a tus oportunidades comerciales</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {activeItems.length > 0 && (
+            <button type="button" onClick={() => exportarCotizacionesExcel(activeItems)} className="flex items-center gap-2 h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors">
+              <FileDown className="w-4 h-4" /><span className="hidden sm:inline">Excel</span>
+            </button>
+          )}
+          <button type="button" onClick={() => { }} className="flex items-center gap-2 h-9 px-4 rounded-xl text-white text-sm font-semibold transition-colors" style={{ background: "#004FBB" }}>
+            <span className="text-base leading-none">+</span> Nueva oportunidad
+          </button>
+        </div>
+      </div>
 
       {/* ── Tab toggle ─────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm w-fit">
@@ -886,70 +798,85 @@ export default function Seguimiento({ items, onView, onEdit, onDelete, onDuplica
         <AnuladasView items={anuladasItems} agenciasMap={agenciasMap} onRestaurar={onRestaurar} />
       ) : (
         <>
-          {/* ── KPI Cards ────────────────────────────────────────────────────── */}
+          {/* ── Metrics bar ──────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KpiCard label="Activas" value={kpi.activas} color="bg-blue-50 text-blue-600" icon={<TrendingUp className="w-5 h-5" />} />
-            <KpiCard label="Acción hoy" value={kpi.accionHoy} color="" iconStyle={{ backgroundColor: "#fdf3e0", color: "#e6ae33" }} icon={<Calendar className="w-5 h-5" />} />
-            <KpiCard label="Seguimiento pendiente" value={kpi.seguimientosPendientes} color="bg-amber-50 text-amber-600" icon={<Bell className="w-5 h-5" />} />
-            <KpiCard label="Confirmadas" value={kpi.confirmadas} color="bg-emerald-50 text-emerald-600" icon={<CheckCircle2 className="w-5 h-5" />} />
-            <KpiCard label="Ventas del mes" value={kpi.ventasMes} color="bg-violet-50 text-violet-600" icon={<Star className="w-5 h-5" />} />
+            <KpiCard label="Total oportunidades" value={metrics.total} color="bg-blue-50 text-blue-600" icon={<TrendingUp className="w-5 h-5" />} />
+            <KpiCard label="Prioritarias" value={metrics.prioritarias} color="" iconStyle={{ backgroundColor: "#fef9c3", color: "#ca8a04" }} icon={<Flame className="w-5 h-5" />} />
+            <KpiCard label="Urgentes" value={metrics.urgentes} color="" iconStyle={{ backgroundColor: "#fee2e2", color: "#dc2626" }} icon={<AlertTriangle className="w-5 h-5" />} />
+            <KpiCard label="Requieren seguimiento" value={metrics.requierenSeg} color="" iconStyle={{ backgroundColor: "#fef3c7", color: "#d97706" }} icon={<Bell className="w-5 h-5" />} />
+            <KpiCard label="Al día" value={metrics.alDia} color="bg-emerald-50 text-emerald-600" icon={<CheckCircle2 className="w-5 h-5" />} />
           </div>
 
-          {/* ── Requieren atención hoy ───────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-              <div>
-                <div className="text-sm font-bold text-slate-900">Requieren atención hoy</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">Cotizaciones que necesitan seguimiento inmediato</div>
-              </div>
-              {atencionItems.length > 0 && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: "#E6AE33" }}>{atencionItems.length}</span>}
+          {/* ── Filter bar ───────────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
+            {/* Ver por */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-slate-500 shrink-0">Ver por:</span>
+              {([ ["urgencia", "Urgencia"], ["agencia", "Agencia"], ["estado", "Estado"] ] as [VerPor, string][]).map(([v, label]) => (
+                <button key={v} type="button" onClick={() => setVerPor(v)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${verPor === v ? "text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`} style={verPor === v ? { background: "#004FBB" } : {}}>
+                  {label}
+                </button>
+              ))}
             </div>
-            {atencionItems.length === 0 ? (
-              <div className="flex flex-col items-center py-8 gap-2">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                <div className="text-sm font-semibold text-slate-700">Todo al día</div>
-                <div className="text-xs text-slate-400">No tienes cotizaciones pendientes por atender.</div>
-              </div>
-            ) : (
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-                {atencionItems.map((g) => (
-                  <AtencionCard key={g.id} g={g} agencia={agenciasMap.get((g.cliente.correo || "").toLowerCase())} onView={() => onView(g)} onAtender={() => markAtendida(g)} onPosponer={() => posponer(g)} />
-                ))}
-              </div>
-            )}
+
+            <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+
+            {/* Estado filter */}
+            <div className="relative">
+              <select value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as EstadoCRM | "todas")} className={selectCls} style={{ minWidth: 130 }}>
+                <option value="todas">Estado: Todos</option>
+                {ESTADO_CRM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Prioridad filter */}
+            <div className="relative">
+              <select value={filterPrioridad} onChange={(e) => setFilterPrioridad(e.target.value as typeof filterPrioridad)} className={selectCls} style={{ minWidth: 140 }}>
+                <option value="todas">Prioridad: Todas</option>
+                {PRIORIDAD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Search */}
+            <div className="flex-1 min-w-[160px] relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar oportunidades…" className="w-full h-9 pl-9 pr-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400" />
+              {query && (
+                <button type="button" onClick={() => setQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* ── Search + Export ──────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setShowSearch((v) => !v)} className={`flex items-center gap-2 h-9 px-3 rounded-xl border text-sm transition-colors ${showSearch ? "border-primary bg-primary/5 text-primary" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
-              <Search className="w-4 h-4" />Buscar
-            </button>
-            {showSearch && (
-              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar agencia, código, agente…" autoFocus className="flex-1 h-9 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400" />
-            )}
-            <div className="flex-1" />
-            {items.length > 0 && (
-              <button type="button" onClick={() => exportarCotizacionesExcel(activeItems)} className="flex items-center gap-2 h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors">
-                <FileDown className="w-4 h-4" />
-                <span className="hidden sm:inline">Exportar Excel</span>
-              </button>
-            )}
-          </div>
-
-          {/* ── Kanban Board ─────────────────────────────────────────────────── */}
+          {/* ── Vertical list ────────────────────────────────────────────────── */}
           {activeItems.length === 0 ? (
             <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
               <ListChecks className="w-10 h-10 mx-auto text-slate-300 mb-3" />
               <div className="text-sm text-slate-700 font-medium">No hay cotizaciones aún</div>
               <div className="text-xs text-slate-500 mt-1">Crea una cotización y guárdala para verla aquí.</div>
             </div>
+          ) : listItems.length === 0 ? (
+            <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-10 text-center">
+              <Search className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+              <div className="text-sm text-slate-600 font-medium">Sin resultados</div>
+              <div className="text-xs text-slate-400 mt-1">Prueba ajustando los filtros o la búsqueda.</div>
+            </div>
           ) : (
-            <div className="overflow-x-auto pb-2 -mx-1 px-1">
-              <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(5, minmax(200px, 1fr))", minWidth: 1060 }}>
-                {KANBAN_COLUMNS.map((col) => (
-                  <KanbanColumn key={col.id} col={col} items={kanbanBuckets[col.id]} agenciasMap={agenciasMap} onView={onView} onEdit={onEdit} onDuplicate={onDuplicate} onCRM={setCrmModal} onUpdateCRM={onUpdateCRM} onAnular={onAnular} />
-                ))}
-              </div>
+            <div className="space-y-3">
+              {listItems.map((g) => (
+                <OpportunityCard
+                  key={g.id} g={g}
+                  agencia={agenciasMap.get((g.cliente.correo || "").toLowerCase())}
+                  onView={() => onView(g)} onEdit={() => onEdit(g)}
+                  onDuplicate={onDuplicate ? () => onDuplicate(g) : undefined}
+                  onCRM={() => setCrmModal(g)}
+                  onUpdateCRM={(patch) => onUpdateCRM(g.id, patch)}
+                  onAnular={() => onAnular(g)}
+                />
+              ))}
             </div>
           )}
         </>
