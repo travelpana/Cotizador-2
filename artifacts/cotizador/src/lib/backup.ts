@@ -9,7 +9,7 @@ import {
   loadTrasladosLS,
   saveTrasladosLS,
 } from "@/lib/tarifas";
-import { loadAgencias, saveAgencias } from "@/lib/agencias";
+import { loadAgencias, saveAgencias, loadAgentes, saveAgentes } from "@/lib/agencias";
 
 export type BackupType = "full" | "plantillas";
 
@@ -26,6 +26,7 @@ export interface RgeBackup {
     traslados: ReturnType<typeof loadTrasladosLS>;
   };
   agencias?: ReturnType<typeof loadAgencias>;
+  agentes?: ReturnType<typeof loadAgentes>;
 }
 
 function todayString(): string {
@@ -64,6 +65,7 @@ export function exportarRespaldoCompleto(): void {
       traslados: loadTrasladosLS(),
     },
     agencias: loadAgencias(),
+    agentes: loadAgentes(),
   };
   downloadJson(backup, `RGE_Backup_${todayString()}.json`);
 }
@@ -118,6 +120,9 @@ export async function importarRespaldo(file: File): Promise<ImportResult> {
       }
       if (data.agencias !== undefined) {
         saveAgencias(data.agencias);
+      }
+      if (data.agentes !== undefined) {
+        saveAgentes(data.agentes);
       }
     }
 

@@ -8,7 +8,16 @@ export interface Agencia {
   predeterminada?: boolean;
 }
 
+export interface AgenteAgencia {
+  id: string;
+  agenciaId: string;
+  nombre: string;
+  correo?: string;
+  telefono?: string;
+}
+
 const STORAGE_KEY = "rge.agencias";
+const AGENTES_KEY = "rge.agentes";
 
 export function loadAgencias(): Agencia[] {
   try {
@@ -31,4 +40,21 @@ export function getAgenciaByNombre(nombre: string): Agencia | undefined {
 
 export function getAgenciaPredeterminada(): Agencia | undefined {
   return loadAgencias().find((a) => a.predeterminada === true);
+}
+
+export function loadAgentes(): AgenteAgencia[] {
+  try {
+    const raw = localStorage.getItem(AGENTES_KEY);
+    return raw ? (JSON.parse(raw) as AgenteAgencia[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveAgentes(list: AgenteAgencia[]): void {
+  localStorage.setItem(AGENTES_KEY, JSON.stringify(list));
+}
+
+export function getAgentesByAgenciaId(agenciaId: string): AgenteAgencia[] {
+  return loadAgentes().filter((a) => a.agenciaId === agenciaId);
 }

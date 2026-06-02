@@ -100,14 +100,7 @@ export interface Descriptivo {
   horarioExtra?: string;
 }
 
-export const AGENTES = [
-  "JOHANNA C.",
-  "MELISA A.",
-  "GABRIELA S.",
-  "JONATHAN C.",
-] as const;
-
-export type Agente = (typeof AGENTES)[number];
+export type Agente = string;
 
 export interface Cliente {
   nombre: string;

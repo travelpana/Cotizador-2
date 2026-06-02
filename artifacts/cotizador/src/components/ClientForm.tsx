@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check, UserRound, MoonStar, Users, Baby, Building2 } from "lucide-react";
-import { loadAgencias, type Agencia } from "@/lib/agencias";
+import { ChevronDown, Check, UserRound, Users, Building2 } from "lucide-react";
 import {
-  AGENTES,
+  loadAgencias,
+  loadAgentes,
+  getAgenciaByNombre,
+  type Agencia,
+} from "@/lib/agencias";
+import {
   type Acomodacion,
   type Cliente,
   type ClienteValidationErrors,
@@ -42,9 +46,6 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
     update(patch);
   };
 
-  const errCls = (on: boolean | undefined) =>
-    on ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "";
-
   return (
     <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
       <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
@@ -66,13 +67,18 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
         <Field label="Agencia" required error={errors?.agencia}>
           <AgenciaCombobox
             value={cliente.correo}
-            onChange={(v) => update({ correo: v })}
+            onChange={(v) => {
+              const patch: Partial<Cliente> = { correo: v };
+              if (v !== cliente.correo) patch.agente = "";
+              update(patch);
+            }}
             error={errors?.agencia}
           />
         </Field>
         <Field label="Agente" required error={errors?.agente}>
-          <AgentSelect
+          <AgentCombobox
             value={cliente.agente}
+            agenciaNombre={cliente.correo}
             onChange={(v) => update({ agente: v })}
             error={errors?.agente}
           />
@@ -200,32 +206,53 @@ function AgenciaCombobox({
   );
 }
 
-function AgentSelect({
+// ─── Agent Combobox ───────────────────────────────────────────────────────────
+
+function AgentCombobox({
   value,
+  agenciaNombre,
   onChange,
   error,
 }: {
   value: string;
+  agenciaNombre: string;
   onChange: (v: string) => void;
   error?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  const agencia = agenciaNombre?.trim() ? getAgenciaByNombre(agenciaNombre) : undefined;
+  const allAgentes = loadAgentes();
+  const agentesForAgencia = agencia
+    ? allAgentes.filter((a) => a.agenciaId === agencia.id)
+    : [];
+  const hasAgents = agentesForAgencia.length > 0;
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const errBorder = error
-    ? "border-red-400 ring-1 ring-red-200 bg-red-50/40"
-    : "border-slate-200";
+  const errBorder = error ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "border-slate-200";
+
+  if (!hasAgents) {
+    return (
+      <div data-testid="select-agente">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value.toUpperCase())}
+          placeholder="Escribir agente"
+          className={`${inputCls} ${errBorder}`}
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="relative" data-testid="select-agente">
@@ -235,27 +262,25 @@ function AgentSelect({
         className={`w-full h-10 px-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] flex items-center justify-between gap-2 transition-colors hover:border-slate-300 ${errBorder}`}
         style={{ color: value ? "#0f172a" : "#94a3b8" }}
       >
-        <span className="truncate font-medium tracking-wide">
+        <span className="truncate font-medium">
           {value || "Seleccionar"}
         </span>
-        <ChevronDown
-          className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-          {AGENTES.map((a) => (
+          {agentesForAgencia.map((a) => (
             <button
-              key={a}
+              key={a.id}
               type="button"
-              onClick={() => {
-                onChange(a);
-                setOpen(false);
-              }}
-              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm font-medium text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be] transition-colors tracking-wide"
+              onClick={() => { onChange(a.nombre); setOpen(false); }}
+              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm font-medium text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be] transition-colors"
             >
-              <span>{a}</span>
-              {value === a && (
+              <div className="flex items-center gap-2 min-w-0">
+                <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="truncate">{a.nombre}</span>
+              </div>
+              {value === a.nombre && (
                 <Check className="w-3.5 h-3.5 text-[#2596be] flex-shrink-0" />
               )}
             </button>
@@ -328,14 +353,11 @@ export function AlojamientoBar({
         boxShadow: "0 4px 20px rgba(0,52,184,0.35)",
       }}
     >
-      {/* Decorative blobs */}
       <span className="pointer-events-none absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-15" style={{ background: "radial-gradient(circle, #60a5fa 0%, transparent 70%)" }} />
       <span className="pointer-events-none absolute bottom-0 left-1/3 w-28 h-28 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #93c5fd 0%, transparent 70%)" }} />
       <span className="pointer-events-none absolute -bottom-4 right-1/4 w-20 h-20 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
-      {/* Subtle inner curve shine */}
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
-      {/* Two-block row */}
       <div
         className="relative"
         style={{
@@ -346,7 +368,6 @@ export function AlojamientoBar({
           padding: "10px 20px",
         }}
       >
-        {/* BLOQUE 1 — Contadores */}
         <div
           style={{
             display: "flex",
@@ -376,10 +397,8 @@ export function AlojamientoBar({
           />
         </div>
 
-        {/* Separador central */}
         <span style={{ width: 1, backgroundColor: "rgba(255,255,255,0.2)", display: "block", margin: "4px 0" }} />
 
-        {/* BLOQUE 2 — Tipos de habitación */}
         <div
           style={{
             display: "flex",
@@ -429,7 +448,6 @@ export function AlojamientoBar({
 
 function NumberInput({
   label,
-  icon,
   value,
   onChange,
   min = 0,
