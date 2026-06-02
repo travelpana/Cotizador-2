@@ -53,74 +53,88 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
         <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>Datos del cliente</h3>
       </div>
       <div className="p-5">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Field label="Nombre">
-          <input
-            type="text"
-            value={cliente.nombre}
-            onChange={(e) => update({ nombre: e.target.value.toUpperCase() })}
-            placeholder=""
-            className={inputCls}
-            data-testid="input-nombre"
-          />
-        </Field>
-        <Field label="Agencia" required error={errors?.agencia}>
-          <AgenciaCombobox
-            value={cliente.correo}
-            onChange={(v) => {
-              const patch: Partial<Cliente> = { correo: v };
-              if (v !== cliente.correo) patch.agente = "";
-              update(patch);
-            }}
-            error={errors?.agencia}
-          />
-        </Field>
-        <Field label="Agente" required error={errors?.agente}>
-          <AgentCombobox
-            value={cliente.agente}
-            agenciaNombre={cliente.correo}
-            onChange={(v) => update({ agente: v })}
-            error={errors?.agente}
-          />
-        </Field>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Row 1: Agencia | Agente | Counter */}
+          <Field label="Agencia" required error={errors?.agencia}>
+            <AgenciaCombobox
+              value={cliente.correo}
+              onChange={(v) => {
+                const patch: Partial<Cliente> = { correo: v };
+                if (v !== cliente.correo) patch.agente = "";
+                update(patch);
+              }}
+              error={errors?.agencia}
+            />
+          </Field>
+          <Field label="Agente" required error={errors?.agente}>
+            <AgentCombobox
+              value={cliente.agente}
+              agenciaNombre={cliente.correo}
+              onChange={(v) => update({ agente: v })}
+              error={errors?.agente}
+            />
+          </Field>
+          <Field label="Counter">
+            <input
+              type="text"
+              value={cliente.counter ?? ""}
+              onChange={(e) => update({ counter: e.target.value })}
+              placeholder="Seleccionar counter"
+              className={inputCls}
+              data-testid="input-counter"
+            />
+          </Field>
 
-        <Field label="Correo electrónico">
-          <input
-            type="email"
-            value={cliente.whatsapp}
-            onChange={(e) => update({ whatsapp: e.target.value })}
-            placeholder="cliente@correo.com (opcional)"
-            className={inputCls}
-            data-testid="input-correo"
-          />
-        </Field>
-        <Field label="Fecha de llegada">
-          <SingleDatePicker
-            value={cliente.fechaInicio}
-            onChange={onCheckinChange}
-            placeholder="Llegada"
-            allowPast
-            error={errors?.fechaInicio}
-          />
-        </Field>
-        <Field label="Fecha de salida">
-          <SingleDatePicker
-            value={cliente.fechaFin}
-            onChange={(iso) => update({ fechaFin: iso })}
-            placeholder="Salida"
-            allowPast
-            minDate={cliente.fechaInicio || undefined}
-          />
-        </Field>
-        <Field label="Vigencia">
-          <SingleDatePicker
-            value={cliente.vigencia}
-            onChange={(iso) => update({ vigencia: iso })}
-            placeholder="Válida hasta…"
-            allowPast
-          />
-        </Field>
-      </div>
+          {/* Row 2: Nombre de cotización | Correo electrónico | Fecha de llegada */}
+          <Field label="Nombre de cotización">
+            <input
+              type="text"
+              value={cliente.cotizacionNombre ?? ""}
+              onChange={(e) => update({ cotizacionNombre: e.target.value })}
+              placeholder="Ej: Panamá + Bocas del Toro - Junio"
+              className={inputCls}
+              data-testid="input-cotizacion-nombre"
+            />
+          </Field>
+          <Field label="Correo electrónico">
+            <input
+              type="email"
+              value={cliente.whatsapp}
+              onChange={(e) => update({ whatsapp: e.target.value })}
+              placeholder="cliente@correo.com (opcional)"
+              className={inputCls}
+              data-testid="input-correo"
+            />
+          </Field>
+          <Field label="Fecha de llegada">
+            <SingleDatePicker
+              value={cliente.fechaInicio}
+              onChange={onCheckinChange}
+              placeholder="Llegada"
+              allowPast
+              error={errors?.fechaInicio}
+            />
+          </Field>
+
+          {/* Row 3: Fecha de salida | Vigencia */}
+          <Field label="Fecha de salida">
+            <SingleDatePicker
+              value={cliente.fechaFin}
+              onChange={(iso) => update({ fechaFin: iso })}
+              placeholder="Salida"
+              allowPast
+              minDate={cliente.fechaInicio || undefined}
+            />
+          </Field>
+          <Field label="Vigencia">
+            <SingleDatePicker
+              value={cliente.vigencia}
+              onChange={(iso) => update({ vigencia: iso })}
+              placeholder="Válida hasta…"
+              allowPast
+            />
+          </Field>
+        </div>
       </div>
     </section>
   );

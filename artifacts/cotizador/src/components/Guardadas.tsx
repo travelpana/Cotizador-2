@@ -260,7 +260,7 @@ export function guardarEnSeguimiento(
   const norm = (s: string) => (s || "").trim().toLowerCase();
   const isDuplicate = items.some(
     (g) =>
-      norm(g.cliente.nombre) === norm(input.cliente.nombre) &&
+      norm(g.cliente.cotizacionNombre || g.cliente.nombre) === norm(input.cliente.cotizacionNombre || input.cliente.nombre) &&
       g.cliente.fechaInicio === input.cliente.fechaInicio &&
       g.cliente.fechaFin === input.cliente.fechaFin,
   );

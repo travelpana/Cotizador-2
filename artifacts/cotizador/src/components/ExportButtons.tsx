@@ -470,7 +470,7 @@ export default function ExportButtons({
     setPdfLoading(true);
 
     const numero = getNumeroCotizacion();
-    const clienteSafe = sanitizeForFilename(cliente.nombre || "");
+    const clienteSafe = sanitizeForFilename(cliente.cotizacionNombre || cliente.nombre || "");
     const filename = `Cotizacion-${numero}-${clienteSafe}.pdf`;
 
     let iframe: HTMLIFrameElement | null = null;

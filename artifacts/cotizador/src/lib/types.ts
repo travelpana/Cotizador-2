@@ -104,9 +104,11 @@ export type Agente = string;
 
 export interface Cliente {
   nombre: string;
+  cotizacionNombre: string;
   correo: string;
   whatsapp: string;
   agente: string;
+  counter: string;
   fechaInicio: string;
   fechaFin: string;
   vigencia: string;

@@ -949,7 +949,7 @@ export function buildPropuestaHtml(input: PropuestaInput): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escape(d.T.propuestaDeServicios)} · ${escape(d.cliente.nombre || "RGE Style Travel")}</title>
+  <title>${escape(d.T.propuestaDeServicios)} · ${escape(d.cliente.cotizacionNombre || d.cliente.nombre || "RGE Style Travel")}</title>
   <style>${PROPUESTA_CSS}</style>
 </head>
 <body>

@@ -79,9 +79,11 @@ function addTwoMonths(date: Date): string {
 function makeDefaultCliente(): Cliente {
   return {
     nombre: "",
+    cotizacionNombre: "",
     correo: "",
     whatsapp: "",
     agente: "",
+    counter: "",
     fechaInicio: "",
     fechaFin: "",
     vigencia: addTwoMonths(new Date()),
