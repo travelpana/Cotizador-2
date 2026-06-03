@@ -220,139 +220,185 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const uMeta = URGENCY_META[urgency];
   const sinActividad = daysSince(opp.lastUpdateAt);
   const initials = getInitials(opp.agencyName || opp.quoteName);
-  const estadoStyle = ESTADO_OPP_STYLES[opp.status];
-  const estadoLabel = ESTADO_OPP_OPTIONS.find((o) => o.value === opp.status)?.label ?? opp.status;
   const isClosedStatus = opp.status === "confirmada" || opp.status === "perdida";
-  const hasReminder = isRecordatorioActivo(opp);
 
   const addHistorial = (tipo: OppHistorialEntry["tipo"], detalle?: string): OppHistorialEntry[] =>
     [{ fecha: new Date().toISOString(), tipo, detalle }, ...(opp.historial ?? [])].slice(0, 100);
 
   const borderColor = getCardBorderColor(opp);
 
+  // Derive metadata from latest quote
+  const latestQ = opp.quotes.length > 0
+    ? allQuotes.find((q) => q.id === opp.quotes[0].id)
+    : undefined;
+  const pax = latestQ?.cliente?.pasajeros;
+  const ninos = latestQ?.cliente?.ninos;
+  const acoms = latestQ?.acomodaciones ?? [];
+  const uniqueAcoms = Array.from(new Set(acoms));
+
+  // Build metadata chips text
+  const metaParts: string[] = [];
+  if (pax != null && pax > 0) metaParts.push(`${pax} ADULTO${pax !== 1 ? "S" : ""}`);
+  if (ninos != null && ninos > 0) metaParts.push(`${ninos} NIÑO${ninos !== 1 ? "S" : ""}`);
+  if (uniqueAcoms.length > 0) metaParts.push(uniqueAcoms.join("/"));
+  metaParts.push(`${opp.quotes.length} COTIZACIÓN${opp.quotes.length !== 1 ? "ES" : ""}`);
+
+  // Line 2: agency • destination
+  const line2Parts: string[] = [];
+  if (opp.agencyName) line2Parts.push(opp.agencyName.toUpperCase());
+  if (opp.destination) line2Parts.push(opp.destination.toUpperCase());
+  const line2 = line2Parts.join(" • ");
+
+  // Format last update date
+  const lastUpdateFormatted = opp.lastUpdateAt
+    ? new Date(opp.lastUpdateAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()
+    : "—";
+
   return (
     <div
-      className="bg-white rounded-2xl hover:shadow-md transition-shadow overflow-hidden"
+      className="bg-white rounded-2xl overflow-hidden transition-all duration-150 cursor-default"
       style={{
-        borderLeft: `6px solid ${borderColor}`,
-        boxShadow: "0 1px 4px 0 rgba(0,0,0,0.07), 0 1px 2px -1px rgba(0,0,0,0.04)",
+        borderLeft: `5px solid ${borderColor}`,
+        boxShadow: "0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)",
+        minHeight: 110,
       }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px 0 rgba(0,0,0,0.10), 0 2px 6px -1px rgba(0,0,0,0.07)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLDivElement).style.transform = ""; }}
     >
-      <div className="flex items-stretch gap-0 px-5 py-4">
+      {/* ── Single horizontal row ─────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 py-3 sm:py-0 sm:min-h-[110px]">
 
-        {/* ── Left: identity ─────────────────────────────────────────── */}
-        <div className="flex items-start gap-3 flex-1 min-w-0 pr-5" style={{ borderRight: "1px solid #f1f5f9" }}>
-          <div className="shrink-0 mt-0.5">
-            <LogoOrInitials agencia={agencia} initials={initials} color="#004FBB" size={44} radius={12} />
+        {/* ── SECTION 2: Logo ──────────────────────────────────────────── */}
+        <div className="shrink-0 self-start sm:self-center mt-1 sm:mt-0">
+          <LogoOrInitials agencia={agencia} initials={initials} color="#004FBB" size={56} radius={14} />
+        </div>
+
+        {/* ── SECTION 3: Main info ─────────────────────────────────────── */}
+        <div className="flex-1 min-w-0">
+          {/* Line 1: Quote name */}
+          <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.01em" }}>
+            {(opp.quoteName || "SIN NOMBRE").toUpperCase()}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-bold text-slate-900 truncate leading-tight" style={{ fontSize: 14 }}>
-              {opp.quoteName || "Sin nombre"}
-            </div>
-            <div className="text-xs text-slate-500 truncate mt-0.5">
-              {opp.agencyName || "—"}{opp.agentName ? ` · ${opp.agentName}` : ""}
-            </div>
-            {opp.destination && (
-              <div className="text-xs text-slate-400 truncate mt-0.5">{opp.destination}</div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ring-1 ${estadoStyle.bg} ${estadoStyle.text} ${estadoStyle.ring}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${estadoStyle.dot}`} />{estadoLabel}
+          {/* Line 2: Agency • Destination */}
+          {line2 && (
+            <div className="text-[11px] font-semibold text-slate-600 truncate mt-0.5 tracking-wide">{line2}</div>
+          )}
+          {/* Line 3: Metadata chips */}
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
+            {pax != null && pax > 0 && (
+              <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
+                <span>👥</span>{pax} ADULTO{pax !== 1 ? "S" : ""}
               </span>
-              {opp.priorityManual && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-300">
-                  <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD
-                </span>
-              )}
-              {hasReminder && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 ring-1 ring-blue-200">
-                  <CalendarClock className="w-2.5 h-2.5" />Recordatorio
-                </span>
-              )}
-            </div>
-
-            <button type="button" onClick={onOpenDetail}
-              className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-primary transition-colors">
-              <ChevronRight className="w-3 h-3" />
-              Ver detalle · {opp.quotes.length} cotización{opp.quotes.length !== 1 ? "es" : ""}
-            </button>
+            )}
+            {ninos != null && ninos > 0 && (
+              <>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] font-semibold text-slate-500">{ninos} NIÑO{ninos !== 1 ? "S" : ""}</span>
+              </>
+            )}
+            {uniqueAcoms.length > 0 && (
+              <>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] font-semibold text-slate-500">{uniqueAcoms.join("/")}</span>
+              </>
+            )}
+            <span className="text-slate-300 text-[10px]">•</span>
+            <span className="text-[10px] font-semibold text-slate-500">{opp.quotes.length} COTIZACIÓN{opp.quotes.length !== 1 ? "ES" : ""}</span>
+            {opp.priorityManual && (
+              <>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD</span>
+              </>
+            )}
           </div>
         </div>
 
-        {/* ── Center: value ──────────────────────────────────────────── */}
-        <div className="flex flex-col justify-center items-center px-6 shrink-0" style={{ borderRight: "1px solid #f1f5f9", minWidth: 140 }}>
+        {/* ── SECTION 4: Price ─────────────────────────────────────────── */}
+        <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-0.5">
           {opp.totalLatest != null && opp.totalLatest > 0 ? (
-            <div className="text-center">
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#004FBB", letterSpacing: "-0.03em", lineHeight: 1 }}>
-                {fmtMoney(opp.totalLatest)}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-1">Total cotización</div>
+            <div className="font-bold tabular-nums leading-none" style={{ fontSize: 18, color: "#044b9e", fontWeight: 700, letterSpacing: "-0.02em" }}>
+              {fmtMoney(opp.totalLatest)}
             </div>
           ) : (
-            <div className="text-[11px] text-slate-400 text-center">Sin valor</div>
+            <div className="text-[11px] text-slate-400">Sin valor</div>
           )}
           {opp.latestQuoteCode && (
-            <div className="text-[10px] font-mono text-slate-400 mt-2">{opp.latestQuoteCode}</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-0.5">Última: {opp.latestQuoteCode}</div>
           )}
-          <button type="button" onClick={onView}
-            className="mt-2 text-[11px] font-semibold underline-offset-2 hover:underline transition-colors" style={{ color: "#004FBB" }}>
-            Ver última
+          <button
+            type="button"
+            onClick={onOpenDetail}
+            className="text-[10px] font-bold text-left mt-0.5 hover:underline underline-offset-2 transition-colors"
+            style={{ color: "#044b9e" }}
+          >
+            VER COTIZACIONES ({opp.quotes.length})
           </button>
         </div>
 
-        {/* ── Right: urgency + actions ────────────────────────────────── */}
-        <div className="flex flex-col justify-between items-end pl-5 shrink-0" style={{ minWidth: 168 }}>
+        {/* ── SECTION 5: Status ────────────────────────────────────────── */}
+        <div className="shrink-0 sm:w-44 flex flex-col justify-center gap-0.5">
           {!isClosedStatus ? (
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: uMeta.bg, color: uMeta.color }}>
+            <>
+              <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: uMeta.dot }} />
-                {uMeta.label}
+                <span className="text-[11px] font-bold text-slate-700 tracking-wide uppercase">{uMeta.label}</span>
               </div>
-              <div className="text-[11px] text-slate-500 text-right">
-                {sinActividad === 0 ? "Actualizado hoy" : `${sinActividad} día${sinActividad !== 1 ? "s" : ""} sin actualización`}
+              <div className="text-[10px] font-semibold" style={{ color: urgency === "red" ? "#dc2626" : "#64748b" }}>
+                {sinActividad === 0
+                  ? "ACTUALIZADO HOY"
+                  : `${sinActividad} DÍA${sinActividad !== 1 ? "S" : ""} SIN ACTUALIZACIÓN`}
               </div>
-              {opp.lastUpdateAt && (
-                <div className="text-[10px] text-slate-400 text-right">
-                  Últ. act.: {formatShortDate(opp.lastUpdateAt)}
-                </div>
-              )}
+              <div className="text-[10px] text-slate-400 font-medium">
+                ACTUALIZADO: {lastUpdateFormatted}
+              </div>
               {opp.recordatorio && (
-                <div className="text-[10px] text-blue-400 text-right flex items-center gap-1">
-                  <CalendarClock className="w-3 h-3" />Rec. {formatShortDate(opp.recordatorio)}
+                <div className="text-[10px] text-blue-400 flex items-center gap-1 mt-0.5">
+                  <CalendarClock className="w-3 h-3 shrink-0" />REC. {formatShortDate(opp.recordatorio).toUpperCase()}
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="flex flex-col items-end gap-1">
+            <>
               {opp.status === "confirmada" ? (
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
-                  <CheckCircle2 className="w-3 h-3" />Confirmada
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">Confirmada</span>
+                </div>
               ) : (
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">
-                  <XCircle className="w-3 h-3" />Perdida
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Perdida</span>
+                </div>
               )}
-              <div className="text-[10px] text-slate-400 text-right">{formatDate(opp.lastUpdateAt)}</div>
-            </div>
+              <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                ACTUALIZADO: {lastUpdateFormatted}
+              </div>
+            </>
           )}
+        </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1.5 mt-3">
-            <button type="button" onClick={onOpenDetail}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-[12px] font-semibold hover:opacity-90 transition-opacity" style={{ background: "#004FBB" }}>
-              <ExternalLink className="w-3 h-3" />Abrir
-            </button>
-            <button ref={menuBtnRef} type="button" onClick={openMenu}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </div>
+        {/* ── SECTION 6: Actions ───────────────────────────────────────── */}
+        <div className="shrink-0 flex items-center gap-2 self-start sm:self-center mt-1 sm:mt-0">
+          <button
+            type="button"
+            onClick={onOpenDetail}
+            className="h-9 px-4 rounded-xl text-white text-[12px] font-bold tracking-wide hover:opacity-90 active:scale-95 transition-all"
+            style={{ background: "#044b9e" }}
+          >
+            ABRIR
+          </button>
+          <button
+            ref={menuBtnRef}
+            type="button"
+            onClick={openMenu}
+            className="h-9 w-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Portal menu */}
+      {/* ── Portal dropdown menu ──────────────────────────────────────── */}
       {menuOpen && menuPos && createPortal(
         <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[210px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
           <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar cotización" onClick={() => { onEdit(); close(); }} />
