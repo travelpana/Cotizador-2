@@ -155,6 +155,7 @@ export default function CotizadorPage() {
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
   const [incluirDescriptivoCompleto, setIncluirDescriptivoCompleto] =
     useState(false);
+  const [personalizarTraslados, setPersonalizarTraslados] = useState(true);
   const [actividadesOverride, setActividadesOverride] = useState<
     Record<number, string>
   >({});
@@ -326,6 +327,7 @@ export default function CotizadorPage() {
       setIncluirItinerario(false);
       setIncluirDescriptivos(false);
       setIncluirDescriptivoCompleto(false);
+      setPersonalizarTraslados(true);
       setActividadesOverride({});
       setObservacionesSeleccionadas([]);
       setObservacionManual("");
@@ -1206,6 +1208,7 @@ export default function CotizadorPage() {
                   }}
                   observaciones={observacionManual}
                   onObservacionesChange={setObservacionManual}
+                  personalizarTraslados={personalizarTraslados}
                 />
                 {incluirItinerario && (
                   <Itinerario
@@ -1232,6 +1235,10 @@ export default function CotizadorPage() {
                   onToggleDescriptivoCompleto={() =>
                     setIncluirDescriptivoCompleto((v) => !v)
                   }
+                  personalizarTraslados={personalizarTraslados}
+                  onTogglePersonalizarTraslados={() =>
+                    setPersonalizarTraslados((v) => !v)
+                  }
                   idioma={idioma}
                   onIdiomaChange={setIdioma}
                 />
@@ -1243,6 +1250,7 @@ export default function CotizadorPage() {
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   incluirDescriptivoCompleto={incluirDescriptivoCompleto}
+                  personalizarTraslados={personalizarTraslados}
                   descriptivos={mergedDescriptivos}
                   actividadesOverride={actividadesOverride}
                   observaciones={resolvedObservaciones}

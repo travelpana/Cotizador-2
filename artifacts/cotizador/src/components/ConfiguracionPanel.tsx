@@ -8,6 +8,7 @@ import {
   Check,
   Globe,
   ChevronDown,
+  Bus,
 } from "lucide-react";
 import type { ModoCotizacion } from "./Guardadas";
 import { type Idioma, IDIOMA_LABELS } from "@/lib/i18n";
@@ -22,6 +23,8 @@ interface Props {
   onToggleDescriptivos: () => void;
   incluirDescriptivoCompleto: boolean;
   onToggleDescriptivoCompleto: () => void;
+  personalizarTraslados: boolean;
+  onTogglePersonalizarTraslados: () => void;
   idioma: Idioma;
   onIdiomaChange: (i: Idioma) => void;
 }
@@ -35,6 +38,8 @@ export default function ConfiguracionPanel({
   onToggleDescriptivos,
   incluirDescriptivoCompleto,
   onToggleDescriptivoCompleto,
+  personalizarTraslados,
+  onTogglePersonalizarTraslados,
   idioma,
   onIdiomaChange,
 }: Props) {
@@ -97,6 +102,13 @@ export default function ConfiguracionPanel({
               onChange={onToggleDescriptivoCompleto}
               icon={<BookOpen className="w-4 h-4" />}
               label="Incluir descriptivo"
+            />
+            <Toggle
+              checked={personalizarTraslados}
+              onChange={onTogglePersonalizarTraslados}
+              icon={<Bus className="w-4 h-4" />}
+              label="Personalizar traslados"
+              help="Reemplaza nombres genéricos con el hotel cotizado"
             />
           </div>
         </section>

@@ -44,6 +44,7 @@ interface Props {
   getNumeroCotizacion: () => string;
   observaciones?: string[];
   idioma?: Idioma;
+  personalizarTraslados?: boolean;
 }
 
 /** Formats an ISO date (YYYY-MM-DD) as DD-MM-YYYY. */
@@ -77,6 +78,7 @@ export default function ExportButtons({
   validateBeforeAction,
   getNumeroCotizacion,
   idioma = "es",
+  personalizarTraslados = true,
 }: Props) {
   const [waCopied, setWaCopied] = useState(false);
   const [mailCopied, setMailCopied] = useState(false);
@@ -390,6 +392,7 @@ export default function ExportButtons({
       numeroCotizacion,
       intro,
       idioma,
+      personalizarTraslados,
     });
 
   const sanitizeForFilename = (s: string) =>

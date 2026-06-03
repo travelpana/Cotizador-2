@@ -8,7 +8,7 @@ import type {
 } from "./types";
 import { formatRegimen } from "./regimen";
 import { fmt } from "./calc";
-import { formatTrasladoNombre } from "./utils";
+import { formatTrasladoNombre, personalizarNombreTraslado } from "./utils";
 import { buildItinerario, type ItinerarioDia } from "@/components/Itinerario";
 import type { ModoCotizacion } from "@/components/Guardadas";
 import { tr as getT, type Idioma, type Traducciones } from "./i18n";
@@ -33,6 +33,8 @@ export interface PropuestaInput {
   observaciones?: string[];
   /** Output language for all section labels and table headers */
   idioma?: Idioma;
+  /** When true (default), generic hotel placeholders in traslado names are replaced with the actual hotel name. */
+  personalizarTraslados?: boolean;
 }
 
 export interface PropuestaData {
@@ -65,6 +67,7 @@ export interface PropuestaData {
   observaciones: string[];
   idioma: Idioma;
   T: Traducciones;
+  personalizarTraslados: boolean;
 }
 
 const MESES_ES = [
@@ -251,6 +254,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     observaciones: input.observaciones ?? [],
     idioma,
     T,
+    personalizarTraslados: input.personalizarTraslados !== false,
   };
 }
 
@@ -447,7 +451,13 @@ function adicionalesTable(
               : T.regular;
 
       const displayName =
-        s.tipo === "traslado" ? formatTrasladoNombre(s.nombre) : s.nombre;
+        s.tipo === "traslado"
+          ? personalizarNombreTraslado(
+              formatTrasladoNombre(s.nombre),
+              d.hoteles,
+              d.personalizarTraslados,
+            )
+          : s.nombre;
 
       const ticketsLine = (() => {
         if (s.tipo !== "tour" || !s.tickets?.enabled || s.tickets.adultPrice <= 0) return "";

@@ -8,7 +8,7 @@ import type {
   TourTickets,
 } from "@/lib/types";
 import { fmt, pickTier, priceForTier } from "@/lib/calc";
-import { formatTrasladoNombre } from "@/lib/utils";
+import { formatTrasladoNombre, personalizarNombreTraslado } from "@/lib/utils";
 import { formatRegimen } from "@/lib/regimen";
 import SingleDatePicker from "./SingleDatePicker";
 import {
@@ -53,6 +53,7 @@ interface Props {
   onEditarPlantilla?: (p: Plantilla) => void;
   observaciones?: string;
   onObservacionesChange?: (v: string) => void;
+  personalizarTraslados?: boolean;
 }
 
 function plantillaResumen(p: Plantilla) {
@@ -99,7 +100,9 @@ export default function ServiciosSeleccionados({
   onEditarPlantilla,
   observaciones = "",
   onObservacionesChange,
+  personalizarTraslados = true,
 }: Props) {
+  const hotelesServs = servicios.filter((s) => s.tipo === "hotel");
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [plantillaModalOpen, setPlantillaModalOpen] = useState(false);
@@ -256,6 +259,8 @@ export default function ServiciosSeleccionados({
                       onEdit={() => onEdit(s)}
                       onRemove={() => remove(s)}
                       onUpdate={update}
+                      hoteles={hotelesServs}
+                      personalizarTraslados={personalizarTraslados}
                     />
                   );
                 })}
@@ -487,6 +492,8 @@ function ServicioRow({
   onEdit,
   onRemove,
   onUpdate,
+  hoteles = [],
+  personalizarTraslados = true,
 }: {
   servicio: ServicioSeleccionado;
   acomodaciones: Acomodacion[];
@@ -501,6 +508,8 @@ function ServicioRow({
   onEdit: () => void;
   onRemove: () => void;
   onUpdate: (s: ServicioSeleccionado) => void;
+  hoteles?: ServicioSeleccionado[];
+  personalizarTraslados?: boolean;
 }) {
   const isHotel = servicio.tipo === "hotel";
   const paxLocal = servicio.paxOverride ?? pasajeros;
@@ -585,7 +594,11 @@ function ServicioRow({
 
   const titleLabel =
     servicio.tipo === "traslado"
-      ? formatTrasladoNombre(servicio.nombre)
+      ? personalizarNombreTraslado(
+          formatTrasladoNombre(servicio.nombre),
+          hoteles,
+          personalizarTraslados,
+        )
       : servicio.nombre;
 
   const rowClasses = [
