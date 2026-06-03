@@ -73,7 +73,7 @@ export default function ToastStack({ toasts, onDismiss }: Props) {
               pointerEvents: "auto",
               background: "#fff",
               borderRadius: 16,
-              boxShadow: "0 8px 32px rgba(4,25,65,0.13), 0 1px 4px rgba(0,0,0,0.06)",
+              boxShadow: "0 10px 30px rgba(4,25,65,0.12)",
               border: "1px solid rgba(4,25,65,0.08)",
               borderLeft: `4px solid ${cfg.barColor}`,
               display: "flex",
@@ -91,7 +91,7 @@ export default function ToastStack({ toasts, onDismiss }: Props) {
                 flex: 1,
                 fontSize: 13,
                 fontWeight: 500,
-                color: "#07152f",
+                color: "#041941",
                 lineHeight: 1.4,
               }}
             >

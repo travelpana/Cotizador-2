@@ -60,7 +60,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             <input
               type="text"
               value={cliente.cotizacionNombre ?? ""}
-              onChange={(e) => update({ cotizacionNombre: e.target.value })}
+              onChange={(e) => update({ cotizacionNombre: e.target.value.toUpperCase() })}
               placeholder="Ej: Panamá + Bocas del Toro - Junio"
               className={inputCls}
               data-testid="input-cotizacion-nombre"
@@ -346,6 +346,7 @@ function AgenciaAutocomplete({
         suggestions={suggestions}
         placeholder="Buscar o escribir agencia"
         error={error}
+        transform={(v) => v.toUpperCase()}
       />
     </div>
   );
@@ -418,6 +419,7 @@ function CounterAutocomplete({
         onChange={onChange}
         suggestions={suggestions}
         placeholder="Buscar o escribir counter"
+        transform={(v) => v.toUpperCase()}
       />
     </div>
   );

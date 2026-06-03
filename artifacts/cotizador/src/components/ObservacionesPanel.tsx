@@ -150,7 +150,7 @@ export default function ObservacionesPanel({
           <textarea
             ref={textareaRef}
             value={manual}
-            onChange={(e) => onManualChange(e.target.value)}
+            onChange={(e) => onManualChange(e.target.value.toUpperCase())}
             placeholder="Escribe observaciones, condiciones o notas para el cliente…"
             rows={3}
             className="w-full px-3 pt-10 pb-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 resize-none transition-colors leading-relaxed"
