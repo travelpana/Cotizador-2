@@ -136,6 +136,12 @@
   border-color: #2563eb !important;
 }
 
+/* Seguimiento sidebar flash badge */
+@keyframes seguimiento-flash-pulse {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0.75; transform: scale(0.9); }
+}
+
 /* Print styles for PDF export view */
 @media print {
   body { background: white !important; color: black !important; }

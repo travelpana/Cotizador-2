@@ -19,9 +19,10 @@ const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "agencias
 interface Props {
   view: View;
   onView: (v: View) => void;
+  seguimientoFlash?: boolean;
 }
 
-export default function Sidebar({ view, onView }: Props) {
+export default function Sidebar({ view, onView, seguimientoFlash = false }: Props) {
   const isConfigView = CONFIG_VIEWS.includes(view);
   const [configOpen, setConfigOpen] = useState(isConfigView);
 
@@ -79,6 +80,7 @@ export default function Sidebar({ view, onView }: Props) {
               onClick={() => onView("seguimiento")}
               icon={<ListChecks className="w-4 h-4" />}
               label="Seguimiento"
+              flash={seguimientoFlash}
             />
           </div>
 
@@ -180,12 +182,14 @@ function NavItem({
   icon,
   label,
   sub,
+  flash,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   sub?: boolean;
+  flash?: boolean;
 }) {
   return (
     <button
@@ -223,7 +227,30 @@ function NavItem({
       >
         {icon}
       </span>
-      {label}
+      <span className="flex-1 text-left">{label}</span>
+      {flash && (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 20,
+            height: 20,
+            borderRadius: 9999,
+            backgroundColor: "#E6AE33",
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            paddingLeft: 5,
+            paddingRight: 5,
+            animation: "seguimiento-flash-pulse 0.6s ease-in-out infinite alternate",
+            flexShrink: 0,
+          }}
+        >
+          +1
+        </span>
+      )}
     </button>
   );
 }

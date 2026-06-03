@@ -400,7 +400,6 @@ export default function ExportButtons({
       .slice(0, 40) || "Cliente";
 
   const copyWhatsapp = async () => {
-    if (!validateBeforeAction()) return;
     try {
       await navigator.clipboard.writeText(buildText());
       setWaCopied(true);

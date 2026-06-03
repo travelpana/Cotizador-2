@@ -245,6 +245,13 @@ export default function CotizadorPage() {
     idioma === "pt" ? (trasladosPt.length > 0 ? trasladosPt : mergedTraslados) :
     mercado === "brasil" ? trasladosBrasil : mergedTraslados;
 
+  const [seguimientoFlash, setSeguimientoFlash] = useState(false);
+
+  const flashSeguimiento = () => {
+    setSeguimientoFlash(true);
+    window.setTimeout(() => setSeguimientoFlash(false), 2750);
+  };
+
   const [toast, setToast] = useState<{
     msg: string;
     tone: "info" | "error";
@@ -296,6 +303,10 @@ export default function CotizadorPage() {
             ? "PDF generado y formulario reiniciado."
             : "Cotización guardada y lista para seguimiento.";
       showToast(toastMsg);
+
+      if (tipo === "correo_enviado" || tipo === "pdf_enviado") {
+        flashSeguimiento();
+      }
 
       setCliente(makeDefaultCliente());
       setValidationErrors({});
@@ -916,6 +927,7 @@ export default function CotizadorPage() {
           if (v === "plantillas") refreshPlantillasCount();
           setView(v);
         }}
+        seguimientoFlash={seguimientoFlash}
       />
 
       <main className="flex-1 overflow-x-hidden bg-[#e8eef6]">
