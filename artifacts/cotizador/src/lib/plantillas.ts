@@ -10,7 +10,8 @@ export type PlantillaBlockTipo =
   | "vuelo"
   | "catamaran"
   | "observaciones"
-  | "observacionesGenerales";
+  | "observacionesGenerales"
+  | "manual";
 
 export interface PlantillaBlock {
   id: string;
@@ -34,6 +35,23 @@ export interface PlantillaBlock {
   /** Catamaran fields (backed by tours catalog) */
   catamaranId?: string;
   catamaranNombre?: string;
+  /** Manual custom-item fields (full ServicioSeleccionado snapshot) */
+  manualTipo?: "hotel" | "tour" | "traslado" | "vuelo" | "catamaran";
+  manualNombre?: string;
+  manualCodigo?: string;
+  manualPrecios?: {
+    p1?: number; p2_5?: number; p6_10?: number; chd?: number;
+    SGL?: number; DBL?: number; TPL?: number; CHD?: number;
+  };
+  manualUnitOverride?: number;
+  manualNotas?: string;
+  manualUbicacion?: string;
+  manualEstrellas?: string;
+  manualTipoHabitacion?: string;
+  manualDesayuno?: string;
+  manualOrigen?: string;
+  manualDestino?: string;
+  manualTipoServicio?: "Regular" | "Privado";
 }
 
 export interface Plantilla {
@@ -386,6 +404,30 @@ export function buildServiciosFromPlantilla(
         }
       }
 
+    // ── Manual custom item — restore full snapshot ────────────────
+    } else if (blk.tipo === "manual") {
+      if (blk.manualTipo && blk.manualNombre) {
+        const baseId = `MAN-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        servicios.push({
+          id: baseId,
+          codigo: blk.manualCodigo ?? baseId,
+          tipo: blk.manualTipo,
+          nombre: blk.manualNombre,
+          precios: blk.manualPrecios ?? { p1: 0, p2_5: 0, p6_10: 0, chd: 0 },
+          manual: true,
+          notas: blk.manualNotas,
+          ubicacion: blk.manualUbicacion,
+          estrellas: blk.manualEstrellas,
+          tipoHabitacion: blk.manualTipoHabitacion,
+          desayuno: blk.manualDesayuno,
+          origen: blk.manualOrigen,
+          destino: blk.manualDestino,
+          tipoServicio: blk.manualTipoServicio,
+          unitOverride: blk.manualUnitOverride,
+          usarFecha: false,
+        });
+      }
+
     // ── titulo / nota / texto — informational only (no services) ──
     } else if (
       blk.tipo === "titulo" ||
@@ -421,6 +463,29 @@ export function serviciosToBlocks(
 ): PlantillaBlock[] {
   return servicios.map((s) => {
     const id = `blk_${uid()}`;
+
+    // ── Manual custom items: snapshot the full service structure ──────────────
+    if (s.manual) {
+      return {
+        id,
+        tipo: "manual" as const,
+        manualTipo: s.tipo,
+        manualNombre: s.nombre,
+        manualCodigo: s.codigo,
+        manualPrecios: { ...s.precios },
+        manualUnitOverride: s.unitOverride,
+        manualNotas: s.notas,
+        manualUbicacion: s.ubicacion,
+        manualEstrellas: s.estrellas,
+        manualTipoHabitacion: s.tipoHabitacion,
+        manualDesayuno: s.desayuno,
+        manualOrigen: s.origen,
+        manualDestino: s.destino,
+        manualTipoServicio: s.tipoServicio,
+      };
+    }
+
+    // ── Catalog-backed services ───────────────────────────────────────────────
     if (s.tipo === "hotel") {
       return {
         id,

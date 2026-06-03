@@ -365,9 +365,7 @@ export default function ServicioFormModal(props: Props) {
       subtitle={
         initial
           ? nombre || "Configura los detalles del servicio"
-          : isManual
-            ? "Servicio manual sin catálogo"
-            : "Configura los detalles del servicio"
+          : "Configura los detalles del servicio"
       }
       size="xl"
     >

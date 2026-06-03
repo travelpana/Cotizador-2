@@ -13,6 +13,7 @@ import {
   Plus,
   Save,
   Ship,
+  Sparkles,
   StickyNote,
   Trash2,
   Type,
@@ -164,6 +165,11 @@ const BLOCK_META: Record<
     label: "Observaciones",
     badgeCls: "bg-violet-100 text-violet-700",
     icon: <ClipboardList className="w-3 h-3" />,
+  },
+  manual: {
+    label: "Ítem personalizado",
+    badgeCls: "bg-pink-100 text-pink-700",
+    icon: <Sparkles className="w-3 h-3" />,
   },
 };
 
@@ -420,6 +426,25 @@ function BlockEditor({
             />
           </>
         )}
+
+        {block.tipo === "manual" && (
+          <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-pink-50 border border-pink-100">
+            <Sparkles className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-slate-800 truncate">{block.manualNombre ?? "Ítem sin nombre"}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                {block.manualTipo && <span className="capitalize">{block.manualTipo}</span>}
+                {block.manualPrecios && (() => {
+                  const p = block.manualPrecios;
+                  const precio = p.p1 ?? p.SGL ?? p.DBL ?? 0;
+                  return precio > 0 ? <span> · USD {precio.toLocaleString("es-ES")}</span> : null;
+                })()}
+                {block.manualNotas && <span> · {block.manualNotas}</span>}
+              </div>
+              <p className="text-[10px] text-pink-400 mt-1">Ítem personalizado — los precios se restauran automáticamente al cargar la plantilla</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -506,6 +531,7 @@ export default function PlantillaEditor({
   const trasladoCount = bloques.filter((b) => b.tipo === "traslado" && b.trasladoId).length;
   const vueloCount = bloques.filter((b) => b.tipo === "vuelo" && (b.vueloOrigen || b.vueloDestino)).length;
   const catamaranCount = bloques.filter((b) => b.tipo === "catamaran" && b.catamaranId).length;
+  const manualCount = bloques.filter((b) => b.tipo === "manual" && b.manualNombre).length;
   const obsCount = bloques.filter(
     (b) => (b.tipo === "observaciones" || b.tipo === "observacionesGenerales") && b.texto?.trim(),
   ).length;
@@ -528,6 +554,7 @@ export default function PlantillaEditor({
           {trasladoCount > 0 && <span>· {trasladoCount} traslado{trasladoCount !== 1 ? "s" : ""}</span>}
           {vueloCount > 0 && <span>· {vueloCount} vuelo{vueloCount !== 1 ? "s" : ""}</span>}
           {catamaranCount > 0 && <span>· {catamaranCount} catamarán</span>}
+          {manualCount > 0 && <span>· {manualCount} personalizado{manualCount !== 1 ? "s" : ""}</span>}
           {obsCount > 0 && <span>· {obsCount} obs</span>}
         </div>
         <button
