@@ -15,27 +15,24 @@ import {
   TrendingUp,
   MessageSquare,
   X,
-  Save,
   Star,
-  Phone,
-  MessageCircle,
-  Mail,
-  Send,
-  CreditCard,
   ExternalLink,
   MoreHorizontal,
   XCircle,
   RotateCcw,
   ChevronRight,
+  CalendarClock,
 } from "lucide-react";
 import type {
   CotizacionGuardada,
   Opportunity,
   EstadoOportunidad,
-  ActividadTipo,
+  OppHistorialEntry,
 } from "./Guardadas";
+import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
 import { exportarCotizacionesExcel } from "@/lib/exportExcel";
 import { loadAgencias, type Agencia } from "@/lib/agencias";
+import OportunidadDetailPanel from "./OportunidadDetailPanel";
 
 interface Props {
   items: CotizacionGuardada[];
@@ -67,20 +64,9 @@ const ESTADO_OPP_STYLES: Record<EstadoOportunidad, { bg: string; text: string; r
   anulada:     { bg: "bg-slate-100",  text: "text-slate-400",   ring: "ring-slate-200",   dot: "bg-slate-300"   },
 };
 
-// ─── Urgency semáforo ─────────────────────────────────────────────────────────
-
-type UrgencyLevel = "red" | "yellow" | "green";
-
-function getUrgency(o: Opportunity): UrgencyLevel {
-  const days = daysSince(o.lastUpdateAt);
-  if (days >= 7) return "red";
-  if (days >= 4) return "yellow";
-  return "green";
-}
-
 function oppSortKey(o: Opportunity): number {
   if (o.priorityManual) return 0;
-  const u = getUrgency(o);
+  const u = getOppUrgency(o);
   const uMap: Record<UrgencyLevel, number> = { red: 1, yellow: 2, green: 3 };
   return uMap[u];
 }
@@ -126,6 +112,12 @@ function getInitials(name: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
+function isRecordatorioActivo(o: Opportunity): boolean {
+  if (!o.recordatorio) return false;
+  const d = new Date(o.recordatorio + "T23:59:59");
+  return d <= new Date();
+}
+
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, color, icon, iconStyle }: {
@@ -163,174 +155,6 @@ function LogoOrInitials({ agencia, initials, color, size = 36, radius }: {
   );
 }
 
-// ─── CRM Modal (per Opportunity) ──────────────────────────────────────────────
-
-function OppCrmModal({ opp, onClose, onSave }: {
-  opp: Opportunity; onClose: () => void;
-  onSave: (patch: Partial<Opportunity>) => void;
-}) {
-  const [estado, setEstado] = useState<EstadoOportunidad>(opp.status);
-  const [notaInterna, setNotaInterna] = useState(opp.notaInterna ?? "");
-  const [recordatorio, setRecordatorio] = useState(opp.recordatorio?.slice(0, 10) ?? "");
-
-  const addDaysStr = (n: number): string => {
-    const d = new Date();
-    d.setDate(d.getDate() + n);
-    return d.toISOString().slice(0, 10);
-  };
-
-  const handleSave = () => {
-    onSave({
-      status: estado,
-      notaInterna: notaInterna.trim() || undefined,
-      recordatorio: recordatorio || undefined,
-      historial: [
-        { fecha: new Date().toISOString(), detalle: `Estado: ${ESTADO_OPP_OPTIONS.find((o) => o.value === estado)?.label ?? estado}${notaInterna.trim() ? ` · ${notaInterna.trim().slice(0, 60)}` : ""}` },
-        ...(opp.historial ?? []),
-      ].slice(0, 50),
-    });
-    onClose();
-  };
-
-  const estadoStyle = ESTADO_OPP_STYLES[estado];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh]">
-        <div className="flex items-start justify-between p-5 border-b border-slate-100">
-          <div>
-            <div className="font-semibold text-slate-900">{opp.quoteName}</div>
-            <div className="text-xs text-slate-500 mt-0.5">{opp.agencyName}{opp.agentName ? ` · ${opp.agentName}` : ""}</div>
-          </div>
-          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400"><X className="w-4 h-4" /></button>
-        </div>
-
-        <div className="overflow-y-auto flex-1 p-5 space-y-5">
-          {/* Estado */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Estado de oportunidad</label>
-            <div className="flex flex-wrap gap-2">
-              {ESTADO_OPP_OPTIONS.filter((o) => o.value !== "anulada").map((o) => {
-                const st = ESTADO_OPP_STYLES[o.value];
-                const active = estado === o.value;
-                return (
-                  <button key={o.value} type="button" onClick={() => setEstado(o.value)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ring-1 ${active ? `${st.bg} ${st.text} ${st.ring} shadow-sm` : "bg-slate-50 text-slate-400 ring-slate-200 hover:bg-slate-100"}`}>
-                    {active && <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />}
-                    {o.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recordarme */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Recordarme</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {[{ label: "Mañana", days: 1 }, { label: "En 3 días", days: 3 }, { label: "En 1 semana", days: 7 }].map(({ label, days }) => {
-                const target = addDaysStr(days);
-                const active = recordatorio === target;
-                return (
-                  <button key={days} type="button" onClick={() => setRecordatorio(active ? "" : target)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ring-1 ${active ? "bg-primary/10 text-primary ring-primary/30 shadow-sm" : "bg-slate-50 text-slate-500 ring-slate-200 hover:bg-slate-100"}`}>{label}</button>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="date" value={recordatorio} onChange={(e) => setRecordatorio(e.target.value)} className="flex-1 h-9 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
-              {recordatorio && <button type="button" onClick={() => setRecordatorio("")} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>}
-            </div>
-          </div>
-
-          {/* Nota interna */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Nota interna</label>
-            <textarea value={notaInterna} onChange={(e) => setNotaInterna(e.target.value)} placeholder="Ej: Cliente quiere hotel 4*, pendiente pago…" rows={3} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 resize-none" />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t border-slate-100">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100">Cancelar</button>
-          <button type="button" onClick={handleSave} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium"><Save className="w-3.5 h-3.5" />Guardar</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Quotes Modal ─────────────────────────────────────────────────────────────
-
-function QuotesModal({ opp, allQuotes, onClose, onView, onDuplicate }: {
-  opp: Opportunity;
-  allQuotes: CotizacionGuardada[];
-  onClose: () => void;
-  onView: (g: CotizacionGuardada) => void;
-  onDuplicate?: (g: CotizacionGuardada) => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[85vh]">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <div>
-            <div className="font-semibold text-slate-900">{opp.quoteName}</div>
-            <div className="text-xs text-slate-500 mt-0.5">{opp.quotes.length} cotización{opp.quotes.length !== 1 ? "es" : ""}</div>
-          </div>
-          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400"><X className="w-4 h-4" /></button>
-        </div>
-
-        <div className="overflow-y-auto flex-1">
-          {opp.quotes.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-400">No hay cotizaciones registradas</div>
-          ) : (
-            <div className="divide-y divide-slate-50">
-              {opp.quotes.map((qRef, i) => {
-                const full = allQuotes.find((g) => g.id === qRef.id);
-                const isLatest = i === 0;
-                return (
-                  <div key={qRef.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-slate-800 font-mono">{qRef.numeroCotizacion}</span>
-                        {isLatest && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 ring-1 ring-blue-200">Última</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className="text-[11px] text-slate-400">{formatDate(qRef.fechaCreacion)}</span>
-                        {qRef.total != null && qRef.total > 0 && (
-                          <span className="text-[11px] font-bold text-slate-600">· {fmtMoney(qRef.total)}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {full ? (
-                        <>
-                          <button type="button" onClick={() => { onView(full); onClose(); }}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-opacity hover:opacity-90" style={{ background: "#004FBB" }}>
-                            <ExternalLink className="w-3 h-3" />Abrir
-                          </button>
-                          {onDuplicate && (
-                            <button type="button" onClick={() => { onDuplicate(full); onClose(); }}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
-                              <Copy className="w-3 h-3" />Duplicar
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">No disponible</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Menu item ────────────────────────────────────────────────────────────────
 
 function MenuItem({ icon, label, onClick, danger = false }: {
@@ -345,14 +169,13 @@ function MenuItem({ icon, label, onClick, danger = false }: {
 
 // ─── Opportunity Card ─────────────────────────────────────────────────────────
 
-function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onCRM, onUpdateOpportunity, onAnular, onOpenQuotes }: {
+function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onOpenDetail, onUpdateOpportunity, onAnular }: {
   opp: Opportunity; agencia?: Agencia;
   allQuotes: CotizacionGuardada[];
   onView: () => void; onEdit: () => void; onDuplicate?: () => void;
-  onCRM: () => void;
+  onOpenDetail: () => void;
   onUpdateOpportunity: (patch: Partial<Opportunity>) => void;
   onAnular: () => void;
-  onOpenQuotes: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
@@ -381,13 +204,17 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
   const close = () => setMenuOpen(false);
 
-  const urgency = getUrgency(opp);
+  const urgency = getOppUrgency(opp);
   const uMeta = URGENCY_META[urgency];
   const sinActividad = daysSince(opp.lastUpdateAt);
   const initials = getInitials(opp.agencyName || opp.quoteName);
   const estadoStyle = ESTADO_OPP_STYLES[opp.status];
   const estadoLabel = ESTADO_OPP_OPTIONS.find((o) => o.value === opp.status)?.label ?? opp.status;
   const isClosedStatus = opp.status === "confirmada" || opp.status === "perdida";
+  const hasReminder = isRecordatorioActivo(opp);
+
+  const addHistorial = (tipo: OppHistorialEntry["tipo"], detalle?: string): OppHistorialEntry[] =>
+    [{ fecha: new Date().toISOString(), tipo, detalle }, ...(opp.historial ?? [])].slice(0, 100);
 
   return (
     <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
@@ -399,37 +226,36 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             <LogoOrInitials agencia={agencia} initials={initials} color="#004FBB" size={44} radius={12} />
           </div>
           <div className="flex-1 min-w-0">
-            {/* Title: quoteName */}
             <div className="font-bold text-slate-900 truncate leading-tight" style={{ fontSize: 14 }}>
               {opp.quoteName || "Sin nombre"}
             </div>
-            {/* Agencia · Agente */}
             <div className="text-xs text-slate-500 truncate mt-0.5">
               {opp.agencyName || "—"}{opp.agentName ? ` · ${opp.agentName}` : ""}
             </div>
-            {/* Destino */}
             {opp.destination && (
               <div className="text-xs text-slate-400 truncate mt-0.5">{opp.destination}</div>
             )}
 
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              {/* Estado badge */}
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ring-1 ${estadoStyle.bg} ${estadoStyle.text} ${estadoStyle.ring}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${estadoStyle.dot}`} />{estadoLabel}
               </span>
-              {/* Priority badge */}
               {opp.priorityManual && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-300">
                   <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD
                 </span>
               )}
+              {hasReminder && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 ring-1 ring-blue-200">
+                  <CalendarClock className="w-2.5 h-2.5" />Recordatorio
+                </span>
+              )}
             </div>
 
-            {/* Ver cotizaciones */}
-            <button type="button" onClick={onOpenQuotes}
+            <button type="button" onClick={onOpenDetail}
               className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-primary transition-colors">
               <ChevronRight className="w-3 h-3" />
-              Ver cotizaciones ({opp.quotes.length})
+              Ver detalle · {opp.quotes.length} cotización{opp.quotes.length !== 1 ? "es" : ""}
             </button>
           </div>
         </div>
@@ -457,7 +283,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
         {/* ── Right: urgency + actions ────────────────────────────────── */}
         <div className="flex flex-col justify-between items-end pl-5 shrink-0" style={{ minWidth: 168 }}>
-          {/* Semáforo */}
           {!isClosedStatus ? (
             <div className="flex flex-col items-end gap-1">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: uMeta.bg, color: uMeta.color }}>
@@ -470,6 +295,11 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               {opp.lastUpdateAt && (
                 <div className="text-[10px] text-slate-400 text-right">
                   Últ. act.: {formatShortDate(opp.lastUpdateAt)}
+                </div>
+              )}
+              {opp.recordatorio && (
+                <div className="text-[10px] text-blue-400 text-right flex items-center gap-1">
+                  <CalendarClock className="w-3 h-3" />Rec. {formatShortDate(opp.recordatorio)}
                 </div>
               )}
             </div>
@@ -490,7 +320,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
           {/* Actions */}
           <div className="flex items-center gap-1.5 mt-3">
-            <button type="button" onClick={onView}
+            <button type="button" onClick={onOpenDetail}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-[12px] font-semibold hover:opacity-90 transition-opacity" style={{ background: "#004FBB" }}>
               <ExternalLink className="w-3 h-3" />Abrir
             </button>
@@ -505,21 +335,22 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       {/* Portal menu */}
       {menuOpen && menuPos && createPortal(
         <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[210px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
-          <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar" onClick={() => { onEdit(); close(); }} />
+          <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar cotización" onClick={() => { onEdit(); close(); }} />
           {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
-          <MenuItem icon={<MessageSquare className="w-3.5 h-3.5" />} label="Seguimiento / CRM" onClick={() => { onCRM(); close(); }} />
+          <MenuItem icon={<ExternalLink className="w-3.5 h-3.5" />} label="Abrir detalle" onClick={() => { onOpenDetail(); close(); }} />
           <div className="h-px bg-slate-100 my-1" />
           <MenuItem
             icon={opp.priorityManual ? <Star className="w-3.5 h-3.5 text-amber-500" /> : <Star className="w-3.5 h-3.5" />}
             label={opp.priorityManual ? "Quitar prioridad" : "Marcar prioridad"}
             onClick={() => {
-              onUpdateOpportunity({ priorityManual: !opp.priorityManual });
+              const tipo: OppHistorialEntry["tipo"] = opp.priorityManual ? "prioridad_quitada" : "prioridad_activada";
+              onUpdateOpportunity({ priorityManual: !opp.priorityManual, historial: addHistorial(tipo) });
               close();
             }}
           />
           <div className="h-px bg-slate-100 my-1" />
-          <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateOpportunity({ status: "confirmada" }); close(); }} />
-          <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateOpportunity({ status: "perdida" }); close(); }} />
+          <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateOpportunity({ status: "confirmada", historial: addHistorial("venta_confirmada") }); close(); }} />
+          <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateOpportunity({ status: "perdida", historial: addHistorial("marcada_perdida") }); close(); }} />
           <div className="h-px bg-slate-100 my-1" />
           <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label="Anular" onClick={() => { onAnular(); close(); }} danger />
         </div>,
@@ -529,7 +360,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   );
 }
 
-// ─── Anuladas View ────────────────────────────────────────────────────────────
+// ─── Anuladas / Finalizadas Views ─────────────────────────────────────────────
 
 function AnuladasView({ opps, agenciasMap, onRestaurar }: {
   opps: Opportunity[];
@@ -541,7 +372,7 @@ function AnuladasView({ opps, agenciasMap, onRestaurar }: {
       <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
         <Trash2 className="w-10 h-10 mx-auto text-slate-200 mb-3" />
         <div className="text-sm font-medium text-slate-600">No hay oportunidades anuladas</div>
-        <div className="text-xs text-slate-400 mt-1">Las oportunidades anuladas aparecen aquí para que puedas restaurarlas si es necesario.</div>
+        <div className="text-xs text-slate-400 mt-1">Las oportunidades anuladas aparecen aquí para que puedas restaurarlas.</div>
       </div>
     );
   }
@@ -573,18 +404,97 @@ function AnuladasView({ opps, agenciasMap, onRestaurar }: {
   );
 }
 
+function FinalizadasView({ opps, agenciasMap, onOpenDetail }: {
+  opps: Opportunity[];
+  agenciasMap: Map<string, Agencia>;
+  onOpenDetail: (o: Opportunity) => void;
+}) {
+  if (opps.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
+        <CheckCircle2 className="w-10 h-10 mx-auto text-slate-200 mb-3" />
+        <div className="text-sm font-medium text-slate-600">No hay oportunidades finalizadas</div>
+        <div className="text-xs text-slate-400 mt-1">Confirmadas y perdidas aparecen aquí.</div>
+      </div>
+    );
+  }
+  const confirmadas = opps.filter((o) => o.status === "confirmada");
+  const perdidas = opps.filter((o) => o.status === "perdida");
+  return (
+    <div className="space-y-4">
+      {confirmadas.length > 0 && (
+        <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <div className="text-sm font-bold text-slate-900">Confirmadas</div>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">{confirmadas.length}</span>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {confirmadas.map((o) => {
+              const agencia = agenciasMap.get((o.agencyName || "").toLowerCase());
+              const initials = getInitials(o.agencyName || o.quoteName);
+              return (
+                <div key={o.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
+                  <LogoOrInitials agencia={agencia} initials={initials} color="#10b981" size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-700 truncate">{o.quoteName}</div>
+                    <div className="text-xs text-slate-400 truncate">{o.agencyName}{o.agentName ? ` · ${o.agentName}` : ""}</div>
+                  </div>
+                  {o.totalLatest != null && o.totalLatest > 0 && (
+                    <span className="text-sm font-bold text-emerald-700">{fmtMoney(o.totalLatest)}</span>
+                  )}
+                  <button type="button" onClick={() => onOpenDetail(o)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold" style={{ background: "#eff6ff", color: "#004FBB" }}>
+                    <ExternalLink className="w-3 h-3" />Detalle
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {perdidas.length > 0 && (
+        <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-slate-400" />
+            <div className="text-sm font-bold text-slate-900">Perdidas</div>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{perdidas.length}</span>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {perdidas.map((o) => {
+              const agencia = agenciasMap.get((o.agencyName || "").toLowerCase());
+              const initials = getInitials(o.agencyName || o.quoteName);
+              return (
+                <div key={o.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
+                  <LogoOrInitials agencia={agencia} initials={initials} color="#94a3b8" size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-500 truncate">{o.quoteName}</div>
+                    <div className="text-xs text-slate-400 truncate">{o.agencyName}{o.agentName ? ` · ${o.agentName}` : ""}</div>
+                  </div>
+                  <button type="button" onClick={() => onOpenDetail(o)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <ExternalLink className="w-3 h-3" />Detalle
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+type TabView = "activas" | "finalizadas" | "anuladas";
 type VerPor = "urgencia" | "agencia" | "estado";
 
 export default function Seguimiento({ items, opportunities, onView, onEdit, onDelete, onDuplicate, onUpdateCRM, onUpdateOpportunity }: Props) {
-  const [tab, setTab] = useState<"activas" | "anuladas">("activas");
+  const [tab, setTab] = useState<TabView>("activas");
   const [query, setQuery] = useState("");
   const [verPor, setVerPor] = useState<VerPor>("urgencia");
   const [filterEstado, setFilterEstado] = useState<EstadoOportunidad | "todas">("todas");
-  const [crmModal, setCrmModal] = useState<Opportunity | null>(null);
-  const [quotesModal, setQuotesModal] = useState<Opportunity | null>(null);
   const [agencias, setAgencias] = useState<Agencia[]>([]);
+  const [openOppId, setOpenOppId] = useState<string | null>(null);
 
   useEffect(() => { setAgencias(loadAgencias()); }, []);
 
@@ -594,19 +504,31 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
     return map;
   }, [agencias]);
 
-  const activeOpps = useMemo(() => opportunities.filter((o) => o.status !== "anulada"), [opportunities]);
+  const openOpp = useMemo(
+    () => openOppId ? opportunities.find((o) => o.id === openOppId) ?? null : null,
+    [openOppId, opportunities],
+  );
+
+  const activeOpps = useMemo(() => opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida"), [opportunities]);
+  const finalizadasOpps = useMemo(() => opportunities.filter((o) => o.status === "confirmada" || o.status === "perdida"), [opportunities]);
   const anuladasOpps = useMemo(() => opportunities.filter((o) => o.status === "anulada"), [opportunities]);
 
   // ─── Metrics ──────────────────────────────────────────────────────────────
 
   const metrics = useMemo(() => {
-    const open = activeOpps.filter((o) => o.status !== "confirmada" && o.status !== "perdida");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return {
       total: activeOpps.length,
-      prioritarias: open.filter((o) => o.priorityManual).length,
-      urgentes: open.filter((o) => getUrgency(o) === "red").length,
-      requierenSeg: open.filter((o) => getUrgency(o) === "yellow").length,
-      alDia: open.filter((o) => getUrgency(o) === "green").length,
+      prioritarias: activeOpps.filter((o) => o.priorityManual).length,
+      urgentes: activeOpps.filter((o) => getOppUrgency(o) === "red").length,
+      requierenSeg: activeOpps.filter((o) => getOppUrgency(o) === "yellow").length,
+      alDia: activeOpps.filter((o) => getOppUrgency(o) === "green").length,
+      accionHoy: activeOpps.filter((o) => {
+        if (!o.recordatorio) return false;
+        const d = new Date(o.recordatorio + "T23:59:59");
+        return d <= new Date();
+      }).length,
     };
   }, [activeOpps]);
 
@@ -630,7 +552,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
       const skA = oppSortKey(a);
       const skB = oppSortKey(b);
       if (skA !== skB) return skA - skB;
-      // Within same priority bucket, sort by lastUpdateAt oldest first
       return new Date(a.lastUpdateAt).getTime() - new Date(b.lastUpdateAt).getTime();
     });
   }, [activeOpps, query, filterEstado, verPor]);
@@ -638,20 +559,28 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   // ─── Actions ──────────────────────────────────────────────────────────────
 
   const onAnular = (o: Opportunity) => {
-    onUpdateOpportunity(o.id, { status: "anulada" });
+    const entry: OppHistorialEntry = { fecha: new Date().toISOString(), tipo: "anulada" };
+    onUpdateOpportunity(o.id, { status: "anulada", historial: [entry, ...(o.historial ?? [])].slice(0, 100) });
   };
 
   const onRestaurar = (o: Opportunity) => {
-    onUpdateOpportunity(o.id, { status: "nueva" });
+    const entry: OppHistorialEntry = { fecha: new Date().toISOString(), tipo: "restaurada" };
+    onUpdateOpportunity(o.id, { status: "nueva", historial: [entry, ...(o.historial ?? [])].slice(0, 100) });
   };
 
-  // Find latest quote CotizacionGuardada for an opportunity
   const getLatestQuote = (o: Opportunity): CotizacionGuardada | undefined => {
     for (const qRef of o.quotes) {
       const found = items.find((g) => g.id === qRef.id);
       if (found) return found;
     }
     return undefined;
+  };
+
+  const handleUpdateOpp = (id: string, patch: Partial<Opportunity>) => {
+    onUpdateOpportunity(id, patch);
+    if (openOppId === id) {
+      // keep panel open — openOpp will re-derive from updated opportunities
+    }
   };
 
   const inputCls = "h-9 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
@@ -681,6 +610,10 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
           Activas
           <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "activas" ? "bg-white/20" : "bg-slate-100 text-slate-500"}`}>{activeOpps.length}</span>
         </button>
+        <button type="button" onClick={() => setTab("finalizadas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "finalizadas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+          Finalizadas
+          {finalizadasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "finalizadas" ? "bg-white/20" : "bg-emerald-50 text-emerald-600"}`}>{finalizadasOpps.length}</span>}
+        </button>
         <button type="button" onClick={() => setTab("anuladas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "anuladas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
           Anuladas
           {anuladasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "anuladas" ? "bg-white/20" : "bg-red-50 text-red-500"}`}>{anuladasOpps.length}</span>}
@@ -689,11 +622,14 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
 
       {tab === "anuladas" ? (
         <AnuladasView opps={anuladasOpps} agenciasMap={agenciasMap} onRestaurar={onRestaurar} />
+      ) : tab === "finalizadas" ? (
+        <FinalizadasView opps={finalizadasOpps} agenciasMap={agenciasMap} onOpenDetail={(o) => setOpenOppId(o.id)} />
       ) : (
         <>
           {/* ── Metrics bar ──────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <KpiCard label="Total oportunidades" value={metrics.total} color="bg-blue-50 text-blue-600" icon={<TrendingUp className="w-5 h-5" />} />
+            <KpiCard label="Acción hoy" value={metrics.accionHoy} color="" iconStyle={{ backgroundColor: "#dbeafe", color: "#1d4ed8" }} icon={<CalendarClock className="w-5 h-5" />} />
             <KpiCard label="Prioritarias" value={metrics.prioritarias} color="" iconStyle={{ backgroundColor: "#fef9c3", color: "#ca8a04" }} icon={<Star className="w-5 h-5" />} />
             <KpiCard label="Urgentes" value={metrics.urgentes} color="" iconStyle={{ backgroundColor: "#fee2e2", color: "#dc2626" }} icon={<AlertTriangle className="w-5 h-5" />} />
             <KpiCard label="Requieren seguimiento" value={metrics.requierenSeg} color="" iconStyle={{ backgroundColor: "#fef3c7", color: "#d97706" }} icon={<Bell className="w-5 h-5" />} />
@@ -702,7 +638,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
 
           {/* ── Filter bar ───────────────────────────────────────────────────── */}
           <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
-            {/* Ver por */}
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-500 shrink-0">Ver por:</span>
               {([ ["urgencia", "Urgencia"], ["agencia", "Agencia"], ["estado", "Estado"] ] as [VerPor, string][]).map(([v, label]) => (
@@ -714,7 +649,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
 
             <div className="w-px h-5 bg-slate-200 hidden sm:block" />
 
-            {/* Estado filter */}
             <div className="relative">
               <select value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as EstadoOportunidad | "todas")} className={selectCls} style={{ minWidth: 130 }}>
                 <option value="todas">Estado: Todos</option>
@@ -723,7 +657,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
               <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
-            {/* Search */}
             <div className="flex-1 min-w-[160px] relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar oportunidades…" className="w-full h-9 pl-9 pr-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400" />
@@ -761,10 +694,9 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
                     onView={() => { if (latestQuote) onView(latestQuote); }}
                     onEdit={() => { if (latestQuote) onEdit(latestQuote); }}
                     onDuplicate={onDuplicate && latestQuote ? () => onDuplicate!(latestQuote) : undefined}
-                    onCRM={() => setCrmModal(o)}
-                    onUpdateOpportunity={(patch) => onUpdateOpportunity(o.id, patch)}
+                    onOpenDetail={() => setOpenOppId(o.id)}
+                    onUpdateOpportunity={(patch) => handleUpdateOpp(o.id, patch)}
                     onAnular={() => onAnular(o)}
-                    onOpenQuotes={() => setQuotesModal(o)}
                   />
                 );
               })}
@@ -773,23 +705,15 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
         </>
       )}
 
-      {/* ── CRM Modal ─────────────────────────────────────────────────────── */}
-      {crmModal && (
-        <OppCrmModal
-          opp={crmModal}
-          onClose={() => setCrmModal(null)}
-          onSave={(patch) => { onUpdateOpportunity(crmModal.id, patch); setCrmModal(null); }}
-        />
-      )}
-
-      {/* ── Quotes Modal ──────────────────────────────────────────────────── */}
-      {quotesModal && (
-        <QuotesModal
-          opp={quotesModal}
+      {/* ── Opportunity Detail Panel ───────────────────────────────────────── */}
+      {openOpp && (
+        <OportunidadDetailPanel
+          opp={openOpp}
           allQuotes={items}
-          onClose={() => setQuotesModal(null)}
-          onView={onView}
-          onDuplicate={onDuplicate}
+          onClose={() => setOpenOppId(null)}
+          onSave={(patch) => handleUpdateOpp(openOpp.id, patch)}
+          onView={(g) => { onView(g); setOpenOppId(null); }}
+          onDuplicate={onDuplicate ? (g) => { onDuplicate!(g); setOpenOppId(null); } : undefined}
         />
       )}
     </div>

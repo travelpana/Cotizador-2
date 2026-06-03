@@ -37,6 +37,7 @@ import {
   type ModoCotizacion,
   type Prioridad,
   type ActividadTipo,
+  type OppHistorialEntry,
   type Opportunity,
 } from "@/components/Guardadas";
 import {
@@ -675,8 +676,20 @@ export default function CotizadorPage() {
     });
 
     if (shouldUpsertOpp && newQuoteId) {
-      const nextOpps = upsertOpportunity(buildOppInput(newQuoteId, numero, total));
-      setOpportunities(nextOpps);
+      const upserted = upsertOpportunity(buildOppInput(newQuoteId, numero, total));
+      // Register typed historial entry on the opportunity
+      const oppId = upserted.find((o) => o.quotes.some((q) => q.id === newQuoteId))?.id;
+      if (oppId) {
+        const oppTipo: OppHistorialEntry["tipo"] = tipo === "pdf_enviado" ? "pdf_generado" : "correo_generado";
+        const opp = upserted.find((o) => o.id === oppId)!;
+        const entry: OppHistorialEntry = { fecha: now, tipo: oppTipo };
+        const finalOpps = updateOpportunity(oppId, {
+          historial: [entry, ...(opp.historial ?? [])].slice(0, 100),
+        });
+        setOpportunities(finalOpps);
+      } else {
+        setOpportunities(upserted);
+      }
     }
   };
 
@@ -887,8 +900,10 @@ export default function CotizadorPage() {
   const bellSlot = (
     <NotificationBell
       items={guardadas}
+      opportunities={opportunities}
       onView={seguimientoView}
       onUpdateCRM={seguimientoUpdateCRM}
+      onUpdateOpportunity={seguimientoUpdateOpportunity}
       onGoToSeguimiento={() => setView("seguimiento")}
     />
   );

@@ -50,6 +50,31 @@ export interface ActividadEntry {
   detalle?: string;
 }
 
+// ─── Opportunity history types ─────────────────────────────────────────────────
+
+export type OppActividadTipo =
+  | "oportunidad_creada"
+  | "cotizacion_agregada"
+  | "pdf_generado"
+  | "correo_generado"
+  | "prioridad_activada"
+  | "prioridad_quitada"
+  | "nota_agregada"
+  | "recordatorio_creado"
+  | "recordatorio_pospuesto"
+  | "marcada_atendida"
+  | "estado_cambiado"
+  | "venta_confirmada"
+  | "marcada_perdida"
+  | "anulada"
+  | "restaurada";
+
+export interface OppHistorialEntry {
+  fecha: string;
+  tipo?: OppActividadTipo;
+  detalle?: string;
+}
+
 export interface CotizacionGuardada {
   id: string;
   fechaCreacion: string;
@@ -353,7 +378,31 @@ export interface Opportunity {
   latestQuoteCode: string;
   notaInterna?: string;
   recordatorio?: string;
-  historial?: { fecha: string; detalle: string }[];
+  proximaAccion?: string;
+  historial?: OppHistorialEntry[];
+}
+
+// ─── Urgency ──────────────────────────────────────────────────────────────────
+
+export type UrgencyLevel = "red" | "yellow" | "green";
+
+function _daysSince(iso?: string): number {
+  if (!iso) return 999;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 999;
+  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export function getOppUrgency(o: Opportunity): UrgencyLevel {
+  if (o.status === "confirmada" || o.status === "perdida" || o.status === "anulada") return "green";
+  const days = _daysSince(o.lastUpdateAt);
+  const rec = o.recordatorio ? new Date(o.recordatorio + "T23:59:59") : null;
+  const recExpired = rec !== null && rec <= new Date();
+  if (days >= 7) return "red";
+  if (recExpired && days >= 6) return "red";
+  if (days >= 4) return "yellow";
+  if (recExpired) return "yellow";
+  return "green";
 }
 
 const OPP_STORAGE_KEY = "cotizador.oportunidades";
@@ -405,6 +454,7 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
 
   if (idx !== -1) {
     const existing = opps[idx];
+    const isNewQuote = !existing.quotes.some((q) => q.id === input.quoteId);
     const dedupedQuotes = [quoteRef, ...existing.quotes.filter((q) => q.id !== input.quoteId)];
     const updatedStatus: EstadoOportunidad =
       existing.status === "anulada" || existing.status === "confirmada" || existing.status === "perdida"
@@ -412,6 +462,9 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
         : input.quoteId === existing.quotes[0]?.id
           ? existing.status
           : "enviada";
+    const newEntry: OppHistorialEntry | null = isNewQuote
+      ? { fecha: now, tipo: "cotizacion_agregada", detalle: input.numeroCotizacion }
+      : null;
     const updated: Opportunity = {
       ...existing,
       quotes: dedupedQuotes,
@@ -421,6 +474,9 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
       destination: input.destination || existing.destination,
       counterName: input.counterName || existing.counterName,
       status: updatedStatus,
+      historial: newEntry
+        ? [newEntry, ...(existing.historial ?? [])].slice(0, 100)
+        : existing.historial,
     };
     next = opps.map((o, i) => (i === idx ? updated : o));
   } else {
@@ -438,6 +494,7 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
       quotes: [quoteRef],
       totalLatest: input.total,
       latestQuoteCode: input.numeroCotizacion,
+      historial: [{ fecha: now, tipo: "oportunidad_creada" }],
     };
     next = [opp, ...opps];
   }
