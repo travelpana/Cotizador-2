@@ -181,6 +181,7 @@ export default function CotizadorPage() {
   // so all surfaces show the same code (e.g. RGE-HF9ZMW).
   const [currentNumero, setCurrentNumero] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedOppId, setSavedOppId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(CLOSED_FORM);
   const [customOpen, setCustomOpen] = useState(false);
   const [customEditing, setCustomEditing] =
@@ -299,19 +300,21 @@ export default function CotizadorPage() {
     }
 
     try {
+      const isUpdate = !!savedId;
       handleRegisterActivity(tipo);
 
       const toastMsg =
         tipo === "correo_enviado"
-          ? "Cotización enviada y formulario reiniciado."
+          ? isUpdate
+            ? "Cotización actualizada en Seguimiento"
+            : "Nueva cotización enviada a Seguimiento"
           : tipo === "pdf_enviado"
-            ? "PDF generado y formulario reiniciado."
-            : "Cotización guardada y lista para seguimiento.";
+            ? isUpdate
+              ? "Cotización actualizada en Seguimiento"
+              : "Nueva cotización enviada a Seguimiento"
+            : "Cotización guardada en Seguimiento.";
       showToast(toastMsg, "success");
-
-      if (tipo === "correo_enviado" || tipo === "pdf_enviado") {
-        flashSeguimiento();
-      }
+      flashSeguimiento();
 
       setCliente(makeDefaultCliente());
       setValidationErrors({});
@@ -328,6 +331,7 @@ export default function CotizadorPage() {
       setObservacionManual("");
       setCurrentNumero(null);
       setSavedId(null);
+      setSavedOppId(null);
       setSearchResetKey((k) => k + 1);
     } catch {
       showToast("Error al guardar la cotización", "error");
@@ -648,7 +652,7 @@ export default function CotizadorPage() {
               observacionManual: observacionManual.trim() || undefined,
               prioridad: autoPriority,
               ultimoSeguimiento: now,
-              historial: [...(g.historial ?? []), { fecha: now, tipo: "creada" as const }],
+              historial: [...(g.historial ?? []), { fecha: now, tipo: "editada" as const }],
             }
           : g,
       );
@@ -656,7 +660,19 @@ export default function CotizadorPage() {
       setGuardadas(next);
       const updatedQuote = next.find((g) => g.id === savedId);
       if (updatedQuote) {
-        let nextOpps = upsertOpportunity(buildOppInput(savedId, updatedQuote.numeroCotizacion, total));
+        // Use savedOppId to update by ID (prevents duplicate if client fields changed)
+        const targetOppId =
+          savedOppId ??
+          loadOpportunities().find((o) => o.quotes.some((q) => q.id === savedId))?.id;
+
+        let nextOpps = targetOppId
+          ? updateOpportunity(targetOppId, {
+              totalLatest: total > 0 ? total : undefined,
+              latestQuoteCode: updatedQuote.numeroCotizacion,
+              destination: cliente.cotizacionNombre || undefined,
+            })
+          : upsertOpportunity(buildOppInput(savedId, updatedQuote.numeroCotizacion, total));
+
         if (prevQuote) {
           const cambios = diffCotizacion(prevQuote, {
             cliente,
@@ -667,15 +683,16 @@ export default function CotizadorPage() {
             total,
           });
           if (cambios.length > 0) {
-            const opp = nextOpps.find((o) => o.quotes.some((q) => q.id === savedId));
-            if (opp) {
+            const oppId = targetOppId ?? nextOpps.find((o) => o.quotes.some((q) => q.id === savedId))?.id;
+            if (oppId) {
+              const opp = nextOpps.find((o) => o.id === oppId)!;
               const modEntry: OppHistorialEntry = {
                 fecha: now,
                 tipo: "cotizacion_modificada",
                 detalle: `${cambios.length} cambio${cambios.length !== 1 ? "s" : ""}`,
                 cambios,
               };
-              nextOpps = updateOpportunity(opp.id, {
+              nextOpps = updateOpportunity(oppId, {
                 historial: [modEntry, ...(opp.historial ?? [])].slice(0, 100),
               });
             }
@@ -683,7 +700,8 @@ export default function CotizadorPage() {
         }
         setOpportunities(nextOpps);
       }
-      showToast("Cotización actualizada", "success");
+      flashSeguimiento();
+      showToast("Cotización actualizada en Seguimiento", "success");
       return;
     }
 
@@ -715,8 +733,11 @@ export default function CotizadorPage() {
     setSavedId(item.id);
     // Upsert opportunity
     const nextOpps = upsertOpportunity(buildOppInput(newId, numero, total));
+    const newOpp = nextOpps.find((o) => o.quotes.some((q) => q.id === newId));
+    if (newOpp) setSavedOppId(newOpp.id);
     setOpportunities(nextOpps);
-    showToast("Cotización guardada", "success");
+    flashSeguimiento();
+    showToast("Nueva cotización enviada a Seguimiento", "success");
   };
 
   const handleRegisterActivity = (tipo: ActividadTipo) => {
@@ -821,6 +842,7 @@ export default function CotizadorPage() {
     setModo("tarifas");
     setCurrentNumero(null);
     setSavedId(null);
+    setSavedOppId(null);
     setObservacionesSeleccionadas([]);
     setObservacionManual("");
   };
@@ -881,6 +903,8 @@ export default function CotizadorPage() {
     setModo(g.modoCotizacion);
     setCurrentNumero(g.numeroCotizacion);
     setSavedId(g.id);
+    const opp = opportunities.find((o) => o.quotes.some((q) => q.id === g.id));
+    setSavedOppId(opp?.id ?? null);
     setObservacionesSeleccionadas(g.observacionesSeleccionadas ?? []);
     setObservacionManual(g.observacionManual ?? "");
     setView("cotizador");
