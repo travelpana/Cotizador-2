@@ -77,6 +77,18 @@ const URGENCY_META: Record<UrgencyLevel, { label: string; color: string; bg: str
   green:  { label: "Al día",              color: "#065f46", bg: "#d1fae5", dot: "#10b981" },
 };
 
+// ─── Border color by priority ──────────────────────────────────────────────────
+// Priority: 1-Urgente · 2-Vencida · 3-Requiere seguimiento · 4-Prioritaria · 5-Nueva · 6-Al día
+function getCardBorderColor(opp: Opportunity): string {
+  const urgency = getOppUrgency(opp);
+  if (urgency === "red")               return "#ef4444"; // 1. Urgente
+  if (isRecordatorioActivo(opp))       return "#b91c1c"; // 2. Vencida / atrasada
+  if (urgency === "yellow")            return "#e6ae33"; // 3. Requiere seguimiento
+  if (opp.priorityManual)              return "#f2c94c"; // 4. Prioritaria
+  if (opp.status === "nueva")          return "#0b63ff"; // 5. Nueva
+  return "#03a04e";                                       // 6. Al día
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function daysSince(iso?: string): number {
@@ -216,8 +228,16 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const addHistorial = (tipo: OppHistorialEntry["tipo"], detalle?: string): OppHistorialEntry[] =>
     [{ fecha: new Date().toISOString(), tipo, detalle }, ...(opp.historial ?? [])].slice(0, 100);
 
+  const borderColor = getCardBorderColor(opp);
+
   return (
-    <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <div
+      className="bg-white rounded-2xl hover:shadow-md transition-shadow overflow-hidden"
+      style={{
+        borderLeft: `6px solid ${borderColor}`,
+        boxShadow: "0 1px 4px 0 rgba(0,0,0,0.07), 0 1px 2px -1px rgba(0,0,0,0.04)",
+      }}
+    >
       <div className="flex items-stretch gap-0 px-5 py-4">
 
         {/* ── Left: identity ─────────────────────────────────────────── */}
