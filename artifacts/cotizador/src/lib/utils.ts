@@ -10,8 +10,8 @@ export function cn(...inputs: ClassValue[]) {
  *
  * - Strips the leading "Traslado(s)" prefix.
  * - Replaces " – ", " — " and " - " separators with " → ".
- * - Leaves parenthetical clarifications and trailing notes untouched so we
- *   don't drop information that may matter to the client.
+ * - Removes "/ One Way" suffixes.
+ * - Leaves parenthetical clarifications and trailing notes untouched.
  */
 export function formatTrasladoNombre(nombre: string | undefined | null): string {
   if (!nombre) return ""
@@ -29,13 +29,21 @@ export function formatTrasladoNombre(nombre: string | undefined | null): string 
 const normZone = (s: string): string =>
   (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
 
-const CIUDAD_KEYS   = ["ciudad de panama", "panama city", "ciudad panama"]
-const PLAYA_KEYS    = [
-  "riviera pacifica", "playa blanca", "farallon", "coronado",
-  "buenaventura", "bijao", "santa clara", "decameron",
+/**
+ * Zone keys for matching hotel ubicacion values from the tarifario.
+ * The actual Excel section headers are things like "CIUDAD DE PANAMÁ",
+ * "COCLÉ (RIVIERA PACÍFICA)", "BOCAS DEL TORO", "PLAYA BONITA", etc.
+ * After normZone they become lowercase with no accents.
+ */
+const CIUDAD_KEYS = [
+  "ciudad de panama", "panama city", "ciudad panama", "casco antiguo",
 ]
-const BOCAS_KEYS    = ["bocas del toro", "bocas town", "isla colon"]
-const TIERRAS_KEYS  = ["boquete", "volcan", "cerro punta", "tierras altas"]
+const PLAYA_KEYS = [
+  "riviera pacifica", "playa blanca", "farallon", "coronado",
+  "buenaventura", "bijao", "santa clara", "decameron", "playa bonita",
+]
+const BOCAS_KEYS  = ["bocas del toro", "bocas town", "isla colon"]
+const TIERRAS_KEYS = ["boquete", "volcan", "cerro punta", "tierras altas", "chiriqui"]
 
 function zoneMatch(ubicacion: string | undefined | null, keys: string[]): boolean {
   if (!ubicacion) return false
@@ -54,11 +62,19 @@ function firstHotelInZone(
  * Replace generic hotel placeholders in a (already-formatted) traslado name
  * with the actual hotel names present in the current quote.
  *
- * Only substitutes when a unique hotel can be identified for the zone.
- * If the hotel cannot be determined, the original text is returned unchanged.
+ * Matches the real patterns found in the tarifario, which use plural forms
+ * ("Hoteles") and optional "en" prepositions:
  *
- * Recognised placeholders: "Hotel Ciudad", "Hotel Playa", "Hotel Bocas",
- * "Hotel Tierras Altas".
+ *   Ciudad  → "Hotel ciudad", "Hoteles Ciudad", "Hoteles en ciudad"
+ *             NOT "Hoteles Ciudad de Colón" (different route)
+ *
+ *   Playa   → "Hotel Playa", "Hoteles Playa", "Hoteles en Playa Bonita"
+ *             Bocas del Toro counts as a playa destination for this rule.
+ *
+ *   Bocas   → "Hotel Bocas", "Hoteles en Bocas", "Hoteles en Bocas del Toro (Isla Colón)"
+ *
+ * Only substitutes when a hotel can be identified for the zone.
+ * Returns the original text unchanged when no match is possible.
  *
  * @param displayName  The formatted traslado name (after formatTrasladoNombre).
  * @param hoteles      Hotel services in the current quote (tipo === "hotel").
@@ -73,22 +89,30 @@ export function personalizarNombreTraslado(
 
   let s = displayName
 
-  if (/hotel\s+ciudad/i.test(s)) {
+  // ── Ciudad de Panamá ──────────────────────────────────────────────────────
+  // Matches: "Hotel ciudad", "Hoteles Ciudad", "Hoteles en ciudad"
+  // Negative lookahead avoids: "Hoteles Ciudad de Colón", "Hoteles Ciudad de Los Santos"
+  if (/hoteles?\s+(?:en\s+)?ciudad(?!\s+de\s+)/i.test(s)) {
     const h = firstHotelInZone(hoteles, CIUDAD_KEYS)
-    if (h) s = s.replace(/hotel\s+ciudad/gi, h)
+    if (h) s = s.replace(/hoteles?\s+(?:en\s+)?ciudad(?!\s+de\s+)/gi, h)
   }
 
-  if (/hotel\s+playa/i.test(s)) {
-    // Per spec: Bocas behaves like a playa destination for this replacement
+  // ── Playa (Riviera Pacífica, Playa Blanca, Coronado, Playa Bonita…) ───────
+  // Matches: "Hotel Playa", "Hoteles Playa", "Hoteles en Playa Bonita"
+  // Per spec: Bocas del Toro also counts as a playa destination here.
+  if (/hoteles?\s+(?:en\s+)?playa(?:\s+\w+)*/i.test(s)) {
     const h = firstHotelInZone(hoteles, [...PLAYA_KEYS, ...BOCAS_KEYS])
-    if (h) s = s.replace(/hotel\s+playa/gi, h)
+    if (h) s = s.replace(/hoteles?\s+(?:en\s+)?playa(?:\s+\w+)*/gi, h)
   }
 
-  if (/hotel\s+bocas/i.test(s)) {
+  // ── Bocas del Toro ────────────────────────────────────────────────────────
+  // Matches: "Hotel Bocas", "Hoteles en Bocas", "Hoteles en Bocas del Toro (Isla Colón)"
+  if (/hoteles?\s+(?:en\s+)?bocas(?:\s+del\s+toro)?(?:\s*\([^)]*\))?/i.test(s)) {
     const h = firstHotelInZone(hoteles, BOCAS_KEYS)
-    if (h) s = s.replace(/hotel\s+bocas/gi, h)
+    if (h) s = s.replace(/hoteles?\s+(?:en\s+)?bocas(?:\s+del\s+toro)?(?:\s*\([^)]*\))?/gi, h)
   }
 
+  // ── Tierras Altas / Chiriquí ──────────────────────────────────────────────
   if (/hotel\s+tierras\s+altas/i.test(s)) {
     const h = firstHotelInZone(hoteles, TIERRAS_KEYS)
     if (h) s = s.replace(/hotel\s+tierras\s+altas/gi, h)

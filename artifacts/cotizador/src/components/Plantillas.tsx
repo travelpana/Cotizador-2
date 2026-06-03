@@ -41,6 +41,7 @@ const BLOCK_TYPE_LABELS: Record<PlantillaBlockTipo, string> = {
   catamaran: "Catamarán",
   observaciones: "Observaciones",
   observacionesGenerales: "Observaciones",
+  manual: "Ítem manual",
 };
 
 function plantillaResumen(p: Plantilla) {
