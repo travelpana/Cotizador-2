@@ -142,6 +142,22 @@
   to   { opacity: 0.75; transform: scale(0.9); }
 }
 
+/* Toast animations */
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(calc(100% + 24px)); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-slide-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(calc(100% + 24px)); }
+}
+.toast-enter {
+  animation: toast-slide-in 0.25s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+.toast-leave {
+  animation: toast-slide-out 0.2s ease-in forwards;
+}
+
 /* Print styles for PDF export view */
 @media print {
   body { background: white !important; color: black !important; }

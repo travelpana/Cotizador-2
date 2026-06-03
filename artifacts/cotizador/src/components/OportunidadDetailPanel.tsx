@@ -3,7 +3,7 @@ import {
   X, ExternalLink, Copy, CheckCircle2, XCircle, Trash2, RotateCcw,
   Star, Clock, Bell, AlertTriangle, Save, AlarmClock, Check,
   FileText, Mail, TrendingUp, MessageSquare, History, Ban,
-  Users, MapPin, DollarSign, Calendar,
+  Users, MapPin, DollarSign, Calendar, Edit2, ChevronDown,
 } from "lucide-react";
 import type {
   Opportunity, CotizacionGuardada, OppActividadTipo, OppHistorialEntry,
@@ -76,9 +76,10 @@ const ESTADO_LABELS: Record<string, string> = {
 // ─── Historial icons ──────────────────────────────────────────────────────────
 
 const HISTORIAL_CONFIG: Record<OppActividadTipo, { label: string; icon: React.ReactNode; color: string }> = {
-  oportunidad_creada:   { label: "Oportunidad creada",       icon: <TrendingUp className="w-3.5 h-3.5" />,   color: "text-blue-500"    },
-  cotizacion_agregada:  { label: "Cotización agregada",      icon: <FileText className="w-3.5 h-3.5" />,     color: "text-blue-400"    },
-  pdf_generado:         { label: "PDF generado",             icon: <FileText className="w-3.5 h-3.5" />,     color: "text-slate-500"   },
+  oportunidad_creada:    { label: "Oportunidad creada",       icon: <TrendingUp className="w-3.5 h-3.5" />,   color: "text-blue-500"    },
+  cotizacion_agregada:   { label: "Cotización agregada",      icon: <FileText className="w-3.5 h-3.5" />,     color: "text-blue-400"    },
+  cotizacion_modificada: { label: "Cotización modificada",    icon: <Edit2 className="w-3.5 h-3.5" />,        color: "text-violet-500"  },
+  pdf_generado:          { label: "PDF generado",             icon: <FileText className="w-3.5 h-3.5" />,     color: "text-slate-500"   },
   correo_generado:      { label: "Correo generado",          icon: <Mail className="w-3.5 h-3.5" />,         color: "text-slate-500"   },
   prioridad_activada:   { label: "Prioridad activada",       icon: <Star className="w-3.5 h-3.5" />,         color: "text-amber-500"   },
   prioridad_quitada:    { label: "Prioridad quitada",        icon: <Star className="w-3.5 h-3.5" />,         color: "text-slate-400"   },
@@ -382,6 +383,14 @@ function SeguimientoTab({ opp, onQuickAction, onSaveForm }: {
 
 function HistorialTab({ opp }: { opp: Opportunity }) {
   const historial = opp.historial ?? [];
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const toggle = (i: number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
 
   if (historial.length === 0) {
     return (
@@ -402,19 +411,58 @@ function HistorialTab({ opp }: { opp: Opportunity }) {
       <div className="divide-y divide-slate-50 max-h-[420px] overflow-y-auto">
         {historial.map((entry, i) => {
           const cfg = entry.tipo ? HISTORIAL_CONFIG[entry.tipo] : null;
+          const isModification = entry.tipo === "cotizacion_modificada";
+          const hasCambios = isModification && entry.cambios && entry.cambios.length > 0;
+          const isExpanded = expanded.has(i);
+
           return (
-            <div key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50/40 transition-colors">
-              <div className={`mt-0.5 shrink-0 ${cfg?.color ?? "text-slate-400"}`}>
-                {cfg?.icon ?? <Clock className="w-3.5 h-3.5" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[12px] font-semibold text-slate-700">
-                  {cfg?.label ?? entry.detalle ?? "Evento"}
+            <div key={i} className="px-4 py-3 hover:bg-slate-50/40 transition-colors">
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 shrink-0 ${cfg?.color ?? "text-slate-400"}`}>
+                  {cfg?.icon ?? <Clock className="w-3.5 h-3.5" />}
                 </div>
-                {entry.detalle && cfg && (
-                  <div className="text-[11px] text-slate-400 mt-0.5">{entry.detalle}</div>
-                )}
-                <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(entry.fecha)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[12px] font-semibold text-slate-700">
+                      {cfg?.label ?? entry.detalle ?? "Evento"}
+                    </span>
+                    {hasCambios && (
+                      <span className="text-[10px] font-medium text-violet-400">
+                        · {entry.cambios!.length} cambio{entry.cambios!.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                  {entry.detalle && cfg && !isModification && (
+                    <div className="text-[11px] text-slate-400 mt-0.5">{entry.detalle}</div>
+                  )}
+                  <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(entry.fecha)}</div>
+
+                  {hasCambios && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => toggle(i)}
+                        className="mt-1.5 flex items-center gap-1 text-[10px] font-semibold text-violet-500 hover:text-violet-700 transition-colors"
+                      >
+                        <ChevronDown
+                          className="w-3 h-3 transition-transform"
+                          style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                        />
+                        {isExpanded ? "Ocultar detalle" : "Ver detalle"}
+                      </button>
+
+                      {isExpanded && (
+                        <ul className="mt-2 space-y-1 pl-1 border-l-2 border-violet-100 ml-0.5">
+                          {entry.cambios!.map((c, j) => (
+                            <li key={j} className="text-[11px] text-slate-600 pl-2 leading-snug">
+                              {c}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           );

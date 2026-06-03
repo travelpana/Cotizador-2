@@ -18,6 +18,7 @@ import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
 import Respaldos from "@/components/Respaldos";
 import Agencias from "@/components/Agencias";
+import ToastStack, { type ToastItem, type ToastTone } from "@/components/ToastStack";
 import { loadObservaciones, resolveObservaciones } from "@/lib/observaciones";
 import {
   loadGuardadas,
@@ -252,13 +253,17 @@ export default function CotizadorPage() {
     window.setTimeout(() => setSeguimientoFlash(false), 2750);
   };
 
-  const [toast, setToast] = useState<{
-    msg: string;
-    tone: "info" | "error";
-  } | null>(null);
-  const showToast = (msg: string, tone: "info" | "error" = "info") => {
-    setToast({ msg, tone });
-    window.setTimeout(() => setToast(null), 3000);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
+    window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 220);
+  };
+
+  const showToast = (msg: string, tone: ToastTone = "info", duration = 3000) => {
+    const id = `t${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+    setToasts((prev) => [{ id, msg, tone }, ...prev]);
+    window.setTimeout(() => dismissToast(id), duration);
   };
 
   const handleClienteChange = (next: Cliente) => {
@@ -302,7 +307,7 @@ export default function CotizadorPage() {
           : tipo === "pdf_enviado"
             ? "PDF generado y formulario reiniciado."
             : "Cotización guardada y lista para seguimiento.";
-      showToast(toastMsg);
+      showToast(toastMsg, "success");
 
       if (tipo === "correo_enviado" || tipo === "pdf_enviado") {
         flashSeguimiento();
@@ -530,6 +535,84 @@ export default function CotizadorPage() {
     };
   }, [previewQuote, result, mergedHoteles]);
 
+  const diffCotizacion = (
+    prev: CotizacionGuardada,
+    next: {
+      cliente: Cliente;
+      servicios: ServicioSeleccionado[];
+      acomodaciones: Acomodacion[];
+      observacionesSeleccionadas: string[];
+      observacionManual: string;
+      total: number;
+    },
+  ): string[] => {
+    const changes: string[] = [];
+    const pc = prev.cliente;
+    const nc = next.cliente;
+
+    const fmtDate = (iso?: string) => {
+      if (!iso) return "—";
+      const parts = iso.split("-");
+      if (parts.length !== 3) return iso;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    };
+    const fmtMon = (n: number) =>
+      `USD ${n.toLocaleString("es-ES", { maximumFractionDigits: 0 })}`;
+
+    if ((pc.correo ?? "") !== (nc.correo ?? ""))
+      changes.push(`Agencia: ${pc.correo || "—"} → ${nc.correo || "—"}`);
+    if ((pc.agente ?? "") !== (nc.agente ?? ""))
+      changes.push(`Agente: ${pc.agente || "—"} → ${nc.agente || "—"}`);
+    if ((pc.counter ?? "") !== (nc.counter ?? ""))
+      changes.push(`Counter: ${pc.counter || "—"} → ${nc.counter || "—"}`);
+    if ((pc.cotizacionNombre ?? "") !== (nc.cotizacionNombre ?? ""))
+      changes.push(`Nombre: "${pc.cotizacionNombre || "—"}" → "${nc.cotizacionNombre || "—"}"`);
+    if ((pc.fechaInicio ?? "") !== (nc.fechaInicio ?? ""))
+      changes.push(`Llegada: ${fmtDate(pc.fechaInicio)} → ${fmtDate(nc.fechaInicio)}`);
+    if ((pc.fechaFin ?? "") !== (nc.fechaFin ?? ""))
+      changes.push(`Salida: ${fmtDate(pc.fechaFin)} → ${fmtDate(nc.fechaFin)}`);
+    if ((pc.vigencia ?? "") !== (nc.vigencia ?? ""))
+      changes.push(`Vigencia: ${fmtDate(pc.vigencia)} → ${fmtDate(nc.vigencia)}`);
+    if (pc.pasajeros !== nc.pasajeros)
+      changes.push(`Pasajeros: ${pc.pasajeros} → ${nc.pasajeros}`);
+    if ((pc.ninos ?? 0) !== (nc.ninos ?? 0))
+      changes.push(`Niños: ${pc.ninos ?? 0} → ${nc.ninos ?? 0}`);
+    if (pc.noches !== nc.noches)
+      changes.push(`Noches: ${pc.noches} → ${nc.noches}`);
+
+    const prevAcom = [...prev.acomodaciones].sort().join(",");
+    const nextAcom = [...next.acomodaciones].sort().join(",");
+    if (prevAcom !== nextAcom)
+      changes.push(`Acomodación: ${prev.acomodaciones.join("/")} → ${next.acomodaciones.join("/")}`);
+
+    const TIPO_LABEL: Record<string, string> = {
+      hotel: "Hotel", tour: "Tour", traslado: "Traslado",
+      vuelo: "Vuelo", catamaran: "Catamarán", custom: "Ítem",
+    };
+    const prevMap = new Map(prev.servicios.map((s) => [`${s.tipo}::${s.id}`, s]));
+    const nextMap = new Map(next.servicios.map((s) => [`${s.tipo}::${s.id}`, s]));
+    for (const [key, s] of nextMap)
+      if (!prevMap.has(key))
+        changes.push(`${TIPO_LABEL[s.tipo] ?? s.tipo} agregado: ${s.nombre}`);
+    for (const [key, s] of prevMap)
+      if (!nextMap.has(key))
+        changes.push(`${TIPO_LABEL[s.tipo] ?? s.tipo} eliminado: ${s.nombre}`);
+
+    const prevObsKey = [...(prev.observacionesSeleccionadas ?? [])].sort().join(",");
+    const nextObsKey = [...next.observacionesSeleccionadas].sort().join(",");
+    if (
+      prevObsKey !== nextObsKey ||
+      (prev.observacionManual ?? "").trim() !== next.observacionManual.trim()
+    )
+      changes.push("Observaciones modificadas");
+
+    const prevTotal = prev.valorCotizacion ?? 0;
+    if (Math.abs(prevTotal - next.total) >= 1 && next.total > 0)
+      changes.push(`Total: ${fmtMon(prevTotal)} → ${fmtMon(next.total)}`);
+
+    return changes;
+  };
+
   const buildOppInput = (quoteId: string, numero: string, total: number) => ({
     quoteId,
     numeroCotizacion: numero,
@@ -549,6 +632,7 @@ export default function CotizadorPage() {
       total > 1500 ? "alta" : total > 500 ? "media" : "baja";
 
     if (savedId) {
+      const prevQuote = guardadas.find((g) => g.id === savedId);
       const next = guardadas.map((g) =>
         g.id === savedId
           ? {
@@ -570,13 +654,36 @@ export default function CotizadorPage() {
       );
       saveGuardadas(next);
       setGuardadas(next);
-      // Upsert opportunity on update too
       const updatedQuote = next.find((g) => g.id === savedId);
       if (updatedQuote) {
-        const nextOpps = upsertOpportunity(buildOppInput(savedId, updatedQuote.numeroCotizacion, total));
+        let nextOpps = upsertOpportunity(buildOppInput(savedId, updatedQuote.numeroCotizacion, total));
+        if (prevQuote) {
+          const cambios = diffCotizacion(prevQuote, {
+            cliente,
+            servicios,
+            acomodaciones,
+            observacionesSeleccionadas,
+            observacionManual,
+            total,
+          });
+          if (cambios.length > 0) {
+            const opp = nextOpps.find((o) => o.quotes.some((q) => q.id === savedId));
+            if (opp) {
+              const modEntry: OppHistorialEntry = {
+                fecha: now,
+                tipo: "cotizacion_modificada",
+                detalle: `${cambios.length} cambio${cambios.length !== 1 ? "s" : ""}`,
+                cambios,
+              };
+              nextOpps = updateOpportunity(opp.id, {
+                historial: [modEntry, ...(opp.historial ?? [])].slice(0, 100),
+              });
+            }
+          }
+        }
         setOpportunities(nextOpps);
       }
-      showToast("Cotización actualizada correctamente");
+      showToast("Cotización actualizada", "success");
       return;
     }
 
@@ -609,7 +716,7 @@ export default function CotizadorPage() {
     // Upsert opportunity
     const nextOpps = upsertOpportunity(buildOppInput(newId, numero, total));
     setOpportunities(nextOpps);
-    showToast("Cotización guardada correctamente");
+    showToast("Cotización guardada", "success");
   };
 
   const handleRegisterActivity = (tipo: ActividadTipo) => {
@@ -1203,26 +1310,7 @@ export default function CotizadorPage() {
           : resolvedObservaciones}
       />
 
-      {toast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2.5 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-xl ring-1 animate-in fade-in slide-in-from-top-2 duration-200 whitespace-nowrap ${
-            toast.tone === "error"
-              ? "bg-red-600 ring-red-500/30"
-              : "bg-slate-900 ring-white/10"
-          }`}
-        >
-          <span
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{
-              backgroundColor:
-                toast.tone === "error" ? "#fecaca" : "#2596be",
-            }}
-          />
-          {toast.msg}
-        </div>
-      )}
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

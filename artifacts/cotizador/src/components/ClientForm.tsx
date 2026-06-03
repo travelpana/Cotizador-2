@@ -55,7 +55,19 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
       </div>
       <div className="p-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Row 1: Agencia | Agente | Counter */}
+          {/* Row 1: Nombre de cotización (full width) */}
+          <Field label="Nombre de cotización" span={3}>
+            <input
+              type="text"
+              value={cliente.cotizacionNombre ?? ""}
+              onChange={(e) => update({ cotizacionNombre: e.target.value })}
+              placeholder="Ej: Panamá + Bocas del Toro - Junio"
+              className={inputCls}
+              data-testid="input-cotizacion-nombre"
+            />
+          </Field>
+
+          {/* Row 2: Agencia | Agente | Counter */}
           <Field label="Agencia" required error={errors?.agencia}>
             <AgenciaAutocomplete
               value={cliente.correo}
@@ -82,27 +94,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             />
           </Field>
 
-          {/* Row 2: Nombre de cotización | Correo electrónico | Fecha de llegada */}
-          <Field label="Nombre de cotización">
-            <input
-              type="text"
-              value={cliente.cotizacionNombre ?? ""}
-              onChange={(e) => update({ cotizacionNombre: e.target.value })}
-              placeholder="Ej: Panamá + Bocas del Toro - Junio"
-              className={inputCls}
-              data-testid="input-cotizacion-nombre"
-            />
-          </Field>
-          <Field label="Correo electrónico">
-            <input
-              type="email"
-              value={cliente.whatsapp}
-              onChange={(e) => update({ whatsapp: e.target.value })}
-              placeholder="cliente@correo.com (opcional)"
-              className={inputCls}
-              data-testid="input-correo"
-            />
-          </Field>
+          {/* Row 3: Fecha de llegada | Fecha de salida | Vigencia */}
           <Field label="Fecha de llegada">
             <SingleDatePicker
               value={cliente.fechaInicio}
@@ -112,8 +104,6 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
               error={errors?.fechaInicio}
             />
           </Field>
-
-          {/* Row 3: Fecha de salida | Vigencia */}
           <Field label="Fecha de salida">
             <SingleDatePicker
               value={cliente.fechaFin}

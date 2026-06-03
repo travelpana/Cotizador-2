@@ -55,6 +55,7 @@ export interface ActividadEntry {
 export type OppActividadTipo =
   | "oportunidad_creada"
   | "cotizacion_agregada"
+  | "cotizacion_modificada"
   | "pdf_generado"
   | "correo_generado"
   | "prioridad_activada"
@@ -73,6 +74,7 @@ export interface OppHistorialEntry {
   fecha: string;
   tipo?: OppActividadTipo;
   detalle?: string;
+  cambios?: string[];
 }
 
 export interface CotizacionGuardada {
