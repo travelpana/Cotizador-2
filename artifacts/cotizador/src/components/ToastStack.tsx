@@ -12,27 +12,37 @@ export interface ToastItem {
 const TONE_CFG: Record<ToastTone, {
   icon: React.ReactNode;
   iconColor: string;
-  barColor: string;
+  iconBg: string;
+  borderColor: string;
+  bg: string;
 }> = {
   success: {
     icon: <CheckCircle2 className="w-4 h-4 shrink-0" />,
-    iconColor: "#03A04E",
-    barColor: "#03A04E",
+    iconColor: "#03a04e",
+    iconBg: "#dcfce7",
+    borderColor: "#03a04e",
+    bg: "#ecfdf5",
   },
   info: {
     icon: <Info className="w-4 h-4 shrink-0" />,
-    iconColor: "#004FBB",
-    barColor: "#004FBB",
+    iconColor: "#044b9e",
+    iconBg: "#dbeafe",
+    borderColor: "#044b9e",
+    bg: "#eff6ff",
   },
   warning: {
     icon: <AlertTriangle className="w-4 h-4 shrink-0" />,
-    iconColor: "#E6AE33",
-    barColor: "#E6AE33",
+    iconColor: "#b45309",
+    iconBg: "#fef3c7",
+    borderColor: "#e6ae33",
+    bg: "#fffbeb",
   },
   error: {
     icon: <XCircle className="w-4 h-4 shrink-0" />,
-    iconColor: "#E55353",
-    barColor: "#E55353",
+    iconColor: "#ef4444",
+    iconBg: "#fee2e2",
+    borderColor: "#ef4444",
+    bg: "#fef2f2",
   },
 };
 
@@ -50,15 +60,15 @@ export default function ToastStack({ toasts, onDismiss }: Props) {
       aria-label="Notificaciones"
       style={{
         position: "fixed",
-        top: 24,
+        top: 72,
         right: 24,
         zIndex: 9999,
         display: "flex",
         flexDirection: "column",
-        gap: 12,
+        gap: 10,
         pointerEvents: "none",
-        minWidth: 280,
-        maxWidth: 400,
+        minWidth: 300,
+        maxWidth: 420,
       }}
     >
       {toasts.map((t) => {
@@ -71,32 +81,49 @@ export default function ToastStack({ toasts, onDismiss }: Props) {
             className={t.leaving ? "toast-leave" : "toast-enter"}
             style={{
               pointerEvents: "auto",
-              background: "#fff",
-              borderRadius: 16,
-              boxShadow: "0 10px 30px rgba(4,25,65,0.12)",
-              border: "1px solid rgba(4,25,65,0.08)",
-              borderLeft: `4px solid ${cfg.barColor}`,
+              background: cfg.bg,
+              borderRadius: 14,
+              boxShadow: "0 12px 30px rgba(4,25,65,0.18)",
+              borderLeft: `5px solid ${cfg.borderColor}`,
+              outline: "1px solid rgba(4,25,65,0.07)",
               display: "flex",
               alignItems: "center",
               gap: 12,
-              padding: "12px 14px",
-              minHeight: 52,
+              padding: "12px 14px 12px 16px",
+              minHeight: 56,
             }}
           >
-            <span style={{ color: cfg.iconColor, display: "flex", alignItems: "center" }}>
+            {/* Icon in soft circle */}
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: cfg.iconBg,
+                color: cfg.iconColor,
+                flexShrink: 0,
+              }}
+            >
               {cfg.icon}
             </span>
+
+            {/* Message */}
             <span
               style={{
                 flex: 1,
                 fontSize: 13,
-                fontWeight: 500,
+                fontWeight: 700,
                 color: "#041941",
-                lineHeight: 1.4,
+                lineHeight: 1.45,
               }}
             >
               {t.msg}
             </span>
+
+            {/* Dismiss button */}
             <button
               type="button"
               onClick={() => onDismiss(t.id)}
@@ -105,19 +132,19 @@ export default function ToastStack({ toasts, onDismiss }: Props) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 24,
-                height: 24,
+                width: 26,
+                height: 26,
                 borderRadius: 8,
                 border: "none",
-                background: "transparent",
-                color: "#94a3b8",
+                background: "rgba(4,25,65,0.06)",
+                color: "#64748b",
                 cursor: "pointer",
                 padding: 0,
                 flexShrink: 0,
                 transition: "background 0.15s",
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f1f5f9"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(4,25,65,0.12)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(4,25,65,0.06)"; }}
             >
               <X className="w-3.5 h-3.5" />
             </button>
