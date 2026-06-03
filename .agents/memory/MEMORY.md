@@ -1,0 +1,1 @@
+- [Opportunity grouping](opportunity-grouping.md) — Opportunity layer (cotizador.oportunidades) sits above CotizacionGuardada (cotizador.guardadas); upsert key is agencyName|agentName|quoteName.

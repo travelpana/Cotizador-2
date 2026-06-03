@@ -184,6 +184,7 @@ function NotificationPanel({
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
+      return undefined;
     } else {
       setVisible(false);
       const t = setTimeout(() => setMounted(false), 200);

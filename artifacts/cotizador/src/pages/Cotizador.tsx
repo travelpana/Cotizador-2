@@ -27,12 +27,17 @@ import {
   duplicarCotizacion,
   registrarActividad,
   computeAutoEstado,
+  loadOpportunities,
+  saveOpportunities,
+  upsertOpportunity,
+  updateOpportunity,
   type CotizacionGuardada,
   type EstadoCotizacion,
   type EstadoCRM,
   type ModoCotizacion,
   type Prioridad,
   type ActividadTipo,
+  type Opportunity,
 } from "@/components/Guardadas";
 import {
   loadPlantillas,
@@ -182,8 +187,10 @@ export default function CotizadorPage() {
   const [searchResetKey, setSearchResetKey] = useState(0);
 
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   useEffect(() => {
     setGuardadas(loadGuardadas());
+    setOpportunities(loadOpportunities());
   }, []);
 
   const [plantillasCount, setPlantillasCount] = useState(
@@ -511,6 +518,17 @@ export default function CotizadorPage() {
     };
   }, [previewQuote, result, mergedHoteles]);
 
+  const buildOppInput = (quoteId: string, numero: string, total: number) => ({
+    quoteId,
+    numeroCotizacion: numero,
+    agencyName: cliente.correo || cliente.nombre || "",
+    agentName: cliente.agente || "",
+    counterName: cliente.counter || "",
+    quoteName: cliente.cotizacionNombre || "",
+    destination: cliente.cotizacionNombre || "",
+    total: total > 0 ? total : undefined,
+  });
+
   const handleSave = () => {
     const numero = getOrCreateNumero();
     const now = new Date().toISOString();
@@ -540,12 +558,19 @@ export default function CotizadorPage() {
       );
       saveGuardadas(next);
       setGuardadas(next);
+      // Upsert opportunity on update too
+      const updatedQuote = next.find((g) => g.id === savedId);
+      if (updatedQuote) {
+        const nextOpps = upsertOpportunity(buildOppInput(savedId, updatedQuote.numeroCotizacion, total));
+        setOpportunities(nextOpps);
+      }
       showToast("Cotización actualizada correctamente");
       return;
     }
 
+    const newId = `${Date.now()}`;
     const base: CotizacionGuardada = {
-      id: `${Date.now()}`,
+      id: newId,
       fechaCreacion: now,
       numeroCotizacion: numero,
       cliente,
@@ -569,6 +594,9 @@ export default function CotizadorPage() {
     saveGuardadas(next);
     setGuardadas(next);
     setSavedId(item.id);
+    // Upsert opportunity
+    const nextOpps = upsertOpportunity(buildOppInput(newId, numero, total));
+    setOpportunities(nextOpps);
     showToast("Cotización guardada correctamente");
   };
 
@@ -580,14 +608,20 @@ export default function CotizadorPage() {
     const autoPriority: Prioridad =
       total > 1500 ? "alta" : total > 500 ? "media" : "baja";
 
+    // Only PDF and email create/update opportunities (not WhatsApp)
+    const shouldUpsertOpp = tipo === "correo_enviado" || tipo === "pdf_enviado";
+
+    let newQuoteId: string | null = null;
+
     setGuardadas((prev) => {
       const idx = prev.findIndex((g) => g.numeroCotizacion === numero);
 
       const isSend = tipo === "whatsapp_enviado" || tipo === "correo_enviado" || tipo === "pdf_enviado";
 
       if (idx === -1) {
+        newQuoteId = `${Date.now()}`;
         const nuevaBase: CotizacionGuardada = {
-          id: `${Date.now()}`,
+          id: newQuoteId,
           fechaCreacion: now,
           numeroCotizacion: numero,
           cliente,
@@ -612,6 +646,7 @@ export default function CotizadorPage() {
         return next;
       }
 
+      newQuoteId = prev[idx].id;
       const g = prev[idx];
       const days = Math.floor(
         (Date.now() -
@@ -638,6 +673,11 @@ export default function CotizadorPage() {
       saveGuardadas(next);
       return next;
     });
+
+    if (shouldUpsertOpp && newQuoteId) {
+      const nextOpps = upsertOpportunity(buildOppInput(newQuoteId, numero, total));
+      setOpportunities(nextOpps);
+    }
   };
 
   const handleClear = () => {
@@ -746,6 +786,11 @@ export default function CotizadorPage() {
     });
     saveGuardadas(next);
     setGuardadas(next);
+  };
+
+  const seguimientoUpdateOpportunity = (id: string, patch: Partial<Opportunity>) => {
+    const next = updateOpportunity(id, patch);
+    setOpportunities(next);
   };
 
   const closePreview = () => {
@@ -884,11 +929,13 @@ export default function CotizadorPage() {
               <ModuleRibbon title="SEGUIMIENTO" rightSlot={bellSlot} />
               <Seguimiento
                 items={guardadas}
+                opportunities={opportunities}
                 onView={seguimientoView}
                 onEdit={seguimientoEdit}
                 onDelete={seguimientoDelete}
                 onDuplicate={seguimientoDuplicate}
                 onUpdateCRM={seguimientoUpdateCRM}
+                onUpdateOpportunity={seguimientoUpdateOpportunity}
               />
             </div>
           ) : view === "agencias" ? (

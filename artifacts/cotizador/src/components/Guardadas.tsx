@@ -87,6 +87,8 @@ export interface CotizacionGuardada {
   anulada?: boolean;
   fechaAnulacion?: string;
   motivoAnulacion?: string;
+  /** Link to parent opportunity */
+  opportunityId?: string;
 }
 
 const STORAGE_KEY = "cotizador.guardadas";
@@ -313,6 +315,144 @@ export function duplicarCotizacion(
     cliente: { ...orig.cliente },
     servicios: orig.servicios.map((s) => ({ ...s })),
     acomodaciones: [...orig.acomodaciones],
+    opportunityId: undefined,
   };
   return { ...base, estadoCRM: computeAutoEstado(base) };
+}
+
+// ─── Opportunity ──────────────────────────────────────────────────────────────
+
+export type EstadoOportunidad =
+  | "nueva"
+  | "enviada"
+  | "seguimiento"
+  | "confirmada"
+  | "perdida"
+  | "anulada";
+
+export interface OpportunityQuote {
+  id: string;
+  numeroCotizacion: string;
+  fechaCreacion: string;
+  total?: number;
+}
+
+export interface Opportunity {
+  id: string;
+  agencyName: string;
+  agentName: string;
+  counterName: string;
+  quoteName: string;
+  destination: string;
+  status: EstadoOportunidad;
+  priorityManual: boolean;
+  lastUpdateAt: string;
+  createdAt: string;
+  quotes: OpportunityQuote[];
+  totalLatest?: number;
+  latestQuoteCode: string;
+  notaInterna?: string;
+  recordatorio?: string;
+  historial?: { fecha: string; detalle: string }[];
+}
+
+const OPP_STORAGE_KEY = "cotizador.oportunidades";
+
+export function loadOpportunities(): Opportunity[] {
+  try {
+    const raw = localStorage.getItem(OPP_STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as Opportunity[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveOpportunities(items: Opportunity[]) {
+  localStorage.setItem(OPP_STORAGE_KEY, JSON.stringify(items));
+}
+
+export interface UpsertOpportunityInput {
+  quoteId: string;
+  numeroCotizacion: string;
+  agencyName: string;
+  agentName: string;
+  counterName: string;
+  quoteName: string;
+  destination: string;
+  total?: number;
+}
+
+function oppKey(agencyName: string, agentName: string, quoteName: string): string {
+  const n = (s: string) => (s || "").trim().toLowerCase();
+  return `${n(agencyName)}|${n(agentName)}|${n(quoteName)}`;
+}
+
+export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] {
+  const opps = loadOpportunities();
+  const now = new Date().toISOString();
+  const key = oppKey(input.agencyName, input.agentName, input.quoteName);
+
+  const quoteRef: OpportunityQuote = {
+    id: input.quoteId,
+    numeroCotizacion: input.numeroCotizacion,
+    fechaCreacion: now,
+    total: input.total,
+  };
+
+  const idx = opps.findIndex((o) => oppKey(o.agencyName, o.agentName, o.quoteName) === key);
+  let next: Opportunity[];
+
+  if (idx !== -1) {
+    const existing = opps[idx];
+    const dedupedQuotes = [quoteRef, ...existing.quotes.filter((q) => q.id !== input.quoteId)];
+    const updatedStatus: EstadoOportunidad =
+      existing.status === "anulada" || existing.status === "confirmada" || existing.status === "perdida"
+        ? existing.status
+        : input.quoteId === existing.quotes[0]?.id
+          ? existing.status
+          : "enviada";
+    const updated: Opportunity = {
+      ...existing,
+      quotes: dedupedQuotes,
+      totalLatest: input.total ?? existing.totalLatest,
+      latestQuoteCode: input.numeroCotizacion,
+      lastUpdateAt: now,
+      destination: input.destination || existing.destination,
+      counterName: input.counterName || existing.counterName,
+      status: updatedStatus,
+    };
+    next = opps.map((o, i) => (i === idx ? updated : o));
+  } else {
+    const opp: Opportunity = {
+      id: `opp-${Date.now()}`,
+      agencyName: input.agencyName,
+      agentName: input.agentName,
+      counterName: input.counterName,
+      quoteName: input.quoteName || "Sin nombre",
+      destination: input.destination,
+      status: "nueva",
+      priorityManual: false,
+      lastUpdateAt: now,
+      createdAt: now,
+      quotes: [quoteRef],
+      totalLatest: input.total,
+      latestQuoteCode: input.numeroCotizacion,
+    };
+    next = [opp, ...opps];
+  }
+
+  saveOpportunities(next);
+  return next;
+}
+
+export function updateOpportunity(id: string, patch: Partial<Opportunity>): Opportunity[] {
+  const opps = loadOpportunities();
+  const now = new Date().toISOString();
+  const next = opps.map((o) => {
+    if (o.id !== id) return o;
+    return { ...o, ...patch, lastUpdateAt: now };
+  });
+  saveOpportunities(next);
+  return next;
 }
