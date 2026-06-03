@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check, UserRound, Users, Building2 } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Check, UserRound, Users, Building2, Shield } from "lucide-react";
 import {
   loadAgencias,
   loadAgentes,
   getAgenciaByNombre,
+  loadCounterSuggestions,
   type Agencia,
 } from "@/lib/agencias";
 import {
@@ -56,7 +57,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Row 1: Agencia | Agente | Counter */}
           <Field label="Agencia" required error={errors?.agencia}>
-            <AgenciaCombobox
+            <AgenciaAutocomplete
               value={cliente.correo}
               onChange={(v) => {
                 const patch: Partial<Cliente> = { correo: v };
@@ -67,7 +68,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             />
           </Field>
           <Field label="Agente" required error={errors?.agente}>
-            <AgentCombobox
+            <AgentAutocomplete
               value={cliente.agente}
               agenciaNombre={cliente.correo}
               onChange={(v) => update({ agente: v })}
@@ -75,13 +76,9 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             />
           </Field>
           <Field label="Counter">
-            <input
-              type="text"
+            <CounterAutocomplete
               value={cliente.counter ?? ""}
-              onChange={(e) => update({ counter: e.target.value })}
-              placeholder="Seleccionar counter"
-              className={inputCls}
-              data-testid="input-counter"
+              onChange={(v) => update({ counter: v })}
             />
           </Field>
 
@@ -140,12 +137,189 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
   );
 }
 
-const inputCls =
-  "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] placeholder:text-slate-400";
+// ─── Shared AutocompleteInput ─────────────────────────────────────────────────
 
-// ─── Agency Combobox ──────────────────────────────────────────────────────────
+interface SuggestionItem {
+  label: string;
+  icon?: React.ReactNode;
+}
 
-function AgenciaCombobox({
+interface AutocompleteInputProps {
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: SuggestionItem[];
+  placeholder?: string;
+  error?: boolean;
+  "data-testid"?: string;
+  transform?: (v: string) => string;
+}
+
+function AutocompleteInput({
+  value,
+  onChange,
+  suggestions,
+  placeholder,
+  error,
+  "data-testid": testId,
+  transform,
+}: AutocompleteInputProps) {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const q = value.trim().toLowerCase();
+  const filtered = suggestions
+    .filter((s) => !q || s.label.toLowerCase().includes(q))
+    .slice(0, 8);
+
+  const showDropdown = open && (filtered.length > 0 || (q.length > 0 && suggestions.length > 0));
+
+  // Reset active index when filtered list changes
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [q]);
+
+  // Scroll active item into view
+  useEffect(() => {
+    if (activeIndex >= 0 && listRef.current) {
+      const items = listRef.current.querySelectorAll("[data-item]");
+      items[activeIndex]?.scrollIntoView({ block: "nearest" });
+    }
+  }, [activeIndex]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setActiveIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const select = useCallback(
+    (label: string) => {
+      onChange(transform ? transform(label) : label);
+      setOpen(false);
+      setActiveIndex(-1);
+      inputRef.current?.blur();
+    },
+    [onChange, transform]
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown) {
+      if (e.key === "ArrowDown" && filtered.length > 0) {
+        setOpen(true);
+        setActiveIndex(0);
+        e.preventDefault();
+      }
+      return;
+    }
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setActiveIndex((i) => Math.max(i - 1, -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (activeIndex >= 0 && filtered[activeIndex]) {
+          select(filtered[activeIndex].label);
+        } else {
+          setOpen(false);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setOpen(false);
+        setActiveIndex(-1);
+        break;
+    }
+  };
+
+  const errBorder = error
+    ? "border-red-400 ring-1 ring-red-200 bg-red-50/40"
+    : "border-slate-200";
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        data-testid={testId}
+        placeholder={placeholder}
+        className={`${inputCls} ${errBorder}`}
+        onChange={(e) => {
+          const v = transform ? transform(e.target.value) : e.target.value;
+          onChange(v);
+          setOpen(true);
+          setActiveIndex(-1);
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+        spellCheck={false}
+      />
+
+      {showDropdown && (
+        <div
+          ref={listRef}
+          className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden"
+          style={{ boxShadow: "0 8px 24px rgba(0,52,184,0.10), 0 1px 4px rgba(0,0,0,0.06)" }}
+        >
+          {filtered.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-slate-400 italic text-center">
+              No hay resultados
+            </div>
+          ) : (
+            filtered.map((item, i) => {
+              const isActive = i === activeIndex;
+              const isSelected = value.toLowerCase() === item.label.toLowerCase();
+              return (
+                <button
+                  key={item.label}
+                  data-item
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(i)}
+                  onClick={() => select(item.label)}
+                  className={[
+                    "w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left transition-colors",
+                    isActive
+                      ? "bg-[#2596be]/8 text-[#2596be]"
+                      : "text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be]",
+                  ].join(" ")}
+                >
+                  {item.icon && (
+                    <span className="shrink-0 text-slate-400 flex items-center">{item.icon}</span>
+                  )}
+                  <span className="font-medium truncate flex-1">{item.label}</span>
+                  {isSelected && (
+                    <Check className="w-3.5 h-3.5 text-[#2596be] ml-auto shrink-0" />
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Agencia Autocomplete ─────────────────────────────────────────────────────
+
+function AgenciaAutocomplete({
   value,
   onChange,
   error,
@@ -154,75 +328,42 @@ function AgenciaCombobox({
   onChange: (v: string) => void;
   error?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   const [agencias, setAgencias] = useState<Agencia[]>([]);
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setAgencias(loadAgencias());
-  }, [open]);
+  }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  // Reload on focus so new agencies added in Configuración appear
+  const handleFocus = () => setAgencias(loadAgencias());
 
-  const q = value.trim().toLowerCase();
-  const suggestions = agencias.filter((a) => !q || a.nombre.toLowerCase().includes(q)).slice(0, 8);
-
-  const errBorder = error ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "border-slate-200";
+  const suggestions: SuggestionItem[] = agencias.map((a) => ({
+    label: a.nombre,
+    icon: a.logoUrl ? (
+      <div className="w-4 h-4 rounded bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
+        <img src={a.logoUrl} alt="" className="w-full h-full object-contain" />
+      </div>
+    ) : (
+      <Building2 className="w-4 h-4" />
+    ),
+  }));
 
   return (
-    <div ref={ref} className="relative" data-testid="input-agencia">
-      <input
-        type="text"
+    <div data-testid="input-agencia" onFocus={handleFocus}>
+      <AutocompleteInput
         value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        placeholder="Seleccionar o escribir agencia"
-        className={`${inputCls} ${errBorder} pr-8`}
+        onChange={onChange}
+        suggestions={suggestions}
+        placeholder="Buscar o escribir agencia"
+        error={error}
       />
-      {agencias.length > 0 && (
-        <button type="button" tabIndex={-1} onClick={() => setOpen((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-        </button>
-      )}
-      {open && suggestions.length > 0 && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-          {suggestions.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(a.nombre); setOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be] transition-colors"
-            >
-              {a.logoUrl ? (
-                <div className="w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                  <img src={a.logoUrl} alt="" className="w-full h-full object-contain" />
-                </div>
-              ) : (
-                <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
-              )}
-              <span className="font-medium">{a.nombre}</span>
-              {value.toLowerCase() === a.nombre.toLowerCase() && (
-                <Check className="w-3.5 h-3.5 text-[#2596be] ml-auto shrink-0" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
-// ─── Agent Combobox ───────────────────────────────────────────────────────────
+// ─── Agent Autocomplete ───────────────────────────────────────────────────────
 
-function AgentCombobox({
+function AgentAutocomplete({
   value,
   agenciaNombre,
   onChange,
@@ -233,77 +374,66 @@ function AgentCombobox({
   onChange: (v: string) => void;
   error?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
   const agencia = agenciaNombre?.trim() ? getAgenciaByNombre(agenciaNombre) : undefined;
   const allAgentes = loadAgentes();
   const agentesForAgencia = agencia
     ? allAgentes.filter((a) => a.agenciaId === agencia.id)
     : [];
-  const hasAgents = agentesForAgencia.length > 0;
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const errBorder = error ? "border-red-400 ring-1 ring-red-200 bg-red-50/40" : "border-slate-200";
-
-  if (!hasAgents) {
-    return (
-      <div data-testid="select-agente">
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value.toUpperCase())}
-          placeholder="Escribir agente"
-          className={`${inputCls} ${errBorder}`}
-        />
-      </div>
-    );
-  }
+  const suggestions: SuggestionItem[] = agentesForAgencia.map((a) => ({
+    label: a.nombre,
+    icon: <Users className="w-3.5 h-3.5" />,
+  }));
 
   return (
-    <div ref={ref} className="relative" data-testid="select-agente">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`w-full h-10 px-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] flex items-center justify-between gap-2 transition-colors hover:border-slate-300 ${errBorder}`}
-        style={{ color: value ? "#0f172a" : "#94a3b8" }}
-      >
-        <span className="truncate font-medium">
-          {value || "Seleccionar"}
-        </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-          {agentesForAgencia.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => { onChange(a.nombre); setOpen(false); }}
-              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm font-medium text-slate-800 hover:bg-[#2596be]/5 hover:text-[#2596be] transition-colors"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">{a.nombre}</span>
-              </div>
-              {value === a.nombre && (
-                <Check className="w-3.5 h-3.5 text-[#2596be] flex-shrink-0" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+    <div data-testid="select-agente">
+      <AutocompleteInput
+        value={value}
+        onChange={onChange}
+        suggestions={suggestions}
+        placeholder={agentesForAgencia.length > 0 ? "Buscar agente…" : "Escribir agente"}
+        error={error}
+        transform={(v) => v.toUpperCase()}
+      />
     </div>
   );
 }
+
+// ─── Counter Autocomplete ─────────────────────────────────────────────────────
+
+function CounterAutocomplete({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [counterNames, setCounterNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    setCounterNames(loadCounterSuggestions());
+  }, []);
+
+  const handleFocus = () => setCounterNames(loadCounterSuggestions());
+
+  const suggestions: SuggestionItem[] = counterNames.map((n) => ({
+    label: n,
+    icon: <Shield className="w-3.5 h-3.5" />,
+  }));
+
+  return (
+    <div data-testid="input-counter" onFocus={handleFocus}>
+      <AutocompleteInput
+        value={value}
+        onChange={onChange}
+        suggestions={suggestions}
+        placeholder="Buscar o escribir counter"
+      />
+    </div>
+  );
+}
+
+// ─── Field wrapper ────────────────────────────────────────────────────────────
 
 function Field({
   label,
@@ -333,6 +463,8 @@ function Field({
     </div>
   );
 }
+
+// ─── Alojamiento Bar ──────────────────────────────────────────────────────────
 
 export function AlojamientoBar({
   cliente,
@@ -563,4 +695,6 @@ export function Section({
   );
 }
 
-export { inputCls };
+const inputCls =
+  "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] placeholder:text-slate-400 transition-colors";
+

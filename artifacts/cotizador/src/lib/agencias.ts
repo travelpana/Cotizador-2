@@ -58,3 +58,42 @@ export function saveAgentes(list: AgenteAgencia[]): void {
 export function getAgentesByAgenciaId(agenciaId: string): AgenteAgencia[] {
   return loadAgentes().filter((a) => a.agenciaId === agenciaId);
 }
+
+// ─── Counters ─────────────────────────────────────────────────────────────────
+
+export interface Counter {
+  id: string;
+  nombre: string;
+}
+
+const COUNTERS_KEY = "rge.counters";
+
+export function loadCounters(): Counter[] {
+  try {
+    const raw = localStorage.getItem(COUNTERS_KEY);
+    return raw ? (JSON.parse(raw) as Counter[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCounters(list: Counter[]): void {
+  localStorage.setItem(COUNTERS_KEY, JSON.stringify(list));
+}
+
+/** Extract unique counter names from saved quotes as fallback suggestions */
+export function loadCounterSuggestions(): string[] {
+  const dedicated = loadCounters().map((c) => c.nombre);
+  if (dedicated.length > 0) return dedicated;
+  try {
+    const raw = localStorage.getItem("cotizador.guardadas");
+    if (!raw) return [];
+    const items = JSON.parse(raw) as Array<{ counterName?: string }>;
+    const unique = Array.from(
+      new Set(items.map((i) => i.counterName ?? "").filter(Boolean))
+    );
+    return unique;
+  } catch {
+    return [];
+  }
+}
