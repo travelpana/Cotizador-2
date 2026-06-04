@@ -9,6 +9,7 @@ import type {
   Opportunity, CotizacionGuardada, OppActividadTipo, OppHistorialEntry,
 } from "./Guardadas";
 import { getOppUrgency } from "./Guardadas";
+import SingleDatePicker from "./SingleDatePicker";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -288,11 +289,14 @@ function SeguimientoTab({ opp, onQuickAction, onSaveForm }: {
             })}
           </div>
           <div className="flex items-center gap-2">
-            <input type="date" value={recordatorio} onChange={(e) => setRecordatorio(e.target.value)}
-              className="flex-1 h-9 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
-            {recordatorio && (
-              <button type="button" onClick={() => setRecordatorio("")} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-            )}
+            <div className="flex-1">
+              <SingleDatePicker
+                value={recordatorio}
+                onChange={setRecordatorio}
+                placeholder="Seleccionar fecha"
+                allowPast={false}
+              />
+            </div>
           </div>
         </div>
 
