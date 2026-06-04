@@ -5,7 +5,6 @@ import {
   Hotel as HotelIcon,
   MapPin,
   Plus,
-  Save,
   Tag,
   ToggleLeft,
   ToggleRight,
@@ -214,10 +213,14 @@ function HotelesTab({
               </button>
             )}
             <div className="flex-1" />
-            <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 mr-2 transition-colors">Cancelar</button>
-            <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Save className="w-4 h-4" /> Guardar
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setEditing(null)} title="Cancelar" className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </Modal>
       )}
@@ -267,7 +270,7 @@ function HotelForm({ hotel: h, onChange }: { hotel: HotelLocal; onChange: (h: Ho
         <input value={h.vigencia} onChange={e => set({ vigencia: e.target.value })} placeholder="Ej: Ene–Dic 2026" className={inputCls} />
       </div>
       <div>
-        <label className={labelCls}>Tarifas por noche (USD)</label>
+        <label className={labelCls}>Tarifas (USD)</label>
         <div className="grid grid-cols-4 gap-2">
           {(["SGL", "DBL", "TPL", "CHD"] as const).map(k => (
             <div key={k}>
@@ -370,10 +373,14 @@ function ToursTab({
               </button>
             )}
             <div className="flex-1" />
-            <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 mr-2 transition-colors">Cancelar</button>
-            <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Save className="w-4 h-4" /> Guardar
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setEditing(null)} title="Cancelar" className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </Modal>
       )}
@@ -422,7 +429,7 @@ function TourForm({ tour: t, onChange }: { tour: TourLocal; onChange: (t: TourLo
         </div>
       </div>
       <div>
-        <label className={labelCls}>Tarifas por persona (USD)</label>
+        <label className={labelCls}>Tarifas (USD)</label>
         <div className="grid grid-cols-4 gap-2">
           {([["p1", "1 pax"], ["p2_5", "2–5 pax"], ["p6_10", "6–10 pax"], ["chd", "Niño"]] as const).map(([k, lbl]) => (
             <div key={k}>
@@ -524,10 +531,14 @@ function TrasladosTab({
               </button>
             )}
             <div className="flex-1" />
-            <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 mr-2 transition-colors">Cancelar</button>
-            <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Save className="w-4 h-4" /> Guardar
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setEditing(null)} title="Cancelar" className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </Modal>
       )}
@@ -573,7 +584,7 @@ function TrasladoForm({ traslado: t, onChange }: { traslado: TrasladoLocal; onCh
         </div>
       </div>
       <div>
-        <label className={labelCls}>Tarifas por persona (USD)</label>
+        <label className={labelCls}>Tarifas (USD)</label>
         <div className="grid grid-cols-4 gap-2">
           {([["p1", "1 pax"], ["p2_5", "2–5 pax"], ["p6_10", "6–10 pax"], ["chd", "Niño"]] as const).map(([k, lbl]) => (
             <div key={k}>

@@ -6,13 +6,13 @@ import {
   Hotel as HotelIcon,
   Bus,
   MapPin,
-  Sparkles,
   Calendar,
   Users,
   Tag,
   StickyNote,
   Clock,
   X,
+  Check,
 } from "lucide-react";
 import Modal from "./Modal";
 import type {
@@ -605,18 +605,20 @@ export default function ServicioFormModal(props: Props) {
 
       <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
         <button
+          type="button"
           onClick={onClose}
-          className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-white"
+          title="Cancelar"
+          className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
         >
-          Cancelar
+          <X className="w-4 h-4" />
         </button>
         <button
           onClick={handleSave}
           disabled={!canSave}
-          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
+          title={initial ? "Guardar cambios" : "Guardar servicio"}
+          className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors disabled:opacity-40"
         >
-          <Sparkles className="w-4 h-4" />
-          {initial ? "Guardar cambios" : "Guardar servicio"}
+          <Check className="w-4 h-4" />
         </button>
       </div>
     </Modal>

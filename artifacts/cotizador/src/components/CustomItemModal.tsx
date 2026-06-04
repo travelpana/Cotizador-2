@@ -614,19 +614,17 @@ export default function CustomItemModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 h-9 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-200/60"
+            title="Cancelar"
+            className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
           >
-            Cancelar
+            <X className="w-4 h-4" />
           </button>
           <button
             type="submit"
-            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-sm font-semibold text-white shadow-sm transition-colors"
-            style={{ backgroundColor: "#004fbb" }}
-            onMouseOver={e => (e.currentTarget.style.backgroundColor = "#003f96")}
-            onMouseOut={e => (e.currentTarget.style.backgroundColor = "#004fbb")}
+            title={isEdit ? "Guardar" : "Agregar"}
+            className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors"
           >
-            <Plus className="w-4 h-4" />
-            {isEdit ? "Guardar" : "Agregar"}
+            <Check className="w-4 h-4" />
           </button>
         </footer>
       </form>

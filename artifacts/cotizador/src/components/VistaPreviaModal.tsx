@@ -1,4 +1,5 @@
 import Modal from "./Modal";
+import { X } from "lucide-react";
 import type {
   Cliente,
   CotizacionResult,
@@ -213,9 +214,10 @@ export default function VistaPreviaModal({
       <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
         <button
           onClick={onClose}
-          className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+          title="Cerrar"
+          className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
         >
-          Cerrar
+          <X className="w-4 h-4" />
         </button>
       </div>
     </Modal>

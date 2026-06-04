@@ -5,7 +5,7 @@ import {
   Pencil,
   Trash2,
   X,
-  Save,
+  Check,
   Upload,
   Phone,
   Mail,
@@ -259,18 +259,19 @@ function AgenciaModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+            title="Cancelar"
+            className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
           >
-            Cancelar
+            <X className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={!nombre.trim()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors disabled:opacity-40"
+            title="Guardar"
+            className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors disabled:opacity-40"
           >
-            <Save className="w-3.5 h-3.5" />
-            Guardar
+            <Check className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -378,18 +379,19 @@ function AgenteModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+            title="Cancelar"
+            className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
           >
-            Cancelar
+            <X className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={!nombre.trim()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors disabled:opacity-40"
+            title="Guardar"
+            className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors disabled:opacity-40"
           >
-            <Save className="w-3.5 h-3.5" />
-            Guardar
+            <Check className="w-4 h-4" />
           </button>
         </div>
       </div>
