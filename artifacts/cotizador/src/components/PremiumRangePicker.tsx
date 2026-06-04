@@ -8,6 +8,10 @@ const MONTHS_ES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ];
+const MONTHS_SHORT = [
+  "ENE","FEB","MAR","ABR","MAY","JUN",
+  "JUL","AGO","SEP","OCT","NOV","DIC",
+];
 const DAYS_ES = ["LU","MA","MI","JU","VI","SÁ","DO"];
 
 const CLR_SELECTED   = "#004FBB";
@@ -15,6 +19,9 @@ const CLR_RANGE_BG   = "rgba(0,79,187,0.10)";
 const CLR_TEXT       = "#041941";
 const CLR_ACCENT     = "#E6AE33";
 const CAL_WIDTH      = 316;
+
+const YEAR_START = 2023;
+const YEAR_END   = 2031;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,11 +72,14 @@ export default function PremiumRangePicker({
     return { year: p.y, month: p.m };
   }, [selecting, fechaFin, fechaInicio, today]);
 
-  const [viewYear, setViewYear]   = useState(() => getInitialView().year);
-  const [viewMonth, setViewMonth] = useState(() => getInitialView().month);
-  const [hoverDate, setHoverDate] = useState<string | null>(null);
-  const [pos, setPos]             = useState<{ top: number; left: number } | null>(null);
-  const calRef = useRef<HTMLDivElement>(null);
+  const [viewYear, setViewYear]         = useState(() => getInitialView().year);
+  const [viewMonth, setViewMonth]       = useState(() => getInitialView().month);
+  const [hoverDate, setHoverDate]       = useState<string | null>(null);
+  const [pos, setPos]                   = useState<{ top: number; left: number } | null>(null);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker]   = useState(false);
+  const calRef      = useRef<HTMLDivElement>(null);
+  const yearListRef = useRef<HTMLDivElement>(null);
 
   // Re-sync view when calendar opens
   useEffect(() => {
@@ -78,6 +88,8 @@ export default function PremiumRangePicker({
     setViewYear(year);
     setViewMonth(month);
     setHoverDate(null);
+    setShowMonthPicker(false);
+    setShowYearPicker(false);
   }, [open, getInitialView]);
 
   // Position to the LEFT of the anchor element
@@ -114,18 +126,32 @@ export default function PremiumRangePicker({
     return () => document.removeEventListener("mousedown", handler);
   }, [open, anchorEl, onClose]);
 
+  // Scroll year list to current year when opened
+  useEffect(() => {
+    if (showYearPicker && yearListRef.current) {
+      const el = yearListRef.current.querySelector("[data-selected='true']") as HTMLElement | null;
+      if (el) el.scrollIntoView({ block: "center" });
+    }
+  }, [showYearPicker]);
+
   // ── Navigation ──────────────────────────────────────────────────────────────
   const prevMonth = () => {
+    setShowMonthPicker(false);
+    setShowYearPicker(false);
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
     else setViewMonth(m => m - 1);
   };
   const nextMonth = () => {
+    setShowMonthPicker(false);
+    setShowYearPicker(false);
     if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
     else setViewMonth(m => m + 1);
   };
 
   // ── Day click ───────────────────────────────────────────────────────────────
   const handleDayClick = (iso: string) => {
+    setShowMonthPicker(false);
+    setShowYearPicker(false);
     if (selecting === "inicio") {
       const keepFin = fechaFin && fechaFin > iso ? fechaFin : "";
       onSelect(iso, keepFin, false);
@@ -179,9 +205,175 @@ export default function PremiumRangePicker({
         <button type="button" onClick={prevMonth} style={navBtn}>
           <ChevronLeft size={15} />
         </button>
-        <span style={{ fontSize: 13, fontWeight: 700, color: CLR_TEXT, letterSpacing: "0.02em" }}>
-          {MONTHS_ES[viewMonth]} {viewYear}
-        </span>
+
+        {/* ── Month + Year clickable labels ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4, position: "relative" }}>
+          {/* Month button */}
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowYearPicker(false);
+                setShowMonthPicker(v => !v);
+              }}
+              style={{
+                fontSize: 13, fontWeight: 700, color: CLR_TEXT, letterSpacing: "0.02em",
+                background: showMonthPicker ? "rgba(0,79,187,0.08)" : "transparent",
+                border: "1.5px solid " + (showMonthPicker ? "rgba(0,79,187,0.25)" : "transparent"),
+                borderRadius: 8, padding: "2px 6px", cursor: "pointer", outline: "none",
+                transition: "background 0.15s, border-color 0.15s",
+              }}
+            >
+              {MONTHS_ES[viewMonth]}
+            </button>
+
+            {/* Month dropdown */}
+            {showMonthPicker && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,30,90,0.18), 0 2px 8px rgba(0,0,0,0.06)",
+                  border: "1px solid rgba(0,79,187,0.14)",
+                  padding: "8px",
+                  zIndex: 10001,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 4,
+                  width: 174,
+                  animation: "fadeInDown 0.12s ease",
+                }}
+              >
+                {MONTHS_SHORT.map((m, i) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setViewMonth(i);
+                      setShowMonthPicker(false);
+                    }}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: i === viewMonth ? 700 : 500,
+                      color: i === viewMonth ? "#fff" : CLR_TEXT,
+                      background: i === viewMonth ? CLR_SELECTED : "transparent",
+                      border: "1.5px solid " + (i === viewMonth ? CLR_SELECTED : "transparent"),
+                      borderRadius: 7,
+                      padding: "5px 0",
+                      cursor: "pointer",
+                      outline: "none",
+                      textAlign: "center",
+                      transition: "background 0.1s, color 0.1s",
+                    }}
+                    onMouseEnter={e => {
+                      if (i !== viewMonth) {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,79,187,0.07)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (i !== viewMonth) {
+                        (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                      }
+                    }}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Year button */}
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMonthPicker(false);
+                setShowYearPicker(v => !v);
+              }}
+              style={{
+                fontSize: 13, fontWeight: 700, color: CLR_TEXT, letterSpacing: "0.02em",
+                background: showYearPicker ? "rgba(0,79,187,0.08)" : "transparent",
+                border: "1.5px solid " + (showYearPicker ? "rgba(0,79,187,0.25)" : "transparent"),
+                borderRadius: 8, padding: "2px 6px", cursor: "pointer", outline: "none",
+                transition: "background 0.15s, border-color 0.15s",
+              }}
+            >
+              {viewYear}
+            </button>
+
+            {/* Year dropdown */}
+            {showYearPicker && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,30,90,0.18), 0 2px 8px rgba(0,0,0,0.06)",
+                  border: "1px solid rgba(0,79,187,0.14)",
+                  padding: "6px 4px",
+                  zIndex: 10001,
+                  width: 90,
+                  maxHeight: 160,
+                  overflowY: "auto",
+                  animation: "fadeInDown 0.12s ease",
+                }}
+                ref={yearListRef}
+              >
+                {Array.from({ length: YEAR_END - YEAR_START + 1 }, (_, i) => YEAR_START + i).map(yr => (
+                  <button
+                    key={yr}
+                    type="button"
+                    data-selected={yr === viewYear ? "true" : "false"}
+                    onClick={() => {
+                      setViewYear(yr);
+                      setShowYearPicker(false);
+                    }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      fontSize: 12,
+                      fontWeight: yr === viewYear ? 700 : 500,
+                      color: yr === viewYear ? "#fff" : CLR_TEXT,
+                      background: yr === viewYear ? CLR_SELECTED : "transparent",
+                      border: "none",
+                      borderRadius: 7,
+                      padding: "5px 0",
+                      cursor: "pointer",
+                      outline: "none",
+                      textAlign: "center",
+                      transition: "background 0.1s, color 0.1s",
+                    }}
+                    onMouseEnter={e => {
+                      if (yr !== viewYear) {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,79,187,0.07)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (yr !== viewYear) {
+                        (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                      }
+                    }}
+                  >
+                    {yr}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <button type="button" onClick={nextMonth} style={navBtn}>
           <ChevronRight size={15} />
         </button>
@@ -297,6 +489,14 @@ export default function PremiumRangePicker({
         <span style={{ color: "#cbd5e1", alignSelf: "center", fontSize: 12 }}>→</span>
         <Chip active={selecting === "fin"}   label="Salida"   value={fechaFin}    />
       </div>
+
+      {/* ── Keyframe animation ── */}
+      <style>{`
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </div>,
     document.body
   );
