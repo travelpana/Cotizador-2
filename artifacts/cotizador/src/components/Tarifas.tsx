@@ -17,6 +17,7 @@ import {
   AlertCircle,
   AlertTriangle,
   FileSpreadsheet,
+  Search,
 } from "lucide-react";
 import type { Hotel, Tour, Traslado } from "@/lib/types";
 import type { CatalogInfo } from "@/lib/api";
@@ -147,6 +148,10 @@ function HotelesTab({
   const activeApiHoteles = importMercado === "brasil" ? (apiHotelesBrasil ?? []) : apiHoteles;
   const [items, setItems] = useState<HotelLocal[]>(loadHotelesLS);
   const [editing, setEditing] = useState<HotelLocal | null>(null);
+  const [query, setQuery] = useState("");
+  const filtered = query.trim()
+    ? items.filter(h => `${h.nombre} ${h.codigo ?? ""}`.toLowerCase().includes(query.toLowerCase()))
+    : items;
 
   const persist = (next: HotelLocal[]) => { saveHotelesLS(next); setItems(next); onChanged(); };
 
@@ -173,6 +178,18 @@ function HotelesTab({
       {items.length === 0 ? (
         <EmptyState icon={<HotelIcon className="w-8 h-8 text-emerald-400" />} msg="Sin hoteles locales" onNew={() => setEditing(newHotelLocal())} newLabel="Crear hotel" />
       ) : (
+        <>
+        {items.length > 3 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Buscar por nombre o código…"
+              className="w-full pl-9 pr-3 h-9 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#004FBB]/20 focus:border-[#004FBB]"
+            />
+          </div>
+        )}
         <div className="overflow-x-auto bg-white border border-slate-200 rounded-xl shadow-sm">
           <table className="w-full text-sm border-collapse">
             <thead>
@@ -183,9 +200,12 @@ function HotelesTab({
               </tr>
             </thead>
             <tbody>
-              {items.map(h => (
+              {filtered.map(h => (
                 <tr key={h.id} className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors ${!h.activo ? "opacity-50" : ""}`}>
-                  <td className="px-4 py-3 font-medium text-slate-900 max-w-[180px] truncate">{h.nombre || <span className="italic text-slate-400">Sin nombre</span>}</td>
+                  <td className="px-4 py-3 max-w-[180px]">
+                    <div className="font-medium text-slate-900 truncate">{h.nombre || <span className="italic text-slate-400">Sin nombre</span>}</div>
+                    {h.codigo && <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{h.codigo}</div>}
+                  </td>
                   <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{h.estrellas}</td>
                   <td className="px-4 py-3 text-slate-500 text-xs max-w-[130px] truncate">{h.ubicacion}</td>
                   <td className="px-4 py-3 text-slate-500 text-xs">{h.desayuno}</td>
@@ -201,6 +221,7 @@ function HotelesTab({
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {editing && (
@@ -213,14 +234,9 @@ function HotelesTab({
               </button>
             )}
             <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <button onClick={() => setEditing(null)} title="Cancelar" className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
-                <Check className="w-4 h-4" />
-              </button>
-            </div>
+            <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
+              <Check className="w-4 h-4" />
+            </button>
           </div>
         </Modal>
       )}
@@ -238,6 +254,10 @@ function HotelForm({ hotel: h, onChange }: { hotel: HotelLocal; onChange: (h: Ho
       <div>
         <label className={labelCls}>Nombre del hotel</label>
         <input value={h.nombre} onChange={e => set({ nombre: e.target.value })} placeholder="Ej: Hotel Marriott Panama" className={inputCls} />
+      </div>
+      <div>
+        <label className={labelCls}>Código</label>
+        <input value={h.codigo ?? ""} onChange={e => set({ codigo: e.target.value })} placeholder="Ej: RGE-HOT-001" className={inputCls + " font-mono"} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -373,14 +393,9 @@ function ToursTab({
               </button>
             )}
             <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <button onClick={() => setEditing(null)} title="Cancelar" className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
-                <Check className="w-4 h-4" />
-              </button>
-            </div>
+            <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
+              <Check className="w-4 h-4" />
+            </button>
           </div>
         </Modal>
       )}
@@ -464,6 +479,10 @@ function TrasladosTab({
   const activeApiTraslados = importMercado === "brasil" ? (apiTrasladosBrasil ?? []) : apiTraslados;
   const [items, setItems] = useState<TrasladoLocal[]>(loadTrasladosLS);
   const [editing, setEditing] = useState<TrasladoLocal | null>(null);
+  const [query, setQuery] = useState("");
+  const filtered = query.trim()
+    ? items.filter(t => `${t.nombre} ${t.codigo ?? ""}`.toLowerCase().includes(query.toLowerCase()))
+    : items;
 
   const persist = (next: TrasladoLocal[]) => { saveTrasladosLS(next); setItems(next); onChanged(); };
 
@@ -490,6 +509,18 @@ function TrasladosTab({
       {items.length === 0 ? (
         <EmptyState icon={<Bus className="w-8 h-8 text-orange-400" />} msg="Sin traslados locales" onNew={() => setEditing(newTrasladoLocal())} newLabel="Crear traslado" />
       ) : (
+        <>
+        {items.length > 3 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Buscar por nombre o código…"
+              className="w-full pl-9 pr-3 h-9 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#004FBB]/20 focus:border-[#004FBB]"
+            />
+          </div>
+        )}
         <div className="overflow-x-auto bg-white border border-slate-200 rounded-xl shadow-sm">
           <table className="w-full text-sm border-collapse">
             <thead>
@@ -500,9 +531,12 @@ function TrasladosTab({
               </tr>
             </thead>
             <tbody>
-              {items.map(t => (
+              {filtered.map(t => (
                 <tr key={t.id} className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors ${!t.activo ? "opacity-50" : ""}`}>
-                  <td className="px-4 py-3 font-medium text-slate-900 max-w-[220px] truncate">{t.nombre || <span className="italic text-slate-400">Sin nombre</span>}</td>
+                  <td className="px-4 py-3 max-w-[220px]">
+                    <div className="font-medium text-slate-900 truncate">{t.nombre || <span className="italic text-slate-400">Sin nombre</span>}</div>
+                    {t.codigo && <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{t.codigo}</div>}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.tipo === "Privado" ? "bg-orange-50 text-orange-600" : "bg-blue-50 text-blue-600"}`}>
                       {t.tipo}
@@ -519,6 +553,7 @@ function TrasladosTab({
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {editing && (
@@ -531,14 +566,9 @@ function TrasladosTab({
               </button>
             )}
             <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <button onClick={() => setEditing(null)} title="Cancelar" className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
-                <Check className="w-4 h-4" />
-              </button>
-            </div>
+            <button onClick={() => handleSave({ ...editing, updatedAt: new Date().toISOString() })} title="Guardar" className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors">
+              <Check className="w-4 h-4" />
+            </button>
           </div>
         </Modal>
       )}
@@ -569,6 +599,10 @@ function TrasladoForm({ traslado: t, onChange }: { traslado: TrasladoLocal; onCh
       <div>
         <label className={labelCls}>Nombre / Descripción ruta</label>
         <input value={t.nombre} onChange={e => set({ nombre: e.target.value })} placeholder="Se genera automáticamente desde Origen → Destino" className={inputCls} />
+      </div>
+      <div>
+        <label className={labelCls}>Código</label>
+        <input value={t.codigo ?? ""} onChange={e => set({ codigo: e.target.value })} placeholder="Ej: RGE-TRF-001" className={inputCls + " font-mono"} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

@@ -258,14 +258,6 @@ function AgenciaModal({
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-100">
           <button
             type="button"
-            onClick={onClose}
-            title="Cancelar"
-            className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
             onClick={handleSave}
             disabled={!nombre.trim()}
             title="Guardar"
@@ -376,14 +368,6 @@ function AgenteModal({
         </div>
 
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={onClose}
-            title="Cancelar"
-            className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
           <button
             type="button"
             onClick={handleSave}

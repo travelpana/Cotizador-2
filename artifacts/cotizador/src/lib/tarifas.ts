@@ -3,6 +3,7 @@ import type { Hotel, Tour, Traslado } from "@/lib/types";
 /* ─── Extended local types ─── */
 
 export interface HotelLocal extends Hotel {
+  codigo?: string;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -18,6 +19,7 @@ export interface TourLocal extends Tour {
 }
 
 export interface TrasladoLocal extends Traslado {
+  codigo?: string;
   rutaOrigen?: string;
   rutaDestino?: string;
   activo: boolean;
@@ -68,6 +70,7 @@ export function newHotelLocal(partial?: Partial<HotelLocal>): HotelLocal {
   return {
     id: uid("hotel"),
     nombre: "",
+    codigo: "",
     categoria: "★★★★",
     estrellas: "★★★★",
     tipoHabitacion: "Estándar",
@@ -106,6 +109,7 @@ export function newTrasladoLocal(partial?: Partial<TrasladoLocal>): TrasladoLoca
   return {
     id: uid("traslado"),
     nombre: "",
+    codigo: "",
     categoria: "",
     tipo: "Regular",
     precio_por_persona: 0,
