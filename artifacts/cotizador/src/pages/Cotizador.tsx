@@ -83,7 +83,14 @@ function addTwoMonths(date: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function toIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function makeDefaultCliente(): Cliente {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
   return {
     nombre: "",
     cotizacionNombre: "",
@@ -91,9 +98,9 @@ function makeDefaultCliente(): Cliente {
     whatsapp: "",
     agente: "",
     counter: "",
-    fechaInicio: "",
-    fechaFin: "",
-    vigencia: addTwoMonths(new Date()),
+    fechaInicio: toIso(today),
+    fechaFin: toIso(tomorrow),
+    vigencia: addTwoMonths(today),
     pasajeros: 2,
     ninos: 0,
     noches: 1,

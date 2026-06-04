@@ -88,11 +88,13 @@ function StatCounter({
   value,
   onChange,
   min = 0,
+  accent = false,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
+  accent?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const display = draft ?? String(value);
@@ -101,7 +103,7 @@ function StatCounter({
     <div className="flex-1 text-center">
       <div
         className="text-[9px] font-bold uppercase tracking-widest mb-0.5"
-        style={{ color: "#94a3b8" }}
+        style={{ color: accent ? "#004FBB" : "#94a3b8" }}
       >
         {label}
       </div>
@@ -130,7 +132,7 @@ function StatCounter({
         style={{
           fontSize: 26,
           fontWeight: 900,
-          color: "#041941",
+          color: accent ? "#004FBB" : "#041941",
           background: "transparent",
           border: 0,
           padding: 0,
@@ -174,14 +176,14 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
 
       {/* ── LEFT: Datos comerciales ─────────────────────── */}
       <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
           <UserRound className="w-4 h-4" style={{ color: "#1495ff" }} />
           <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
-            Datos comerciales
+            Datos de la cotización
           </h3>
         </div>
         <div className="p-5">
@@ -251,7 +253,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
           <Calendar className="w-4 h-4" style={{ color: "#1495ff" }} />
           <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
-            Fechas del viaje
+            Detalles del viaje
           </h3>
         </div>
         <div className="p-5 space-y-4">
@@ -275,23 +277,26 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             />
           </div>
 
-          {/* Noches / Pasajeros / Niños */}
+          {/* Noches / Adultos / Niños */}
           <div
             className="flex items-center gap-0 rounded-xl overflow-hidden"
             style={{ border: "1px solid #e2e8f0" }}
           >
-            <div className="flex-1 py-2.5 px-3">
+            <div
+              className="flex-1 py-2.5 px-3"
+              style={{ background: "rgba(0,79,187,0.06)", borderRight: "1px solid rgba(0,79,187,0.14)" }}
+            >
               <StatCounter
                 label="NOCHES"
                 value={cliente.noches}
                 onChange={(v) => update({ noches: v })}
                 min={0}
+                accent
               />
             </div>
-            <div className="w-px self-stretch bg-slate-200" />
             <div className="flex-1 py-2.5 px-3">
               <StatCounter
-                label="PASAJEROS"
+                label="ADULTOS"
                 value={cliente.pasajeros}
                 onChange={(v) => update({ pasajeros: v })}
                 min={1}
