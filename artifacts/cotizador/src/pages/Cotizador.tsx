@@ -299,7 +299,7 @@ export default function CotizadorPage() {
     return fresh;
   };
 
-  const handleActionComplete = (tipo: ActividadTipo) => {
+  const handleActionComplete = (tipo: ActividadTipo, isNew?: boolean) => {
     if (tipo === "whatsapp_enviado") return;
 
     if (tipo === "guardado_manual") {
@@ -307,44 +307,31 @@ export default function CotizadorPage() {
       return;
     }
 
-    try {
-      const isUpdate = !!savedId;
-      handleRegisterActivity(tipo);
+    // For correo/pdf: save was done BEFORE copy/download; just flash, toast, clear.
+    const toastMsg = isNew
+      ? "Cotización enviada a Seguimiento"
+      : "Cotización actualizada en Seguimiento";
+    showToast(toastMsg, "success");
+    flashSeguimiento();
 
-      const toastMsg =
-        tipo === "correo_enviado"
-          ? isUpdate
-            ? "Cotización actualizada en Seguimiento"
-            : "Nueva cotización enviada a Seguimiento"
-          : tipo === "pdf_enviado"
-            ? isUpdate
-              ? "Cotización actualizada en Seguimiento"
-              : "Nueva cotización enviada a Seguimiento"
-            : "Cotización guardada en Seguimiento.";
-      showToast(toastMsg, "success");
-      flashSeguimiento();
-
-      setCliente(makeDefaultCliente());
-      setValidationErrors({});
-      setAcomodaciones(["DBL"]);
-      setServicios([]);
-      setModo("tarifas");
-      setIdioma("es");
-      setMercado("general");
-      setIncluirItinerario(false);
-      setIncluirDescriptivos(false);
-      setIncluirDescriptivoCompleto(false);
-      setPersonalizarTraslados(true);
-      setActividadesOverride({});
-      setObservacionesSeleccionadas([]);
-      setObservacionManual("");
-      setCurrentNumero(null);
-      setSavedId(null);
-      setSavedOppId(null);
-      setSearchResetKey((k) => k + 1);
-    } catch {
-      showToast("Error al guardar la cotización", "error");
-    }
+    setCliente(makeDefaultCliente());
+    setValidationErrors({});
+    setAcomodaciones(["DBL"]);
+    setServicios([]);
+    setModo("tarifas");
+    setIdioma("es");
+    setMercado("general");
+    setIncluirItinerario(false);
+    setIncluirDescriptivos(false);
+    setIncluirDescriptivoCompleto(false);
+    setPersonalizarTraslados(true);
+    setActividadesOverride({});
+    setObservacionesSeleccionadas([]);
+    setObservacionManual("");
+    setCurrentNumero(null);
+    setSavedId(null);
+    setSavedOppId(null);
+    setSearchResetKey((k) => k + 1);
   };
 
   const fetchAll = async () => {
@@ -637,7 +624,8 @@ export default function CotizadorPage() {
     total: total > 0 ? total : undefined,
   });
 
-  const handleSave = () => {
+  const handleSave = (opts: { silent?: boolean } = {}): { ok: boolean; isNew: boolean } => {
+    const isNew = !savedId;
     const numero = getOrCreateNumero();
     const now = new Date().toISOString();
     const total = result.totalesPorAcomodacion[acomodaciones[0]] ?? 0;
@@ -669,7 +657,6 @@ export default function CotizadorPage() {
       setGuardadas(next);
       const updatedQuote = next.find((g) => g.id === savedId);
       if (updatedQuote) {
-        // Use savedOppId to update by ID (prevents duplicate if client fields changed)
         const targetOppId =
           savedOppId ??
           loadOpportunities().find((o) => o.quotes.some((q) => q.id === savedId))?.id;
@@ -680,7 +667,7 @@ export default function CotizadorPage() {
               latestQuoteCode: updatedQuote.numeroCotizacion,
               destination: cliente.cotizacionNombre || undefined,
             })
-          : upsertOpportunity(buildOppInput(savedId, updatedQuote.numeroCotizacion, total));
+          : upsertOpportunity(buildOppInput(savedId!, updatedQuote.numeroCotizacion, total));
 
         if (prevQuote) {
           const cambios = diffCotizacion(prevQuote, {
@@ -709,44 +696,47 @@ export default function CotizadorPage() {
         }
         setOpportunities(nextOpps);
       }
-      flashSeguimiento();
-      showToast("Cotización actualizada en Seguimiento", "success");
-      return;
+    } else {
+      const newId = `${Date.now()}`;
+      const base: CotizacionGuardada = {
+        id: newId,
+        fechaCreacion: now,
+        numeroCotizacion: numero,
+        cliente,
+        servicios,
+        acomodaciones,
+        modoCotizacion: modo,
+        observacionesSeleccionadas:
+          observacionesSeleccionadas.length > 0
+            ? [...observacionesSeleccionadas]
+            : undefined,
+        observacionManual: observacionManual.trim() || undefined,
+        estadoCRM: "esperando_cliente",
+        sentAt: now,
+        prioridad: autoPriority,
+        valorCotizacion: total,
+        ultimoSeguimiento: now,
+        historial: [{ fecha: now, tipo: "creada" }],
+      };
+      const item = { ...base, estadoCRM: computeAutoEstado(base) };
+      const next = [item, ...guardadas].slice(0, 30);
+      saveGuardadas(next);
+      setGuardadas(next);
+      setSavedId(item.id);
+      const nextOpps = upsertOpportunity(buildOppInput(newId, numero, total));
+      const newOpp = nextOpps.find((o) => o.quotes.some((q) => q.id === newId));
+      if (newOpp) setSavedOppId(newOpp.id);
+      setOpportunities(nextOpps);
     }
 
-    const newId = `${Date.now()}`;
-    const base: CotizacionGuardada = {
-      id: newId,
-      fechaCreacion: now,
-      numeroCotizacion: numero,
-      cliente,
-      servicios,
-      acomodaciones,
-      modoCotizacion: modo,
-      observacionesSeleccionadas:
-        observacionesSeleccionadas.length > 0
-          ? [...observacionesSeleccionadas]
-          : undefined,
-      observacionManual: observacionManual.trim() || undefined,
-      estadoCRM: "esperando_cliente",
-      sentAt: now,
-      prioridad: autoPriority,
-      valorCotizacion: total,
-      ultimoSeguimiento: now,
-      historial: [{ fecha: now, tipo: "creada" }],
-    };
-    const item = { ...base, estadoCRM: computeAutoEstado(base) };
-    const next = [item, ...guardadas].slice(0, 30);
-    saveGuardadas(next);
-    setGuardadas(next);
-    setSavedId(item.id);
-    // Upsert opportunity
-    const nextOpps = upsertOpportunity(buildOppInput(newId, numero, total));
-    const newOpp = nextOpps.find((o) => o.quotes.some((q) => q.id === newId));
-    if (newOpp) setSavedOppId(newOpp.id);
-    setOpportunities(nextOpps);
-    flashSeguimiento();
-    showToast("Nueva cotización enviada a Seguimiento", "success");
+    if (!opts.silent) {
+      flashSeguimiento();
+      showToast(
+        isNew ? "Cotización enviada a Seguimiento" : "Cotización actualizada en Seguimiento",
+        "success",
+      );
+    }
+    return { ok: true, isNew };
   };
 
   const handleRegisterActivity = (tipo: ActividadTipo) => {
@@ -1269,6 +1259,7 @@ export default function CotizadorPage() {
                   }}
                   onActionComplete={handleActionComplete}
                   validateBeforeAction={validateBeforeAction}
+                  onSaveToSeguimiento={() => handleSave({ silent: true })}
                   getNumeroCotizacion={getOrCreateNumero}
                   idioma={idioma}
                 />

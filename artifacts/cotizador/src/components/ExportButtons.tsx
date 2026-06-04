@@ -39,7 +39,8 @@ interface Props {
   actividadesOverride?: Record<number, string>;
   onClear: () => void;
   onPreview: () => void;
-  onActionComplete?: (tipo: ActividadTipo) => void;
+  onActionComplete?: (tipo: ActividadTipo, isNew?: boolean) => void;
+  onSaveToSeguimiento: () => { ok: boolean; isNew: boolean };
   validateBeforeAction: () => boolean;
   getNumeroCotizacion: () => string;
   observaciones?: string[];
@@ -75,6 +76,7 @@ export default function ExportButtons({
   onClear,
   onPreview,
   onActionComplete,
+  onSaveToSeguimiento,
   validateBeforeAction,
   getNumeroCotizacion,
   idioma = "es",
@@ -414,6 +416,11 @@ export default function ExportButtons({
 
   const copyEmail = async () => {
     if (!validateBeforeAction()) return;
+
+    // Save to Seguimiento FIRST — before copying
+    const { ok: saved, isNew } = onSaveToSeguimiento();
+    if (!saved) return;
+
     try {
       const numero = getNumeroCotizacion();
       const emailIntro = T.emailIntro;
@@ -458,7 +465,7 @@ export default function ExportButtons({
       if (copied) {
         setMailCopied(true);
         setTimeout(() => setMailCopied(false), 2000);
-        onActionComplete?.("correo_enviado");
+        onActionComplete?.("correo_enviado", isNew);
       }
     } catch (err) {
       console.error("Copy email failed:", err);
@@ -468,6 +475,11 @@ export default function ExportButtons({
   const handlePdf = async () => {
     if (pdfLoading) return;
     if (!validateBeforeAction()) return;
+
+    // Save to Seguimiento FIRST — before generating PDF
+    const { ok: saved, isNew } = onSaveToSeguimiento();
+    if (!saved) return;
+
     setPdfError(false);
     setPdfLoading(true);
 
@@ -529,7 +541,7 @@ export default function ExportButtons({
         .from(target)
         .save();
 
-      onActionComplete?.("pdf_enviado");
+      onActionComplete?.("pdf_enviado", isNew);
     } catch (err) {
       console.error("PDF generation failed:", err);
       setPdfError(true);
