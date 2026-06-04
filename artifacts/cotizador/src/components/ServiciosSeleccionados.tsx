@@ -931,17 +931,17 @@ function ServicioRow({
 /* ───────────────────────── Shared popup button styles ──────────────────────── */
 
 const btnApply: React.CSSProperties = {
-  width: 40, height: 40, borderRadius: 12,
+  width: 34, height: 34, borderRadius: 10,
   background: "#004FBB", color: "#fff", border: "none",
-  fontSize: 16, fontWeight: 700,
+  fontSize: 15, fontWeight: 700,
   display: "flex", alignItems: "center", justifyContent: "center",
   cursor: "pointer", flexShrink: 0, transition: "opacity 0.15s",
 };
 
 const btnReset: React.CSSProperties = {
-  width: 40, height: 40, borderRadius: 12,
+  width: 34, height: 34, borderRadius: 10,
   background: "#fff", color: "#64748B", border: "1.5px solid #D8E0EE",
-  fontSize: 16, fontWeight: 500,
+  fontSize: 15, fontWeight: 500,
   display: "flex", alignItems: "center", justifyContent: "center",
   cursor: "pointer", flexShrink: 0, transition: "background 0.15s",
 };
@@ -1162,13 +1162,17 @@ function NotesEditor({
 
   const handleApply = () => {
     onSave(text);
+    onClose();
   };
 
   return (
-    <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 flex items-center gap-1.5">
-        <StickyNote className="w-3 h-3" />
-        Notas
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
+          <StickyNote size={11} />
+          Notas
+        </div>
+        <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
       </div>
       <textarea
         value={text}
@@ -1176,23 +1180,10 @@ function NotesEditor({
         placeholder="Detalles, restricciones u observaciones para el cliente..."
         rows={4}
         autoFocus
-        className="w-full px-2.5 py-2 rounded-md border border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+        className="w-full px-2.5 py-2 rounded-md border border-[#D8E0EE] text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
       />
       <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={handleApply}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90"
-        >
-          Guardar
-        </button>
+        <button type="button" onClick={handleApply} style={btnApply} title="Guardar">✓</button>
       </div>
     </div>
   );

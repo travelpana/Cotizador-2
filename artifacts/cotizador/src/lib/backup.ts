@@ -10,11 +10,17 @@ import {
   saveTrasladosLS,
 } from "@/lib/tarifas";
 import { loadAgencias, saveAgencias, loadAgentes, saveAgentes } from "@/lib/agencias";
+import {
+  loadGuardadas,
+  saveGuardadas,
+  loadOpportunities,
+  saveOpportunities,
+} from "@/components/Guardadas";
 
 export type BackupType = "full" | "plantillas";
 
 export interface RgeBackup {
-  version: 1;
+  version: 2;
   type: BackupType;
   exportedAt: string;
   plantillas?: ReturnType<typeof loadPlantillas>;
@@ -27,6 +33,10 @@ export interface RgeBackup {
   };
   agencias?: ReturnType<typeof loadAgencias>;
   agentes?: ReturnType<typeof loadAgentes>;
+  seguimiento?: {
+    guardadas: ReturnType<typeof loadGuardadas>;
+    oportunidades: ReturnType<typeof loadOpportunities>;
+  };
 }
 
 function todayString(): string {
@@ -53,7 +63,7 @@ function downloadJson(data: unknown, filename: string): void {
 
 export function exportarRespaldoCompleto(): void {
   const backup: RgeBackup = {
-    version: 1,
+    version: 2,
     type: "full",
     exportedAt: new Date().toISOString(),
     plantillas: loadPlantillas(),
@@ -66,13 +76,17 @@ export function exportarRespaldoCompleto(): void {
     },
     agencias: loadAgencias(),
     agentes: loadAgentes(),
+    seguimiento: {
+      guardadas: loadGuardadas(),
+      oportunidades: loadOpportunities(),
+    },
   };
   downloadJson(backup, `RGE_Backup_${todayString()}.json`);
 }
 
 export function exportarRespaldoPlantillas(): void {
-  const backup: RgeBackup = {
-    version: 1,
+  const backup: Pick<RgeBackup, "version" | "type" | "exportedAt" | "plantillas"> = {
+    version: 2,
     type: "plantillas",
     exportedAt: new Date().toISOString(),
     plantillas: loadPlantillas(),
@@ -87,7 +101,7 @@ export type ImportResult =
 function isValidBackup(data: unknown): data is RgeBackup {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
-  if (d.version !== 1) return false;
+  if (d.version !== 1 && d.version !== 2) return false;
   if (d.type !== "full" && d.type !== "plantillas") return false;
   if (typeof d.exportedAt !== "string") return false;
   return true;
@@ -123,6 +137,14 @@ export async function importarRespaldo(file: File): Promise<ImportResult> {
       }
       if (data.agentes !== undefined) {
         saveAgentes(data.agentes);
+      }
+      if (data.seguimiento !== undefined) {
+        if (data.seguimiento.guardadas !== undefined) {
+          saveGuardadas(data.seguimiento.guardadas);
+        }
+        if (data.seguimiento.oportunidades !== undefined) {
+          saveOpportunities(data.seguimiento.oportunidades);
+        }
       }
     }
 
