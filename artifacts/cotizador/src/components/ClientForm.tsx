@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Check, UserRound, Users, Building2, Shield } from "lucide-react";
+import { Check, UserRound, Users, Building2, Shield, Calendar, Mail } from "lucide-react";
 import {
   loadAgencias,
   loadAgentes,
@@ -27,6 +27,108 @@ function addOneDay(iso: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+const MESES_ES = [
+  "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
+  "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
+];
+
+function DateCard({ iso, label }: { iso: string; label: string }) {
+  const hasDate = !!iso;
+  let dayStr = "--";
+  let monthYear = "--- ----";
+  if (hasDate) {
+    const [y, m, d] = iso.split("-").map(Number);
+    dayStr = String(d).padStart(2, "0");
+    monthYear = `${MESES_ES[m - 1]} ${y}`;
+  }
+  return (
+    <div
+      className="flex-1 rounded-xl py-3 px-2 text-center"
+      style={{
+        background: hasDate ? "rgba(4,25,65,0.05)" : "#f8fafc",
+        border: hasDate ? "1px solid rgba(20,149,255,0.18)" : "1px solid #e2e8f0",
+      }}
+    >
+      <div
+        className="text-[9px] font-bold uppercase tracking-widest mb-1.5"
+        style={{ color: hasDate ? "#1495ff" : "#94a3b8" }}
+      >
+        {label}
+      </div>
+      <div
+        className="text-4xl font-black leading-none mb-0.5"
+        style={{ color: hasDate ? "#041941" : "#cbd5e1", fontVariantNumeric: "tabular-nums" }}
+      >
+        {dayStr}
+      </div>
+      <div
+        className="text-[10px] font-semibold uppercase tracking-wide mt-1"
+        style={{ color: hasDate ? "#374151" : "#cbd5e1" }}
+      >
+        {monthYear}
+      </div>
+    </div>
+  );
+}
+
+function StatCounter({
+  label,
+  value,
+  onChange,
+  min = 0,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const display = draft ?? String(value);
+
+  return (
+    <div className="flex-1 text-center">
+      <div
+        className="text-[9px] font-bold uppercase tracking-widest mb-0.5"
+        style={{ color: "#94a3b8" }}
+      >
+        {label}
+      </div>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={display}
+        onFocus={() => setDraft("")}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9]/g, "");
+          setDraft(raw);
+          if (!raw) return;
+          const n = parseInt(raw, 10);
+          if (Number.isFinite(n)) onChange(Math.max(min, n));
+        }}
+        onBlur={() => {
+          if (draft === "" || draft === null) onChange(min);
+          setDraft(null);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        }}
+        aria-label={label}
+        className="w-full text-center focus:outline-none focus:ring-0"
+        style={{
+          fontSize: 26,
+          fontWeight: 900,
+          color: "#041941",
+          background: "transparent",
+          border: 0,
+          padding: 0,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function ClientForm({ cliente, onChange, errors }: Props) {
   const update = (patch: Partial<Cliente>) => {
     const next = { ...cliente, ...patch };
@@ -48,54 +150,99 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
-      <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
-        <UserRound className="w-4 h-4" style={{ color: "#1495ff" }} />
-        <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>Datos del cliente</h3>
-      </div>
-      <div className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Row 1: Nombre de cotización (full width) */}
-          <Field label="Nombre de cotización" span={3}>
-            <input
-              type="text"
-              value={cliente.cotizacionNombre ?? ""}
-              onChange={(e) => update({ cotizacionNombre: e.target.value.toUpperCase() })}
-              placeholder="Ej: Panamá + Bocas del Toro - Junio"
-              className={inputCls}
-              data-testid="input-cotizacion-nombre"
-            />
-          </Field>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-          {/* Row 2: Agencia | Agente | Counter */}
-          <Field label="Agencia" required error={errors?.agencia}>
-            <AgenciaAutocomplete
-              value={cliente.correo}
-              onChange={(v) => {
-                const patch: Partial<Cliente> = { correo: v };
-                if (v !== cliente.correo) patch.agente = "";
-                update(patch);
-              }}
-              error={errors?.agencia}
-            />
-          </Field>
-          <Field label="Agente" required error={errors?.agente}>
-            <AgentAutocomplete
-              value={cliente.agente}
-              agenciaNombre={cliente.correo}
-              onChange={(v) => update({ agente: v })}
-              error={errors?.agente}
-            />
-          </Field>
-          <Field label="Counter">
-            <CounterAutocomplete
-              value={cliente.counter ?? ""}
-              onChange={(v) => update({ counter: v })}
-            />
-          </Field>
+      {/* ── LEFT: Datos comerciales ─────────────────────── */}
+      <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
+          <UserRound className="w-4 h-4" style={{ color: "#1495ff" }} />
+          <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
+            Datos comerciales
+          </h3>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-2 gap-4">
 
-          {/* Row 3: Fecha de llegada | Fecha de salida | Vigencia */}
-          <Field label="Fecha de llegada">
+            {/* Nombre de cotización */}
+            <Field label="Nombre de cotización" span={2}>
+              <input
+                type="text"
+                value={cliente.cotizacionNombre ?? ""}
+                onChange={(e) => update({ cotizacionNombre: e.target.value.toUpperCase() })}
+                placeholder="Ej: Panamá + Bocas del Toro - Junio"
+                className={inputCls}
+                data-testid="input-cotizacion-nombre"
+              />
+            </Field>
+
+            {/* Agencia | Agente */}
+            <Field label="Agencia" required error={errors?.agencia}>
+              <AgenciaAutocomplete
+                value={cliente.correo}
+                onChange={(v) => {
+                  const patch: Partial<Cliente> = { correo: v };
+                  if (v !== cliente.correo) patch.agente = "";
+                  update(patch);
+                }}
+                error={errors?.agencia}
+              />
+            </Field>
+            <Field label="Agente" required error={errors?.agente}>
+              <AgentAutocomplete
+                value={cliente.agente}
+                agenciaNombre={cliente.correo}
+                onChange={(v) => update({ agente: v })}
+                error={errors?.agente}
+              />
+            </Field>
+
+            {/* Counter | Correo electrónico */}
+            <Field label="Counter">
+              <CounterAutocomplete
+                value={cliente.counter ?? ""}
+                onChange={(v) => update({ counter: v })}
+              />
+            </Field>
+            <Field label="Correo electrónico">
+              <div className="relative flex items-center">
+                <Mail className="absolute left-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="email"
+                  value={cliente.emailCliente ?? ""}
+                  onChange={(e) => update({ emailCliente: e.target.value })}
+                  placeholder="cliente@correo.com"
+                  className={inputCls + " pl-8"}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+            </Field>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── RIGHT: Fechas del viaje ──────────────────────── */}
+      <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
+          <Calendar className="w-4 h-4" style={{ color: "#1495ff" }} />
+          <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
+            Fechas del viaje
+          </h3>
+        </div>
+        <div className="p-5 space-y-4">
+
+          {/* Visual date display */}
+          <div className="flex items-stretch gap-3">
+            <DateCard label="LLEGADA" iso={cliente.fechaInicio} />
+            <div className="flex items-center">
+              <div className="w-px h-10 bg-slate-200" />
+            </div>
+            <DateCard label="SALIDA" iso={cliente.fechaFin} />
+          </div>
+
+          {/* Date pickers */}
+          <div className="grid grid-cols-2 gap-3">
             <SingleDatePicker
               value={cliente.fechaInicio}
               onChange={onCheckinChange}
@@ -103,8 +250,6 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
               allowPast
               error={errors?.fechaInicio}
             />
-          </Field>
-          <Field label="Fecha de salida">
             <SingleDatePicker
               value={cliente.fechaFin}
               onChange={(iso) => update({ fechaFin: iso })}
@@ -112,7 +257,42 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
               allowPast
               minDate={cliente.fechaInicio || undefined}
             />
-          </Field>
+          </div>
+
+          {/* Noches / Pasajeros / Niños */}
+          <div
+            className="flex items-center gap-0 rounded-xl overflow-hidden"
+            style={{ border: "1px solid #e2e8f0" }}
+          >
+            <div className="flex-1 py-2.5 px-3">
+              <StatCounter
+                label="NOCHES"
+                value={cliente.noches}
+                onChange={(v) => update({ noches: v })}
+                min={0}
+              />
+            </div>
+            <div className="w-px self-stretch bg-slate-200" />
+            <div className="flex-1 py-2.5 px-3">
+              <StatCounter
+                label="PASAJEROS"
+                value={cliente.pasajeros}
+                onChange={(v) => update({ pasajeros: v })}
+                min={1}
+              />
+            </div>
+            <div className="w-px self-stretch bg-slate-200" />
+            <div className="flex-1 py-2.5 px-3">
+              <StatCounter
+                label="NIÑOS"
+                value={cliente.ninos}
+                onChange={(v) => update({ ninos: v })}
+                min={0}
+              />
+            </div>
+          </div>
+
+          {/* Vigencia */}
           <Field label="Vigencia">
             <SingleDatePicker
               value={cliente.vigencia}
@@ -121,9 +301,10 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
               allowPast
             />
           </Field>
+
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -166,12 +347,10 @@ function AutocompleteInput({
 
   const showDropdown = open && (filtered.length > 0 || (q.length > 0 && suggestions.length > 0));
 
-  // Reset active index when filtered list changes
   useEffect(() => {
     setActiveIndex(-1);
   }, [q]);
 
-  // Scroll active item into view
   useEffect(() => {
     if (activeIndex >= 0 && listRef.current) {
       const items = listRef.current.querySelectorAll("[data-item]");
@@ -179,7 +358,6 @@ function AutocompleteInput({
     }
   }, [activeIndex]);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -324,7 +502,6 @@ function AgenciaAutocomplete({
     setAgencias(loadAgencias());
   }, []);
 
-  // Reload on focus so new agencies added in Configuración appear
   const handleFocus = () => setAgencias(loadAgencias());
 
   const suggestions: SuggestionItem[] = agencias.map((a) => ({
@@ -459,13 +636,13 @@ function Field({
 // ─── Alojamiento Bar ──────────────────────────────────────────────────────────
 
 export function AlojamientoBar({
-  cliente,
-  onClienteChange,
+  cliente: _cliente,
+  onClienteChange: _onClienteChange,
   acomodaciones,
   onAcomodacionesChange,
 }: {
-  cliente: Cliente;
-  onClienteChange: (c: Cliente) => void;
+  cliente?: Cliente;
+  onClienteChange?: (c: Cliente) => void;
   acomodaciones: Acomodacion[];
   onAcomodacionesChange: (a: Acomodacion[]) => void;
 }) {
@@ -479,9 +656,6 @@ export function AlojamientoBar({
       onAcomodacionesChange([...acomodaciones, a]);
     }
   };
-
-  const updateNum = (patch: Partial<Cliente>) =>
-    onClienteChange({ ...cliente, ...patch });
 
   return (
     <section
@@ -497,158 +671,47 @@ export function AlojamientoBar({
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
 
       <div
-        className="relative"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "3fr 1px 2fr",
-          gap: 0,
-          alignItems: "stretch",
-          padding: "10px 20px",
-        }}
+        className="relative flex items-center justify-evenly gap-3"
+        style={{ padding: "10px 20px" }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-evenly",
-            gap: 8,
-            paddingRight: 16,
-          }}
-        >
-          <NumberInput
-            label="NOCHES"
-            value={cliente.noches}
-            onChange={(v) => updateNum({ noches: v })}
-            min={0}
-          />
-          <NumberInput
-            label="PASAJEROS"
-            value={cliente.pasajeros}
-            onChange={(v) => updateNum({ pasajeros: v })}
-            min={1}
-          />
-          <NumberInput
-            label="NIÑOS"
-            value={cliente.ninos}
-            onChange={(v) => updateNum({ ninos: v })}
-            min={0}
-          />
-        </div>
-
-        <span style={{ width: 1, backgroundColor: "rgba(255,255,255,0.2)", display: "block", margin: "4px 0" }} />
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-evenly",
-            gap: 8,
-            paddingLeft: 16,
-          }}
-        >
-          {PILLS.map((p) => {
-            const active = acomodaciones.includes(p);
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => togglePill(p)}
-                style={{
-                  flex: 1,
-                  height: 44,
-                  minWidth: 0,
-                  borderRadius: 9999,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "#fff",
-                  textTransform: "uppercase",
-                  textAlign: "center",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.15s",
-                  ...(active
-                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
-                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
-                }}
-                data-testid={`acomodacion-${p}`}
-              >
-                {p}
-              </button>
-            );
-          })}
-        </div>
+        {PILLS.map((p) => {
+          const active = acomodaciones.includes(p);
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => togglePill(p)}
+              style={{
+                flex: 1,
+                height: 44,
+                minWidth: 0,
+                borderRadius: 9999,
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                color: "#fff",
+                textTransform: "uppercase",
+                textAlign: "center",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.15s",
+                ...(active
+                  ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
+                  : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
+              }}
+              data-testid={`acomodacion-${p}`}
+            >
+              {p}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function NumberInput({
-  label,
-  value,
-  onChange,
-  min = 0,
-}: {
-  label: string;
-  icon?: React.ReactNode;
-  value: number;
-  onChange: (v: number) => void;
-  min?: number;
-}) {
-  const [draft, setDraft] = useState<string | null>(null);
-  const display = draft ?? String(value);
-
-  return (
-    <label
-      title={label}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 8,
-        height: 44,
-        padding: "0 14px",
-        flex: 1,
-        minWidth: 0,
-        backgroundColor: "rgba(0,20,70,0.55)",
-        border: "1px solid rgba(147,197,253,0.3)",
-        borderRadius: 9999,
-        cursor: "text",
-      }}
-    >
-      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", lineHeight: 1, color: "rgba(255,255,255,0.65)", userSelect: "none", whiteSpace: "nowrap", flexShrink: 0 }}>{label}</span>
-      <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={display}
-        onFocus={() => setDraft("")}
-        onChange={(e) => {
-          const raw = e.target.value.replace(/[^0-9]/g, "");
-          setDraft(raw);
-          if (raw === "") return;
-          const n = parseInt(raw, 10);
-          if (Number.isFinite(n)) onChange(Math.max(min, n));
-        }}
-        onBlur={() => {
-          if (draft === "" || draft === null) {
-            onChange(min);
-          }
-          setDraft(null);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        aria-label={label}
-        style={{ width: 34, minWidth: 34, flexShrink: 0, textAlign: "right", fontSize: 18, fontWeight: 800, lineHeight: 1, color: "#fff", background: "transparent", border: 0, padding: 0, outline: "none", fontVariantNumeric: "tabular-nums" }}
-        className="focus:outline-none"
-      />
-    </label>
-  );
-}
+// ─── Section (used externally) ────────────────────────────────────────────────
 
 export function Section({
   icon,
@@ -689,4 +752,3 @@ export function Section({
 
 const inputCls =
   "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2596be]/30 focus:border-[#2596be] placeholder:text-slate-400 transition-colors";
-

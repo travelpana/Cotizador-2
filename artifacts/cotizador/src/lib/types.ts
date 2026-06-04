@@ -109,6 +109,7 @@ export interface Cliente {
   whatsapp: string;
   agente: string;
   counter: string;
+  emailCliente?: string;
   fechaInicio: string;
   fechaFin: string;
   vigencia: string;
