@@ -36,6 +36,7 @@ import {
   type EstadoCotizacion,
   type EstadoCRM,
   type ModoCotizacion,
+  type PresentationMode,
   type Prioridad,
   type ActividadTipo,
   type OppHistorialEntry,
@@ -158,6 +159,7 @@ export default function CotizadorPage() {
   const [acomodaciones, setAcomodaciones] = useState<Acomodacion[]>(["DBL"]);
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
+  const [presentationMode, setPresentationMode] = useState<PresentationMode>("detailed");
   const [incluirItinerario, setIncluirItinerario] = useState(false);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
   const [incluirDescriptivoCompleto, setIncluirDescriptivoCompleto] =
@@ -319,6 +321,7 @@ export default function CotizadorPage() {
     setAcomodaciones(["DBL"]);
     setServicios([]);
     setModo("tarifas");
+    setPresentationMode("detailed");
     setIdioma("es");
     setMercado("general");
     setIncluirItinerario(false);
@@ -1222,6 +1225,8 @@ export default function CotizadorPage() {
                 <ConfiguracionPanel
                   modo={modo}
                   onModoChange={setModo}
+                  presentationMode={presentationMode}
+                  onPresentationModeChange={setPresentationMode}
                   incluirItinerario={incluirItinerario}
                   onToggleItinerario={() => setIncluirItinerario((v) => !v)}
                   incluirDescriptivos={incluirDescriptivos}
@@ -1244,6 +1249,7 @@ export default function CotizadorPage() {
                   servicios={servicios}
                   result={result}
                   modo={modo}
+                  presentationMode={presentationMode}
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   incluirDescriptivoCompleto={incluirDescriptivoCompleto}
@@ -1323,6 +1329,7 @@ export default function CotizadorPage() {
         servicios={previewServicios}
         result={previewResult}
         modo={previewModo}
+        presentationMode={presentationMode}
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
         incluirDescriptivoCompleto={incluirDescriptivoCompleto}

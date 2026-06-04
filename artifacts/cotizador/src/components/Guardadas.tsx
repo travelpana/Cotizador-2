@@ -1,6 +1,7 @@
 import type { Acomodacion, Cliente, ServicioSeleccionado } from "@/lib/types";
 
 export type ModoCotizacion = "tarifas" | "calculo";
+export type PresentationMode = "detailed" | "package";
 
 /** Legacy status — kept for backward compat */
 export type EstadoCotizacion =
@@ -116,6 +117,8 @@ export interface CotizacionGuardada {
   motivoAnulacion?: string;
   /** Link to parent opportunity */
   opportunityId?: string;
+  /** Presentation mode: detailed shows all prices, package hides individual prices */
+  presentationMode?: PresentationMode;
 }
 
 const STORAGE_KEY = "cotizador.guardadas";

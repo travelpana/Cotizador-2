@@ -20,7 +20,7 @@ import type {
   Descriptivo,
   ServicioSeleccionado,
 } from "@/lib/types";
-import type { ModoCotizacion, ActividadTipo } from "./Guardadas";
+import type { ModoCotizacion, ActividadTipo, PresentationMode } from "./Guardadas";
 import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
@@ -32,6 +32,7 @@ interface Props {
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
   modo: ModoCotizacion;
+  presentationMode?: PresentationMode;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   incluirDescriptivoCompleto: boolean;
@@ -67,6 +68,7 @@ export default function ExportButtons({
   servicios,
   result,
   modo,
+  presentationMode = "detailed",
   incluirItinerario,
   incluirDescriptivos,
   incluirDescriptivoCompleto,
@@ -98,7 +100,102 @@ export default function ExportButtons({
 
   const SEP = "━━━━━━━━━━━━━━━━━━";
 
+  const isPackage = presentationMode === "package";
+
+  const buildPackageText = (): string => {
+    const lines: string[] = [];
+    lines.push("🎁 *PAQUETE DE SERVICIOS*");
+    lines.push("");
+    if (cliente.fechaInicio) {
+      const inicio = fmtDMA(cliente.fechaInicio);
+      const fin = cliente.fechaFin ? fmtDMA(cliente.fechaFin) : "";
+      lines.push(`📅 *${T.fechasDeEstadia}:* ${inicio}${fin ? ` al ${fin}` : ""}`);
+    }
+    const pax = cliente.pasajeros;
+    const ninos = cliente.ninos ?? 0;
+    const pasajerosStr = `${pax} ${pax === 1 ? T.adulto : T.adultos}${ninos ? ` + ${ninos} ${ninos === 1 ? T.nino : T.ninoPlural}` : ""}`;
+    lines.push(`👥 *${T.pasajeros}:* ${pasajerosStr}`);
+    lines.push("");
+    lines.push(SEP);
+
+    const inclusions: string[] = [];
+    if (hoteles.length > 0) {
+      inclusions.push("Alojamiento");
+      if (hoteles.some((h) => !!formatRegimen(h.desayuno))) inclusions.push("Desayuno");
+    }
+    const traslados2 = adicionales.filter((s) => s.tipo === "traslado");
+    const tours2 = adicionales.filter((s) => s.tipo === "tour");
+    const catamarans2 = adicionales.filter((s) => s.tipo === "catamaran");
+    const vuelos2 = adicionales.filter((s) => s.tipo === "vuelo");
+    if (traslados2.length > 0) inclusions.push("Traslados");
+    if (tours2.length > 0 || catamarans2.length > 0) inclusions.push("Tours seleccionados");
+    if (vuelos2.length > 0) inclusions.push("Vuelos (si aplica)");
+    if (tours2.some((s) => s.tickets?.enabled && s.tickets.adultPrice > 0)) inclusions.push("Entradas (si aplica)");
+
+    lines.push(`📦 *El paquete incluye:*`);
+    lines.push("");
+    for (const inc of inclusions) lines.push(`✓ ${inc}`);
+
+    if (hoteles.length > 0) {
+      lines.push("");
+      lines.push(`🏨 *${T.alojamiento}*`);
+      for (const h of hoteles) {
+        lines.push(`• ${h.nombre}${h.estrellas ? ` · ${h.estrellas}` : ""}`);
+        const reg = formatRegimen(h.desayuno);
+        if (reg) lines.push(`  🍽 ${reg}`);
+      }
+    }
+    if (traslados2.length > 0) {
+      lines.push("");
+      lines.push(`🚐 *${T.traslados}*`);
+      for (const s of traslados2) lines.push(`• ${s.nombre}`);
+    }
+    if (tours2.length > 0) {
+      lines.push("");
+      lines.push(`🌴 *${T.toursYExperiencias}*`);
+      for (const s of tours2) lines.push(`• ${s.nombre}`);
+    }
+    if (catamarans2.length > 0) {
+      lines.push("");
+      lines.push(`⛵ *${T.catamaranYNavegacion}*`);
+      for (const s of catamarans2) lines.push(`• ${s.nombre}`);
+    }
+    if (vuelos2.length > 0) {
+      lines.push("");
+      lines.push(`✈️ *${T.vuelos}*`);
+      for (const s of vuelos2) lines.push(`• ${s.nombre}`);
+    }
+
+    const totalVal = result.totalesPorAcomodacion[primary];
+    lines.push("");
+    lines.push(SEP);
+    lines.push(`💰 *VALOR DEL PAQUETE*`);
+    lines.push("");
+    if (acoms.length > 1) {
+      for (const a of acoms) lines.push(`• ${a}: *${fmt(result.totalesPorAcomodacion[a])}*`);
+    } else {
+      lines.push(`*${fmt(totalVal)}*${!isCalc ? ` por persona` : ""}`);
+    }
+
+    if (cliente.vigencia) {
+      lines.push("");
+      lines.push(`⏳ *Vigencia:* ${fmtDMA(cliente.vigencia)}`);
+    }
+
+    if (observaciones && observaciones.length > 0) {
+      lines.push("");
+      lines.push(SEP);
+      lines.push(`📋 *${T.observaciones}*`);
+      for (const o of observaciones) lines.push(`• ${o}`);
+    }
+
+    while (lines.length && lines[lines.length - 1] === "") lines.pop();
+    return lines.join("\n");
+  };
+
   const buildText = () => {
+    if (isPackage) return buildPackageText();
+
     const lines: string[] = [];
 
     // ── Encabezado ──────────────────────────────────────────────
@@ -385,6 +482,7 @@ export default function ExportButtons({
       servicios,
       result,
       modo,
+      presentationMode,
       incluirItinerario,
       incluirDescriptivos,
       incluirDescriptivoCompleto,

@@ -9,14 +9,18 @@ import {
   Globe,
   ChevronDown,
   Bus,
+  Package,
+  List,
 } from "lucide-react";
-import type { ModoCotizacion } from "./Guardadas";
+import type { ModoCotizacion, PresentationMode } from "./Guardadas";
 import { type Idioma, IDIOMA_LABELS } from "@/lib/i18n";
 import { useRef, useState } from "react";
 
 interface Props {
   modo: ModoCotizacion;
   onModoChange: (m: ModoCotizacion) => void;
+  presentationMode: PresentationMode;
+  onPresentationModeChange: (m: PresentationMode) => void;
   incluirItinerario: boolean;
   onToggleItinerario: () => void;
   incluirDescriptivos: boolean;
@@ -32,6 +36,8 @@ interface Props {
 export default function ConfiguracionPanel({
   modo,
   onModoChange,
+  presentationMode,
+  onPresentationModeChange,
   incluirItinerario,
   onToggleItinerario,
   incluirDescriptivos,
@@ -69,6 +75,26 @@ export default function ConfiguracionPanel({
               icon={<Calculator className="w-4 h-4" />}
               title="Totales"
               onClick={() => onModoChange("calculo")}
+            />
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
+            Presentación
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <ModeCard
+              active={presentationMode === "detailed"}
+              icon={<List className="w-4 h-4" />}
+              title="Detallada"
+              onClick={() => onPresentationModeChange("detailed")}
+            />
+            <ModeCard
+              active={presentationMode === "package"}
+              icon={<Package className="w-4 h-4" />}
+              title="Paquete"
+              onClick={() => onPresentationModeChange("package")}
             />
           </div>
         </section>

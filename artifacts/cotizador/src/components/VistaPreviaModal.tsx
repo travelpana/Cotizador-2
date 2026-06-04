@@ -5,7 +5,7 @@ import type {
   Descriptivo,
   ServicioSeleccionado,
 } from "@/lib/types";
-import type { ModoCotizacion } from "./Guardadas";
+import type { ModoCotizacion, PresentationMode } from "./Guardadas";
 import { buildPropuestaBody, buildPropuestaData } from "@/lib/propuesta";
 import type { Idioma } from "@/lib/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,6 +17,7 @@ interface Props {
   servicios: ServicioSeleccionado[];
   result: CotizacionResult;
   modo: ModoCotizacion;
+  presentationMode?: PresentationMode;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   incluirDescriptivoCompleto: boolean;
@@ -40,6 +41,7 @@ export default function VistaPreviaModal({
   servicios,
   result,
   modo,
+  presentationMode,
   incluirItinerario,
   incluirDescriptivos,
   incluirDescriptivoCompleto,
@@ -103,6 +105,7 @@ export default function VistaPreviaModal({
       servicios,
       result,
       modo,
+      presentationMode,
       incluirItinerario,
       incluirDescriptivos,
       incluirDescriptivoCompleto,
@@ -118,6 +121,7 @@ export default function VistaPreviaModal({
     servicios,
     result,
     modo,
+    presentationMode,
     incluirItinerario,
     incluirDescriptivos,
     incluirDescriptivoCompleto,
