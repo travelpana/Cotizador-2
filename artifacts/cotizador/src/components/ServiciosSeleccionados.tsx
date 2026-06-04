@@ -10,7 +10,7 @@ import type {
 import { fmt, pickTier, priceForTier } from "@/lib/calc";
 import { formatTrasladoNombre, personalizarNombreTraslado } from "@/lib/utils";
 import { formatRegimen } from "@/lib/regimen";
-import SingleDatePicker from "./SingleDatePicker";
+import InlineRangePicker, { nightsBetween } from "./InlineRangePicker";
 import {
   Popover,
   PopoverContent,
@@ -708,18 +708,8 @@ function ServicioRow({
             </PopoverTrigger>
             <PopoverContent
               align="start"
-              className="w-[300px] p-4 z-[60]"
+              className="w-[290px] p-3 z-[60]"
               onOpenAutoFocus={(e) => e.preventDefault()}
-              onInteractOutside={(e) => {
-                const target = e.target as Node;
-                if (
-                  document
-                    .querySelector(".flatpickr-calendar")
-                    ?.contains(target)
-                ) {
-                  e.preventDefault();
-                }
-              }}
             >
               <DatesEditor
                 servicio={servicio}
@@ -787,7 +777,7 @@ function ServicioRow({
           </PopoverTrigger>
           <PopoverContent
             align="end"
-            className="w-[240px] p-4 z-[60]"
+            className="w-[180px] p-0 z-[60]"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <PricesEditor
@@ -822,7 +812,7 @@ function ServicioRow({
           </PopoverTrigger>
           <PopoverContent
             align="end"
-            className="w-[280px] p-0 z-[60] overflow-hidden"
+            className="w-[180px] p-0 z-[60]"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <UnitPriceEditor
@@ -951,70 +941,66 @@ function DatesEditor({
 }) {
   const [fechaInicio, setFechaInicio] = useState(servicio.fechaInicio ?? "");
   const [fechaFin, setFechaFin] = useState(servicio.fechaFin ?? "");
+  const origInicio = servicio.fechaInicio ?? "";
+  const origFin = servicio.fechaFin ?? "";
 
-  const persist = (inicio: string, fin: string) => {
+  const handleSelect = (inicio: string, fin: string) => {
+    setFechaInicio(inicio);
+    setFechaFin(fin);
+  };
+
+  const handleApply = () => {
     onSave({
-      fechaInicio: inicio || undefined,
-      fechaFin: fin || undefined,
+      fechaInicio: fechaInicio || undefined,
+      fechaFin: fechaFin || undefined,
     });
+    onClose();
   };
 
-  const handleCheckIn = (iso: string) => {
-    let fin = fechaFin;
-    if (iso && (!fechaFin || fechaFin <= iso)) {
-      const d = new Date(iso + "T00:00:00");
-      d.setDate(d.getDate() + 1);
-      fin = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      setFechaFin(fin);
-    }
-    setFechaInicio(iso);
-    persist(iso, fin);
+  const handleReset = () => {
+    onSave({
+      fechaInicio: origInicio || undefined,
+      fechaFin: origFin || undefined,
+    });
+    onClose();
   };
 
-  const handleCheckOut = (iso: string) => {
-    setFechaFin(iso);
-    persist(fechaInicio, iso);
-  };
+  const noches = fechaInicio && fechaFin && fechaFin > fechaInicio
+    ? nightsBetween(fechaInicio, fechaFin)
+    : null;
 
   return (
-    <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 flex items-center gap-1.5">
-        <Calendar className="w-3 h-3" />
-        Estadía
-      </div>
-      <div className="grid grid-cols-1 gap-2">
-        <div>
-          <label className="block text-[11px] font-medium text-slate-600 mb-1">
-            Check-in
-          </label>
-          <SingleDatePicker
-            value={fechaInicio}
-            onChange={handleCheckIn}
-            placeholder="Check-in"
-            allowPast
-          />
+    <div className="space-y-2">
+      <InlineRangePicker
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        onSelect={handleSelect}
+      />
+      <div className="flex items-center justify-between pt-1">
+        {noches !== null ? (
+          <span className="text-[11px] text-slate-500 tabular-nums">
+            {noches} noche{noches !== 1 ? "s" : ""}
+          </span>
+        ) : (
+          <span />
+        )}
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            onClick={handleReset}
+            title="Restablecer fechas originales"
+            className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
+          >
+            ↺
+          </button>
+          <button
+            type="button"
+            onClick={handleApply}
+            className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+          >
+            ✓ Aplicar
+          </button>
         </div>
-        <div>
-          <label className="block text-[11px] font-medium text-slate-600 mb-1">
-            Check-out
-          </label>
-          <SingleDatePicker
-            value={fechaFin}
-            onChange={handleCheckOut}
-            placeholder="Check-out"
-            allowPast
-            minDate={fechaInicio || undefined}
-          />
-        </div>
-      </div>
-      <div className="flex justify-end pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90"
-        >
-          Listo
-        </button>
       </div>
     </div>
   );
@@ -1044,53 +1030,57 @@ function PricesEditor({
     return isNaN(n) ? 0 : n;
   };
 
+  const buildPrecios = (src: Record<string, string>) => ({
+    ...servicio.precios,
+    SGL: num(src.SGL),
+    DBL: num(src.DBL),
+    TPL: num(src.TPL),
+    CHD: num(src.CHD),
+    chd: num(src.CHD),
+  });
+
   const handleApply = () => {
-    onSave({
-      ...servicio.precios,
-      SGL: num(vals.SGL),
-      DBL: num(vals.DBL),
-      TPL: num(vals.TPL),
-      CHD: num(vals.CHD),
-      chd: num(vals.CHD),
-    });
+    onSave(buildPrecios(vals));
+    onClose();
+  };
+
+  const handleReset = () => {
+    onSave(buildPrecios(initial));
+    onClose();
   };
 
   return (
-    <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-        Precio por noche (p/p)
-      </div>
-      <div className="grid grid-cols-2 gap-2">
+    <div className="p-3 space-y-2.5">
+      <div className="space-y-1.5">
         {acomodaciones.map((a) => (
-          <div key={a}>
-            <label className="block text-[11px] font-medium text-slate-600 mb-1">
-              {a}
-            </label>
+          <div key={a} className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-500 w-8 flex-shrink-0">{a}</span>
             <PriceInput
               value={vals[a] ?? "0"}
               onChange={(v) => setVals((prev) => ({ ...prev, [a]: v }))}
               onApply={handleApply}
               onCancel={onClose}
-              wrapperClassName="w-full"
-              inputClassName="w-full h-9 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              wrapperClassName="flex-1"
+              inputClassName="w-full h-8 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
         ))}
       </div>
-      <div className="flex justify-end gap-2 pt-1">
+      <div className="flex justify-end gap-1.5 pt-0.5">
         <button
           type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100"
+          onClick={handleReset}
+          title="Restablecer tarifa original"
+          className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
         >
-          Cancelar
+          ↺
         </button>
         <button
           type="button"
           onClick={handleApply}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90"
+          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
         >
-          Aplicar
+          ✓ Aplicar
         </button>
       </div>
     </div>
@@ -1111,52 +1101,43 @@ function UnitPriceEditor({
   const handleApply = () => {
     const n = parseFloat(val);
     onSave(isNaN(n) ? null : n);
+    onClose();
   };
 
   const handleReset = () => {
     onSave(null);
+    onClose();
   };
 
   return (
-    <div className="flex flex-col box-border w-full">
-      <div className="px-5 pt-4 pb-2">
-        <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-          Precio por persona
-        </div>
+    <div className="p-3 space-y-2.5">
+      <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+        Precio por persona
       </div>
-      <div className="px-5 pb-3">
-        <PriceInput
-          value={val}
-          onChange={setVal}
-          onApply={handleApply}
-          onCancel={onClose}
-          autoFocus
-          wrapperClassName="w-full"
-          inputClassName="w-full h-9 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-        />
-      </div>
-      <div className="px-5 pb-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-3 flex-wrap">
+      <PriceInput
+        value={val}
+        onChange={setVal}
+        onApply={handleApply}
+        onCancel={onClose}
+        autoFocus
+        wrapperClassName="w-full"
+        inputClassName="w-full h-8 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+      />
+      <div className="flex justify-end gap-1.5">
         <button
           type="button"
           onClick={handleReset}
           title="Restablecer precio automático"
-          className="mr-auto px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 whitespace-nowrap"
+          className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
         >
-          Restablecer
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:bg-slate-100 whitespace-nowrap"
-        >
-          Cancelar
+          ↺
         </button>
         <button
           type="button"
           onClick={handleApply}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 whitespace-nowrap"
+          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
         >
-          Aplicar
+          ✓ Aplicar
         </button>
       </div>
     </div>
