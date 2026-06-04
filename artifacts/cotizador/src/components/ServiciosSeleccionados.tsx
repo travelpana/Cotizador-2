@@ -928,6 +928,30 @@ function ServicioRow({
   );
 }
 
+/* ───────────────────────── Shared popup button styles ──────────────────────── */
+
+const btnApply: React.CSSProperties = {
+  width: 40, height: 40, borderRadius: 12,
+  background: "#004FBB", color: "#fff", border: "none",
+  fontSize: 16, fontWeight: 700,
+  display: "flex", alignItems: "center", justifyContent: "center",
+  cursor: "pointer", flexShrink: 0, transition: "opacity 0.15s",
+};
+
+const btnReset: React.CSSProperties = {
+  width: 40, height: 40, borderRadius: 12,
+  background: "#fff", color: "#64748B", border: "1.5px solid #D8E0EE",
+  fontSize: 16, fontWeight: 500,
+  display: "flex", alignItems: "center", justifyContent: "center",
+  cursor: "pointer", flexShrink: 0, transition: "background 0.15s",
+};
+
+const btnClose: React.CSSProperties = {
+  background: "none", border: "none", color: "#94A3B8",
+  fontSize: 13, cursor: "pointer", padding: "2px 4px",
+  lineHeight: 1, borderRadius: 4,
+};
+
 /* ───────────────────────── Inline editors (popovers) ───────────────────────── */
 
 function DatesEditor({
@@ -971,6 +995,13 @@ function DatesEditor({
 
   return (
     <div className="space-y-2">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1">
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Estadía
+        </span>
+        <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
+      </div>
       <InlineRangePicker
         fechaInicio={fechaInicio}
         fechaFin={fechaFin}
@@ -978,28 +1009,15 @@ function DatesEditor({
       />
       <div className="flex items-center justify-between pt-1">
         {noches !== null ? (
-          <span className="text-[11px] text-slate-500 tabular-nums">
+          <span style={{ fontSize: 11, color: "#64748B", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
             {noches} noche{noches !== 1 ? "s" : ""}
           </span>
         ) : (
           <span />
         )}
-        <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={handleReset}
-            title="Restablecer fechas originales"
-            className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
-          >
-            ↺
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-          >
-            ✓ Aplicar
-          </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={handleReset} style={btnReset} title="Restablecer fechas originales">↺</button>
+          <button type="button" onClick={handleApply} style={btnApply} title="Aplicar">✓</button>
         </div>
       </div>
     </div>
@@ -1051,37 +1069,33 @@ function PricesEditor({
 
   return (
     <div className="p-3 space-y-2.5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Tarifas por noche
+        </span>
+        <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
+      </div>
+      {/* Rows */}
       <div className="space-y-1.5">
         {acomodaciones.map((a) => (
           <div key={a} className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-500 w-8 flex-shrink-0">{a}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#041941", width: 28, flexShrink: 0 }}>{a}</span>
             <PriceInput
               value={vals[a] ?? "0"}
               onChange={(v) => setVals((prev) => ({ ...prev, [a]: v }))}
               onApply={handleApply}
               onCancel={onClose}
               wrapperClassName="flex-1"
-              inputClassName="w-full h-8 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              inputClassName="w-full h-8 pr-2.5 rounded-md text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
         ))}
       </div>
-      <div className="flex justify-end gap-1.5 pt-0.5">
-        <button
-          type="button"
-          onClick={handleReset}
-          title="Restablecer tarifa original"
-          className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
-        >
-          ↺
-        </button>
-        <button
-          type="button"
-          onClick={handleApply}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-        >
-          ✓ Aplicar
-        </button>
+      {/* Actions */}
+      <div className="flex justify-end gap-2 pt-0.5">
+        <button type="button" onClick={handleReset} style={btnReset} title="Restablecer tarifa original">↺</button>
+        <button type="button" onClick={handleApply} style={btnApply} title="Aplicar">✓</button>
       </div>
     </div>
   );
@@ -1111,8 +1125,12 @@ function UnitPriceEditor({
 
   return (
     <div className="p-3 space-y-2.5">
-      <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
-        Precio por persona
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Precio p/p
+        </span>
+        <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
       </div>
       <PriceInput
         value={val}
@@ -1123,22 +1141,9 @@ function UnitPriceEditor({
         wrapperClassName="w-full"
         inputClassName="w-full h-8 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
       />
-      <div className="flex justify-end gap-1.5">
-        <button
-          type="button"
-          onClick={handleReset}
-          title="Restablecer precio automático"
-          className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
-        >
-          ↺
-        </button>
-        <button
-          type="button"
-          onClick={handleApply}
-          className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-        >
-          ✓ Aplicar
-        </button>
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={handleReset} style={btnReset} title="Restablecer precio automático">↺</button>
+        <button type="button" onClick={handleApply} style={btnApply} title="Aplicar">✓</button>
       </div>
     </div>
   );
@@ -1333,3 +1338,4 @@ function TicketsEditor({
     </div>
   );
 }
+
