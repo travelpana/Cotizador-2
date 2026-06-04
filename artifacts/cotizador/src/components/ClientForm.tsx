@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Check, UserRound, Users, Building2, Shield, Calendar, Mail } from "lucide-react";
+import PremiumRangePicker from "./PremiumRangePicker";
 import {
   loadAgencias,
   loadAgentes,
@@ -21,18 +22,22 @@ interface Props {
   errors?: ClienteValidationErrors;
 }
 
-function addOneDay(iso: string): string {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 const MESES_ES = [
   "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
   "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
 ];
 
-function DateCard({ iso, label }: { iso: string; label: string }) {
+function DateCard({
+  iso,
+  label,
+  onClick,
+  active = false,
+}: {
+  iso: string;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+}) {
   const hasDate = !!iso;
   let dayStr = "--";
   let monthYear = "--- ----";
@@ -42,16 +47,23 @@ function DateCard({ iso, label }: { iso: string; label: string }) {
     monthYear = `${MESES_ES[m - 1]} ${y}`;
   }
   return (
-    <div
-      className="flex-1 rounded-xl py-3 px-2 text-center"
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-1 rounded-xl py-3 px-2 text-center transition-all"
       style={{
-        background: hasDate ? "rgba(4,25,65,0.05)" : "#f8fafc",
-        border: hasDate ? "1px solid rgba(20,149,255,0.18)" : "1px solid #e2e8f0",
+        background:  active ? "rgba(0,79,187,0.06)" : hasDate ? "rgba(4,25,65,0.05)" : "#f8fafc",
+        border:      active ? "1.5px solid #004FBB"
+                   : hasDate ? "1px solid rgba(20,149,255,0.18)"
+                   : "1px solid #e2e8f0",
+        boxShadow:   active ? "0 0 0 3px rgba(0,79,187,0.10)" : undefined,
+        cursor:      "pointer",
+        outline:     "none",
       }}
     >
       <div
         className="text-[9px] font-bold uppercase tracking-widest mb-1.5"
-        style={{ color: hasDate ? "#1495ff" : "#94a3b8" }}
+        style={{ color: active ? "#004FBB" : hasDate ? "#1495ff" : "#94a3b8" }}
       >
         {label}
       </div>
@@ -67,7 +79,7 @@ function DateCard({ iso, label }: { iso: string; label: string }) {
       >
         {monthYear}
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -130,26 +142,38 @@ function StatCounter({
 }
 
 export default function ClientForm({ cliente, onChange, errors }: Props) {
+  const [calOpen,   setCalOpen]   = useState(false);
+  const [selecting, setSelecting] = useState<"inicio" | "fin">("inicio");
+  const rightCardRef = useRef<HTMLElement>(null);
+
   const update = (patch: Partial<Cliente>) => {
     const next = { ...cliente, ...patch };
-    if (patch.fechaInicio || patch.fechaFin) {
+    if (patch.fechaInicio !== undefined || patch.fechaFin !== undefined) {
       const calc = diffNoches(next.fechaInicio, next.fechaFin);
       if (calc > 0) next.noches = calc;
     }
     onChange(next);
   };
 
-  const onCheckinChange = (iso: string) => {
-    const patch: Partial<Cliente> = { fechaInicio: iso };
-    if (iso) {
-      const nextDay = addOneDay(iso);
-      const currentFin = cliente.fechaFin;
-      if (!currentFin || currentFin <= iso) patch.fechaFin = nextDay;
+  const openCal = (which: "inicio" | "fin") => {
+    setSelecting(which);
+    setCalOpen(true);
+  };
+
+  const handleRangeSelect = (inicio: string, fin: string, done: boolean) => {
+    const next: Partial<Cliente> = { fechaInicio: inicio, fechaFin: fin };
+    const calc = diffNoches(inicio, fin);
+    if (calc > 0) next.noches = calc;
+    onChange({ ...cliente, ...next });
+    if (done) {
+      setCalOpen(false);
+    } else {
+      setSelecting("fin");
     }
-    update(patch);
   };
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       {/* ── LEFT: Datos comerciales ─────────────────────── */}
@@ -223,7 +247,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
       </section>
 
       {/* ── RIGHT: Fechas del viaje ──────────────────────── */}
-      <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
+      <section ref={rightCardRef} className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 rounded-t-2xl">
           <Calendar className="w-4 h-4" style={{ color: "#1495ff" }} />
           <h3 className="font-bold leading-tight" style={{ fontSize: 20, color: "#07152f" }}>
@@ -232,30 +256,22 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
         </div>
         <div className="p-5 space-y-4">
 
-          {/* Visual date display */}
+          {/* Clickable date cards → open premium calendar */}
           <div className="flex items-stretch gap-3">
-            <DateCard label="LLEGADA" iso={cliente.fechaInicio} />
+            <DateCard
+              label="LLEGADA"
+              iso={cliente.fechaInicio}
+              active={calOpen && selecting === "inicio"}
+              onClick={() => openCal("inicio")}
+            />
             <div className="flex items-center">
               <div className="w-px h-10 bg-slate-200" />
             </div>
-            <DateCard label="SALIDA" iso={cliente.fechaFin} />
-          </div>
-
-          {/* Date pickers */}
-          <div className="grid grid-cols-2 gap-3">
-            <SingleDatePicker
-              value={cliente.fechaInicio}
-              onChange={onCheckinChange}
-              placeholder="Llegada"
-              allowPast
-              error={errors?.fechaInicio}
-            />
-            <SingleDatePicker
-              value={cliente.fechaFin}
-              onChange={(iso) => update({ fechaFin: iso })}
-              placeholder="Salida"
-              allowPast
-              minDate={cliente.fechaInicio || undefined}
+            <DateCard
+              label="SALIDA"
+              iso={cliente.fechaFin}
+              active={calOpen && selecting === "fin"}
+              onClick={() => openCal("fin")}
             />
           </div>
 
@@ -305,6 +321,18 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
         </div>
       </section>
     </div>
+
+    {/* ── Premium range calendar (portal, floats left of right card) ── */}
+    <PremiumRangePicker
+      open={calOpen}
+      fechaInicio={cliente.fechaInicio}
+      fechaFin={cliente.fechaFin}
+      selecting={selecting}
+      anchorEl={rightCardRef.current}
+      onSelect={handleRangeSelect}
+      onClose={() => setCalOpen(false)}
+    />
+    </>
   );
 }
 
