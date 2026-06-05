@@ -63,13 +63,33 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+/** Converts a name to Title Case (handles accented uppercase like MARÍA → María). */
+function toTitleCase(s: string): string {
+  const lower = s.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/** Detects Estimada vs Estimado/a based on common Spanish feminine name endings. */
+function detectTratamiento(name: string): string {
+  const normalized = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const feminineEndings = ["ia", "na", "ela", "ina", "ira", "isa", "a"];
+  for (const ending of feminineEndings) {
+    if (normalized.endsWith(ending)) return "Estimada";
+  }
+  return "Estimado/a";
+}
+
 /** Builds a time-aware personalized email greeting using the agent's first name. */
 function buildEmailGreeting(agente: string): string {
   const hour = new Date().getHours();
   const saludo = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
-  const firstName = agente.trim().split(/\s+/)[0] ?? "";
-  const greeting = firstName ? `${saludo}, ${firstName}:` : `${saludo}:`;
-  return `${greeting}\n\nUn gusto saludarle. A continuación encontrará la propuesta solicitada.`;
+  const rawFirst = agente.trim().split(/\s+/)[0] ?? "";
+  const firstName = rawFirst ? toTitleCase(rawFirst) : "";
+  const tratamiento = firstName ? detectTratamiento(firstName) : "";
+  const greeting = firstName
+    ? `${saludo}, ${tratamiento} ${firstName}:`
+    : `${saludo}:`;
+  return `${greeting}\n\nEs un gusto saludarle.\n\nA continuación encontrará la propuesta solicitada.`;
 }
 
 export default function ExportButtons({
