@@ -515,7 +515,7 @@ export default function CotizadorPage() {
       ...r,
       servicios: r.servicios.map((s) => {
         if (s.tipo !== "hotel" || s.desayuno) return s;
-        const cat = mergedHoteles.find((h) => h.id === s.codigo || h.id === s.id);
+        const cat = mergedHoteles.find((h) => h.id === s.codigo || (h as any).codigo === s.codigo || h.id === s.id);
         return cat?.desayuno ? { ...s, desayuno: cat.desayuno } : s;
       }),
     };
@@ -532,7 +532,7 @@ export default function CotizadorPage() {
       ...r,
       servicios: r.servicios.map((s) => {
         if (s.tipo !== "hotel" || s.desayuno) return s;
-        const cat = mergedHoteles.find((h) => h.id === s.codigo || h.id === s.id);
+        const cat = mergedHoteles.find((h) => h.id === s.codigo || (h as any).codigo === s.codigo || h.id === s.id);
         return cat?.desayuno ? { ...s, desayuno: cat.desayuno } : s;
       }),
     };

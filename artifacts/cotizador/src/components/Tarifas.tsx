@@ -204,7 +204,9 @@ function HotelesTab({
                 <tr key={h.id} className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors ${!h.activo ? "opacity-50" : ""}`}>
                   <td className="px-4 py-3 max-w-[180px]">
                     <div className="font-medium text-slate-900 truncate">{h.nombre || <span className="italic text-slate-400">Sin nombre</span>}</div>
-                    {h.codigo && <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{h.codigo}</div>}
+                    <div className="text-[10px] font-mono mt-0.5 truncate" style={{ color: h.codigo ? "#64748b" : "#cbd5e1" }}>
+                      {h.codigo || "SIN CÓDIGO"}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{h.estrellas}</td>
                   <td className="px-4 py-3 text-slate-500 text-xs max-w-[130px] truncate">{h.ubicacion}</td>
@@ -363,7 +365,9 @@ function ToursTab({
             <tbody>
               {items.map(t => (
                 <tr key={t.id} className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors ${!t.activo ? "opacity-50" : ""}`}>
-                  <td className="px-4 py-3 font-mono text-xs text-primary font-semibold">{t.id}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-semibold" style={{ color: /^tour_\d+_\d+$/.test(t.id) ? "#cbd5e1" : "#004FBB" }}>
+                    {/^tour_\d+_\d+$/.test(t.id) ? "SIN CÓDIGO" : t.id}
+                  </td>
                   <td className="px-4 py-3 font-medium text-slate-900 max-w-[200px] truncate">{t.nombre || <span className="italic text-slate-400">Sin nombre</span>}</td>
                   <td className="px-4 py-3">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.tipoServicio === "Privado" ? "bg-orange-50 text-orange-600" : "bg-blue-50 text-blue-600"}`}>
