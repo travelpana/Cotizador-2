@@ -859,53 +859,110 @@ function buildPackageView(d: PropuestaData): string {
   const C_HDR_BG  = "#f5f7fb";
   const C_SEP_BG  = "#eef2f8";
   const C_LBL     = "#64748b";
+  const C_PRICE_BG = "#eef2f8";
 
-  // ── 1. EL PAQUETE INCLUYE ─────────────────────────────────────────────────
-  const inclusions: string[] = [];
-  if (d.hoteles.length > 0) {
-    inclusions.push("Alojamiento");
-    if (d.hoteles.some((h) => !!formatRegimen(h.desayuno))) inclusions.push("Desayuno incluido");
-  }
-  if (d.traslados.length > 0) inclusions.push("Traslados");
-  if (d.tours.length > 0 || d.catamarans.length > 0) inclusions.push("Tours seleccionados");
-  if (d.vuelos.length > 0) inclusions.push("Vuelos, si aplica");
-  if (d.tours.some((s) => s.tickets?.enabled && s.tickets.adultPrice > 0)) inclusions.push("Entradas, si aplica");
+  // Reusable checkmark HTML entity (&#10003; = ✓, no SVG)
+  const TICK = `<span style="color:${C_BLUE};font-weight:800;margin-right:7px;">&#10003;</span>`;
 
-  const inclusionRows = inclusions
-    .map(
-      (item) =>
-        `<tr><td style="padding:7px 14px 7px 24px;font-size:13px;color:${C_DARK};border-bottom:1px solid ${C_BORDER};">` +
-        `<span style="color:${C_BLUE};font-weight:700;margin-right:8px;">•</span>${escape(item)}</td></tr>`,
-    )
-    .join("");
+  // ── 1. TWO-COLUMN INCLUSION BLOCK ────────────────────────────────────────
+  // Left column: real names of each service
+  const includeItems: string[] = [];
+  d.hoteles.forEach((h) => includeItems.push(h.nombre));
+  d.traslados.forEach((t) =>
+    includeItems.push(
+      personalizarNombreTraslado(formatTrasladoNombre(t.nombre), d.hoteles, d.personalizarTraslados),
+    ),
+  );
+  [...d.tours, ...d.catamarans].forEach((s) => includeItems.push(s.nombre));
+  d.vuelos.forEach((v) => includeItems.push(v.nombre));
 
-  const inclusionBlock = inclusions.length
+  // Right column: highlights derived from the quote
+  const highlightItems: string[] = [];
+  const regimenes = d.hoteles
+    .map((h) => formatRegimen(h.desayuno))
+    .filter(Boolean) as string[];
+  if (regimenes.length > 0) highlightItems.push(regimenes[0]);
+  d.hoteles.forEach((h) => {
+    if (h.noches) {
+      highlightItems.push(
+        `${h.noches} ${h.noches === 1 ? "noche" : "noches"} en ${h.nombre}`,
+      );
+    }
+  });
+  if (d.traslados.length > 0) highlightItems.push("Traslados incluidos");
+  highlightItems.push("Tarifas netas por persona");
+
+  const colHdrTd = `padding:7px 14px 7px 16px;font-size:10px;font-weight:700;color:#ffffff;` +
+    `text-transform:uppercase;letter-spacing:0.8px;background:${C_BLUE};border-bottom:1px solid #2a3585;`;
+
+  const checkTd = (text: string) =>
+    `<tr><td style="padding:6px 12px 6px 14px;font-size:13px;color:${C_DARK};` +
+    `border-bottom:1px solid ${C_BORDER};">${TICK}${escape(text)}</td></tr>`;
+
+  const leftRows  = includeItems.map(checkTd).join("");
+  const rightRows = highlightItems.map(checkTd).join("");
+
+  const inclusionBlock = (includeItems.length || highlightItems.length)
     ? `<div style="margin-bottom:20px;">
-        ${sectionBar("El paquete incluye", C_BLUE)}
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
-          <tbody>${inclusionRows}</tbody>
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};">
+          <tbody>
+            <tr valign="top">
+              <td width="50%" style="width:50%;border-right:1px solid ${C_BORDER};vertical-align:top;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%"
+                  style="width:100%;border-collapse:collapse;">
+                  <thead><tr><td style="${colHdrTd}">El paquete incluye</td></tr></thead>
+                  <tbody>${leftRows}</tbody>
+                </table>
+              </td>
+              <td width="50%" style="width:50%;vertical-align:top;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%"
+                  style="width:100%;border-collapse:collapse;">
+                  <thead><tr><td style="${colHdrTd}">Highlights</td></tr></thead>
+                  <tbody>${rightRows}</tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>`
     : "";
 
   // ── 2. OPCIONES DE ALOJAMIENTO ────────────────────────────────────────────
   const acoms = d.acoms;
+  const nAcoms = acoms.length;
 
-  /** Small sub-header bar used inside the hotel block. */
-  function subHeader(text: string): string {
-    return `<tr><td colspan="${acoms.length + 1}" style="padding:7px 14px 7px 24px;font-size:10px;font-weight:700;color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">${escape(text)}</td></tr>`;
+  /** Sub-header row spanning all acom columns (colspan = nAcoms). */
+  function subHeader(text: string, bg = C_HDR_BG): string {
+    return (
+      `<tr><td colspan="${nAcoms}" style="padding:7px 14px 7px 24px;font-size:10px;font-weight:700;` +
+      `color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;` +
+      `background:${bg};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">` +
+      `${escape(text)}</td></tr>`
+    );
   }
 
-  /** Price cells for each acomodacion in a single row. */
-  function acomCells(totales: Record<string, number>, large = false): string {
-    const fs = large ? "15px" : "13px";
-    const fw = large ? "800" : "700";
+  /** Noche-adicional cells (normal weight, muted style). */
+  function nocheCells(totales: Record<string, number>): string {
     return acoms
       .map(
         (a) =>
-          `<td style="padding:10px 12px;text-align:center;border-right:1px solid ${C_BORDER};vertical-align:middle;width:${Math.floor(60 / acoms.length)}%;">` +
+          `<td style="padding:9px 12px;text-align:center;border-right:1px solid ${C_BORDER};vertical-align:middle;">` +
           `<div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">${escape(String(a))}</div>` +
-          `<div style="font-size:${fs};font-weight:${fw};color:${C_DARK};">USD ${escape(fmt(totales[a] ?? 0))}</div>` +
+          `<div style="font-size:13px;font-weight:700;color:${C_DARK};">USD ${escape(fmt(totales[a] ?? 0))}</div>` +
+          `</td>`,
+      )
+      .join("");
+  }
+
+  /** Precio-final cells (large, bold, prominent). */
+  function precioCells(totales: Record<string, number>): string {
+    return acoms
+      .map(
+        (a) =>
+          `<td style="padding:12px;text-align:center;border-right:1px solid ${C_BORDER};vertical-align:middle;background:${C_PRICE_BG};">` +
+          `<div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">${escape(String(a))}</div>` +
+          `<div style="font-size:17px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(totales[a] ?? 0))}</div>` +
           `</td>`,
       )
       .join("");
@@ -917,34 +974,35 @@ function buildPackageView(d: PropuestaData): string {
     // ── Single option: premium simple layout ──────────────────────────────
     const h = d.hoteles[0];
     const regimenFmt = formatRegimen(h.desayuno);
-    const notas = h.notas
+    const notasHtml = h.notas
       ? `<div style="font-size:11px;color:${C_LBL};font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
       : "";
 
     hotelBlock = `
     <div style="margin-bottom:20px;">
       ${sectionBar("Alojamiento", C_BLUE)}
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%"
+        style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
         <tbody>
 
           <tr>
-            <td colspan="${acoms.length + 1}" style="padding:12px 14px 12px 24px;border-bottom:1px solid ${C_BORDER};">
+            <td colspan="${nAcoms}" style="padding:12px 14px 12px 24px;border-bottom:1px solid ${C_BORDER};">
               <div style="font-size:14px;font-weight:700;color:${C_DARK};">${escape(h.nombre)}</div>
               ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};margin-top:2px;">${escape(h.estrellas)}</div>` : ""}
               ${h.noches ? `<div style="font-size:11px;color:${C_LBL};margin-top:1px;">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
               ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:3px;">${escape(regimenFmt)}</div>` : ""}
-              ${notas}
+              ${notasHtml}
             </td>
           </tr>
 
-          ${subHeader("Precios del paquete por persona")}
-          <tr>${acomCells(d.result.totalesPorAcomodacion, true)}</tr>
-
           ${subHeader("Noche adicional por persona")}
           <tr>
-            <td colspan="${acoms.length + 1}" style="padding:5px 14px 2px 24px;font-size:11px;font-weight:600;color:${C_LBL};background:${C_SEP_BG};border-bottom:1px solid ${C_BORDER};">${escape(h.nombre)}</td>
+            <td colspan="${nAcoms}" style="padding:5px 14px 2px 24px;font-size:11px;font-weight:600;color:${C_LBL};background:${C_SEP_BG};border-bottom:1px solid ${C_BORDER};">${escape(h.nombre)}</td>
           </tr>
-          <tr>${acomCells(h.preciosPorAcomodacion)}</tr>
+          <tr>${nocheCells(h.preciosPorAcomodacion)}</tr>
+
+          ${subHeader("Precio final del paquete por persona", C_PRICE_BG)}
+          <tr>${precioCells(d.result.totalesPorAcomodacion)}</tr>
 
         </tbody>
       </table>
@@ -952,34 +1010,42 @@ function buildPackageView(d: PropuestaData): string {
 
   } else if (d.hoteles.length >= 2) {
     // ── Multi-option: comparative table ───────────────────────────────────
-    const thStyle = `padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};border-bottom:2px solid ${C_BORDER};border-right:1px solid ${C_BORDER};`;
+    // Column order: OPCIÓN | ALOJAMIENTO | NOCHE ADICIONAL | PRECIO FINAL PAQUETE
+    const thBase = `padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:${C_LBL};` +
+      `text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};` +
+      `border-bottom:2px solid ${C_BORDER};border-right:1px solid ${C_BORDER};`;
+    const thPrice = `padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:${C_DARK};` +
+      `text-transform:uppercase;letter-spacing:0.6px;background:${C_PRICE_BG};` +
+      `border-bottom:2px solid ${C_BORDER};`;
 
     const dataRows = d.hoteles
       .map((h, idx) => {
         const regimenFmt = formatRegimen(h.desayuno);
         const rowBg = idx % 2 === 0 ? "#ffffff" : C_HDR_BG;
 
-        const priceLinesHtml = acoms
-          .map(
-            (a) =>
-              `<div style="font-size:12px;color:${C_DARK};line-height:1.8;">` +
-              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;">${escape(String(a))}:</span>` +
-              ` USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</div>`,
-          )
-          .join("");
-
+        // NOCHE ADICIONAL column: per-hotel per-night rate
         const nocheLinesHtml = acoms
           .map(
             (a) =>
-              `<div style="font-size:12px;color:${C_DARK};line-height:1.8;">` +
-              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;">${escape(String(a))}:</span>` +
+              `<div style="font-size:13px;color:${C_DARK};line-height:2.0;">` +
+              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
               ` USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</div>`,
+          )
+          .join("");
+
+        // PRECIO FINAL PAQUETE column: global package total — prominent
+        const priceLinesHtml = acoms
+          .map(
+            (a) =>
+              `<div style="font-size:15px;font-weight:800;color:${C_DARK};line-height:2.0;">` +
+              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
+              ` USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</div>`,
           )
           .join("");
 
         return `<tr style="background:${rowBg};page-break-inside:avoid;">
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;white-space:nowrap;">
-            <div style="font-weight:700;color:${C_BLUE};font-size:13px;">Opción ${idx + 1}</div>
+            <div style="font-weight:700;color:${C_BLUE};font-size:13px;">Opci&#243;n ${idx + 1}</div>
           </td>
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">
             <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>
@@ -987,8 +1053,8 @@ function buildPackageView(d: PropuestaData): string {
             ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} noches</div>` : ""}
             ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
           </td>
-          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">${priceLinesHtml}</td>
-          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};vertical-align:top;">${nocheLinesHtml}</td>
+          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">${nocheLinesHtml}</td>
+          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};vertical-align:top;background:${C_PRICE_BG};">${priceLinesHtml}</td>
         </tr>`;
       })
       .join("");
@@ -996,13 +1062,14 @@ function buildPackageView(d: PropuestaData): string {
     hotelBlock = `
     <div style="margin-bottom:20px;">
       ${sectionBar("Opciones de alojamiento", C_BLUE)}
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%"
+        style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
         <thead>
           <tr>
-            <th style="${thStyle}width:10%;">Opción</th>
-            <th style="${thStyle}width:32%;">Alojamiento</th>
-            <th style="${thStyle}width:30%;">Precio final paquete</th>
-            <th style="${thStyle}width:28%;border-right:none;">Noche adicional</th>
+            <th style="${thBase}width:9%;">Opci&#243;n</th>
+            <th style="${thBase}width:30%;">Alojamiento</th>
+            <th style="${thBase}width:26%;">Noche adicional</th>
+            <th style="${thPrice}width:35%;">Precio final paquete</th>
           </tr>
         </thead>
         <tbody>${dataRows}</tbody>
