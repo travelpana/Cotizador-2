@@ -93,6 +93,18 @@ function fmtFechaCompacta(iso: string): string {
   return `${d}-${m}-${String(y).slice(2)}`;
 }
 
+function fmtFechaBar(iso: string, idioma: Idioma = "es"): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const MESES: Record<Idioma, string[]> = {
+    es: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"],
+    en: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    pt: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+  };
+  return `${String(d).padStart(2,"0")} ${(MESES[idioma] ?? MESES.es)[m - 1]} ${y}`;
+}
+
 function formatNotasLineas(text: string, style: string): string {
   if (!text.trim()) return "";
   const lines: string[] = [];
@@ -1022,6 +1034,46 @@ function introBlock(d: PropuestaData): string {
   return `<tr><td style="padding:0 0 16px 0;">${paragraphs}</td></tr>`;
 }
 
+function infoBar(d: PropuestaData): string {
+  const { T, idioma } = d;
+  const c = d.cliente;
+  const IC = "#004FBB";
+
+  const fechasText =
+    c.fechaInicio && c.fechaFin
+      ? `${fmtFechaBar(c.fechaInicio, idioma)} – ${fmtFechaBar(c.fechaFin, idioma)}`
+      : c.fechaInicio
+      ? fmtFechaBar(c.fechaInicio, idioma)
+      : "—";
+
+  const svgPin = `<svg width="22" height="22" viewBox="0 0 24 24" fill="${IC}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+  const svgCal  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="${IC}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;"><path d="M20 3h-1V1h-2v2H7V1H5v2H4C2.9 3 2 3.9 2 5v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13zM10 11H8v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H8v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>`;
+  const svgMoon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="${IC}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>`;
+  const svgUser = `<svg width="22" height="22" viewBox="0 0 24 24" fill="${IC}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+
+  const LBL = `font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;margin:6px 0 2px;display:block;`;
+  const VAL = `font-size:13px;font-weight:700;color:#1e293b;display:block;word-break:break-word;`;
+  const SEP = `width:1px;background:#e2e8f0;`;
+  const CEL = `padding:13px 10px;text-align:center;vertical-align:middle;`;
+
+  function col(svg: string, lbl: string, val: string): string {
+    return `<td style="${CEL}">${svg}<span style="${LBL}">${escape(lbl)}</span><span style="${VAL}">${escape(val)}</span></td>`;
+  }
+
+  return `
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f8faff;">
+  <tr>
+    ${col(svgPin,  T.destino,         d.destino)}
+    <td style="${SEP}"></td>
+    ${col(svgCal,  T.fechasDeEstadia, fechasText)}
+    <td style="${SEP}"></td>
+    ${col(svgMoon, T.noches,          d.noches)}
+    <td style="${SEP}"></td>
+    ${col(svgUser, T.pasajeros,       d.pasajerosLabel)}
+  </tr>
+</table>`;
+}
+
 export function buildPropuestaBody(d: PropuestaData): string {
   const { T } = d;
   return `
@@ -1040,28 +1092,8 @@ export function buildPropuestaBody(d: PropuestaData): string {
             </tr>
 
             <tr>
-              <td style="padding-bottom:12px;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-                  <tr>
-                    <td style="vertical-align:top;width:50%;padding-right:20px;">
-                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-                        <tbody>
-                          ${infoRow(T.destino, d.destino)}
-                          ${infoRow(T.fechasDeEstadia, d.fechaViaje)}
-                          ${infoRow(T.pasajeros, d.pasajerosLabel)}
-                        </tbody>
-                      </table>
-                    </td>
-                    <td style="vertical-align:top;width:50%;padding-left:20px;">
-                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-                        <tbody>
-                          ${infoRow(T.noches, d.noches)}
-                          ${infoRow(T.validaHasta, d.validaHasta)}
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
+              <td style="padding-bottom:16px;">
+                ${infoBar(d)}
               </td>
             </tr>
 
