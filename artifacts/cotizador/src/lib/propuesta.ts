@@ -853,139 +853,165 @@ function buildTotalesView(d: PropuestaData): string {
 // ─── PACKAGE VIEW ─────────────────────────────────────────────────────────────
 
 function buildPackageView(d: PropuestaData): string {
-  const { T } = d;
-  const C_PKG_DARK   = "#041941";
-  const C_PKG_GOLD   = "#e6ae33";
-  const C_PKG_BLUE   = "#2F3D90";
-  const C_PKG_GREEN  = "#16a34a";
+  const C_BLUE    = "#334196";
+  const C_DARK    = "#041941";
+  const C_BORDER  = "#e2e8f0";
+  const C_HDR_BG  = "#f5f7fb";
+  const C_SEP_BG  = "#eef2f8";
+  const C_LBL     = "#64748b";
 
-  // ── Auto-generate inclusion list ──────────────────────────────────────────
+  // ── 1. EL PAQUETE INCLUYE ─────────────────────────────────────────────────
   const inclusions: string[] = [];
   if (d.hoteles.length > 0) {
     inclusions.push("Alojamiento");
-    const hasDesayuno = d.hoteles.some((h) => !!formatRegimen(h.desayuno));
-    if (hasDesayuno) inclusions.push("Desayuno");
+    if (d.hoteles.some((h) => !!formatRegimen(h.desayuno))) inclusions.push("Desayuno incluido");
   }
   if (d.traslados.length > 0) inclusions.push("Traslados");
   if (d.tours.length > 0 || d.catamarans.length > 0) inclusions.push("Tours seleccionados");
-  if (d.vuelos.length > 0) inclusions.push("Vuelos (si aplica)");
-  const hasTickets = d.tours.some((s) => s.tickets?.enabled && s.tickets.adultPrice > 0);
-  if (hasTickets) inclusions.push("Entradas (si aplica)");
+  if (d.vuelos.length > 0) inclusions.push("Vuelos, si aplica");
+  if (d.tours.some((s) => s.tickets?.enabled && s.tickets.adultPrice > 0)) inclusions.push("Entradas, si aplica");
 
   const inclusionRows = inclusions
     .map(
       (item) =>
-        `<tr><td style="padding:5px 0;color:#ffffff;font-size:13px;">` +
-        `<span style="color:${C_PKG_GOLD};font-weight:700;margin-right:8px;">✓</span>${escape(item)}</td></tr>`,
+        `<tr><td style="padding:7px 14px 7px 24px;font-size:13px;color:${C_DARK};border-bottom:1px solid ${C_BORDER};">` +
+        `<span style="color:${C_BLUE};font-weight:700;margin-right:8px;">•</span>${escape(item)}</td></tr>`,
     )
     .join("");
 
   const inclusionBlock = inclusions.length
-    ? `<div style="margin-bottom:24px;">
-        <div style="background:${C_PKG_DARK};border-radius:8px;padding:16px 20px;">
-          <div style="font-size:10px;font-weight:700;color:${C_PKG_GOLD};letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">El paquete incluye</div>
-          <table cellpadding="0" cellspacing="0" border="0" width="100%"><tbody>${inclusionRows}</tbody></table>
-        </div>
+    ? `<div style="margin-bottom:20px;">
+        ${sectionBar("El paquete incluye", C_BLUE)}
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+          <tbody>${inclusionRows}</tbody>
+        </table>
       </div>`
     : "";
 
-  // ── Services listing (no prices) ──────────────────────────────────────────
-  const pillStyle = `display:inline-block;background:${C_PKG_GREEN};color:#ffffff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.5px;text-transform:uppercase;`;
+  // ── 2. OPCIONES DE ALOJAMIENTO ────────────────────────────────────────────
+  const acoms = d.acoms;
 
-  let servicesHtml = "";
+  /** Small sub-header bar used inside the hotel block. */
+  function subHeader(text: string): string {
+    return `<tr><td colspan="${acoms.length + 1}" style="padding:7px 14px 7px 24px;font-size:10px;font-weight:700;color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">${escape(text)}</td></tr>`;
+  }
 
-  if (d.hoteles.length > 0) {
-    const hotelItems = d.hoteles
-      .map((h) => {
+  /** Price cells for each acomodacion in a single row. */
+  function acomCells(totales: Record<string, number>, large = false): string {
+    const fs = large ? "15px" : "13px";
+    const fw = large ? "800" : "700";
+    return acoms
+      .map(
+        (a) =>
+          `<td style="padding:10px 12px;text-align:center;border-right:1px solid ${C_BORDER};vertical-align:middle;width:${Math.floor(60 / acoms.length)}%;">` +
+          `<div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">${escape(String(a))}</div>` +
+          `<div style="font-size:${fs};font-weight:${fw};color:${C_DARK};">USD ${escape(fmt(totales[a] ?? 0))}</div>` +
+          `</td>`,
+      )
+      .join("");
+  }
+
+  let hotelBlock = "";
+
+  if (d.hoteles.length === 1) {
+    // ── Single option: premium simple layout ──────────────────────────────
+    const h = d.hoteles[0];
+    const regimenFmt = formatRegimen(h.desayuno);
+    const notas = h.notas
+      ? `<div style="font-size:11px;color:${C_LBL};font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
+      : "";
+
+    hotelBlock = `
+    <div style="margin-bottom:20px;">
+      ${sectionBar("Alojamiento", C_BLUE)}
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+        <tbody>
+
+          <tr>
+            <td colspan="${acoms.length + 1}" style="padding:12px 14px 12px 24px;border-bottom:1px solid ${C_BORDER};">
+              <div style="font-size:14px;font-weight:700;color:${C_DARK};">${escape(h.nombre)}</div>
+              ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};margin-top:2px;">${escape(h.estrellas)}</div>` : ""}
+              ${h.noches ? `<div style="font-size:11px;color:${C_LBL};margin-top:1px;">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
+              ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:3px;">${escape(regimenFmt)}</div>` : ""}
+              ${notas}
+            </td>
+          </tr>
+
+          ${subHeader("Precios del paquete por persona")}
+          <tr>${acomCells(d.result.totalesPorAcomodacion, true)}</tr>
+
+          ${subHeader("Noche adicional por persona")}
+          <tr>
+            <td colspan="${acoms.length + 1}" style="padding:5px 14px 2px 24px;font-size:11px;font-weight:600;color:${C_LBL};background:${C_SEP_BG};border-bottom:1px solid ${C_BORDER};">${escape(h.nombre)}</td>
+          </tr>
+          <tr>${acomCells(h.preciosPorAcomodacion)}</tr>
+
+        </tbody>
+      </table>
+    </div>`;
+
+  } else if (d.hoteles.length >= 2) {
+    // ── Multi-option: comparative table ───────────────────────────────────
+    const thStyle = `padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};border-bottom:2px solid ${C_BORDER};border-right:1px solid ${C_BORDER};`;
+
+    const dataRows = d.hoteles
+      .map((h, idx) => {
         const regimenFmt = formatRegimen(h.desayuno);
-        const regimenLine = regimenFmt
-          ? `<div style="font-size:11px;color:${C_PKG_BLUE};font-weight:600;margin-top:4px;">${escape(regimenFmt)}</div>`
-          : "";
-        const nochesSuffix = h.noches
-          ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>`
-          : "";
-        const notasLine = h.notas
-          ? `<div style="font-size:11px;color:#64748b;font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
-          : "";
-        return `<tr style="page-break-inside:avoid;">
-          <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top;">
-            <div style="font-weight:600;color:#1f2937;font-size:13px;">${escape(h.nombre)}</div>
-            ${nochesSuffix}${regimenLine}${notasLine}
+        const rowBg = idx % 2 === 0 ? "#ffffff" : C_HDR_BG;
+
+        const priceLinesHtml = acoms
+          .map(
+            (a) =>
+              `<div style="font-size:12px;color:${C_DARK};line-height:1.8;">` +
+              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;">${escape(String(a))}:</span>` +
+              ` USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</div>`,
+          )
+          .join("");
+
+        const nocheLinesHtml = acoms
+          .map(
+            (a) =>
+              `<div style="font-size:12px;color:${C_DARK};line-height:1.8;">` +
+              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;">${escape(String(a))}:</span>` +
+              ` USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</div>`,
+          )
+          .join("");
+
+        return `<tr style="background:${rowBg};page-break-inside:avoid;">
+          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;white-space:nowrap;">
+            <div style="font-weight:700;color:${C_BLUE};font-size:13px;">Opción ${idx + 1}</div>
           </td>
-          <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;text-align:right;white-space:nowrap;">
-            <span style="${pillStyle}">Incluido</span>
+          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>
+            ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.estrellas)}</div>` : ""}
+            ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} noches</div>` : ""}
+            ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
           </td>
+          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">${priceLinesHtml}</td>
+          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};vertical-align:top;">${nocheLinesHtml}</td>
         </tr>`;
       })
       .join("");
-    servicesHtml += `
+
+    hotelBlock = `
     <div style="margin-bottom:20px;">
-      ${sectionBar(T.alojamiento, C_PKG_BLUE)}
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-        <tbody>${hotelItems}</tbody>
+      ${sectionBar("Opciones de alojamiento", C_BLUE)}
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
+        <thead>
+          <tr>
+            <th style="${thStyle}width:10%;">Opción</th>
+            <th style="${thStyle}width:32%;">Alojamiento</th>
+            <th style="${thStyle}width:30%;">Precio final paquete</th>
+            <th style="${thStyle}width:28%;border-right:none;">Noche adicional</th>
+          </tr>
+        </thead>
+        <tbody>${dataRows}</tbody>
       </table>
     </div>`;
   }
 
-  const serviceGroup = (
-    title: string,
-    color: string,
-    items: ServicioCalculado[],
-    getName: (s: ServicioCalculado) => string,
-  ): string => {
-    if (items.length === 0) return "";
-    const rows = items
-      .map((s) => {
-        const horarioLine =
-          s.tipo === "tour" && d.incluirDescriptivos && s.horario
-            ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${escape(s.horario)}</div>`
-            : "";
-        const notasLine = s.notas
-          ? `<div style="font-size:11px;color:#64748b;font-style:italic;margin-top:3px;">${escape(s.notas)}</div>`
-          : "";
-        return `<tr style="page-break-inside:avoid;">
-          <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top;">
-            <div style="font-weight:600;color:#1f2937;font-size:13px;">${escape(getName(s))}</div>
-            ${horarioLine}${notasLine}
-          </td>
-          <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;text-align:right;white-space:nowrap;">
-            <span style="${pillStyle}">Incluido</span>
-          </td>
-        </tr>`;
-      })
-      .join("");
-    return `
-    <div style="margin-bottom:20px;">
-      ${sectionBar(title, color)}
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-  };
-
-  servicesHtml += serviceGroup(
-    T.traslados, C_TOT_TRASLADOS, d.traslados,
-    (s) => personalizarNombreTraslado(formatTrasladoNombre(s.nombre), d.hoteles, d.personalizarTraslados),
-  );
-  servicesHtml += serviceGroup(T.toursYExperiencias, C_TOT_TOURS, d.tours, (s) => s.nombre);
-  servicesHtml += serviceGroup(T.catamaranYNavegacion, C_TOT_VUELOS, d.catamarans, (s) => s.nombre);
-  servicesHtml += serviceGroup(T.vuelos, C_TOT_VUELOS, d.vuelos, (s) => s.nombre);
-
-  // ── Price block ───────────────────────────────────────────────────────────
-  const totalVal = d.result.totalesPorAcomodacion[d.primary] ?? 0;
-  const priceLabel = d.isCalc ? "TOTAL PAQUETE" : "VALOR DEL PAQUETE";
-  const priceSubLabel = d.isCalc ? "" : "POR PERSONA";
-
-  const priceBlock = `
-  <div style="margin-top:8px;margin-bottom:24px;background:${C_PKG_DARK};border-radius:12px;padding:24px 28px;text-align:center;">
-    <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">${escape(priceLabel)}</div>
-    <div style="font-size:36px;font-weight:800;color:${C_PKG_GOLD};line-height:1.1;">${escape(fmt(totalVal))}</div>
-    ${priceSubLabel ? `<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;">${escape(priceSubLabel)}</div>` : ""}
-    ${d.acoms.length > 1 ? `<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:8px;">${escape(d.acoms.map((a) => `${a}: ${fmt(d.result.totalesPorAcomodacion[a])}`).join(" · "))}</div>` : ""}
-  </div>`;
-
   // ── Compose ───────────────────────────────────────────────────────────────
-  let html = inclusionBlock + servicesHtml + priceBlock;
+  let html = inclusionBlock + hotelBlock;
   html += observacionesBlock(d, C_TOT_OBSERVACIONES);
   html += itinerarioTable(d, C_TOT_ITINERARIO, "#ffffff");
   html += descriptivosBlock(d, C_TOT_DESCRIPTIVOS);
