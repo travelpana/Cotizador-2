@@ -144,7 +144,8 @@ export function duplicarTraslado(t: TrasladoLocal): TrasladoLocal {
 
 export function hotelFromApi(h: Hotel): HotelLocal {
   const now = new Date().toISOString();
-  return { ...h, activo: true, createdAt: now, updatedAt: now };
+  const codigo = /^(hotel|tour|traslado)_\d+_\d+$/.test(h.id) ? undefined : h.id;
+  return { ...h, codigo, activo: true, createdAt: now, updatedAt: now };
 }
 
 export function tourFromApi(t: Tour): TourLocal {
@@ -154,7 +155,8 @@ export function tourFromApi(t: Tour): TourLocal {
 
 export function trasladoFromApi(t: Traslado): TrasladoLocal {
   const now = new Date().toISOString();
-  return { ...t, rutaOrigen: "", rutaDestino: "", activo: true, createdAt: now, updatedAt: now };
+  const codigo = /^(hotel|tour|traslado)_\d+_\d+$/.test(t.id) ? undefined : t.id;
+  return { ...t, codigo, rutaOrigen: "", rutaDestino: "", activo: true, createdAt: now, updatedAt: now };
 }
 
 /* ─── Merge: LS takes priority over API (by id). Inactive excluded. ─── */

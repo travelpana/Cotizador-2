@@ -19,6 +19,18 @@ import { fmt } from "@/lib/calc";
 type Categoria = "todos" | "hotel" | "traslado" | "tour";
 type Mercado = "general" | "brasil";
 
+/**
+ * Returns the commercial code to display for a catalog item.
+ * - Local items have id = "hotel_TIMESTAMP_N" / "tour_..." / "traslado_..." and a separate `codigo` field.
+ * - API/Excel items have id = the RGE code itself (e.g. "RGE-020") and no `codigo` field.
+ * Rule: use `codigoField` if present; else use `id` unless it looks like an internal generated ID.
+ */
+function displayCodigo(id: string, codigoField?: string): string {
+  if (codigoField) return codigoField;
+  if (/^(hotel|tour|traslado)_\d+_\d+$/.test(id)) return "";
+  return id;
+}
+
 interface Props {
   hoteles: Hotel[];
   tours: Tour[];
@@ -131,8 +143,8 @@ export default function ServiceSearchBar({
 
     if (categoria === "todos" || categoria === "hotel") {
       for (const h of hoteles) {
-        const hCodigo: string = (h as any).codigo ?? "";
-        if (matches(h.nombre) || matches(h.id) || matches(hCodigo) || matches(h.ubicacion ?? "") || matches(h.categoria ?? "")) {
+        const hCodigo = displayCodigo(h.id, (h as any).codigo);
+        if (matches(h.nombre) || matches(hCodigo) || matches(h.ubicacion ?? "") || matches(h.categoria ?? "")) {
           out.push({
             tipo: "hotel",
             raw: h,
@@ -152,8 +164,8 @@ export default function ServiceSearchBar({
 
     if (categoria === "todos" || categoria === "traslado") {
       for (const t of traslados) {
-        const tCodigo: string = (t as any).codigo ?? "";
-        if (matches(t.nombre) || matches(t.id) || matches(tCodigo) || matches(t.categoria ?? "")) {
+        const tCodigo = displayCodigo(t.id, (t as any).codigo);
+        if (matches(t.nombre) || matches(tCodigo) || matches(t.categoria ?? "")) {
           out.push({
             tipo: "traslado",
             raw: t,
@@ -172,12 +184,13 @@ export default function ServiceSearchBar({
 
     if (categoria === "todos" || categoria === "tour") {
       for (const t of tours) {
-        if (matches(t.nombre) || matches(t.id) || matches(t.categoria ?? "") || matches(t.seccion ?? "")) {
+        const tCodigo = displayCodigo(t.id);
+        if (matches(t.nombre) || matches(tCodigo) || matches(t.categoria ?? "") || matches(t.seccion ?? "")) {
           out.push({
             tipo: "tour",
             raw: t,
             nombre: t.nombre,
-            codigo: t.id,
+            codigo: tCodigo,
             vigencia: t.horario,
             categoria: t.categoria || t.seccion,
             precios: {
@@ -214,12 +227,12 @@ export default function ServiceSearchBar({
   }, [resultados]);
 
   const buildServicio = (r: Resultado): ServicioSeleccionado => {
-    const uid = `${r.tipo}-${r.codigo || Date.now()}-${Date.now()}`;
+    const uid = `${r.tipo}-${Date.now()}`;
     if (r.tipo === "hotel") {
       const h = r.raw as Hotel;
-      const comercial: string = (h as any).codigo ?? "";
+      const codValue = displayCodigo(h.id, (h as any).codigo);
       return {
-        id: uid, codigo: comercial || h.id, tipo: "hotel", nombre: h.nombre,
+        id: uid, codigo: codValue || h.id, tipo: "hotel", nombre: h.nombre,
         precios: { SGL: h.precios.SGL, DBL: h.precios.DBL, TPL: h.precios.TPL, CHD: h.precios.CHD },
         ubicacion: h.ubicacion, estrellas: h.estrellas, vigencia: h.vigencia,
         tipoHabitacion: h.tipoHabitacion,
@@ -236,7 +249,7 @@ export default function ServiceSearchBar({
       };
     }
     const tr = r.raw as Traslado;
-    const trCodigo: string = (tr as any).codigo ?? "";
+    const trCodigo = displayCodigo(tr.id, (tr as any).codigo);
     return {
       id: uid, codigo: trCodigo || tr.id, tipo: "traslado", nombre: tr.nombre,
       precios: { p1: tr.precios.p1, p2_5: tr.precios.p2_5, p6_10: tr.precios.p6_10, chd: tr.precios.chd },
@@ -517,9 +530,11 @@ function ResultRow({
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className="text-[11px] font-mono font-semibold" style={{ color: r.codigo ? "#004fbb" : "#94a3b8" }}>
-            {r.codigo ? highlight(r.codigo, query) : "SIN CÓDIGO"}
-          </span>
+          {r.codigo && (
+            <span className="text-[11px] font-mono font-semibold" style={{ color: "#004fbb" }}>
+              {highlight(r.codigo, query)}
+            </span>
+          )}
           {r.categoria && (
             <>
               <span className="text-slate-300 text-[10px]">·</span>
