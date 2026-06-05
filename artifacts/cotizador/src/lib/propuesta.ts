@@ -876,49 +876,34 @@ function buildPackageView(d: PropuestaData): string {
   [...d.tours, ...d.catamarans].forEach((s) => includeItems.push(s.nombre));
   d.vuelos.forEach((v) => includeItems.push(v.nombre));
 
-  // Right column: highlights derived from the quote
-  const highlightItems: string[] = [];
-  const regimenes = d.hoteles
-    .map((h) => formatRegimen(h.desayuno))
-    .filter(Boolean) as string[];
-  if (regimenes.length > 0) highlightItems.push(regimenes[0]);
-  d.hoteles.forEach((h) => {
-    if (h.noches) {
-      highlightItems.push(
-        `${h.noches} ${h.noches === 1 ? "noche" : "noches"} en ${h.nombre}`,
-      );
-    }
-  });
-  if (d.traslados.length > 0) highlightItems.push("Traslados incluidos");
-  highlightItems.push("Tarifas netas por persona");
-
-  const colHdrTd = `padding:7px 14px 7px 16px;font-size:10px;font-weight:700;color:#ffffff;` +
-    `text-transform:uppercase;letter-spacing:0.8px;background:${C_BLUE};border-bottom:1px solid #2a3585;`;
+  // Split includeItems evenly: left half / right half (no highlights column)
+  const midpoint  = Math.ceil(includeItems.length / 2);
+  const leftItems  = includeItems.slice(0, midpoint);
+  const rightItems = includeItems.slice(midpoint);
 
   const checkTd = (text: string) =>
     `<tr><td style="padding:6px 12px 6px 14px;font-size:13px;color:${C_DARK};` +
     `border-bottom:1px solid ${C_BORDER};">${TICK}${escape(text)}</td></tr>`;
 
-  const leftRows  = includeItems.map(checkTd).join("");
-  const rightRows = highlightItems.map(checkTd).join("");
+  const leftRows  = leftItems.map(checkTd).join("");
+  const rightRows = rightItems.map(checkTd).join("");
 
-  const inclusionBlock = (includeItems.length || highlightItems.length)
+  const inclusionBlock = includeItems.length
     ? `<div style="margin-bottom:20px;">
+        ${sectionBar("Incluye", C_BLUE)}
         <table cellpadding="0" cellspacing="0" border="0" width="100%"
-          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};">
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
           <tbody>
             <tr valign="top">
               <td width="50%" style="width:50%;border-right:1px solid ${C_BORDER};vertical-align:top;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%"
                   style="width:100%;border-collapse:collapse;">
-                  <thead><tr><td style="${colHdrTd}">El paquete incluye</td></tr></thead>
                   <tbody>${leftRows}</tbody>
                 </table>
               </td>
               <td width="50%" style="width:50%;vertical-align:top;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%"
                   style="width:100%;border-collapse:collapse;">
-                  <thead><tr><td style="${colHdrTd}">Highlights</td></tr></thead>
                   <tbody>${rightRows}</tbody>
                 </table>
               </td>
@@ -980,7 +965,7 @@ function buildPackageView(d: PropuestaData): string {
 
     hotelBlock = `
     <div style="margin-bottom:20px;">
-      ${sectionBar("Alojamiento", C_BLUE)}
+      ${sectionBar("Alojamiento", "#363765")}
       <table cellpadding="0" cellspacing="0" border="0" width="100%"
         style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
         <tbody>
@@ -1001,7 +986,7 @@ function buildPackageView(d: PropuestaData): string {
           </tr>
           <tr>${nocheCells(h.preciosPorAcomodacion)}</tr>
 
-          ${subHeader("Precio final del paquete por persona", C_PRICE_BG)}
+          ${subHeader("Precio total por persona", C_PRICE_BG)}
           <tr>${precioCells(d.result.totalesPorAcomodacion)}</tr>
 
         </tbody>
@@ -1061,7 +1046,7 @@ function buildPackageView(d: PropuestaData): string {
 
     hotelBlock = `
     <div style="margin-bottom:20px;">
-      ${sectionBar("Opciones de alojamiento", C_BLUE)}
+      ${sectionBar("Opciones de alojamiento", "#363765")}
       <table cellpadding="0" cellspacing="0" border="0" width="100%"
         style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
         <thead>
@@ -1069,7 +1054,7 @@ function buildPackageView(d: PropuestaData): string {
             <th style="${thBase}width:9%;">Opci&#243;n</th>
             <th style="${thBase}width:30%;">Alojamiento</th>
             <th style="${thBase}width:26%;">Noche adicional</th>
-            <th style="${thPrice}width:35%;">Precio final paquete</th>
+            <th style="${thPrice}width:35%;">Precio total</th>
           </tr>
         </thead>
         <tbody>${dataRows}</tbody>
