@@ -27,6 +27,10 @@ const MESES_ES = [
   "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
 ];
 
+const DIAS_ES = [
+  "DOMINGO","LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO",
+];
+
 function DateCard({
   iso,
   label,
@@ -41,10 +45,12 @@ function DateCard({
   const hasDate = !!iso;
   let dayStr = "--";
   let monthYear = "--- ----";
+  let weekday = "";
   if (hasDate) {
     const [y, m, d] = iso.split("-").map(Number);
     dayStr = String(d).padStart(2, "0");
     monthYear = `${MESES_ES[m - 1]} ${y}`;
+    weekday = DIAS_ES[new Date(y, m - 1, d).getDay()];
   }
   return (
     <button
@@ -62,10 +68,21 @@ function DateCard({
       }}
     >
       <div
-        className="text-[9px] font-bold uppercase tracking-widest mb-1.5"
+        className="text-[9px] font-bold uppercase tracking-widest"
         style={{ color: active ? "#004FBB" : hasDate ? "#1495ff" : "#94a3b8" }}
       >
         {label}
+      </div>
+      <div
+        className="text-[11px] font-bold uppercase tracking-wide mt-0.5 mb-1"
+        style={{
+          color: hasDate ? "#041941" : "#cbd5e1",
+          fontSize: 11,
+          fontWeight: 700,
+          minHeight: 16,
+        }}
+      >
+        {weekday || "\u00A0"}
       </div>
       <div
         className="text-4xl font-black leading-none mb-0.5"
@@ -89,12 +106,14 @@ function StatCounter({
   onChange,
   min = 0,
   accent = false,
+  prominent = false,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
   accent?: boolean;
+  prominent?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const display = draft ?? String(value);
@@ -130,7 +149,7 @@ function StatCounter({
         aria-label={label}
         className="w-full text-center focus:outline-none focus:ring-0"
         style={{
-          fontSize: 26,
+          fontSize: prominent ? 32 : 26,
           fontWeight: 900,
           color: accent ? "#004FBB" : "#041941",
           background: "transparent",
@@ -292,6 +311,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
                 onChange={(v) => update({ noches: v })}
                 min={0}
                 accent
+                prominent={cliente.noches > 1}
               />
             </div>
             <div className="flex-1 py-2.5 px-3">
