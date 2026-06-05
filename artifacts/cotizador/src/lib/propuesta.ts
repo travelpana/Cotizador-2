@@ -1086,12 +1086,6 @@ export function buildPropuestaBody(d: PropuestaData): string {
             ${introBlock(d)}
 
             <tr>
-              <td style="text-align:center;padding-bottom:18px;">
-                <span style="${STYLES.pillBlue};padding:10px 25px;font-size:16px;">${d.isPackage ? escape("PAQUETE DE SERVICIOS") : escape(T.propuestaDeServicios)}</span>
-              </td>
-            </tr>
-
-            <tr>
               <td style="padding-bottom:16px;">
                 ${infoBar(d)}
               </td>
