@@ -63,6 +63,15 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+/** Builds a time-aware personalized email greeting using the agent's first name. */
+function buildEmailGreeting(agente: string): string {
+  const hour = new Date().getHours();
+  const saludo = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
+  const firstName = agente.trim().split(/\s+/)[0] ?? "";
+  const greeting = firstName ? `${saludo}, ${firstName}:` : `${saludo}:`;
+  return `${greeting}\n\nUn gusto saludarle. A continuación encontrará la propuesta solicitada.`;
+}
+
 export default function ExportButtons({
   cliente,
   servicios,
@@ -521,7 +530,7 @@ export default function ExportButtons({
 
     try {
       const numero = getNumeroCotizacion();
-      const emailIntro = T.emailIntro;
+      const emailIntro = buildEmailGreeting(cliente.agente ?? "");
       const html = buildHtml(numero, emailIntro);
       const text = `${emailIntro}\n\n${buildText()}`;
 
