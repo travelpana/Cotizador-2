@@ -700,7 +700,59 @@ export function AlojamientoBar({
   onAcomodacionesChange: (a: Acomodacion[]) => void;
 }) {
   const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
-  const BED_COUNT: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+
+  const BED_ICONS: Record<Acomodacion, React.ReactNode> = {
+    SGL: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
+        <rect x="2" y="7" width="18" height="5" rx="1" fill="white" opacity="0.7"/>
+        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
+        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
+        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
+      </svg>
+    ),
+    DBL: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
+        <rect x="2" y="7" width="8" height="5" rx="1" fill="white" opacity="0.7"/>
+        <rect x="12" y="7" width="8" height="5" rx="1" fill="white" opacity="0.7"/>
+        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
+        <line x1="11" y1="7" x2="11" y2="12" stroke="white" strokeWidth="0.8" opacity="0.5"/>
+        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
+        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
+      </svg>
+    ),
+    TPL: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
+        <rect x="2" y="7" width="18" height="5" rx="1" fill="white" opacity="0.7"/>
+        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
+        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
+        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
+        <circle cx="17.5" cy="5.5" r="4.5" fill="#1495ff" stroke="white" strokeWidth="1"/>
+        <text x="17.5" y="8.5" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="white" fontFamily="system-ui">3</text>
+      </svg>
+    ),
+    QDL: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
+        <rect x="2" y="7" width="18" height="5" rx="1" fill="white" opacity="0.7"/>
+        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
+        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
+        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
+        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
+        <circle cx="17.5" cy="5.5" r="4.5" fill="#1495ff" stroke="white" strokeWidth="1"/>
+        <text x="17.5" y="8.5" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="white" fontFamily="system-ui">4</text>
+      </svg>
+    ),
+  };
 
   const togglePill = (a: Acomodacion) => {
     if (acomodaciones.includes(a)) {
@@ -756,12 +808,8 @@ export function AlojamientoBar({
               }}
               data-testid={`acomodacion-${p}`}
             >
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-                  {Array.from({ length: BED_COUNT[p] ?? 1 }).map((_, i) => (
-                    <span key={i} style={{ display: "inline-block", width: 8, height: 5, background: "currentColor", borderRadius: 1.5, opacity: 0.9 }} />
-                  ))}
-                </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
+                {BED_ICONS[p]}
                 {p}
               </div>
             </button>
