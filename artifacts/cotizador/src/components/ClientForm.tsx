@@ -766,6 +766,8 @@ export function AlojamientoBar({
     }
   };
 
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const handleInputChange = (p: Acomodacion, raw: string) => {
     const val = parseInt(raw, 10);
     const next = isNaN(val) ? 0 : Math.max(0, val);
@@ -849,22 +851,65 @@ export function AlojamientoBar({
     whiteSpace: "nowrap",
   };
 
+  const ROOM_ICONS: Record<Acomodacion, React.ReactNode> = {
+    SGL: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+        <path d="M3 14h18"/>
+        <path d="M8 8V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+      </svg>
+    ),
+    DBL: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+        <path d="M3 14h18"/>
+        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <path d="M12 8v6"/>
+      </svg>
+    ),
+    TPL: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="7" r="2"/>
+        <path d="M5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
+        <circle cx="4" cy="9" r="1.5"/>
+        <circle cx="20" cy="9" r="1.5"/>
+        <path d="M1 20v-1.5a3 3 0 0 1 3-3"/>
+        <path d="M23 20v-1.5a3 3 0 0 0-3-3"/>
+      </svg>
+    ),
+    QDL: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8" cy="7" r="2"/>
+        <circle cx="16" cy="7" r="2"/>
+        <path d="M4 20v-1a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v1"/>
+        <path d="M12 12v8"/>
+      </svg>
+    ),
+    CHD: <></>,
+  };
+
   return (
     <section
       className="relative rounded-2xl overflow-hidden text-white"
       style={{ ...sectionStyle, animation: "grupoEnter 0.3s ease-out" }}
     >
-      <style>{`@keyframes grupoEnter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <style>{`
+        @keyframes grupoEnter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .grupo-input::-webkit-outer-spin-button,
+        .grupo-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .grupo-input[type=number] { -moz-appearance: textfield; }
+      `}</style>
       {decorations}
-      <div className="relative" style={{ padding: "12px 14px 0" }}>
+      <div className="relative" style={{ padding: "10px 12px 0" }}>
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.55, marginBottom: 10 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.5, marginBottom: 8 }}>
           Distribución del Grupo
         </p>
 
         {/* Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-          {PILLS.map((p) => {
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          {PILLS.map((p, idx) => {
             const active = acomodaciones.includes(p);
             const count = habitacionesPorAcomodacion[p] ?? 0;
             const pax = count * ROOM_PAX[p];
@@ -872,57 +917,70 @@ export function AlojamientoBar({
             return (
               <div
                 key={p}
-                role="button"
-                tabIndex={0}
                 data-testid={`acomodacion-${p}`}
-                onClick={() => handleCardClick(p)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleCardClick(p); }}
+                onClick={() => { if (!active) handleCardClick(p); }}
                 style={{
-                  borderRadius: 14,
-                  padding: "8px 10px 8px",
-                  cursor: "pointer",
+                  borderRadius: 12,
+                  padding: "8px 10px",
+                  cursor: active ? "default" : "pointer",
                   userSelect: "none",
                   transition: "background 0.15s, box-shadow 0.15s, opacity 0.15s",
-                  outline: "none",
                   ...(active
                     ? { backgroundColor: "#1495ff", boxShadow: "0 2px 12px rgba(20,149,255,0.5)" }
-                    : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.3)", opacity: 0.75 }),
+                    : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.3)", opacity: 0.72 }),
                 }}
               >
-                {/* Type label */}
-                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#e6ae33", lineHeight: 1, marginBottom: 4, display: "block" }}>
-                  {p}
-                </span>
-
-                {/* "Habitaciones" label */}
-                <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4 }}>
-                  Habitaciones
-                </span>
-
-                {/* Numeric input */}
-                <div onClick={(e) => e.stopPropagation()} style={{ marginBottom: 6 }}>
-                  <input
-                    type="number"
-                    min={0}
-                    value={count === 0 ? "" : count}
-                    placeholder="0"
-                    onChange={(e) => handleInputChange(p, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    onFocus={(e) => e.target.select()}
-                    style={{
-                      width: "100%", textAlign: "center",
-                      fontSize: 22, fontWeight: 800, color: "#fff",
-                      background: "rgba(255,255,255,0.15)",
-                      border: "1px solid rgba(255,255,255,0.3)",
-                      borderRadius: 8, padding: "4px 0",
-                      outline: "none", appearance: "textfield",
-                    }}
-                  />
+                {/* Header row: icon + name on left, input on right */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  {/* Icon + label */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, minWidth: 0 }}>
+                    <span style={{ opacity: 0.85, flexShrink: 0 }}>{ROOM_ICONS[p]}</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>
+                      {p}
+                    </span>
+                  </div>
+                  {/* Numeric input */}
+                  <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+                    <input
+                      ref={(el) => { inputRefs.current[idx] = el; }}
+                      type="number"
+                      className="grupo-input"
+                      min={0}
+                      value={count === 0 ? "" : count}
+                      placeholder="0"
+                      tabIndex={idx + 1}
+                      onChange={(e) => handleInputChange(p, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.target.select()}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
+                          e.preventDefault();
+                          const next = inputRefs.current[idx + 1];
+                          if (next) { next.focus(); next.select(); }
+                        }
+                        if (e.key === "Tab" && e.shiftKey) {
+                          e.preventDefault();
+                          const prev = inputRefs.current[idx - 1];
+                          if (prev) { prev.focus(); prev.select(); }
+                        }
+                      }}
+                      style={{
+                        width: 46, textAlign: "center",
+                        fontSize: 18, fontWeight: 800, color: "#fff",
+                        background: "rgba(255,255,255,0.18)",
+                        border: "1px solid rgba(255,255,255,0.35)",
+                        borderRadius: 7, padding: "3px 4px",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
                 </div>
 
-                {/* Pasajeros pill */}
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <span style={pillStyle}>{pax} {pax === 1 ? "pasajero" : "pasajeros"}</span>
+                {/* Pills row */}
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  <span style={pillStyle}>{count} {count === 1 ? "hab." : "hab."}</span>
+                  <span style={pillStyle}>{pax} {pax === 1 ? "pax" : "pax"}</span>
                 </div>
               </div>
             );
@@ -931,7 +989,7 @@ export function AlojamientoBar({
 
         {/* Summary — single line with | separators */}
         <div style={{
-          marginTop: 10, paddingTop: 8, paddingBottom: 12,
+          marginTop: 8, paddingTop: 7, paddingBottom: 10,
           borderTop: "1px solid rgba(255,255,255,0.15)",
           display: "flex", alignItems: "center", flexWrap: "wrap",
         }}>
