@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Check, UserRound, Users, Building2, Shield, Calendar, Mail, BedSingle, BedDouble } from "lucide-react";
+import { Check, UserRound, Users, Building2, Shield, Calendar, Mail } from "lucide-react";
+import type { CotizacionResult } from "@/lib/types";
 import PremiumRangePicker from "./PremiumRangePicker";
 import {
   loadAgencias,
@@ -688,6 +689,8 @@ function Field({
 
 // ─── Alojamiento Bar ──────────────────────────────────────────────────────────
 
+const ROOM_PAX: Record<Acomodacion, number> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+
 export function AlojamientoBar({
   cliente: _cliente,
   onClienteChange: _onClienteChange,
@@ -695,6 +698,9 @@ export function AlojamientoBar({
   onAcomodacionesChange,
   quotingMode,
   habitacionesPorAcomodacion = {},
+  onHabitacionesChange,
+  result,
+  ninos = 0,
 }: {
   cliente?: Cliente;
   onClienteChange?: (c: Cliente) => void;
@@ -702,15 +708,12 @@ export function AlojamientoBar({
   onAcomodacionesChange: (a: Acomodacion[]) => void;
   quotingMode?: string;
   habitacionesPorAcomodacion?: Partial<Record<Acomodacion, number>>;
+  onHabitacionesChange?: (h: Partial<Record<Acomodacion, number>>) => void;
+  result?: CotizacionResult;
+  ninos?: number;
 }) {
   const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
-
-  const BED_ICONS: Record<Acomodacion, React.ReactNode> = {
-    SGL: <BedSingle size={20} strokeWidth={1.75} />,
-    DBL: <BedDouble size={20} strokeWidth={1.75} />,
-    TPL: <BedDouble size={20} strokeWidth={1.75} />,
-    QDL: <BedDouble size={20} strokeWidth={1.75} />,
-  };
+  const isGrupo = quotingMode === "grupo";
 
   const togglePill = (a: Acomodacion) => {
     if (acomodaciones.includes(a)) {
@@ -721,71 +724,180 @@ export function AlojamientoBar({
     }
   };
 
-  return (
-    <section
-      className="relative rounded-2xl overflow-hidden text-white"
-      style={{
-        background: "linear-gradient(135deg, #0034b8 0%, #005be8 50%, #0a7eff 100%)",
-        boxShadow: "0 4px 20px rgba(0,52,184,0.35)",
-      }}
-    >
+  const setHab = (a: Acomodacion, val: number) => {
+    onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [a]: Math.max(0, val) });
+  };
+
+  // Summary calculations for grupo mode
+  const totalAdultos = PILLS.filter((a) => acomodaciones.includes(a))
+    .reduce((s, a) => s + (habitacionesPorAcomodacion[a] ?? 0) * ROOM_PAX[a], 0);
+  const totalPax = totalAdultos + ninos;
+  const totalGrupo = result
+    ? PILLS.filter((a) => acomodaciones.includes(a)).reduce(
+        (s, a) => s + (result.totalesPorAcomodacion[a] ?? 0) * (habitacionesPorAcomodacion[a] ?? 0) * ROOM_PAX[a],
+        0,
+      ) + ninos * (result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0)
+    : 0;
+
+  const sectionStyle: React.CSSProperties = {
+    background: "linear-gradient(135deg, #0034b8 0%, #005be8 50%, #0a7eff 100%)",
+    boxShadow: "0 4px 20px rgba(0,52,184,0.35)",
+  };
+
+  const decorations = (
+    <>
       <span className="pointer-events-none absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-15" style={{ background: "radial-gradient(circle, #60a5fa 0%, transparent 70%)" }} />
       <span className="pointer-events-none absolute bottom-0 left-1/3 w-28 h-28 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #93c5fd 0%, transparent 70%)" }} />
-      <span className="pointer-events-none absolute -bottom-4 right-1/4 w-20 h-20 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
       <span className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl opacity-10" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)" }} />
+    </>
+  );
 
-      <div
-        className="relative flex items-center justify-evenly gap-3"
-        style={{ padding: "10px 20px" }}
-      >
-        {PILLS.map((p) => {
-          const active = acomodaciones.includes(p);
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => togglePill(p)}
-              style={{
-                flex: 1,
-                height: 44,
-                minWidth: 0,
-                borderRadius: 9999,
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                color: "#fff",
-                textTransform: "uppercase",
-                textAlign: "center",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.15s",
-                ...(active
-                  ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
-                  : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
-              }}
-              data-testid={`acomodacion-${p}`}
-            >
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
-                {BED_ICONS[p]}
-                <span>{p}</span>
-                {quotingMode === "grupo" && (habitacionesPorAcomodacion[p] ?? 0) > 0 && (
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    opacity: 0.85,
-                    background: "rgba(255,255,255,0.2)",
-                    borderRadius: 99,
-                    padding: "1px 6px",
-                    letterSpacing: "0.03em",
-                  }}>
-                    {habitacionesPorAcomodacion[p]} hab
+  // ── MODO INDIVIDUAL: simple pill row ──────────────────────────────────────
+  if (!isGrupo) {
+    return (
+      <section className="relative rounded-2xl overflow-hidden text-white" style={sectionStyle}>
+        {decorations}
+        <div className="relative flex items-center justify-evenly gap-3" style={{ padding: "10px 20px" }}>
+          {PILLS.map((p) => {
+            const active = acomodaciones.includes(p);
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => togglePill(p)}
+                data-testid={`acomodacion-${p}`}
+                style={{
+                  flex: 1,
+                  height: 44,
+                  minWidth: 0,
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  color: "#fff",
+                  textTransform: "uppercase",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s",
+                  ...(active
+                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
+                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
+                }}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
+
+  // ── MODO GRUPO: integrated distribution ───────────────────────────────────
+  return (
+    <section className="relative rounded-2xl overflow-hidden text-white" style={sectionStyle}>
+      {decorations}
+      <div className="relative" style={{ padding: "12px 16px 0" }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.7, marginBottom: 10 }}>
+          Distribución del Grupo
+        </p>
+        <div className="flex gap-2">
+          {PILLS.map((p) => {
+            const active = acomodaciones.includes(p);
+            const count = habitacionesPorAcomodacion[p] ?? 0;
+            const pax = count * ROOM_PAX[p];
+            return (
+              <div
+                key={p}
+                style={{
+                  flex: 1,
+                  borderRadius: 14,
+                  padding: "10px 6px 8px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 6,
+                  transition: "all 0.15s",
+                  ...(active
+                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.45)" }
+                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
+                }}
+              >
+                {/* Label — click to toggle */}
+                <button
+                  type="button"
+                  onClick={() => togglePill(p)}
+                  data-testid={`acomodacion-${p}`}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    padding: 0,
+                    opacity: active ? 1 : 0.55,
+                  }}
+                >
+                  {p}
+                </button>
+
+                {/* Counter */}
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => setHab(p, count - 1)}
+                    style={{
+                      width: 22, height: 22, borderRadius: 6,
+                      background: "rgba(255,255,255,0.18)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      color: "#fff", fontSize: 14, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", lineHeight: 1,
+                    }}
+                  >−</button>
+                  <span style={{ minWidth: 20, textAlign: "center", fontSize: 14, fontWeight: 800, color: "#fff" }}>
+                    {count}
                   </span>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setHab(p, count + 1)}
+                    style={{
+                      width: 22, height: 22, borderRadius: 6,
+                      background: "rgba(255,255,255,0.18)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      color: "#fff", fontSize: 14, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", lineHeight: 1,
+                    }}
+                  >+</button>
+                </div>
+
+                {/* Pax */}
+                <span style={{ fontSize: 10, opacity: 0.75, color: "#fff", fontWeight: 600 }}>
+                  {pax} {pax === 1 ? "pasajero" : "pasajeros"}
+                </span>
               </div>
-            </button>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* Summary row */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          marginTop: 10, paddingTop: 8, paddingBottom: 12,
+          borderTop: "1px solid rgba(255,255,255,0.15)",
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>
+            Total pasajeros: <strong style={{ opacity: 1 }}>{totalPax}</strong>
+          </span>
+          <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>
+            Total grupo: <strong style={{ opacity: 1 }}>USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+          </span>
+        </div>
       </div>
     </section>
   );

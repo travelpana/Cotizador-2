@@ -11,7 +11,6 @@ import ConfiguracionPanel from "@/components/ConfiguracionPanel";
 import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
-import GrupoResumenCard from "@/components/GrupoResumenCard";
 import Seguimiento from "@/components/Seguimiento";
 import NotificationBell from "@/components/NotificationBell";
 import Plantillas from "@/components/Plantillas";
@@ -1185,16 +1184,10 @@ export default function CotizadorPage() {
                   onAcomodacionesChange={setAcomodaciones}
                   quotingMode={quotingMode}
                   habitacionesPorAcomodacion={habitacionesPorAcomodacion}
+                  onHabitacionesChange={setHabitacionesPorAcomodacion}
+                  result={result}
+                  ninos={cliente.ninos ?? 0}
                 />
-                {quotingMode === "grupo" && (
-                  <GrupoResumenCard
-                    acomodaciones={acomodaciones}
-                    result={result}
-                    habitaciones={habitacionesPorAcomodacion}
-                    onHabitacionesChange={setHabitacionesPorAcomodacion}
-                    ninos={cliente.ninos ?? 0}
-                  />
-                )}
                 {langFallback && (
                   <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
                     <span className="text-base shrink-0">⚠️</span>
