@@ -36,6 +36,7 @@ import {
   Building2,
   List,
   X,
+  Check,
 } from "lucide-react";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
 import { loadObservaciones } from "@/lib/observaciones";
@@ -527,13 +528,14 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "tickets" | null
+    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | null
   >(null);
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(servicio.nombre);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const savingRef = useRef(false);
+  const dragHandleActive = useRef(false);
 
   function startNameEdit() {
     setNameValue(servicio.nombre);
@@ -623,16 +625,28 @@ function ServicioRow({
     <div
       draggable
       onDragStart={(e) => {
+        if (!dragHandleActive.current) {
+          e.preventDefault();
+          return;
+        }
+        dragHandleActive.current = false;
         e.dataTransfer.effectAllowed = "move";
         onDragStart();
       }}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      onDragEnd={onDragEnd}
+      onDragEnd={() => {
+        dragHandleActive.current = false;
+        onDragEnd();
+      }}
       className={rowClasses}
     >
-      {/* Drag handle */}
-      <div className="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors">
+      {/* Drag handle — only draggable from here */}
+      <div
+        className="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors"
+        onMouseDown={() => { dragHandleActive.current = true; }}
+        onMouseUp={() => { dragHandleActive.current = false; }}
+      >
         <GripVertical className="w-3.5 h-3.5" />
       </div>
 
@@ -694,35 +708,101 @@ function ServicioRow({
           </div>
         )}
 
-        {/* Description / dates trigger */}
+        {/* Description / meta */}
         {isHotel ? (
-          <Popover
-            open={openEditor === "dates"}
-            onOpenChange={(o) => setOpenEditor(o ? "dates" : null)}
-          >
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="text-[11px] text-slate-500 hover:text-primary hover:bg-primary/5 -mx-1 px-1 py-0.5 rounded transition-colors text-left mt-0.5 truncate max-w-full"
-                title="Editar fechas de estadía"
-              >
-                {descripcion || (
-                  <span className="text-slate-400 italic">Agregar fechas</span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              className="w-[290px] p-3 z-[60]"
-              onOpenAutoFocus={(e) => e.preventDefault()}
+          <div className="flex items-center gap-0.5 flex-wrap mt-0.5">
+            {/* Ubicación */}
+            <Popover
+              open={openEditor === "ubicacion"}
+              onOpenChange={(o) => setOpenEditor(o ? "ubicacion" : null)}
             >
-              <DatesEditor
-                servicio={servicio}
-                onSave={(patch) => onUpdate({ ...servicio, ...patch })}
-                onClose={() => setOpenEditor(null)}
-              />
-            </PopoverContent>
-          </Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-slate-500 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Cambiar ubicación"
+                >
+                  {servicio.ubicacion ?? <span className="italic text-slate-400">Ubicación</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[210px] p-1 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <UbicacionEditor
+                  current={servicio.ubicacion ?? ""}
+                  onSave={(v) => { onUpdate({ ...servicio, ubicacion: v }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+
+            {/* Categoría / Estrellas */}
+            <Popover
+              open={openEditor === "estrellas"}
+              onOpenChange={(o) => setOpenEditor(o ? "estrellas" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Cambiar categoría"
+                >
+                  {servicio.estrellas ?? <span className="text-slate-400 italic">★ Cat.</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[160px] p-1 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <EstrellasEditor
+                  current={servicio.estrellas ?? ""}
+                  onSave={(v) => { onUpdate({ ...servicio, estrellas: v }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+
+            {/* Fechas */}
+            <Popover
+              open={openEditor === "dates"}
+              onOpenChange={(o) => setOpenEditor(o ? "dates" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-slate-500 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
+                  title="Editar fechas de estadía"
+                >
+                  {servicio.fechaInicio && servicio.fechaFin ? (
+                    <>
+                      <Calendar className="w-3 h-3" />
+                      {fmtDMA(servicio.fechaInicio)} → {fmtDMA(servicio.fechaFin)}
+                    </>
+                  ) : (
+                    <span className="italic text-slate-400">Fechas</span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-[290px] p-3 z-[60]"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                <DatesEditor
+                  servicio={servicio}
+                  onSave={(patch) => onUpdate({ ...servicio, ...patch })}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Régimen */}
+            {formatRegimen(servicio.desayuno) && (
+              <>
+                <span className="text-slate-300 text-[11px] select-none">·</span>
+                <span className="text-[11px] text-amber-700 font-medium px-1">{formatRegimen(servicio.desayuno)}</span>
+              </>
+            )}
+          </div>
         ) : descripcion ? (
           <div className="text-[11px] text-slate-500 truncate mt-0.5">
             {descripcion}
@@ -940,15 +1020,6 @@ function ServicioRow({
         </Popover>
 
         <button
-          onClick={onEdit}
-          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
-          aria-label="Editar"
-          title={isHotel ? "Más opciones" : "Editar"}
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-
-        <button
           onClick={onRemove}
           className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
           aria-label="Quitar"
@@ -986,6 +1057,76 @@ const btnClose: React.CSSProperties = {
 };
 
 /* ───────────────────────── Inline editors (popovers) ───────────────────────── */
+
+const UBICACIONES_LIST = [
+  "BOCAS DEL TORO",
+  "CHIRIQUÍ",
+  "CIUDAD DE PANAMÁ",
+  "COCLÉ (RIVIERA PACÍFICA)",
+  "COLÓN",
+  "CONTADORA",
+  "SAN BLAS",
+  "TABOGA",
+  "VERAGUAS / SANTIAGO",
+];
+
+const ESTRELLAS_LIST = ["★★★", "★★★★", "★★★★★"];
+
+function UbicacionEditor({
+  current,
+  onSave,
+  onClose,
+}: {
+  current: string;
+  onSave: (v: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="py-0.5 max-h-64 overflow-y-auto">
+      {UBICACIONES_LIST.map((u) => (
+        <button
+          key={u}
+          type="button"
+          onClick={() => onSave(u)}
+          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-[11px] rounded-lg hover:bg-primary/5 hover:text-primary transition-colors ${
+            current === u ? "text-primary font-semibold" : "text-slate-700"
+          }`}
+        >
+          {current === u && <Check className="w-3 h-3 flex-shrink-0" />}
+          <span className={current === u ? "" : "ml-[15px]"}>{u}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function EstrellasEditor({
+  current,
+  onSave,
+  onClose,
+}: {
+  current: string;
+  onSave: (v: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="py-0.5">
+      {ESTRELLAS_LIST.map((s) => (
+        <button
+          key={s}
+          type="button"
+          onClick={() => onSave(s)}
+          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors ${
+            current === s ? "text-amber-600 font-semibold" : "text-slate-700"
+          }`}
+        >
+          {current === s && <Check className="w-3 h-3 flex-shrink-0 text-amber-500" />}
+          <span className={current === s ? "" : "ml-[15px]"}>{s}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function DatesEditor({
   servicio,
