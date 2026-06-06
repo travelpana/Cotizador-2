@@ -828,19 +828,27 @@ function ServicioRow({
         {/* Notes list (multi-note system) */}
         {(servicio.notasList && servicio.notasList.length > 0) ? (
           <div className="mt-0.5 space-y-0.5">
-            {servicio.notasList.map((n, i) =>
-              n.important ? (
-                <div key={i} className="text-[11px] font-bold flex items-start gap-1 leading-tight" style={{ color: "#ef7b15" }}>
-                  <AlertTriangle className="w-2.5 h-2.5 flex-shrink-0 mt-[1px]" />
-                  <span>{n.text}</span>
-                </div>
-              ) : (
-                <div key={i} className="text-[11px] flex items-start gap-1 text-slate-600 leading-tight">
-                  <span className="text-slate-400 flex-shrink-0">•</span>
-                  <span>{n.text}</span>
-                </div>
-              )
-            )}
+            {servicio.notasList.map((n, i) => (
+              <NoteItem
+                key={n.id ?? i}
+                note={n}
+                onEdit={(newText) => {
+                  const now = new Date().toISOString();
+                  const updated = (servicio.notasList ?? []).map((x, xi) =>
+                    (x.id && n.id ? x.id === n.id : xi === i)
+                      ? { ...x, text: newText, updatedAt: now }
+                      : x
+                  );
+                  onUpdate({ ...servicio, notasList: updated });
+                }}
+                onDelete={() => {
+                  const updated = (servicio.notasList ?? []).filter((x, xi) =>
+                    x.id && n.id ? x.id !== n.id : xi !== i
+                  );
+                  onUpdate({ ...servicio, notasList: updated });
+                }}
+              />
+            ))}
           </div>
         ) : servicio.notas ? (
           <div
@@ -1029,7 +1037,7 @@ function ServicioRow({
             <button
               type="button"
               className={`p-1.5 rounded-lg transition-colors ${
-                (servicio.notasList ?? []).some(n => !n.important) || (servicio.notas && !servicio.notesImportant)
+                (servicio.notasList ?? []).some(n => n.type !== "important" && !n.important) || (servicio.notas && !servicio.notesImportant)
                   ? "text-amber-600 bg-amber-50 hover:bg-amber-100 opacity-100"
                   : "text-slate-500 hover:bg-slate-100"
               }`}
@@ -1044,11 +1052,12 @@ function ServicioRow({
             className="w-[280px] p-3 z-[60]"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
-            <NoteAdder
+            <NoteEditor
               tipo="normal"
               onSave={(text) => {
+                const now = new Date().toISOString();
                 const prev = servicio.notasList ?? [];
-                onUpdate({ ...servicio, notasList: [...prev, { text, important: false }] });
+                onUpdate({ ...servicio, notasList: [...prev, { id: `note-${Date.now()}`, type: "normal" as const, text, important: false, createdAt: now }] });
                 setOpenEditor(null);
               }}
               onClose={() => setOpenEditor(null)}
@@ -1065,12 +1074,12 @@ function ServicioRow({
             <button
               type="button"
               className={`p-1.5 rounded-lg transition-colors ${
-                (servicio.notasList ?? []).some(n => n.important) || (servicio.notas && servicio.notesImportant)
+                (servicio.notasList ?? []).some(n => n.type === "important" || n.important === true) || (servicio.notas && servicio.notesImportant)
                   ? "opacity-100 hover:bg-orange-100"
                   : "text-slate-500 hover:bg-slate-100"
               }`}
               style={
-                (servicio.notasList ?? []).some(n => n.important) || (servicio.notas && servicio.notesImportant)
+                (servicio.notasList ?? []).some(n => n.type === "important" || n.important === true) || (servicio.notas && servicio.notesImportant)
                   ? { color: "#ef7b15", backgroundColor: "#fff3eb" }
                   : {}
               }
@@ -1085,11 +1094,12 @@ function ServicioRow({
             className="w-[280px] p-3 z-[60]"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
-            <NoteAdder
+            <NoteEditor
               tipo="important"
               onSave={(text) => {
+                const now = new Date().toISOString();
                 const prev = servicio.notasList ?? [];
-                onUpdate({ ...servicio, notasList: [...prev, { text: text.toUpperCase(), important: true }] });
+                onUpdate({ ...servicio, notasList: [...prev, { id: `note-${Date.now()}`, type: "important" as const, text, important: true, createdAt: now }] });
                 setOpenEditor(null);
               }}
               onClose={() => setOpenEditor(null)}
@@ -1401,20 +1411,95 @@ function UnitPriceEditor({
   );
 }
 
-function NoteAdder({
+/* ───────────────── NoteItem — individual note row with edit/delete ─────── */
+
+function NoteItem({
+  note,
+  onEdit,
+  onDelete,
+}: {
+  note: { id?: string; type?: "normal" | "important"; text: string; important?: boolean };
+  onEdit: (newText: string) => void;
+  onDelete: () => void;
+}) {
+  const imp = note.type === "important" || note.important === true;
+  const [editOpen, setEditOpen] = useState(false);
+
+  return (
+    <div className="group/note flex items-start gap-1 min-w-0">
+      {imp ? (
+        <AlertTriangle
+          className="w-2.5 h-2.5 flex-shrink-0 mt-[2px]"
+          style={{ color: "#ef7b15" }}
+        />
+      ) : (
+        <span className="text-slate-400 flex-shrink-0 text-[10px] leading-[1.6]">•</span>
+      )}
+      <span
+        className="text-[11px] leading-snug flex-1 min-w-0 break-words"
+        style={{ color: imp ? "#ef7b15" : "#475569", fontWeight: imp ? 700 : 400 }}
+      >
+        {note.text}
+      </span>
+      <div className="opacity-0 group-hover/note:opacity-100 flex gap-0.5 flex-shrink-0 ml-1 transition-opacity">
+        <Popover open={editOpen} onOpenChange={setEditOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="p-0.5 rounded hover:bg-slate-200 transition-colors"
+              title="Editar nota"
+            >
+              <Pencil className="w-2.5 h-2.5 text-slate-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-[260px] p-3 z-[70]"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <NoteEditor
+              tipo={imp ? "important" : "normal"}
+              initialText={note.text}
+              onSave={(text) => {
+                onEdit(text);
+                setEditOpen(false);
+              }}
+              onClose={() => setEditOpen(false)}
+            />
+          </PopoverContent>
+        </Popover>
+        <button
+          type="button"
+          className="p-0.5 rounded hover:bg-red-100 transition-colors"
+          title="Eliminar nota"
+          onClick={onDelete}
+        >
+          <Trash2 className="w-2.5 h-2.5 text-red-400" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────── NoteEditor — add or edit a single note ─────────────── */
+
+function NoteEditor({
   tipo,
+  initialText = "",
   onSave,
   onClose,
 }: {
   tipo: "normal" | "important";
+  initialText?: string;
   onSave: (text: string) => void;
   onClose: () => void;
 }) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
+  const isEdit = initialText.length > 0;
 
   const handleApply = () => {
     if (!text.trim()) { onClose(); return; }
-    onSave(text.trim());
+    onSave(tipo === "important" ? text.trim().toUpperCase() : text.trim());
     onClose();
   };
 
@@ -1426,7 +1511,10 @@ function NoteAdder({
             ? <AlertTriangle size={11} />
             : <StickyNote size={11} />
           }
-          {tipo === "important" ? "Nota importante" : "Agregar nota"}
+          {isEdit
+            ? (tipo === "important" ? "Editar importante" : "Editar nota")
+            : (tipo === "important" ? "Nota importante" : "Agregar nota")
+          }
         </div>
         <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
       </div>

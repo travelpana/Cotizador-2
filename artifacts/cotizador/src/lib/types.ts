@@ -79,7 +79,14 @@ export interface ServicioSeleccionado {
   duracion?: string;
   entradasDesc?: string;
   customTipo?: string;
-  notasList?: Array<{ text: string; important: boolean }>;
+  notasList?: Array<{
+    id?: string;
+    type?: "normal" | "important";
+    text: string;
+    important?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  }>;
 }
 
 export interface Descriptivo {
@@ -167,7 +174,14 @@ export interface ServicioCalculado {
   tickets?: TourTickets;
   horario?: string;
   tipoServicio?: "Regular" | "Privado";
-  notasList?: Array<{ text: string; important: boolean }>;
+  notasList?: Array<{
+    id?: string;
+    type?: "normal" | "important";
+    text: string;
+    important?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  }>;
 }
 
 export interface CotizacionResult {
