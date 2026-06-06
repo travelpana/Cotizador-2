@@ -837,12 +837,34 @@ export function AlojamientoBar({
   }
 
   // ── MODO GRUPO ─────────────────────────────────────────────────────────────
+  const sepStyle: React.CSSProperties = {
+    color: "rgba(255,255,255,0.3)",
+    marginInline: 10,
+    fontWeight: 300,
+    fontSize: 12,
+    userSelect: "none",
+  };
+
+  const pillStyle: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 600,
+    background: "rgba(255,255,255,0.15)",
+    borderRadius: 99,
+    padding: "2px 8px",
+    color: "rgba(255,255,255,0.85)",
+    whiteSpace: "nowrap",
+  };
+
   return (
-    <section className="relative rounded-2xl overflow-hidden text-white" style={sectionStyle}>
+    <section
+      className="relative rounded-2xl overflow-hidden text-white"
+      style={{ ...sectionStyle, animation: "grupoEnter 0.3s ease-out" }}
+    >
+      <style>{`@keyframes grupoEnter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {decorations}
       <div className="relative" style={{ padding: "12px 14px 0" }}>
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.65, marginBottom: 10 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.55, marginBottom: 10 }}>
           Distribución del Grupo
         </p>
 
@@ -863,48 +885,47 @@ export function AlojamientoBar({
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleCardClick(p); }}
                 style={{
                   borderRadius: 14,
-                  padding: "10px 10px 8px",
+                  padding: "8px 10px 8px",
                   cursor: "pointer",
                   userSelect: "none",
-                  transition: "all 0.15s",
+                  transition: "background 0.15s, box-shadow 0.15s, opacity 0.15s",
                   outline: "none",
                   ...(active
                     ? { backgroundColor: "#1495ff", boxShadow: "0 2px 12px rgba(20,149,255,0.5)" }
                     : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.3)", opacity: 0.75 }),
                 }}
               >
-                {/* Top row: name left, counter right */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 5 }}>
-                  {/* Name */}
-                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff" }}>
+                {/* Top row: name (big, gold) + counter */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, marginBottom: 6 }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", color: "#e6ae33", lineHeight: 1 }}>
                     {p}
                   </span>
 
                   {/* Counter [- N +] */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 3 }} onClick={(e) => e.stopPropagation()}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }} onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
                       onClick={(e) => handleDecrement(e, p)}
                       style={{
-                        width: 22, height: 22, borderRadius: 6,
-                        background: "rgba(255,255,255,0.2)",
-                        border: "1px solid rgba(255,255,255,0.3)",
-                        color: "#fff", fontSize: 15, fontWeight: 700,
+                        width: 24, height: 24, borderRadius: 7,
+                        background: "rgba(255,255,255,0.18)",
+                        border: "1px solid rgba(255,255,255,0.28)",
+                        color: "#fff", fontSize: 16, fontWeight: 700,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         cursor: "pointer", lineHeight: 1, flexShrink: 0,
                       }}
                     >−</button>
-                    <span style={{ minWidth: 18, textAlign: "center", fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                    <span style={{ minWidth: 20, textAlign: "center", fontSize: 14, fontWeight: 800, color: "#fff" }}>
                       {count}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => handleIncrement(e, p)}
                       style={{
-                        width: 22, height: 22, borderRadius: 6,
-                        background: "rgba(255,255,255,0.2)",
-                        border: "1px solid rgba(255,255,255,0.3)",
-                        color: "#fff", fontSize: 15, fontWeight: 700,
+                        width: 24, height: 24, borderRadius: 7,
+                        background: "rgba(255,255,255,0.18)",
+                        border: "1px solid rgba(255,255,255,0.28)",
+                        color: "#fff", fontSize: 16, fontWeight: 700,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         cursor: "pointer", lineHeight: 1, flexShrink: 0,
                       }}
@@ -912,54 +933,55 @@ export function AlojamientoBar({
                   </div>
                 </div>
 
-                {/* Rooms count */}
-                <div style={{ fontSize: 10, opacity: 0.75, color: "#fff", fontWeight: 500 }}>
-                  {count} {count === 1 ? "habitación" : "habitaciones"}
-                </div>
-
-                {/* Pax count */}
-                <div style={{ fontSize: 10, opacity: 0.75, color: "#fff", fontWeight: 500, marginTop: 2 }}>
-                  {pax} {pax === 1 ? "pasajero" : "pasajeros"}
+                {/* Pills row: habitaciones · pasajeros */}
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  <span style={pillStyle}>{count} {count === 1 ? "habitación" : "habitaciones"}</span>
+                  <span style={pillStyle}>{pax} {pax === 1 ? "pasajero" : "pasajeros"}</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Summary row */}
+        {/* Summary — single line with | separators */}
         <div style={{
           marginTop: 10, paddingTop: 8, paddingBottom: 12,
           borderTop: "1px solid rgba(255,255,255,0.15)",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-          flexWrap: "wrap",
+          display: "flex", alignItems: "center", flexWrap: "wrap",
         }}>
-          <div style={{ display: "flex", gap: 16 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, color: "#fff" }}>
-              Habitaciones: <strong>{totalHabitaciones}</strong>
-            </span>
-            <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, color: "#fff" }}>
-              Pasajeros: <strong>{totalAsignados}{cap > 0 ? ` / ${cap}` : ""}</strong>
-            </span>
-          </div>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", opacity: 0.85 }}>
+            Habitaciones: <strong>{totalHabitaciones}</strong>
+          </span>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Validation status */}
-            {cap > 0 && (
-              distribCompleta ? (
-                <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(167,243,208,1)", letterSpacing: "0.04em" }}>
-                  ✓ Distribución completa
-                </span>
-              ) : falta > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#fcd34d", letterSpacing: "0.04em" }}>
-                  Faltan {falta} {falta === 1 ? "pasajero" : "pasajeros"}
-                </span>
-              ) : null
-            )}
+          <span style={sepStyle}>|</span>
 
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>
-              Total grupo: <strong>USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-            </span>
-          </div>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", opacity: 0.85 }}>
+            Pasajeros: <strong>{totalAsignados}{cap > 0 ? ` / ${cap}` : ""}</strong>
+          </span>
+
+          {cap > 0 && falta > 0 && (
+            <>
+              <span style={sepStyle}>|</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#e6ae33" }}>
+                Faltan: {falta} {falta === 1 ? "pasajero" : "pasajeros"}
+              </span>
+            </>
+          )}
+
+          {cap > 0 && distribCompleta && (
+            <>
+              <span style={sepStyle}>|</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(167,243,208,1)" }}>
+                ✓ Distribución completa
+              </span>
+            </>
+          )}
+
+          <span style={sepStyle}>|</span>
+
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>
+            Total grupo: <strong>USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+          </span>
         </div>
       </div>
     </section>
