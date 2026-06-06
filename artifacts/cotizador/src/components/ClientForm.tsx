@@ -885,7 +885,7 @@ export function AlojamientoBar({
     >
       <style>{`
         @keyframes grupoEnter {
-          from { opacity: 0; transform: translateY(8px); }
+          from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .grupo-input::-webkit-outer-spin-button,
@@ -893,15 +893,15 @@ export function AlojamientoBar({
         .grupo-input[type=number] { -moz-appearance: textfield; }
       `}</style>
       {decorations}
-      <div className="relative" style={{ padding: "12px 14px 0" }}>
+      <div className="relative" style={{ padding: "9px 12px 0" }}>
 
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: 2 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.80)", marginBottom: 6 }}>
           Distribución del Grupo
         </p>
 
         {/* Accommodation cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
           {PILLS.map((p, idx) => {
             const active = acomodaciones.includes(p);
             const count = habitacionesPorAcomodacion[p] ?? 0;
@@ -914,48 +914,43 @@ export function AlojamientoBar({
                 data-testid={`acomodacion-${p}`}
                 onClick={() => handleCardClick(p)}
                 style={{
-                  borderRadius: 12,
-                  padding: "9px 8px 8px",
+                  borderRadius: 10,
+                  padding: "7px 7px 6px",
                   cursor: "pointer",
                   userSelect: "none",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 4,
-                  transition: "background 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out, box-shadow 0.25s ease-out",
+                  gap: 3,
+                  transition: "background 0.2s, border-color 0.2s, opacity 0.2s",
                   ...(hasRooms
                     ? {
-                        backgroundColor: "rgba(20,149,255,0.88)",
-                        border: "1px solid #49c6ff",
+                        backgroundColor: "rgba(20,149,255,0.82)",
+                        border: "1px solid rgba(73,198,255,0.70)",
                       }
                     : active
                     ? {
-                        backgroundColor: "rgba(20,149,255,0.55)",
-                        border: "1px solid rgba(73,198,255,0.30)",
+                        backgroundColor: "rgba(20,149,255,0.45)",
+                        border: "1px solid rgba(73,198,255,0.25)",
                       }
                     : {
-                        backgroundColor: "rgba(0,20,60,0.55)",
-                        border: "1px solid rgba(255,255,255,0.13)",
-                        opacity: 0.52,
+                        backgroundColor: "rgba(0,20,60,0.50)",
+                        border: "1px solid rgba(255,255,255,0.11)",
+                        opacity: 0.50,
                       }),
                 }}
               >
-                {/* TOP ROW: icon + label left, counter right — all vertically centered */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
-                  {/* Left: bed icon + accommodation label on same line */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
-                    <span style={{ display: "flex", lineHeight: 0, flexShrink: 0 }}>
+                {/* TOP ROW: icon + label left, counter right */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 3, minWidth: 0 }}>
+                    <span style={{ display: "flex", lineHeight: 0, flexShrink: 0, opacity: 0.90 }}>
                       {ROOM_ICONS[p]}
                     </span>
-                    <span style={{ fontSize: 24, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", lineHeight: 1, textTransform: "uppercase" }}>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", lineHeight: 1, textTransform: "uppercase" }}>
                       {p}
                     </span>
                   </div>
 
-                  {/* Right: counter input */}
-                  <div
-                    style={{ flexShrink: 0 }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <div style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                     <input
                       ref={(el) => { inputRefs.current[idx] = el; }}
                       type="number"
@@ -981,15 +976,15 @@ export function AlojamientoBar({
                         }
                       }}
                       style={{
-                        width: 48, height: 48,
+                        width: 38, height: 38,
                         textAlign: "center",
-                        fontSize: 22, fontWeight: 800, color: "#fff",
-                        background: "rgba(0,0,0,0.2)",
-                        border: "1px solid rgba(255,255,255,0.22)",
-                        borderRadius: 10,
+                        fontSize: 18, fontWeight: 800, color: "#fff",
+                        background: "rgba(0,0,0,0.18)",
+                        border: "1px solid rgba(255,255,255,0.20)",
+                        borderRadius: 8,
                         padding: "0",
                         outline: "none",
-                        lineHeight: "48px",
+                        lineHeight: "38px",
                         boxSizing: "border-box",
                       }}
                     />
@@ -999,14 +994,14 @@ export function AlojamientoBar({
                 {/* BOTTOM ROW: X HAB | Y PAX */}
                 <div style={{
                   textAlign: "center",
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: 600,
-                  color: "rgba(255,255,255,0.85)",
-                  letterSpacing: "0.05em",
+                  color: "rgba(255,255,255,0.80)",
+                  letterSpacing: "0.04em",
                   lineHeight: 1,
                 }}>
                   {count} HAB
-                  <span style={{ color: "rgba(255,255,255,0.35)", marginInline: 4, fontWeight: 300 }}>|</span>
+                  <span style={{ color: "rgba(255,255,255,0.30)", marginInline: 3, fontWeight: 300 }}>|</span>
                   {pax} PAX
                 </div>
               </div>
@@ -1016,55 +1011,55 @@ export function AlojamientoBar({
 
         {/* 4-block summary bar */}
         <div style={{
-          marginTop: 10,
+          marginTop: 8,
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr 1fr",
+          gridTemplateColumns: "1fr 1fr 1fr 1.4fr",
           borderTop: "1px solid rgba(255,255,255,0.12)",
-          paddingBottom: 8,
+          paddingBottom: 7,
         }}>
           {/* Block 1: Habitaciones */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, paddingRight: 8 }}>
-            <span style={{ color: "rgba(255,255,255,0.55)", display: "flex" }}>{IconHab}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
-              Habitaciones
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, paddingTop: 6, paddingRight: 6 }}>
+            <span style={{ color: "rgba(255,255,255,0.45)", display: "flex" }}>{IconHab}</span>
+            <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)" }}>
+              HAB
             </span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+            <span style={{ fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
               {totalHabitaciones}
             </span>
           </div>
 
           {/* Block 2: Pasajeros */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8, paddingRight: 8 }}>
-            <span style={{ color: "rgba(255,255,255,0.55)", display: "flex" }}>{IconPax}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
-              Pasajeros
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, paddingTop: 6, borderLeft: "1px solid rgba(255,255,255,0.12)", paddingLeft: 6, paddingRight: 6 }}>
+            <span style={{ color: "rgba(255,255,255,0.45)", display: "flex" }}>{IconPax}</span>
+            <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)" }}>
+              PAX
             </span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-              {totalAsignados}{cap > 0 ? <span style={{ fontSize: 12, fontWeight: 500, opacity: 0.6 }}> / {cap}</span> : ""}
+            <span style={{ fontSize: 30, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+              {totalAsignados}{cap > 0 ? <span style={{ fontSize: 13, fontWeight: 500, opacity: 0.55 }}> /{cap}</span> : ""}
             </span>
           </div>
 
-          {/* Block 3: Distribución — single-line status */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 6, paddingRight: 6 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+          {/* Block 3: Distribución */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, paddingTop: 6, borderLeft: "1px solid rgba(255,255,255,0.12)", paddingLeft: 5, paddingRight: 5 }}>
+            <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)" }}>
               Distribución
             </span>
             <span style={{
-              fontSize: 11, fontWeight: 800, lineHeight: 1.1, textAlign: "center", letterSpacing: "0.04em",
-              color: cap > 0 && distribCompleta ? "#8cd9fa" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.4)",
+              fontSize: 11, fontWeight: 700, lineHeight: 1.2, textAlign: "center", letterSpacing: "0.04em",
+              color: cap > 0 && distribCompleta ? "#8cd9fa" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.35)",
             }}>
-              {cap > 0 && distribCompleta ? "✓ COMPLETA" : cap > 0 && falta > 0 ? `⚠ FALTAN ${falta} PAX` : "—"}
+              {cap > 0 && distribCompleta ? "✓ COMPLETA" : cap > 0 && falta > 0 ? `⚠ FALTAN ${falta}` : "—"}
             </span>
           </div>
 
-          {/* Block 4: Total grupo */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8 }}>
+          {/* Block 4: Total grupo — most prominent */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, paddingTop: 5, borderLeft: "1px solid rgba(255,255,255,0.12)", paddingLeft: 8 }}>
             <span style={{ color: "#f8d616", display: "flex" }}>{IconDollar}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
-              Total grupo
+            <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#f8d616", opacity: 0.80 }}>
+              USD
             </span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#f8d616", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
-              USD {totalGrupo.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#f8d616", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
+              {totalGrupo.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>
