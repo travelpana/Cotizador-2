@@ -288,7 +288,7 @@ export default function ExportButtons({
             }
           }
 
-          if (s.notas) lines.push(`📝 ${s.notas}`);
+          if (s.notas) lines.push(`📝 ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
           lines.push("");
         }
       }
@@ -321,7 +321,7 @@ export default function ExportButtons({
         lines.push(
           `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
-        if (s.notas) lines.push(`ℹ️ ${s.notas}`);
+        if (s.notas) lines.push(`ℹ️ ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
         lines.push("");
       }
     }
@@ -352,7 +352,7 @@ export default function ExportButtons({
         lines.push(
           `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
-        if (s.notas) lines.push(`ℹ️ ${s.notas}`);
+        if (s.notas) lines.push(`ℹ️ ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
         lines.push("");
       }
     }
@@ -370,7 +370,7 @@ export default function ExportButtons({
         lines.push(
           `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
-        if (s.notas) lines.push(`ℹ️ ${s.notas}`);
+        if (s.notas) lines.push(`ℹ️ ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
         lines.push("");
       }
     }
@@ -388,7 +388,7 @@ export default function ExportButtons({
         lines.push(
           `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );
-        if (s.notas) lines.push(`ℹ️ ${s.notas}`);
+        if (s.notas) lines.push(`ℹ️ ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
         lines.push("");
       }
     }

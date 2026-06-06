@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PriceInput } from "@/components/ui/price-input";
-import SingleDatePicker from "./SingleDatePicker";
+import PremiumSingleDatePicker from "./PremiumSingleDatePicker";
 import {
   Search,
   Hotel as HotelIcon,
@@ -85,6 +85,7 @@ export default function ServicioFormModal(props: Props) {
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
   const [notas, setNotas] = useState("");
+  const [notesImportant, setNotesImportant] = useState(false);
   const [ubicacion, setUbicacion] = useState("");
   const [estrellas, setEstrellas] = useState("");
   const [vigencia, setVigencia] = useState("");
@@ -129,6 +130,7 @@ export default function ServicioFormModal(props: Props) {
       setCodigo(initial.codigo ?? initial.id);
       setNombre(initial.nombre);
       setNotas(initial.notas ?? "");
+      setNotesImportant(initial.notesImportant ?? false);
       setUbicacion(initial.ubicacion ?? "");
       setEstrellas(initial.estrellas ?? "");
       setVigencia(initial.vigencia ?? "");
@@ -163,6 +165,7 @@ export default function ServicioFormModal(props: Props) {
       setCodigo("");
       setNombre("");
       setNotas("");
+      setNotesImportant(false);
       setUbicacion("");
       setEstrellas("");
       setVigencia("");
@@ -304,6 +307,7 @@ export default function ServicioFormModal(props: Props) {
       tipo,
       nombre,
       notas: notas || undefined,
+      notesImportant: notesImportant && !!notas.trim() ? true : undefined,
       paxOverride: paxMode === "manual" ? paxValue : undefined,
       manual: !isCatalog,
       precios:
@@ -368,6 +372,17 @@ export default function ServicioFormModal(props: Props) {
           : "Configura los detalles del servicio"
       }
       size="xl"
+      titleRight={
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!canSave}
+          title={initial ? "Guardar cambios" : "Guardar servicio"}
+          className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors disabled:opacity-40"
+        >
+          <Check className="w-4 h-4" />
+        </button>
+      }
     >
       <div className="px-6 py-5 space-y-5">
         {allowTipoSwitch && !initial && (
@@ -600,26 +615,15 @@ export default function ServicioFormModal(props: Props) {
             rows={3}
             className={`${inputCls} resize-none`}
           />
+          {notas.trim() && (
+            <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+              <ToggleSwitch checked={notesImportant} onChange={() => setNotesImportant(v => !v)} />
+              <span className={`text-[11px] font-medium transition-colors ${notesImportant ? "text-[#ef7b15]" : "text-slate-500"}`}>
+                Marcar como importante
+              </span>
+            </label>
+          )}
         </div>
-      </div>
-
-      <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          title="Cancelar"
-          className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={!canSave}
-          title={initial ? "Guardar cambios" : "Guardar servicio"}
-          className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors disabled:opacity-40"
-        >
-          <Check className="w-4 h-4" />
-        </button>
       </div>
     </Modal>
   );
@@ -671,7 +675,7 @@ function HotelFields({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Check-in</Label>
-            <SingleDatePicker
+            <PremiumSingleDatePicker
               value={fechaInicio}
               onChange={(iso) => {
                 const patch: Parameters<typeof onChange>[0] = { fechaInicio: iso };
@@ -689,7 +693,7 @@ function HotelFields({
           </div>
           <div>
             <Label>Check-out</Label>
-            <SingleDatePicker
+            <PremiumSingleDatePicker
               value={fechaFin}
               onChange={(iso) => onChange({ fechaFin: iso })}
               placeholder="Check-out"
@@ -888,7 +892,7 @@ function TourTrasladoFields({
           </div>
         </div>
         {usarFecha && (
-          <SingleDatePicker
+          <PremiumSingleDatePicker
             value={fecha}
             onChange={onFecha}
             placeholder="Seleccionar fecha"

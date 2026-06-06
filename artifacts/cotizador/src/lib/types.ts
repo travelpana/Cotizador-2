@@ -67,6 +67,7 @@ export interface ServicioSeleccionado {
   fechaInicio?: string;
   fechaFin?: string;
   notas?: string;
+  notesImportant?: boolean;
   ubicacion?: string;
   estrellas?: string;
   vigencia?: string;
@@ -148,6 +149,7 @@ export interface ServicioCalculado {
   fechaInicio?: string;
   fechaFin?: string;
   notas?: string;
+  notesImportant?: boolean;
   ubicacion?: string;
   estrellas?: string;
   vigencia?: string;

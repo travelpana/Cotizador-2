@@ -51,9 +51,24 @@ export default function Modal({
       <div
         className={`relative w-full ${widthCls} bg-white rounded-2xl shadow-2xl max-h-[88vh] flex flex-col overflow-hidden`}
       >
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-          {titleRight && <div>{titleRight}</div>}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 flex-shrink-0">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-lg font-semibold text-slate-900 leading-tight">{title}</h3>
+            {subtitle && (
+              <p className="text-xs text-slate-500 mt-0.5 truncate">{subtitle}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {titleRight}
+            <button
+              type="button"
+              onClick={onClose}
+              title="Cerrar"
+              className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
         <div className="overflow-y-auto flex-1">{children}</div>
       </div>

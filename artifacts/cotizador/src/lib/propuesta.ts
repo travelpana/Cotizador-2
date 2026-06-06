@@ -422,7 +422,7 @@ function alojamientoTable(d: PropuestaData): string {
             ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
             : "";
           const notasHotelLine = h.notas
-            ? `<div style="${STYLES.cellNote}">${escape(h.notas)}</div>`
+            ? `<div style="${h.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote}">${escape(h.notas)}</div>`
             : "";
 
           return `<tr style="page-break-inside:avoid;">
@@ -522,7 +522,7 @@ function adicionalesTable(
           : "";
 
       const notasLine = s.notas
-        ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>`
+        ? `<div style="${s.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote}">${escape(s.notas)}</div>`
         : "";
 
       if (d.isCalc) {
@@ -730,7 +730,7 @@ function buildTotalesView(d: PropuestaData): string {
             ? `<div style="font-size:11px;color:#64748B;font-weight:500;margin-top:4px;">${h.fechaInicio ? fmtFechaCompacta(h.fechaInicio) : "?"} → ${h.fechaFin ? fmtFechaCompacta(h.fechaFin) : "?"}</div>`
             : "";
           const notasHotelLines = h.notas
-            ? formatNotasLineas(h.notas, STYLES.cellNote)
+            ? formatNotasLineas(h.notas, h.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote)
             : "";
           rows += `<tr style="page-break-inside:avoid;">
             <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${fechaHotelLine}${regimenLine}${notasHotelLines}</td>
@@ -802,7 +802,7 @@ function buildTotalesView(d: PropuestaData): string {
         return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">${escape(T.costoAdicionalEntradas)}: ${labelPart}${adultPart}${childPart}</div>`;
       })();
       const notasLine = s.notas
-        ? `<div style="${STYLES.cellNote}">${escape(s.notas)}</div>`
+        ? `<div style="${s.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote}">${escape(s.notas)}</div>`
         : "";
       rows += `<tr style="page-break-inside:avoid;">
         <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}</td>
@@ -989,7 +989,7 @@ function buildPackageView(d: PropuestaData): string {
     const h = d.hoteles[0];
     const regimenFmt = formatRegimen(h.desayuno);
     const notasHtml = h.notas
-      ? `<div style="font-size:11px;color:${C_LBL};font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
+      ? `<div style="font-size:11px;color:${h.notesImportant ? "#ef7b15" : C_LBL};font-weight:${h.notesImportant ? "600" : "400"};font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
       : "";
 
     hotelBlock = `

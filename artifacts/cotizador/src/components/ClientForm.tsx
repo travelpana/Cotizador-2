@@ -15,7 +15,7 @@ import {
   type ClienteValidationErrors,
 } from "@/lib/types";
 import { diffNoches, calcGrupoTotalFromResult } from "@/lib/calc";
-import SingleDatePicker from "./SingleDatePicker";
+import PremiumSingleDatePicker from "./PremiumSingleDatePicker";
 
 interface Props {
   cliente: Cliente;
@@ -336,7 +336,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
 
           {/* Vigencia */}
           <Field label="Vigencia">
-            <SingleDatePicker
+            <PremiumSingleDatePicker
               value={cliente.vigencia}
               onChange={(iso) => update({ vigencia: iso })}
               placeholder="Válida hasta…"

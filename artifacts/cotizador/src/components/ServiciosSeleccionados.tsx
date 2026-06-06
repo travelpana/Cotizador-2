@@ -731,7 +731,10 @@ function ServicioRow({
 
         {/* Notes line (all types) */}
         {servicio.notas && (
-          <div className="text-[11px] text-amber-700 truncate mt-0.5 italic">
+          <div
+            className="text-[11px] truncate mt-0.5 italic"
+            style={{ color: servicio.notesImportant ? "#ef7b15" : "#92400e" }}
+          >
             "{servicio.notas}"
           </div>
         )}
@@ -903,9 +906,12 @@ function ServicioRow({
               type="button"
               className={`p-1.5 rounded-lg transition-colors ${
                 servicio.notas
-                  ? "text-amber-600 bg-amber-50 hover:bg-amber-100 opacity-100"
+                  ? servicio.notesImportant
+                    ? "opacity-100 hover:bg-orange-100"
+                    : "text-amber-600 bg-amber-50 hover:bg-amber-100 opacity-100"
                   : "text-slate-500 hover:bg-slate-100"
               }`}
+          style={servicio.notas && servicio.notesImportant ? { color: "#ef7b15", backgroundColor: "#fff3eb" } : {}}
               aria-label="Notas"
               title={servicio.notas ? "Editar notas" : "Agregar notas"}
             >
@@ -919,10 +925,12 @@ function ServicioRow({
           >
             <NotesEditor
               value={servicio.notas ?? ""}
-              onSave={(notas) => {
+              important={servicio.notesImportant ?? false}
+              onSave={(notas, important) => {
                 onUpdate({
                   ...servicio,
                   notas: notas.trim() ? notas : undefined,
+                  notesImportant: notas.trim() ? important : undefined,
                 });
                 setOpenEditor(null);
               }}
@@ -1176,17 +1184,20 @@ function UnitPriceEditor({
 
 function NotesEditor({
   value,
+  important,
   onSave,
   onClose,
 }: {
   value: string;
-  onSave: (notas: string) => void;
+  important: boolean;
+  onSave: (notas: string, important: boolean) => void;
   onClose: () => void;
 }) {
   const [text, setText] = useState(value);
+  const [isImportant, setIsImportant] = useState(important);
 
   const handleApply = () => {
-    onSave(text);
+    onSave(text, isImportant);
     onClose();
   };
 
@@ -1207,6 +1218,19 @@ function NotesEditor({
         autoFocus
         className="w-full px-2.5 py-2 rounded-md border border-[#D8E0EE] text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
       />
+      {text.trim() && (
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <div
+            className={`relative w-8 h-[18px] rounded-full transition-colors flex-shrink-0 ${isImportant ? "bg-[#ef7b15]" : "bg-slate-200"}`}
+            onClick={() => setIsImportant(v => !v)}
+          >
+            <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${isImportant ? "translate-x-3.5" : "translate-x-0.5"}`} />
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 500, color: isImportant ? "#ef7b15" : "#64748B", transition: "color 0.15s" }}>
+            Marcar como importante
+          </span>
+        </label>
+      )}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={handleApply} style={btnApply} title="Guardar">✓</button>
       </div>

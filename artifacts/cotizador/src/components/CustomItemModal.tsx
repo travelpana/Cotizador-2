@@ -132,6 +132,7 @@ export default function CustomItemModal({
   const [precio, setPrecio] = useState<string>("");
   const [precioNino, setPrecioNino] = useState<string>("");
   const [notas, setNotas] = useState("");
+  const [notesImportant, setNotesImportant] = useState(false);
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
   const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
@@ -176,6 +177,7 @@ export default function CustomItemModal({
             : "",
         );
         setNotas(initial.notas ?? "");
+        setNotesImportant(initial.notesImportant ?? false);
         setOrigen(initial.origen ?? CIUDADES_VUELO[0]);
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
         const arrowCount = (initial.nombre.match(/→/g) ?? []).length;
@@ -190,6 +192,7 @@ export default function CustomItemModal({
         setPrecio("");
         setPrecioNino("");
         setNotas("");
+        setNotesImportant(false);
         setOrigen(CIUDADES_VUELO[0]);
         setDestino(CIUDADES_VUELO[1]);
         setIdaVuelta(true);
@@ -268,6 +271,7 @@ export default function CustomItemModal({
       precios,
       manual: true,
       notas: notas.trim() || undefined,
+      notesImportant: notesImportant && !!notas.trim() ? true : undefined,
       ...(isHotel
         ? {
             fechaInicio: globalFechaInicio || undefined,
@@ -328,14 +332,23 @@ export default function CustomItemModal({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Cerrar"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              title={isEdit ? "Guardar" : "Agregar"}
+              className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
+              aria-label="Cerrar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </header>
 
         <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
@@ -607,26 +620,21 @@ export default function CustomItemModal({
               placeholder="Detalles adicionales que aparecerán en la cotización"
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 resize-none"
             />
+            {notas.trim() && (
+              <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                <div
+                  className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${notesImportant ? "bg-[#ef7b15]" : "bg-slate-200"}`}
+                  onClick={() => setNotesImportant(v => !v)}
+                >
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${notesImportant ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <span className={`text-[11px] font-medium transition-colors ${notesImportant ? "text-[#ef7b15]" : "text-slate-500"}`}>
+                  Marcar como importante
+                </span>
+              </label>
+            )}
           </div>
         </div>
-
-        <footer className="flex items-center justify-end gap-2 px-5 py-3 bg-slate-50 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={onClose}
-            title="Cancelar"
-            className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <button
-            type="submit"
-            title={isEdit ? "Guardar" : "Agregar"}
-            className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors"
-          >
-            <Check className="w-4 h-4" />
-          </button>
-        </footer>
       </form>
     </div>
   );
