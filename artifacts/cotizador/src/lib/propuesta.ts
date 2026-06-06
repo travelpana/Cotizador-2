@@ -37,8 +37,10 @@ export interface PropuestaInput {
   personalizarTraslados?: boolean;
   /** Presentation mode: detailed shows individual prices, package hides them and shows a final price block */
   presentationMode?: PresentationMode;
-  /** Quoting mode: group adds total-group and per-person summary blocks */
+  /** Quoting mode: group adds room-distribution and total-group blocks */
   quotingMode?: "individual" | "grupo";
+  /** Room counts per accommodation type (used in grupo mode) */
+  habitacionesPorAcomodacion?: Partial<Record<Acomodacion, number>>;
 }
 
 export interface PropuestaData {
@@ -62,12 +64,9 @@ export interface PropuestaData {
   isCalc: boolean;
   isPackage: boolean;
   isGrupo: boolean;
-  grupoAdultos: number;
-  grupoNinos: number;
+  grupoHabitacionesPorAcom: Partial<Record<Acomodacion, number>>;
   grupoTotalPax: number;
-  grupoHabitaciones: number;
   grupoTotal: number;
-  grupoPrecioPorPersona: number;
   itinerario: ItinerarioDia[];
   result: CotizacionResult;
   cliente: Cliente;
@@ -249,16 +248,19 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     `RGE-${Date.now().toString(36).slice(-6).toUpperCase()}`;
 
   const isGrupo = input.quotingMode === "grupo";
-  const grupoAdultos = cliente.pasajeros ?? 0;
-  const grupoNinos = cliente.ninos ?? 0;
-  const grupoTotalPax = grupoAdultos + grupoNinos;
-  const grupoTotal = result.totalesPorAcomodacion[primary] ?? 0;
-  const grupoPrecioPorPersona = grupoTotalPax > 0 ? Math.round(grupoTotal / grupoTotalPax) : 0;
-  const grupoHabitaciones = (() => {
-    if (String(primary) === "SGL") return grupoTotalPax;
-    if (String(primary) === "TPL") return Math.ceil(grupoTotalPax / 3);
-    return Math.ceil(grupoTotalPax / 2);
-  })();
+  const grupoHabitacionesPorAcom: Partial<Record<Acomodacion, number>> =
+    input.habitacionesPorAcomodacion ?? {};
+  const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, CHD: 1 };
+  const rp = (a: Acomodacion) => ROOM_PAX[a] ?? 1;
+  const grupoTotalPax = acoms.reduce(
+    (s, a) => s + (grupoHabitacionesPorAcom[a] ?? 0) * rp(a),
+    0,
+  );
+  const grupoTotal = acoms.reduce(
+    (s, a) =>
+      s + (result.totalesPorAcomodacion[a] ?? 0) * (grupoHabitacionesPorAcom[a] ?? 0) * rp(a),
+    0,
+  );
 
   return {
     fechaEmision: fmtFecha(todayIso()),
@@ -281,12 +283,9 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     isCalc,
     isPackage: input.presentationMode === "package",
     isGrupo,
-    grupoAdultos,
-    grupoNinos,
+    grupoHabitacionesPorAcom,
     grupoTotalPax,
-    grupoHabitaciones,
     grupoTotal,
-    grupoPrecioPorPersona,
     itinerario,
     result,
     cliente,
@@ -1098,38 +1097,40 @@ function buildPackageView(d: PropuestaData): string {
   return html;
 }
 
-function grupoDatosBlock(d: PropuestaData): string {
+function grupoConfiguracionBlock(d: PropuestaData): string {
   if (!d.isGrupo) return "";
-  const C_BG = "#f5f7fb";
   const C_DARK = "#041941";
   const C_BLUE = "#1E3A8A";
   const C_BORDER = "#e2e8f0";
-  const C_LBL = "#64748b";
-  const cell = (lbl: string, val: string) =>
-    `<td style="padding:12px 16px;text-align:center;border-right:1px solid ${C_BORDER};vertical-align:middle;">` +
-    `<div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">${escape(lbl)}</div>` +
-    `<div style="font-size:13px;font-weight:700;color:${C_DARK};">${escape(val)}</div></td>`;
+  const C_BG = "#f5f7fb";
+  const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, CHD: 1 };
+  const rp = (a: Acomodacion) => ROOM_PAX[a] ?? 1;
+
+  const activeAcoms = d.acoms.filter((a) => (d.grupoHabitacionesPorAcom[a] ?? 0) > 0);
+
+  if (activeAcoms.length === 0) return "";
+
+  const rows = activeAcoms
+    .map((a) => {
+      const hab = d.grupoHabitacionesPorAcom[a] ?? 0;
+      const pax = hab * rp(a);
+      return `<tr style="border-bottom:1px solid ${C_BORDER};">
+        <td style="padding:10px 16px;font-size:13px;font-weight:700;color:${C_DARK};">${escape(String(a))} &times; ${hab} habitaciones</td>
+        <td style="padding:10px 16px;text-align:right;font-size:12px;color:#64748b;">${pax} pax</td>
+      </tr>`;
+    })
+    .join("");
 
   return `
   <div style="margin-bottom:20px;">
-    ${sectionBar("Datos del Grupo", C_BLUE)}
+    ${sectionBar("Configuración del Grupo", C_BLUE)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%"
       style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:${C_BG};">
       <tbody>
-        <tr>
-          ${cell("Destino", d.destino)}
-          ${cell("Fechas", d.fechaViaje)}
-          ${cell("Noches", d.noches)}
-          <td style="padding:12px 16px;text-align:center;vertical-align:middle;">
-            <div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Acomodación base</div>
-            <div style="font-size:13px;font-weight:700;color:${C_DARK};">${escape(String(d.primary))}</div>
-          </td>
-        </tr>
-        <tr style="border-top:1px solid ${C_BORDER};">
-          ${cell("Adultos", String(d.grupoAdultos))}
-          ${cell("Niños", String(d.grupoNinos))}
-          ${cell("Total pasajeros", String(d.grupoTotalPax))}
-          ${cell("Habitaciones", String(d.grupoHabitaciones))}
+        ${rows}
+        <tr style="background:#eef2f8;">
+          <td style="padding:12px 16px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Total pasajeros</td>
+          <td style="padding:12px 16px;text-align:right;font-size:15px;font-weight:800;color:${C_DARK};">${d.grupoTotalPax}</td>
         </tr>
       </tbody>
     </table>
@@ -1141,21 +1142,46 @@ function grupoResumenEconomicoBlock(d: PropuestaData): string {
   const C_DARK = "#041941";
   const C_BLUE = "#1E3A8A";
   const C_BORDER = "#e2e8f0";
-  const C_PRICE_BG = "#eef2f8";
-  return `
+
+  const activeAcoms = d.acoms.filter(
+    (a) => (d.grupoHabitacionesPorAcom[a] ?? 0) > 0 && (d.result.totalesPorAcomodacion[a] ?? 0) > 0,
+  );
+
+  const precioRows = activeAcoms
+    .map(
+      (a) =>
+        `<tr style="border-bottom:1px solid ${C_BORDER};">
+          <td style="padding:10px 16px;font-size:13px;font-weight:600;color:#64748b;">${escape(String(a))}</td>
+          <td style="padding:10px 16px;text-align:right;font-size:13px;font-weight:700;color:${C_DARK};">USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</td>
+        </tr>`,
+    )
+    .join("");
+
+  const preciosBlock = activeAcoms.length > 0
+    ? `<div style="margin-bottom:20px;">
+        ${sectionBar("Precios por Acomodación", C_BLUE)}
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+          <thead>
+            <tr style="background:#f5f7fb;border-bottom:1px solid ${C_BORDER};">
+              <th style="padding:8px 16px;text-align:left;font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Acomodación</th>
+              <th style="padding:8px 16px;text-align:right;font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Precio / persona</th>
+            </tr>
+          </thead>
+          <tbody>${precioRows}</tbody>
+        </table>
+      </div>`
+    : "";
+
+  return `${preciosBlock}
   <div style="margin-bottom:20px;">
-    ${sectionBar("Resumen Económico", C_BLUE)}
+    ${sectionBar("Total del Grupo", C_BLUE)}
     <table cellpadding="0" cellspacing="0" border="0" width="100%"
       style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
       <tbody>
         <tr>
-          <td style="padding:18px 24px;width:50%;border-right:1px solid ${C_BORDER};vertical-align:middle;">
-            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Total del Grupo</div>
-            <div style="font-size:26px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(d.grupoTotal))}</div>
-          </td>
-          <td style="padding:18px 24px;width:50%;vertical-align:middle;background:${C_PRICE_BG};">
-            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Precio por Persona</div>
-            <div style="font-size:22px;font-weight:800;color:${C_BLUE};">USD ${escape(fmt(d.grupoPrecioPorPersona))}</div>
+          <td style="padding:20px 24px;vertical-align:middle;">
+            <div style="font-size:30px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(d.grupoTotal))}</div>
           </td>
         </tr>
       </tbody>
@@ -1167,7 +1193,6 @@ function buildGrupoPackageView(d: PropuestaData): string {
   const C_BLUE = "#334196";
   const C_DARK = "#041941";
   const C_BORDER = "#e2e8f0";
-  const C_PRICE_BG = "#eef2f8";
   const TICK = `<span style="color:${C_BLUE};font-weight:800;margin-right:7px;">&#10003;</span>`;
 
   const includeItems: string[] = [];
@@ -1190,25 +1215,8 @@ function buildGrupoPackageView(d: PropuestaData): string {
     : "";
 
   let html = inclusionBlock;
-  html += `
-  <div style="margin-bottom:20px;">
-    ${sectionBar("Resumen Económico", C_BLUE)}
-    <table cellpadding="0" cellspacing="0" border="0" width="100%"
-      style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
-      <tbody>
-        <tr>
-          <td style="padding:18px 24px;width:50%;border-right:1px solid ${C_BORDER};vertical-align:middle;">
-            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Total del Grupo</div>
-            <div style="font-size:26px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(d.grupoTotal))}</div>
-          </td>
-          <td style="padding:18px 24px;width:50%;vertical-align:middle;background:${C_PRICE_BG};">
-            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Precio por Persona</div>
-            <div style="font-size:22px;font-weight:800;color:${C_BLUE};">USD ${escape(fmt(d.grupoPrecioPorPersona))}</div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>`;
+  html += grupoConfiguracionBlock(d);
+  html += grupoResumenEconomicoBlock(d);
   html += observacionesBlock(d, C_TOT_OBSERVACIONES);
   html += itinerarioTable(d, C_TOT_ITINERARIO, "#ffffff");
   return html;
@@ -1295,10 +1303,9 @@ export function buildPropuestaBody(d: PropuestaData): string {
 
   let bodyContent: string;
   if (d.isGrupo && d.isPackage) {
-    bodyContent = `<tr><td>${grupoDatosBlock(d)}</td></tr>
-      <tr><td>${buildGrupoPackageView(d)}</td></tr>`;
+    bodyContent = `<tr><td>${buildGrupoPackageView(d)}</td></tr>`;
   } else if (d.isGrupo) {
-    bodyContent = `<tr><td>${grupoDatosBlock(d)}</td></tr>
+    bodyContent = `
       ${d.isCalc
         ? `<tr><td>${buildTotalesView(d)}</td></tr>`
         : `<tr><td>${alojamientoTable(d)}</td></tr>
@@ -1309,6 +1316,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
       <tr><td>${itinerarioTable(d)}</td></tr>
       <tr><td>${descriptivosBlock(d)}</td></tr>
       <tr><td>${observacionesBlock(d)}</td></tr>`}
+      <tr><td>${grupoConfiguracionBlock(d)}</td></tr>
       <tr><td>${grupoResumenEconomicoBlock(d)}</td></tr>`;
   } else if (d.isPackage) {
     bodyContent = `<tr><td>${buildPackageView(d)}</td></tr>`;

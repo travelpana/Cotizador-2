@@ -163,6 +163,9 @@ export default function CotizadorPage() {
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
   const [presentationMode, setPresentationMode] = useState<PresentationMode>("detailed");
   const [quotingMode, setQuotingMode] = useState<QuotingMode>("individual");
+  const [habitacionesPorAcomodacion, setHabitacionesPorAcomodacion] = useState<
+    Partial<Record<Acomodacion, number>>
+  >({});
   const [incluirItinerario, setIncluirItinerario] = useState(false);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
   const [incluirDescriptivoCompleto, setIncluirDescriptivoCompleto] =
@@ -846,6 +849,7 @@ export default function CotizadorPage() {
     setServicios([]);
     setModo("tarifas");
     setQuotingMode("individual");
+    setHabitacionesPorAcomodacion({});
     setCurrentNumero(null);
     setSavedId(null);
     setSavedOppId(null);
@@ -1180,11 +1184,12 @@ export default function CotizadorPage() {
                   acomodaciones={acomodaciones}
                   onAcomodacionesChange={setAcomodaciones}
                 />
-                {quotingMode === "grupo" && servicios.length > 0 && (
+                {quotingMode === "grupo" && (
                   <GrupoResumenCard
-                    cliente={cliente}
                     acomodaciones={acomodaciones}
                     result={result}
+                    habitaciones={habitacionesPorAcomodacion}
+                    onHabitacionesChange={setHabitacionesPorAcomodacion}
                   />
                 )}
                 {langFallback && (
@@ -1264,6 +1269,7 @@ export default function CotizadorPage() {
                   modo={modo}
                   presentationMode={presentationMode}
                   quotingMode={quotingMode}
+                  habitacionesPorAcomodacion={habitacionesPorAcomodacion}
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   incluirDescriptivoCompleto={incluirDescriptivoCompleto}
@@ -1345,6 +1351,7 @@ export default function CotizadorPage() {
         modo={previewModo}
         presentationMode={presentationMode}
         quotingMode={quotingMode}
+        habitacionesPorAcomodacion={habitacionesPorAcomodacion}
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
         incluirDescriptivoCompleto={incluirDescriptivoCompleto}

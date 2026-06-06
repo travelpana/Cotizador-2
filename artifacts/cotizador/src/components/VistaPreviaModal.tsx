@@ -1,6 +1,7 @@
 import Modal from "./Modal";
 import { X } from "lucide-react";
 import type {
+  Acomodacion,
   Cliente,
   CotizacionResult,
   Descriptivo,
@@ -20,6 +21,7 @@ interface Props {
   modo: ModoCotizacion;
   presentationMode?: PresentationMode;
   quotingMode?: QuotingMode;
+  habitacionesPorAcomodacion?: Partial<Record<Acomodacion, number>>;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   incluirDescriptivoCompleto: boolean;
@@ -45,6 +47,7 @@ export default function VistaPreviaModal({
   modo,
   presentationMode,
   quotingMode,
+  habitacionesPorAcomodacion,
   incluirItinerario,
   incluirDescriptivos,
   incluirDescriptivoCompleto,
@@ -110,6 +113,7 @@ export default function VistaPreviaModal({
       modo,
       presentationMode,
       quotingMode,
+      habitacionesPorAcomodacion,
       incluirItinerario,
       incluirDescriptivos,
       incluirDescriptivoCompleto,
@@ -127,6 +131,7 @@ export default function VistaPreviaModal({
     modo,
     presentationMode,
     quotingMode,
+    habitacionesPorAcomodacion,
     incluirItinerario,
     incluirDescriptivos,
     incluirDescriptivoCompleto,

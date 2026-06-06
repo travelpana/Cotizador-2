@@ -15,6 +15,7 @@ import html2pdfImport from "html2pdf.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const html2pdf = html2pdfImport as unknown as (...args: any[]) => any;
 import type {
+  Acomodacion,
   Cliente,
   CotizacionResult,
   Descriptivo,
@@ -34,6 +35,7 @@ interface Props {
   modo: ModoCotizacion;
   presentationMode?: PresentationMode;
   quotingMode?: QuotingMode;
+  habitacionesPorAcomodacion?: Partial<Record<Acomodacion, number>>;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   incluirDescriptivoCompleto: boolean;
@@ -100,6 +102,7 @@ export default function ExportButtons({
   modo,
   presentationMode = "detailed",
   quotingMode = "individual",
+  habitacionesPorAcomodacion,
   incluirItinerario,
   incluirDescriptivos,
   incluirDescriptivoCompleto,
@@ -402,25 +405,39 @@ export default function ExportButtons({
       }
     }
 
-    // ── Resumen del Grupo ─────────────────────────────────────────
+    // ── Configuración del Grupo ───────────────────────────────────
     if (quotingMode === "grupo") {
-      const grupoAdultos = cliente.pasajeros ?? 0;
-      const grupoNinos = cliente.ninos ?? 0;
-      const grupoTotalPax = grupoAdultos + grupoNinos;
-      const grupoTotal = result.totalesPorAcomodacion[primary] ?? 0;
-      const grupoPrecioPorPersona = grupoTotalPax > 0 ? Math.round(grupoTotal / grupoTotalPax) : 0;
+      const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, CHD: 1 };
+      const rp = (a: Acomodacion) => ROOM_PAX[a] ?? 1;
+      const hab = habitacionesPorAcomodacion ?? {};
+      const activeAcoms = acoms.filter((a) => (hab[a] ?? 0) > 0);
+      const grupoTotalPax = activeAcoms.reduce((s, a) => s + (hab[a] ?? 0) * rp(a), 0);
+      const grupoTotal = activeAcoms.reduce(
+        (s, a) => s + (result.totalesPorAcomodacion[a] ?? 0) * (hab[a] ?? 0) * rp(a),
+        0,
+      );
+
       lines.push("");
       lines.push(SEP);
-      lines.push("👥 *RESUMEN DEL GRUPO*");
+      lines.push("👥 *CONFIGURACIÓN DEL GRUPO*");
       lines.push(SEP);
       lines.push("");
-      lines.push(`• Adultos: *${grupoAdultos}*`);
-      if (grupoNinos > 0) lines.push(`• Niños: *${grupoNinos}*`);
-      lines.push(`• Total pasajeros: *${grupoTotalPax}*`);
-      lines.push(`• Acomodación base: *${String(primary)}*`);
+      for (const a of activeAcoms) {
+        lines.push(`• ${String(a)} × ${hab[a]} habitaciones (${(hab[a] ?? 0) * rp(a)} pax)`);
+      }
+      if (grupoTotalPax > 0) lines.push(`• *Total pasajeros: ${grupoTotalPax}*`);
+
+      if (activeAcoms.length > 0) {
+        lines.push("");
+        lines.push("*Precio por persona:*");
+        for (const a of activeAcoms) {
+          const pp = result.totalesPorAcomodacion[a] ?? 0;
+          if (pp > 0) lines.push(`  ${String(a)}: ${fmt(pp)}`);
+        }
+      }
+
       lines.push("");
       lines.push(`💵 *TOTAL DEL GRUPO: ${fmt(grupoTotal)}*`);
-      lines.push(`👤 *PRECIO POR PERSONA: ${fmt(grupoPrecioPorPersona)}*`);
     }
 
     // ── Itinerario ───────────────────────────────────────────────
@@ -536,6 +553,7 @@ export default function ExportButtons({
       modo,
       presentationMode,
       quotingMode,
+      habitacionesPorAcomodacion,
       incluirItinerario,
       incluirDescriptivos,
       incluirDescriptivoCompleto,

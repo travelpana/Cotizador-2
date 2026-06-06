@@ -1,28 +1,57 @@
 import type { Acomodacion, CotizacionResult } from "@/lib/types";
-import type { Cliente } from "@/lib/types";
 import { fmt } from "@/lib/calc";
 
+const ROOM_PAX: Partial<Record<Acomodacion, number>> = {
+  SGL: 1,
+  DBL: 2,
+  TPL: 3,
+  CHD: 1,
+};
+
+function roomPax(a: Acomodacion): number {
+  return ROOM_PAX[a] ?? 1;
+}
+
+export function calcGrupoTotalPax(
+  acoms: Acomodacion[],
+  hab: Partial<Record<Acomodacion, number>>,
+): number {
+  return acoms.reduce((s, a) => s + (hab[a] ?? 0) * roomPax(a), 0);
+}
+
+export function calcGrupoTotal(
+  acoms: Acomodacion[],
+  hab: Partial<Record<Acomodacion, number>>,
+  totales: Partial<Record<Acomodacion, number>>,
+): number {
+  return acoms.reduce(
+    (s, a) => s + (totales[a] ?? 0) * (hab[a] ?? 0) * roomPax(a),
+    0,
+  );
+}
+
 interface Props {
-  cliente: Cliente;
   acomodaciones: Acomodacion[];
   result: CotizacionResult;
+  habitaciones: Partial<Record<Acomodacion, number>>;
+  onHabitacionesChange: (next: Partial<Record<Acomodacion, number>>) => void;
 }
 
-function calcHabitaciones(totalPax: number, acom: Acomodacion): number {
-  if (acom === "SGL") return totalPax;
-  if (acom === "DBL") return Math.ceil(totalPax / 2);
-  if (acom === "TPL") return Math.ceil(totalPax / 3);
-  return totalPax;
-}
+export default function GrupoResumenCard({
+  acomodaciones,
+  result,
+  habitaciones,
+  onHabitacionesChange,
+}: Props) {
+  const totalPax = calcGrupoTotalPax(acomodaciones, habitaciones);
+  const totalGrupo = calcGrupoTotal(
+    acomodaciones,
+    habitaciones,
+    result.totalesPorAcomodacion,
+  );
 
-export default function GrupoResumenCard({ cliente, acomodaciones, result }: Props) {
-  const adultos = cliente.pasajeros ?? 0;
-  const ninos = cliente.ninos ?? 0;
-  const totalPasajeros = adultos + ninos;
-  const acomBase: Acomodacion = acomodaciones[0] ?? "DBL";
-  const habitaciones = calcHabitaciones(totalPasajeros, acomBase);
-  const totalGrupo = result.totalesPorAcomodacion[acomBase] ?? 0;
-  const precioPorPersona = totalPasajeros > 0 ? Math.round(totalGrupo / totalPasajeros) : 0;
+  const setHab = (a: Acomodacion, val: number) =>
+    onHabitacionesChange({ ...habitaciones, [a]: Math.max(0, val) });
 
   const fmtUsd = (n: number) => `USD ${fmt(n)}`;
 
@@ -31,62 +60,119 @@ export default function GrupoResumenCard({ cliente, acomodaciones, result }: Pro
       className="rounded-2xl overflow-hidden shadow-md"
       style={{ border: "1px solid #d0daf0" }}
     >
+      {/* Header */}
       <div
         className="px-5 py-3 flex items-center gap-2"
-        style={{ backgroundColor: "rgba(0,36,126,0.92)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+        style={{
+          backgroundColor: "rgba(0,36,126,0.92)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+        }}
       >
-        <div className="w-[3px] h-4 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
-        <span style={{ color: "#ffffff", fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-          Resumen del Grupo
+        <div
+          className="w-[3px] h-4 rounded-full flex-shrink-0"
+          style={{ backgroundColor: "#eec774" }}
+        />
+        <span
+          style={{
+            color: "#ffffff",
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          Configuración del Grupo
         </span>
       </div>
 
-      <div className="bg-white px-5 py-4">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 mb-4">
-          <Row label="Adultos" value={String(adultos)} />
-          <Row label="Niños" value={String(ninos)} />
-          <Row label="Total pasajeros" value={String(totalPasajeros)} highlight />
-          <Row label="Habitaciones" value={String(habitaciones)} />
-          <div className="col-span-2">
-            <Row label="Acomodación base" value={acomBase} />
-          </div>
+      <div className="bg-white divide-y divide-slate-100">
+        {/* Room inputs */}
+        <div className="px-5 py-4 space-y-3">
+          {acomodaciones.map((a) => (
+            <div key={a} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded"
+                  style={{ background: "#eef2f8", color: "#1E3A8A" }}
+                >
+                  {a}
+                </span>
+                <span className="text-[12px] text-slate-500 font-medium">
+                  habitaciones
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setHab(a, (habitaciones[a] ?? 0) - 1)}
+                  className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all text-sm font-bold select-none"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  value={habitaciones[a] ?? 0}
+                  onChange={(e) =>
+                    setHab(a, parseInt(e.target.value) || 0)
+                  }
+                  className="w-14 text-center text-sm font-bold border border-slate-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  style={{ color: "#07152f" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setHab(a, (habitaciones[a] ?? 0) + 1)}
+                  className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all text-sm font-bold select-none"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="border-t border-slate-100 pt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total grupo</span>
-            <span
-              className="text-lg font-extrabold"
-              style={{ color: "#07152f" }}
-            >
-              {fmtUsd(totalGrupo)}
-            </span>
+        {/* Total pasajeros */}
+        <div className="px-5 py-3 flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            Total pasajeros
+          </span>
+          <span className="text-base font-extrabold" style={{ color: "#0043BB" }}>
+            {totalPax}
+          </span>
+        </div>
+
+        {/* Precios por acomodación */}
+        {acomodaciones.filter((a) => (result.totalesPorAcomodacion[a] ?? 0) > 0).length > 0 && (
+          <div className="px-5 py-3 space-y-1.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Precio por persona
+            </div>
+            {acomodaciones
+              .filter((a) => (result.totalesPorAcomodacion[a] ?? 0) > 0)
+              .map((a) => (
+                <div key={a} className="flex items-center justify-between">
+                  <span className="text-[12px] text-slate-500 font-medium">{a}</span>
+                  <span className="text-[13px] font-bold" style={{ color: "#07152f" }}>
+                    {fmtUsd(result.totalesPorAcomodacion[a] ?? 0)}
+                  </span>
+                </div>
+              ))}
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Precio por persona</span>
-            <span
-              className="text-base font-bold"
-              style={{ color: "#1495ff" }}
-            >
-              {fmtUsd(precioPorPersona)}
-            </span>
-          </div>
+        )}
+
+        {/* Total grupo */}
+        <div className="px-5 py-4 flex items-center justify-between bg-slate-50">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            Total del grupo
+          </span>
+          <span
+            className="text-xl font-extrabold"
+            style={{ color: "#07152f" }}
+          >
+            {fmtUsd(totalGrupo)}
+          </span>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-[12px] text-slate-500 font-medium">{label}</span>
-      <span
-        className="text-[13px] font-bold"
-        style={{ color: highlight ? "#0043BB" : "#07152f" }}
-      >
-        {value}
-      </span>
     </div>
   );
 }
