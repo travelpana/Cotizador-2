@@ -703,53 +703,45 @@ export function AlojamientoBar({
 
   const BED_ICONS: Record<Acomodacion, React.ReactNode> = {
     SGL: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
-        <rect x="2" y="7" width="18" height="5" rx="1" fill="white" opacity="0.7"/>
-        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
-        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
-        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="24" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="2" y="10" width="24" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="5" y="12.5" width="18" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
+        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <line x1="23.5" y1="21" x2="23.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
       </svg>
     ),
     DBL: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
-        <rect x="2" y="7" width="8" height="5" rx="1" fill="white" opacity="0.7"/>
-        <rect x="12" y="7" width="8" height="5" rx="1" fill="white" opacity="0.7"/>
-        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
-        <line x1="11" y1="7" x2="11" y2="12" stroke="white" strokeWidth="0.8" opacity="0.5"/>
-        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
-        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="24" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="2" y="10" width="24" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="4" y="12.5" width="9" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
+        <rect x="15" y="12.5" width="9" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
+        <line x1="14" y1="10" x2="14" y2="21" stroke="currentColor" strokeWidth="1" opacity="0.4"/>
+        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <line x1="23.5" y1="21" x2="23.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
       </svg>
     ),
     TPL: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
-        <rect x="2" y="7" width="18" height="5" rx="1" fill="white" opacity="0.7"/>
-        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
-        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
-        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
-        <circle cx="17.5" cy="5.5" r="4.5" fill="#1495ff" stroke="white" strokeWidth="1"/>
-        <text x="17.5" y="8.5" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="white" fontFamily="system-ui">3</text>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="21" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="2" y="10" width="21" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="5" y="12.5" width="15" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
+        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <line x1="20.5" y1="21" x2="20.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <circle cx="23" cy="6" r="5" fill="rgba(20,149,255,0.9)" stroke="currentColor" strokeWidth="1.2"/>
+        <text x="23" y="9.2" textAnchor="middle" fontSize="6" fontWeight="800" fill="white" fontFamily="system-ui,sans-serif">3</text>
       </svg>
     ),
     QDL: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="11" width="18" height="7" rx="1.5" fill="white"/>
-        <rect x="2" y="7" width="18" height="5" rx="1" fill="white" opacity="0.7"/>
-        <rect x="2" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="17" y="6" width="3" height="5" rx="1" fill="white"/>
-        <rect x="2" y="4" width="18" height="3" rx="1.5" fill="white"/>
-        <rect x="3" y="18" width="2" height="3" rx="1" fill="white"/>
-        <rect x="17" y="18" width="2" height="3" rx="1" fill="white"/>
-        <circle cx="17.5" cy="5.5" r="4.5" fill="#1495ff" stroke="white" strokeWidth="1"/>
-        <text x="17.5" y="8.5" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="white" fontFamily="system-ui">4</text>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="21" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="2" y="10" width="21" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
+        <rect x="5" y="12.5" width="15" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
+        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <line x1="20.5" y1="21" x2="20.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <circle cx="23" cy="6" r="5" fill="rgba(20,149,255,0.9)" stroke="currentColor" strokeWidth="1.2"/>
+        <text x="23" y="9.2" textAnchor="middle" fontSize="6" fontWeight="800" fill="white" fontFamily="system-ui,sans-serif">4</text>
       </svg>
     ),
   };

@@ -20,10 +20,6 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "API Server"
-
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -35,18 +31,6 @@ outputType = "webview"
 task = "shell.exec"
 args = "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/cotizador run dev"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "API Server"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd artifacts/api-server && node ./build.mjs && NODE_ENV=production PORT=8080 node --enable-source-maps ./dist/index.mjs"
-waitForPort = 8080
 
 [agent]
 stack = "BEST_EFFORT_FALLBACK"

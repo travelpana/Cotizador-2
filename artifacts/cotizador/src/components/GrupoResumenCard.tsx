@@ -36,11 +36,11 @@ export function calcGrupoTotal(
   return roomTotal + ninos * chdRate;
 }
 
-const ACOM_COLORS: Partial<Record<Acomodacion, { bg: string; text: string; border: string }>> = {
-  SGL: { bg: "#EEF2FF", text: "#3730A3", border: "#C7D2FE" },
-  DBL: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
-  TPL: { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
-  QDL: { bg: "#FFF7ED", text: "#9A3412", border: "#FED7AA" },
+const ACOM_COLORS: Partial<Record<Acomodacion, { bg: string; text: string; border: string; btn: string; btnBorder: string }>> = {
+  SGL: { bg: "#eef4ff", text: "#044b9e", border: "#9bbcff", btn: "#dbeafe", btnBorder: "#9bbcff" },
+  DBL: { bg: "#fff8e1", text: "#9a6a00", border: "#e6ae33", btn: "#fef3c7", btnBorder: "#e6ae33" },
+  TPL: { bg: "#eef4ff", text: "#044b9e", border: "#9bbcff", btn: "#dbeafe", btnBorder: "#9bbcff" },
+  QDL: { bg: "#fff8e1", text: "#9a6a00", border: "#e6ae33", btn: "#fef3c7", btnBorder: "#e6ae33" },
 };
 
 interface Props {
@@ -122,6 +122,8 @@ export default function GrupoResumenCard({
                 bg: "#f8fafc",
                 text: "#475569",
                 border: "#e2e8f0",
+                btn: "#f1f5f9",
+                btnBorder: "#e2e8f0",
               };
               return (
                 <div
@@ -151,9 +153,9 @@ export default function GrupoResumenCard({
                       onClick={() => setHab(a, count - 1)}
                       className="w-6 h-6 rounded-md flex items-center justify-center text-sm font-bold transition-all select-none"
                       style={{
-                        background: "rgba(255,255,255,0.8)",
+                        background: colors.btn,
                         color: colors.text,
-                        border: `1px solid ${colors.border}`,
+                        border: `1px solid ${colors.btnBorder}`,
                       }}
                     >
                       −
@@ -173,9 +175,9 @@ export default function GrupoResumenCard({
                       onClick={() => setHab(a, count + 1)}
                       className="w-6 h-6 rounded-md flex items-center justify-center text-sm font-bold transition-all select-none"
                       style={{
-                        background: "rgba(255,255,255,0.8)",
+                        background: colors.btn,
                         color: colors.text,
-                        border: `1px solid ${colors.border}`,
+                        border: `1px solid ${colors.btnBorder}`,
                       }}
                     >
                       +
