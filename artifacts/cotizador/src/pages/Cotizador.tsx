@@ -324,6 +324,8 @@ export default function CotizadorPage() {
     setCliente(makeDefaultCliente());
     setValidationErrors({});
     setAcomodaciones(["DBL"]);
+    setHabitacionesPorAcomodacion({});
+    setQuotingMode("individual");
     setServicios([]);
     setModo("tarifas");
     setPresentationMode("detailed");
@@ -891,6 +893,37 @@ export default function CotizadorPage() {
     setObservacionManual("");
   };
 
+  const ROOM_PAX_MAP: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+
+  const handleQuotingModeChange = (newMode: QuotingMode) => {
+    if (newMode === quotingMode) return;
+
+    if (newMode === "grupo") {
+      // Individual → Grupo: seed one room per active accommodation
+      const seed: Partial<Record<Acomodacion, number>> = {};
+      for (const a of acomodaciones) {
+        if (ROOM_PAX_MAP[a] !== undefined) seed[a] = 1;
+      }
+      setHabitacionesPorAcomodacion(seed);
+    } else {
+      // Grupo → Individual: pick the predominant accommodation
+      const roomAcoms = (["SGL", "DBL", "TPL", "QDL"] as Acomodacion[]).filter(
+        (a) => (habitacionesPorAcomodacion[a] ?? 0) > 0,
+      );
+      if (roomAcoms.length > 0) {
+        // Use the one with the most rooms; tie-break by last in list
+        const dominant = roomAcoms.reduce((best, a) =>
+          (habitacionesPorAcomodacion[a] ?? 0) >= (habitacionesPorAcomodacion[best] ?? 0)
+            ? a
+            : best,
+        );
+        setAcomodaciones([dominant]);
+      }
+    }
+
+    setQuotingMode(newMode);
+  };
+
   const handleQuickAdd = (s: ServicioSeleccionado) => {
     setServicios((prev) => {
       const exists = prev.some((x) => x.tipo === s.tipo && x.id === s.id);
@@ -1278,7 +1311,7 @@ export default function CotizadorPage() {
                   presentationMode={presentationMode}
                   onPresentationModeChange={setPresentationMode}
                   quotingMode={quotingMode}
-                  onQuotingModeChange={setQuotingMode}
+                  onQuotingModeChange={handleQuotingModeChange}
                   incluirItinerario={incluirItinerario}
                   onToggleItinerario={() => setIncluirItinerario((v) => !v)}
                   incluirDescriptivos={incluirDescriptivos}
