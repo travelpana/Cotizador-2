@@ -1214,6 +1214,7 @@ export default function CotizadorPage() {
                   servicios={servicios}
                   acomodaciones={acomodaciones}
                   pasajeros={cliente.pasajeros}
+                  ninos={cliente.ninos ?? 0}
                   highlightedId={highlightedServiceId}
                   onChange={setServicios}
                   onEdit={openEdit}

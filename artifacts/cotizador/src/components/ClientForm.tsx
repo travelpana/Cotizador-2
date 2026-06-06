@@ -699,7 +699,8 @@ export function AlojamientoBar({
   acomodaciones: Acomodacion[];
   onAcomodacionesChange: (a: Acomodacion[]) => void;
 }) {
-  const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL", "CHD"];
+  const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
+  const BED_COUNT: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
 
   const togglePill = (a: Acomodacion) => {
     if (acomodaciones.includes(a)) {
@@ -755,7 +756,14 @@ export function AlojamientoBar({
               }}
               data-testid={`acomodacion-${p}`}
             >
-              {p}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
+                  {Array.from({ length: BED_COUNT[p] ?? 1 }).map((_, i) => (
+                    <span key={i} style={{ display: "inline-block", width: 8, height: 5, background: "currentColor", borderRadius: 1.5, opacity: 0.9 }} />
+                  ))}
+                </div>
+                {p}
+              </div>
             </button>
           );
         })}

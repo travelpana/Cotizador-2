@@ -195,28 +195,6 @@ export default function GrupoResumenCard({
           </div>
         )}
 
-        {/* Niños row — only if ninos > 0 */}
-        {ninos > 0 && (
-          <div
-            className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl"
-            style={{ background: "#fefce8", border: "1px solid #fde68a" }}
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="text-[11px] font-bold px-2 py-0.5 rounded-md"
-                style={{ background: "rgba(255,255,255,0.7)", color: "#92400e" }}
-              >
-                CHD
-              </span>
-              <span className="text-[11px] text-amber-700">
-                niños (del formulario)
-              </span>
-            </div>
-            <span className="text-sm font-bold" style={{ color: "#92400e" }}>
-              {ninos}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Summary — 2 cards side by side */}

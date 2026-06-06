@@ -45,6 +45,7 @@ interface Props {
   servicios: ServicioSeleccionado[];
   acomodaciones: Acomodacion[];
   pasajeros: number;
+  ninos?: number;
   highlightedId?: string | null;
   onChange: (s: ServicioSeleccionado[]) => void;
   onEdit: (s: ServicioSeleccionado) => void;
@@ -92,6 +93,7 @@ export default function ServiciosSeleccionados({
   servicios,
   acomodaciones,
   pasajeros,
+  ninos = 0,
   highlightedId,
   onChange,
   onEdit,
@@ -242,6 +244,7 @@ export default function ServiciosSeleccionados({
                       servicio={s}
                       acomodaciones={acomodaciones}
                       pasajeros={pasajeros}
+                      ninos={ninos}
                       highlight={highlightedId === s.id}
                       isDragging={dragId === dragKey}
                       isDragOver={dragOverKey === rowKey}
@@ -482,6 +485,7 @@ function ServicioRow({
   servicio,
   acomodaciones,
   pasajeros,
+  ninos = 0,
   highlight,
   isDragging,
   isDragOver,
@@ -498,6 +502,7 @@ function ServicioRow({
   servicio: ServicioSeleccionado;
   acomodaciones: Acomodacion[];
   pasajeros: number;
+  ninos?: number;
   highlight?: boolean;
   isDragging?: boolean;
   isDragOver?: boolean;
@@ -773,6 +778,16 @@ function ServicioRow({
                   </div>
                 </div>
               ))}
+              {ninos > 0 && (servicio.precios.CHD ?? 0) > 0 && (
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums" style={{ color: "#92400e" }}>
+                    {fmt(servicio.precios.CHD ?? 0)}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wide" style={{ color: "#b45309" }}>
+                    CHD/noche
+                  </div>
+                </div>
+              )}
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -808,6 +823,16 @@ function ServicioRow({
               <div className="text-[10px] uppercase tracking-wide text-slate-400">
                 p/p
               </div>
+              {ninos > 0 && (servicio.precios.chd ?? 0) > 0 && (
+                <>
+                  <div className="text-sm font-bold tabular-nums mt-0.5" style={{ color: "#92400e" }}>
+                    {fmt(servicio.precios.chd ?? 0)}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wide" style={{ color: "#b45309" }}>
+                    niño p/p
+                  </div>
+                </>
+              )}
             </button>
           </PopoverTrigger>
           <PopoverContent

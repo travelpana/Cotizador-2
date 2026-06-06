@@ -91,6 +91,9 @@ export function calcularLocal(
         totalesPorAcom[a] = preciosPorAcom[a] * hotelNoches * paxLocal;
         subtotales.hotel[a] += totalesPorAcom[a];
       }
+      // Always compute CHD tarifa regardless of acoms (needed for group mode + PDF)
+      totalesPorAcom.CHD = preciosPorAcom.CHD * hotelNoches * paxLocal;
+      subtotales.hotel.CHD += totalesPorAcom.CHD;
       out.push({
         id: s.id,
         codigo: s.codigo ?? s.id,
@@ -170,6 +173,8 @@ export function calcularLocal(
     for (const a of acoms) {
       totales[a] += sv.totalesPorAcomodacion[a];
     }
+    // Always accumulate CHD (child tarifa, not a room type)
+    totales.CHD += sv.totalesPorAcomodacion.CHD;
   }
 
   return {

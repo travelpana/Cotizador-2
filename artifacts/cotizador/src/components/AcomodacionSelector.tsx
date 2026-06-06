@@ -12,7 +12,6 @@ const PILLS: { value: Acomodacion; label: string; full: string }[] = [
   { value: "DBL", label: "DBL", full: "Doble" },
   { value: "TPL", label: "TPL", full: "Triple" },
   { value: "QDL", label: "QDL", full: "Cuádruple" },
-  { value: "CHD", label: "CHD", full: "Niño" },
 ];
 
 export default function AcomodacionSelector({ selected, onChange }: Props) {
