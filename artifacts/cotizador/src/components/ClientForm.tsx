@@ -838,20 +838,8 @@ export function AlojamientoBar({
     userSelect: "none",
   };
 
-  const pillStyle: React.CSSProperties = {
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: "0.07em",
-    background: "rgba(255,255,255,0.2)",
-    borderRadius: 99,
-    padding: "1px 7px",
-    color: "#fff",
-    whiteSpace: "nowrap",
-    textTransform: "uppercase",
-  };
-
   const BedIcon = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
       <path d="M3 14h18"/>
       <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
@@ -862,10 +850,13 @@ export function AlojamientoBar({
   return (
     <section
       className="relative rounded-2xl overflow-hidden text-white"
-      style={{ ...sectionStyle, animation: "grupoEnter 0.3s ease-out" }}
+      style={{ ...sectionStyle, animation: "grupoEnter 0.32s ease-out" }}
     >
       <style>{`
-        @keyframes grupoEnter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes grupoEnter {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         .grupo-input::-webkit-outer-spin-button,
         .grupo-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .grupo-input[type=number] { -moz-appearance: textfield; }
@@ -873,11 +864,11 @@ export function AlojamientoBar({
       {decorations}
       <div className="relative" style={{ padding: "10px 12px 0" }}>
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.5, marginBottom: 8 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.45, marginBottom: 8 }}>
           Distribución del Grupo
         </p>
 
-        {/* Cards */}
+        {/* Cards — 4-column grid */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
           {PILLS.map((p, idx) => {
             const active = acomodaciones.includes(p);
@@ -891,127 +882,136 @@ export function AlojamientoBar({
                 data-testid={`acomodacion-${p}`}
                 onClick={() => handleCardClick(p)}
                 style={{
-                  borderRadius: 11,
-                  padding: "7px 9px",
+                  borderRadius: 10,
+                  padding: "8px 10px",
                   cursor: "pointer",
                   userSelect: "none",
-                  transition: "background 0.25s ease-out, box-shadow 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  transition: "background 0.28s ease-out, border-color 0.28s ease-out, opacity 0.28s ease-out, box-shadow 0.28s ease-out",
                   ...(hasRooms
                     ? {
-                        backgroundColor: "#1495ff",
-                        border: "1.5px solid #e6ae33",
-                        boxShadow: "0 0 0 2px rgba(230,174,51,0.25), 0 2px 12px rgba(20,149,255,0.45)",
+                        backgroundColor: "rgba(20,149,255,0.85)",
+                        border: "1px solid #49c6ff",
+                        boxShadow: "0 0 0 2px rgba(73,198,255,0.18), 0 2px 10px rgba(20,149,255,0.35)",
                       }
                     : active
                     ? {
-                        backgroundColor: "#1495ff",
-                        border: "1.5px solid transparent",
-                        boxShadow: "0 2px 10px rgba(20,149,255,0.4)",
+                        backgroundColor: "rgba(20,149,255,0.7)",
+                        border: "1px solid rgba(73,198,255,0.4)",
+                        boxShadow: "0 1px 8px rgba(20,149,255,0.28)",
                       }
                     : {
-                        backgroundColor: "rgba(0,30,90,0.45)",
-                        border: "1px solid rgba(147,197,253,0.3)",
-                        opacity: 0.72,
+                        backgroundColor: "rgba(0,25,70,0.5)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        opacity: 0.55,
                       }),
                 }}
               >
-                {/* Header row: icon + name on left, input on right */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-                  {/* Icon + label */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, minWidth: 0 }}>
-                    <span style={{ opacity: 0.8, flexShrink: 0, display: "flex" }}>{BedIcon}</span>
-                    <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>
-                      {p}
-                    </span>
-                  </div>
-                  {/* Numeric input — smaller, secondary */}
-                  <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
-                    <input
-                      ref={(el) => { inputRefs.current[idx] = el; }}
-                      type="number"
-                      className="grupo-input"
-                      min={0}
-                      value={count === 0 ? "" : count}
-                      placeholder="0"
-                      tabIndex={idx + 1}
-                      onChange={(e) => handleInputChange(p, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      onFocus={(e) => e.target.select()}
-                      onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
-                          e.preventDefault();
-                          const next = inputRefs.current[idx + 1];
-                          if (next) { next.focus(); next.select(); }
-                        }
-                        if (e.key === "Tab" && e.shiftKey) {
-                          e.preventDefault();
-                          const prev = inputRefs.current[idx - 1];
-                          if (prev) { prev.focus(); prev.select(); }
-                        }
-                      }}
-                      style={{
-                        width: 38, textAlign: "center",
-                        fontSize: 15, fontWeight: 800, color: "#fff",
-                        background: "rgba(255,255,255,0.18)",
-                        border: "1px solid rgba(255,255,255,0.3)",
-                        borderRadius: 6, padding: "2px 3px",
-                        outline: "none",
-                        transition: "border-color 0.25s ease-out",
-                      }}
-                    />
-                  </div>
+                {/* LEFT — bed icon + room type label */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, flex: "0 0 auto" }}>
+                  <span style={{ opacity: 0.75, display: "flex", color: "#fff" }}>{BedIcon}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>
+                    {p}
+                  </span>
                 </div>
 
-                {/* Pills row */}
-                <div style={{ display: "flex", gap: 3 }}>
-                  <span style={pillStyle}>{count} HAB</span>
-                  <span style={pillStyle}>{pax} PAX</span>
+                {/* CENTER — large numeric input, main element */}
+                <div
+                  style={{ flex: 1, display: "flex", justifyContent: "center" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    ref={(el) => { inputRefs.current[idx] = el; }}
+                    type="number"
+                    className="grupo-input"
+                    min={0}
+                    value={count === 0 ? "" : count}
+                    placeholder="0"
+                    tabIndex={idx + 1}
+                    onChange={(e) => handleInputChange(p, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
+                        e.preventDefault();
+                        const next = inputRefs.current[idx + 1];
+                        if (next) { next.focus(); next.select(); }
+                      }
+                      if (e.key === "Tab" && e.shiftKey) {
+                        e.preventDefault();
+                        const prev = inputRefs.current[idx - 1];
+                        if (prev) { prev.focus(); prev.select(); }
+                      }
+                    }}
+                    style={{
+                      width: 36, textAlign: "center",
+                      fontSize: 20, fontWeight: 800, color: "#fff",
+                      background: "rgba(255,255,255,0.14)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      borderRadius: 7, padding: "3px 2px",
+                      outline: "none",
+                      lineHeight: 1,
+                    }}
+                  />
+                </div>
+
+                {/* RIGHT — stacked HAB / PAX counts */}
+                <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.9)", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                    {count} HAB
+                  </span>
+                  <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.25)", margin: "1px 0" }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.7)", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                    {pax} PAX
+                  </span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Summary — single line with | separators */}
+        {/* Summary — ordered by importance: Total → Distribución → Pasajeros → Habitaciones */}
         <div style={{
           marginTop: 8, paddingTop: 7, paddingBottom: 10,
-          borderTop: "1px solid rgba(255,255,255,0.15)",
+          borderTop: "1px solid rgba(255,255,255,0.13)",
           display: "flex", alignItems: "center", flexWrap: "wrap",
           gap: "2px 0",
         }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", opacity: 0.85 }}>
-            Habitaciones: <strong>{totalHabitaciones}</strong>
+          <span style={{ fontSize: 12, fontWeight: 800, color: "#e6ae33", letterSpacing: "0.01em" }}>
+            USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-
-          <span style={sepStyle}>|</span>
-
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", opacity: 0.85 }}>
-            Pasajeros: <strong>{totalAsignados}{cap > 0 ? ` / ${cap}` : ""}</strong>
-          </span>
-
-          {cap > 0 && falta > 0 && (
-            <>
-              <span style={sepStyle}>|</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#e6ae33" }}>
-                Faltan: {falta} {falta === 1 ? "pasajero" : "pasajeros"}
-              </span>
-            </>
-          )}
 
           {cap > 0 && distribCompleta && (
             <>
               <span style={sepStyle}>|</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(134,239,172,1)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#49c6ff" }}>
                 ✓ Distribución completa
               </span>
             </>
           )}
 
+          {cap > 0 && falta > 0 && (
+            <>
+              <span style={sepStyle}>|</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#e6ae33" }}>
+                Faltan: {falta} {falta === 1 ? "pax" : "pax"}
+              </span>
+            </>
+          )}
+
           <span style={sepStyle}>|</span>
 
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#e6ae33" }}>
-            Total grupo: USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)" }}>
+            {totalAsignados}{cap > 0 ? ` / ${cap}` : ""} pax
+          </span>
+
+          <span style={sepStyle}>|</span>
+
+          <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>
+            {totalHabitaciones} hab
           </span>
         </div>
 
