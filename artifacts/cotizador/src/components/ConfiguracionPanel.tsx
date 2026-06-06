@@ -4,15 +4,12 @@ import {
   Clock,
   BookOpen,
   Tag,
-  Calculator,
+  Package,
+  Users,
   Check,
   Globe,
   ChevronDown,
   Bus,
-  Package,
-  List,
-  User,
-  Users,
 } from "lucide-react";
 import type { ModoCotizacion, PresentationMode, QuotingMode } from "./Guardadas";
 import { type Idioma, IDIOMA_LABELS } from "@/lib/i18n";
@@ -65,62 +62,44 @@ export default function ConfiguracionPanel({
       </div>
 
       <div className="p-5 space-y-5">
+        {/* ── Formato de cotización ───────────────────────────── */}
         <section>
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
-            Tipo de cotización
+            Formato de cotización
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            {/* Tarifario → Individual + Tarifas + Detallada */}
             <ModeCard
-              active={quotingMode === "individual"}
-              icon={<User className="w-4 h-4" />}
-              title="Individual"
-              onClick={() => onQuotingModeChange("individual")}
+              active={quotingMode === "individual" && modo === "tarifas"}
+              icon={<Tag className="w-4 h-4" />}
+              title="Tarifario"
+              onClick={() => {
+                onQuotingModeChange("individual");
+                onModoChange("tarifas");
+                onPresentationModeChange("detailed");
+              }}
             />
+            {/* Paquete → Individual + Totales + Paquete */}
+            <ModeCard
+              active={quotingMode === "individual" && modo === "calculo" && presentationMode === "package"}
+              icon={<Package className="w-4 h-4" />}
+              title="Paquete"
+              onClick={() => {
+                onQuotingModeChange("individual");
+                onModoChange("calculo");
+                onPresentationModeChange("package");
+              }}
+            />
+            {/* Grupo → Grupo + Totales + Detallada */}
             <ModeCard
               active={quotingMode === "grupo"}
               icon={<Users className="w-4 h-4" />}
               title="Grupo"
-              onClick={() => onQuotingModeChange("grupo")}
-            />
-          </div>
-        </section>
-
-        <section>
-          <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
-            Modo
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <ModeCard
-              active={modo === "tarifas"}
-              icon={<Tag className="w-4 h-4" />}
-              title="Tarifas"
-              onClick={() => onModoChange("tarifas")}
-            />
-            <ModeCard
-              active={modo === "calculo"}
-              icon={<Calculator className="w-4 h-4" />}
-              title="Totales"
-              onClick={() => onModoChange("calculo")}
-            />
-          </div>
-        </section>
-
-        <section>
-          <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
-            Presentación
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <ModeCard
-              active={presentationMode === "detailed"}
-              icon={<List className="w-4 h-4" />}
-              title="Detallada"
-              onClick={() => onPresentationModeChange("detailed")}
-            />
-            <ModeCard
-              active={presentationMode === "package"}
-              icon={<Package className="w-4 h-4" />}
-              title="Paquete"
-              onClick={() => onPresentationModeChange("package")}
+              onClick={() => {
+                onQuotingModeChange("grupo");
+                onModoChange("calculo");
+                onPresentationModeChange("detailed");
+              }}
             />
           </div>
         </section>
