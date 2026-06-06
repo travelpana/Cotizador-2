@@ -916,7 +916,7 @@ export function AlojamientoBar({
       <div className="relative" style={{ padding: "12px 14px 0" }}>
 
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.4, marginBottom: 10 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.4, marginBottom: 2 }}>
           Distribución del Grupo
         </p>
 
@@ -940,13 +940,13 @@ export function AlojamientoBar({
                   userSelect: "none",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 9,
+                  gap: 6,
                   transition: "background 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out, box-shadow 0.25s ease-out",
                   ...(hasRooms
                     ? {
                         backgroundColor: "rgba(20,149,255,0.88)",
                         border: "1px solid #49c6ff",
-                        boxShadow: "0 0 0 2px rgba(73,198,255,0.15), 0 2px 12px rgba(20,149,255,0.3)",
+                        boxShadow: "0 0 0 1px rgba(73,198,255,0.25)",
                       }
                     : active
                     ? {
@@ -961,9 +961,9 @@ export function AlojamientoBar({
                 }}
               >
                 {/* TOP ROW: icon + label left, counter right — all vertically centered */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
                   {/* Left: bed icon + accommodation label on same line */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
                     <span style={{ display: "flex", lineHeight: 0, flexShrink: 0 }}>
                       {ROOM_ICONS[p]}
                     </span>
@@ -1017,18 +1017,18 @@ export function AlojamientoBar({
                   </div>
                 </div>
 
-                {/* BOTTOM ROW: X HABITACIONES | Y PASAJEROS */}
+                {/* BOTTOM ROW: X HAB | Y PAX */}
                 <div style={{
                   textAlign: "center",
-                  fontSize: 14,
+                  fontSize: 11,
                   fontWeight: 600,
                   color: "rgba(255,255,255,0.85)",
-                  letterSpacing: "0.03em",
+                  letterSpacing: "0.05em",
                   lineHeight: 1,
                 }}>
-                  {count} HABITACIONES
-                  <span style={{ color: "rgba(255,255,255,0.35)", marginInline: 5, fontWeight: 300 }}>|</span>
-                  {pax} PASAJEROS
+                  {count} HAB
+                  <span style={{ color: "rgba(255,255,255,0.35)", marginInline: 4, fontWeight: 300 }}>|</span>
+                  {pax} PAX
                 </div>
               </div>
             );
@@ -1041,10 +1041,10 @@ export function AlojamientoBar({
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr 1fr",
           borderTop: "1px solid rgba(255,255,255,0.12)",
-          paddingBottom: 12,
+          paddingBottom: 8,
         }}>
           {/* Block 1: Habitaciones */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, paddingRight: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, paddingRight: 8 }}>
             <span style={{ color: "rgba(255,255,255,0.55)", display: "flex" }}>{IconHab}</span>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
               Habitaciones
@@ -1055,7 +1055,7 @@ export function AlojamientoBar({
           </div>
 
           {/* Block 2: Pasajeros */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8, paddingRight: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8, paddingRight: 8 }}>
             <span style={{ color: "rgba(255,255,255,0.55)", display: "flex" }}>{IconPax}</span>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
               Pasajeros
@@ -1065,26 +1065,27 @@ export function AlojamientoBar({
             </span>
           </div>
 
-          {/* Block 3: Distribución */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8, paddingRight: 8 }}>
-            <span style={{ color: cap > 0 && distribCompleta ? "#49c6ff" : "rgba(255,255,255,0.4)", display: "flex" }}>{IconCheck}</span>
+          {/* Block 3: Distribución — single-line status */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 6, paddingRight: 6 }}>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
               Distribución
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.2, textAlign: "center",
-              color: cap > 0 && distribCompleta ? "#49c6ff" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.5)" }}>
-              {cap > 0 && distribCompleta ? "Completa" : cap > 0 && falta > 0 ? `Faltan ${falta}` : "—"}
+            <span style={{
+              fontSize: 11, fontWeight: 800, lineHeight: 1.1, textAlign: "center", letterSpacing: "0.04em",
+              color: cap > 0 && distribCompleta ? "#49c6ff" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.4)",
+            }}>
+              {cap > 0 && distribCompleta ? "✓ COMPLETA" : cap > 0 && falta > 0 ? `⚠ FALTAN ${falta} PAX` : "—"}
             </span>
           </div>
 
           {/* Block 4: Total grupo */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8 }}>
             <span style={{ color: "#e6ae33", display: "flex" }}>{IconDollar}</span>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
               Total grupo
             </span>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#e6ae33", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
-              USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              USD {totalGrupo.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>
