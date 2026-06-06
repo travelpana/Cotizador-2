@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Check, UserRound, Users, Building2, Shield, Calendar, Mail } from "lucide-react";
+import { Check, UserRound, Users, Building2, Shield, Calendar, Mail, BedSingle, BedDouble } from "lucide-react";
 import PremiumRangePicker from "./PremiumRangePicker";
 import {
   loadAgencias,
@@ -702,48 +702,10 @@ export function AlojamientoBar({
   const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
 
   const BED_ICONS: Record<Acomodacion, React.ReactNode> = {
-    SGL: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="5" width="24" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="2" y="10" width="24" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="5" y="12.5" width="18" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
-        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-        <line x1="23.5" y1="21" x2="23.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-      </svg>
-    ),
-    DBL: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="5" width="24" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="2" y="10" width="24" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="4" y="12.5" width="9" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
-        <rect x="15" y="12.5" width="9" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
-        <line x1="14" y1="10" x2="14" y2="21" stroke="currentColor" strokeWidth="1" opacity="0.4"/>
-        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-        <line x1="23.5" y1="21" x2="23.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-      </svg>
-    ),
-    TPL: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="5" width="21" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="2" y="10" width="21" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="5" y="12.5" width="15" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
-        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-        <line x1="20.5" y1="21" x2="20.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-        <circle cx="23" cy="6" r="5" fill="rgba(20,149,255,0.9)" stroke="currentColor" strokeWidth="1.2"/>
-        <text x="23" y="9.2" textAnchor="middle" fontSize="6" fontWeight="800" fill="white" fontFamily="system-ui,sans-serif">3</text>
-      </svg>
-    ),
-    QDL: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="5" width="21" height="5" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="2" y="10" width="21" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.6"/>
-        <rect x="5" y="12.5" width="15" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" opacity="0.65"/>
-        <line x1="4.5" y1="21" x2="4.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-        <line x1="20.5" y1="21" x2="20.5" y2="25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-        <circle cx="23" cy="6" r="5" fill="rgba(20,149,255,0.9)" stroke="currentColor" strokeWidth="1.2"/>
-        <text x="23" y="9.2" textAnchor="middle" fontSize="6" fontWeight="800" fill="white" fontFamily="system-ui,sans-serif">4</text>
-      </svg>
-    ),
+    SGL: <BedSingle size={20} strokeWidth={1.75} />,
+    DBL: <BedDouble size={20} strokeWidth={1.75} />,
+    TPL: <BedDouble size={20} strokeWidth={1.75} />,
+    QDL: <BedDouble size={20} strokeWidth={1.75} />,
   };
 
   const togglePill = (a: Acomodacion) => {
