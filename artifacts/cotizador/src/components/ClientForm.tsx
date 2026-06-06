@@ -1028,22 +1028,26 @@ export function AlojamientoBar({
           </div>
 
           {/* Block 3: Distribución */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, paddingTop: 6, borderLeft: "1px solid rgba(255,255,255,0.12)", paddingLeft: 5, paddingRight: 5 }}>
-            <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(255,255,255,0.12)", paddingLeft: 5, paddingRight: 5 }}>
+            {/* Icon — top, dominant element */}
+            <span style={{
+              fontSize: 20, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+              marginBottom: 6,
+              color: cap > 0 && distribCompleta ? "#8cd9fa" : cap > 0 && falta > 0 ? "#f8d616" : "rgba(255,255,255,0.30)",
+            }}>
+              {cap > 0 && distribCompleta ? "✓" : cap > 0 && falta > 0 ? "⚠" : "—"}
+            </span>
+            {/* Label */}
+            <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)", marginBottom: 4 }}>
               Distribución
             </span>
+            {/* Status text */}
             {cap > 0 && distribCompleta ? (
-              <>
-                <span style={{ fontSize: 14, lineHeight: 1, color: "#8cd9fa" }}>✓</span>
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textAlign: "center", color: "#8cd9fa" }}>COMPLETA</span>
-              </>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textAlign: "center", color: "#8cd9fa" }}>COMPLETA</span>
             ) : cap > 0 && falta > 0 ? (
-              <>
-                <span style={{ fontSize: 14, lineHeight: 1, color: "#f8d616" }}>⚠</span>
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textAlign: "center", color: "#f8d616" }}>FALTAN {falta}</span>
-              </>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textAlign: "center", color: "#f8d616" }}>FALTAN {falta}</span>
             ) : (
-              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>—</span>
+              <span style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.25)" }}>—</span>
             )}
           </div>
 
