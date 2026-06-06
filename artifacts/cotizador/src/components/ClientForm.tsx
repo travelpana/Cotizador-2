@@ -747,20 +747,13 @@ export function AlojamientoBar({
   // ── grupo handlers ─────────────────────────────────────────────────────────
   const handleCardClick = (p: Acomodacion) => {
     const count = habitacionesPorAcomodacion[p] ?? 0;
-    if (count === 0) {
-      // Activate: add 1 room if cap allows
-      if (cap > 0 && totalAsignados + ROOM_PAX[p] > cap) {
-        onShowToast?.("La distribución supera el total de pasajeros.", "warning");
-        return;
-      }
-      onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: 1 });
-      if (!acomodaciones.includes(p)) onAcomodacionesChange([...acomodaciones, p]);
-    } else {
-      // Deactivate: reset rooms to 0
-      onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: 0 });
-      if (acomodaciones.includes(p) && acomodaciones.length > 1)
-        onAcomodacionesChange(acomodaciones.filter((x) => x !== p));
+    // Every click adds 1 room (fast counter mode)
+    if (cap > 0 && totalAsignados + ROOM_PAX[p] > cap) {
+      onShowToast?.("La distribución supera el total de pasajeros.", "warning");
+      return;
     }
+    onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: count + 1 });
+    if (!acomodaciones.includes(p)) onAcomodacionesChange([...acomodaciones, p]);
   };
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -927,15 +920,10 @@ export function AlojamientoBar({
                         backgroundColor: "rgba(20,149,255,0.82)",
                         border: "1px solid rgba(73,198,255,0.70)",
                       }
-                    : active
-                    ? {
-                        backgroundColor: "rgba(20,149,255,0.45)",
-                        border: "1px solid rgba(73,198,255,0.25)",
-                      }
                     : {
                         backgroundColor: "rgba(0,20,60,0.50)",
-                        border: "1px solid rgba(255,255,255,0.11)",
-                        opacity: 0.50,
+                        border: "1px solid rgba(255,255,255,0.13)",
+                        opacity: 0.60,
                       }),
                 }}
               >
