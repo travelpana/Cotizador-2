@@ -838,40 +838,20 @@ export function AlojamientoBar({
     userSelect: "none",
   };
 
+  const BED_ICON = (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+      <path d="M3 14h18"/>
+      <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+      <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+    </svg>
+  );
+
   const ROOM_ICONS: Record<Acomodacion, React.ReactNode> = {
-    SGL: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-        <path d="M3 14h18"/>
-        <path d="M10 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/>
-      </svg>
-    ),
-    DBL: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-        <path d="M3 14h18"/>
-        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-      </svg>
-    ),
-    TPL: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-        <path d="M3 14h18"/>
-        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <text x="19" y="9" fontSize="7" fontWeight="700" fill="#ffffff" stroke="none" textAnchor="middle">3</text>
-      </svg>
-    ),
-    QDL: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-        <path d="M3 14h18"/>
-        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <text x="19" y="9" fontSize="7" fontWeight="700" fill="#ffffff" stroke="none" textAnchor="middle">4</text>
-      </svg>
-    ),
+    SGL: BED_ICON,
+    DBL: BED_ICON,
+    TPL: BED_ICON,
+    QDL: BED_ICON,
     CHD: <></>,
   };
 
@@ -916,7 +896,7 @@ export function AlojamientoBar({
       <div className="relative" style={{ padding: "12px 14px 0" }}>
 
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.4, marginBottom: 2 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: 2 }}>
           Distribución del Grupo
         </p>
 
@@ -935,23 +915,22 @@ export function AlojamientoBar({
                 onClick={() => handleCardClick(p)}
                 style={{
                   borderRadius: 12,
-                  padding: "12px 10px 10px",
+                  padding: "9px 8px 8px",
                   cursor: "pointer",
                   userSelect: "none",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 6,
+                  gap: 4,
                   transition: "background 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out, box-shadow 0.25s ease-out",
                   ...(hasRooms
                     ? {
                         backgroundColor: "rgba(20,149,255,0.88)",
                         border: "1px solid #49c6ff",
-                        boxShadow: "0 0 0 1px rgba(73,198,255,0.25)",
                       }
                     : active
                     ? {
-                        backgroundColor: "rgba(20,149,255,0.65)",
-                        border: "1px solid rgba(73,198,255,0.35)",
+                        backgroundColor: "rgba(20,149,255,0.55)",
+                        border: "1px solid rgba(73,198,255,0.30)",
                       }
                     : {
                         backgroundColor: "rgba(0,20,60,0.55)",
@@ -1072,7 +1051,7 @@ export function AlojamientoBar({
             </span>
             <span style={{
               fontSize: 11, fontWeight: 800, lineHeight: 1.1, textAlign: "center", letterSpacing: "0.04em",
-              color: cap > 0 && distribCompleta ? "#49c6ff" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.4)",
+              color: cap > 0 && distribCompleta ? "#8cd9fa" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.4)",
             }}>
               {cap > 0 && distribCompleta ? "✓ COMPLETA" : cap > 0 && falta > 0 ? `⚠ FALTAN ${falta} PAX` : "—"}
             </span>
@@ -1080,11 +1059,11 @@ export function AlojamientoBar({
 
           {/* Block 4: Total grupo */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingTop: 7, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8 }}>
-            <span style={{ color: "#e6ae33", display: "flex" }}>{IconDollar}</span>
+            <span style={{ color: "#f8d616", display: "flex" }}>{IconDollar}</span>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
               Total grupo
             </span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#e6ae33", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#f8d616", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
               USD {totalGrupo.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
