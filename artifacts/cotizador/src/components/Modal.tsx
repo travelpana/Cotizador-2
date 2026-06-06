@@ -6,6 +6,7 @@ interface Props {
   onClose: () => void;
   title: string;
   subtitle?: string;
+  titleRight?: React.ReactNode;
   children: React.ReactNode;
   size?: "md" | "lg" | "xl";
 }
@@ -15,6 +16,7 @@ export default function Modal({
   onClose,
   title,
   subtitle,
+  titleRight,
   children,
   size = "lg",
 }: Props) {
@@ -49,19 +51,9 @@ export default function Modal({
       <div
         className={`relative w-full ${widthCls} bg-white rounded-2xl shadow-2xl max-h-[88vh] flex flex-col overflow-hidden`}
       >
-        <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-            {subtitle && (
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-md hover:bg-slate-100 text-slate-500 flex items-center justify-center"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+          {titleRight && <div>{titleRight}</div>}
         </div>
         <div className="overflow-y-auto flex-1">{children}</div>
       </div>

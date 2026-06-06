@@ -792,7 +792,7 @@ export function AlojamientoBar({
     return (
       <section className="relative rounded-2xl overflow-hidden text-white" style={sectionStyle}>
         {decorations}
-        <div className="relative flex items-center justify-evenly gap-3" style={{ padding: "10px 20px" }}>
+        <div className="relative flex items-center justify-evenly gap-3" style={{ padding: "10px 6px" }}>
           {PILLS.map((p) => {
             const active = acomodaciones.includes(p);
             return (
@@ -886,7 +886,7 @@ export function AlojamientoBar({
         .grupo-input[type=number] { -moz-appearance: textfield; }
       `}</style>
       {decorations}
-      <div className="relative" style={{ padding: "9px 12px 0" }}>
+      <div className="relative" style={{ padding: "9px 6px 0" }}>
 
         {/* Title */}
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.80)", marginBottom: 6 }}>

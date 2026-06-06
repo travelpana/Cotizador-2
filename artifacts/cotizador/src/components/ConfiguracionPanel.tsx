@@ -139,7 +139,6 @@ export default function ConfiguracionPanel({
               onChange={onTogglePersonalizarTraslados}
               icon={<Bus className="w-4 h-4" />}
               label="Personalizar traslados"
-              help="Reemplaza nombres genéricos con el hotel cotizado"
             />
           </div>
         </section>

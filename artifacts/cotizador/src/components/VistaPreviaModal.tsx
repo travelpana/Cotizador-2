@@ -203,12 +203,25 @@ export default function VistaPreviaModal({
     };
   }, [open, bodyHtml]);
 
+  const formatoLabel =
+    quotingMode === "grupo"
+      ? "GRUPO"
+      : modo === "tarifas"
+        ? "TARIFARIO"
+        : presentationMode === "package"
+          ? "PAQUETE"
+          : "TARIFARIO";
+
   return (
     <Modal
       open={open}
       onClose={onClose}
       title="Propuesta de Servicios"
-      subtitle="Vista previa idéntica al PDF y correo · El itinerario es editable"
+      titleRight={
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#2b4596", letterSpacing: "0.08em" }}>
+          {formatoLabel}
+        </span>
+      }
       size="xl"
     >
       <div className="bg-slate-100 p-4 max-h-[72vh] overflow-y-auto">
