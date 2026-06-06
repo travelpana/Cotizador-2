@@ -75,6 +75,10 @@ export interface ServicioSeleccionado {
   desayuno?: string;
   manual?: boolean;
   tipoServicio?: "Regular" | "Privado";
+  ruta?: string;
+  duracion?: string;
+  entradasDesc?: string;
+  customTipo?: string;
 }
 
 export interface Descriptivo {

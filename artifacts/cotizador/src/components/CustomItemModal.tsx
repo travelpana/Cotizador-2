@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PriceInput } from "@/components/ui/price-input";
-import { X, Plus, Sparkles, Plane, ChevronDown, Check } from "lucide-react";
+import {
+  X,
+  Check,
+  ChevronDown,
+  Plane,
+  Hotel,
+  Bus,
+  MapPin,
+  Ship,
+  Tag,
+  Sparkles,
+} from "lucide-react";
 import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
 
 type CustomTipo = "hotel" | "traslado" | "tour" | "vuelo" | "catamaran" | "otros";
@@ -22,6 +33,11 @@ const TIPO_OPTIONS: { value: CustomTipo; label: string }[] = [
   { value: "vuelo", label: "Vuelos" },
   { value: "catamaran", label: "Catamarán" },
   { value: "otros", label: "Otros" },
+];
+
+const MODALIDAD_OPTIONS: { value: "Regular" | "Privado"; label: string }[] = [
+  { value: "Regular", label: "Regular" },
+  { value: "Privado", label: "Privado" },
 ];
 
 const ALL_ACOM: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
@@ -50,6 +66,33 @@ const lbl =
   "block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide";
 const inputCls =
   "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
+
+const TIPO_ICON: Record<CustomTipo, React.ReactNode> = {
+  hotel: <Hotel className="w-4 h-4" />,
+  traslado: <Bus className="w-4 h-4" />,
+  tour: <MapPin className="w-4 h-4" />,
+  vuelo: <Plane className="w-4 h-4" />,
+  catamaran: <Ship className="w-4 h-4" />,
+  otros: <Tag className="w-4 h-4" />,
+};
+
+const TIPO_TITLE: Record<CustomTipo, string> = {
+  hotel: "Hotelería personalizada",
+  traslado: "Traslado personalizado",
+  tour: "Tour personalizado",
+  vuelo: "Vuelo personalizado",
+  catamaran: "Catamarán personalizado",
+  otros: "Ítem personalizado",
+};
+
+const TIPO_SUBTITLE: Record<CustomTipo, string> = {
+  hotel: "Agrega un hotel que no está en el tarifario",
+  traslado: "Agrega un traslado que no está en el tarifario",
+  tour: "Agrega un tour que no está en el tarifario",
+  vuelo: "Selecciona origen y destino del vuelo",
+  catamaran: "Agrega un servicio de catamarán",
+  otros: "Agrega un servicio que no está en el tarifario",
+};
 
 interface CustomSelectProps<T extends string> {
   value: T | "";
@@ -117,6 +160,73 @@ function CustomSelect<T extends string>({
   );
 }
 
+interface PriceRowProps {
+  label: string;
+  labelNino?: string;
+  precio: string;
+  setPrecio: (v: string) => void;
+  precioNino: string;
+  setPrecioNino: (v: string) => void;
+  ninosEnabled: boolean;
+  showNino?: boolean;
+  hintText?: string;
+}
+
+function PriceRow({
+  label,
+  labelNino = "Precio niño (USD)",
+  precio,
+  setPrecio,
+  precioNino,
+  setPrecioNino,
+  ninosEnabled,
+  showNino = true,
+  hintText,
+}: PriceRowProps) {
+  return (
+    <>
+      <div className={showNino ? "grid grid-cols-2 gap-3" : ""}>
+        <div>
+          <label className={lbl}>{label}</label>
+          <PriceInput
+            value={precio}
+            onChange={setPrecio}
+            placeholder="0"
+            wrapperClassName="w-full"
+            inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+          />
+        </div>
+        {showNino && (
+          <div>
+            <label
+              className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
+                ninosEnabled ? "text-slate-500" : "text-slate-300"
+              }`}
+            >
+              {labelNino}
+            </label>
+            <PriceInput
+              value={precioNino}
+              onChange={setPrecioNino}
+              placeholder="0"
+              disabled={!ninosEnabled}
+              wrapperClassName="w-full"
+              inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
+                ninosEnabled
+                  ? "border-slate-200 text-slate-900"
+                  : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
+              }`}
+            />
+          </div>
+        )}
+      </div>
+      {hintText && (
+        <p className="text-[11px] text-slate-500 -mt-2">{hintText}</p>
+      )}
+    </>
+  );
+}
+
 export default function CustomItemModal({
   open,
   onClose,
@@ -127,12 +237,14 @@ export default function CustomItemModal({
   initial,
 }: Props) {
   const isEdit = !!initial;
+
   const [tipo, setTipo] = useState<CustomTipo>("tour");
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState<string>("");
   const [precioNino, setPrecioNino] = useState<string>("");
   const [notas, setNotas] = useState("");
   const [notesImportant, setNotesImportant] = useState(false);
+
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
   const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
@@ -142,14 +254,22 @@ export default function CustomItemModal({
   const [tipoHabitacion, setTipoHabitacion] = useState("");
   const [desayuno, setDesayuno] = useState("");
 
+  const [ruta, setRuta] = useState("");
+  const [modalidad, setModalidad] = useState<"Regular" | "Privado">("Regular");
+  const [horarioCustom, setHorarioCustom] = useState("");
+  const [duracion, setDuracion] = useState("");
+  const [entradasDesc, setEntradasDesc] = useState("");
+
   const nombreRef = useRef<HTMLInputElement>(null);
   const ninosEnabled = globalNinos > 0;
 
   useEffect(() => {
     if (open) {
       if (initial) {
+        const rawTipo = initial.customTipo as CustomTipo | undefined;
         const initTipo: CustomTipo =
-          initial.tipo === "vuelo"
+          rawTipo ??
+          (initial.tipo === "vuelo"
             ? "vuelo"
             : initial.tipo === "hotel"
               ? "hotel"
@@ -157,7 +277,7 @@ export default function CustomItemModal({
                 ? "tour"
                 : initial.tipo === "catamaran"
                   ? "catamaran"
-                  : "traslado";
+                  : "traslado");
         setTipo(initTipo);
         setNombre(initial.nombre.replace(/^\[Vuelo\]\s*/, ""));
         const initPrecio =
@@ -186,6 +306,11 @@ export default function CustomItemModal({
         setEstrellas(initial.estrellas ?? "");
         setTipoHabitacion(initial.tipoHabitacion ?? "");
         setDesayuno(initial.desayuno ?? "");
+        setRuta(initial.ruta ?? "");
+        setModalidad((initial.tipoServicio as "Regular" | "Privado") ?? "Regular");
+        setHorarioCustom(initial.horario ?? "");
+        setDuracion(initial.duracion ?? "");
+        setEntradasDesc(initial.entradasDesc ?? "");
       } else {
         setTipo("tour");
         setNombre("");
@@ -200,6 +325,11 @@ export default function CustomItemModal({
         setEstrellas("");
         setTipoHabitacion("");
         setDesayuno("");
+        setRuta("");
+        setModalidad("Regular");
+        setHorarioCustom("");
+        setDuracion("");
+        setEntradasDesc("");
       }
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
@@ -213,6 +343,10 @@ export default function CustomItemModal({
 
   const isVuelo = tipo === "vuelo";
   const isHotel = tipo === "hotel";
+  const isTraslado = tipo === "traslado";
+  const isTour = tipo === "tour";
+  const isCatamaran = tipo === "catamaran";
+  const isOtros = tipo === "otros";
 
   const vueloNombre = useMemo(
     () =>
@@ -270,6 +404,7 @@ export default function CustomItemModal({
       nombre: displayName,
       precios,
       manual: true,
+      customTipo: tipo,
       notas: notas.trim() || undefined,
       notesImportant: notesImportant && !!notas.trim() ? true : undefined,
       ...(isHotel
@@ -289,6 +424,26 @@ export default function CustomItemModal({
             unitOverride: value,
           }
         : {}),
+      ...(isTraslado
+        ? {
+            ruta: ruta.trim() || undefined,
+            tipoServicio: modalidad,
+          }
+        : {}),
+      ...(isTour
+        ? {
+            tipoServicio: modalidad,
+            horario: horarioCustom.trim() || undefined,
+            duracion: duracion.trim() || undefined,
+            entradasDesc: entradasDesc.trim() || undefined,
+          }
+        : {}),
+      ...(isCatamaran
+        ? {
+            tipoServicio: modalidad,
+            horario: horarioCustom.trim() || undefined,
+          }
+        : {}),
     };
 
     onSave(servicio);
@@ -297,6 +452,10 @@ export default function CustomItemModal({
 
   const ciudadOptions = CIUDADES_VUELO.map((c) => ({ value: c, label: c }));
   const ubicacionOptions = UBICACIONES.map((u) => ({ value: u, label: u }));
+
+  const editTitle = isEdit
+    ? `Editar ${TIPO_OPTIONS.find((o) => o.value === tipo)?.label.toLowerCase() ?? "ítem"}`
+    : TIPO_TITLE[tipo];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -309,26 +468,16 @@ export default function CustomItemModal({
         <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#004FBB]/10 text-[#004FBB] flex items-center justify-center">
-              {isVuelo ? (
-                <Plane className="w-4 h-4" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
+              {TIPO_ICON[tipo]}
             </div>
             <div>
               <h2 className="text-base font-semibold text-slate-900 leading-tight">
                 {isEdit
-                  ? isVuelo
-                    ? "Editar vuelo"
-                    : "Editar ítem personalizado"
-                  : isVuelo
-                    ? "Vuelo personalizado"
-                    : "Ítem personalizado"}
+                  ? editTitle
+                  : TIPO_TITLE[tipo]}
               </h2>
               <p className="text-[11px] text-slate-500">
-                {isVuelo
-                  ? "Selecciona origen y destino del vuelo"
-                  : "Agrega un servicio que no está en el tarifario"}
+                {TIPO_SUBTITLE[tipo]}
               </p>
             </div>
           </div>
@@ -417,6 +566,21 @@ export default function CustomItemModal({
                   </span>
                 </div>
               </div>
+
+              <PriceRow
+                label="Precio por persona (USD)"
+                precio={precio}
+                setPrecio={setPrecio}
+                precioNino={precioNino}
+                setPrecioNino={setPrecioNino}
+                ninosEnabled={ninosEnabled}
+                showNino={true}
+                hintText={
+                  ninosEnabled
+                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                    : "Precio por persona del vuelo (puedes editarlo más tarde)"
+                }
+              />
             </>
           )}
 
@@ -510,8 +674,188 @@ export default function CustomItemModal({
             </>
           )}
 
-          {/* ── NON-HOTEL, NON-VUELO: nombre + precio ── */}
-          {!isVuelo && !isHotel && (
+          {/* ── TRASLADO ── */}
+          {isTraslado && (
+            <>
+              <div>
+                <label className={lbl}>Nombre / descripción</label>
+                <input
+                  ref={nombreRef}
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ej: Traslado aeropuerto - hotel"
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={lbl}>Ruta / trayecto</label>
+                <input
+                  type="text"
+                  value={ruta}
+                  onChange={(e) => setRuta(e.target.value)}
+                  placeholder="Ej: Tocumen → Ciudad de Panamá"
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={lbl}>Modalidad</label>
+                <CustomSelect
+                  value={modalidad}
+                  onChange={setModalidad}
+                  options={MODALIDAD_OPTIONS}
+                />
+              </div>
+
+              <PriceRow
+                label="Tarifa p/p (USD)"
+                precio={precio}
+                setPrecio={setPrecio}
+                precioNino={precioNino}
+                setPrecioNino={setPrecioNino}
+                ninosEnabled={ninosEnabled}
+                showNino={true}
+                hintText={
+                  ninosEnabled
+                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                    : "Precio por persona"
+                }
+              />
+            </>
+          )}
+
+          {/* ── TOUR ── */}
+          {isTour && (
+            <>
+              <div>
+                <label className={lbl}>Nombre del tour</label>
+                <input
+                  ref={nombreRef}
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ej: Tour en lancha por San Blas"
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Modalidad</label>
+                  <CustomSelect
+                    value={modalidad}
+                    onChange={setModalidad}
+                    options={MODALIDAD_OPTIONS}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Horario</label>
+                  <input
+                    type="text"
+                    value={horarioCustom}
+                    onChange={(e) => setHorarioCustom(e.target.value)}
+                    placeholder="Ej: 8:00 AM"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={lbl}>Duración</label>
+                <input
+                  type="text"
+                  value={duracion}
+                  onChange={(e) => setDuracion(e.target.value)}
+                  placeholder="Ej: 8 horas"
+                  className={inputCls}
+                />
+              </div>
+
+              <PriceRow
+                label="Tarifa p/p (USD)"
+                precio={precio}
+                setPrecio={setPrecio}
+                precioNino={precioNino}
+                setPrecioNino={setPrecioNino}
+                ninosEnabled={ninosEnabled}
+                showNino={true}
+                hintText={
+                  ninosEnabled
+                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                    : "Precio por persona"
+                }
+              />
+
+              <div>
+                <label className={lbl}>Entradas adicionales (si aplica)</label>
+                <input
+                  type="text"
+                  value={entradasDesc}
+                  onChange={(e) => setEntradasDesc(e.target.value)}
+                  placeholder="Ej: Entrada al parque nacional incluida"
+                  className={inputCls}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── CATAMARÁN ── */}
+          {isCatamaran && (
+            <>
+              <div>
+                <label className={lbl}>Nombre del servicio</label>
+                <input
+                  ref={nombreRef}
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ej: Catamarán a Taboga"
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Modalidad</label>
+                  <CustomSelect
+                    value={modalidad}
+                    onChange={setModalidad}
+                    options={MODALIDAD_OPTIONS}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Horario</label>
+                  <input
+                    type="text"
+                    value={horarioCustom}
+                    onChange={(e) => setHorarioCustom(e.target.value)}
+                    placeholder="Ej: 7:30 AM"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <PriceRow
+                label="Tarifa p/p (USD)"
+                precio={precio}
+                setPrecio={setPrecio}
+                precioNino={precioNino}
+                setPrecioNino={setPrecioNino}
+                ninosEnabled={ninosEnabled}
+                showNino={true}
+                hintText={
+                  ninosEnabled
+                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
+                    : "Precio por persona"
+                }
+              />
+            </>
+          )}
+
+          {/* ── OTROS ── */}
+          {isOtros && (
             <>
               <div>
                 <label className={lbl}>Nombre del servicio</label>
@@ -525,92 +869,20 @@ export default function CustomItemModal({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Precio (USD)</label>
-                  <PriceInput
-                    value={precio}
-                    onChange={setPrecio}
-                    placeholder="0"
-                    wrapperClassName="w-full"
-                    inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
-                      ninosEnabled ? "text-slate-500" : "text-slate-300"
-                    }`}
-                  >
-                    Precio niño (USD)
-                  </label>
-                  <PriceInput
-                    value={precioNino}
-                    onChange={setPrecioNino}
-                    placeholder="0"
-                    disabled={!ninosEnabled}
-                    wrapperClassName="w-full"
-                    inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
-                      ninosEnabled
-                        ? "border-slate-200 text-slate-900"
-                        : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
-                    }`}
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500 -mt-2">
-                {ninosEnabled
-                  ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                  : "Precio por persona, igual para todos los rangos"}
-              </p>
+              <PriceRow
+                label="Tarifa (USD)"
+                precio={precio}
+                setPrecio={setPrecio}
+                precioNino={precioNino}
+                setPrecioNino={setPrecioNino}
+                ninosEnabled={ninosEnabled}
+                showNino={false}
+                hintText="Tarifa fija para este servicio"
+              />
             </>
           )}
 
-          {/* Precio para vuelo */}
-          {isVuelo && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Precio (USD)</label>
-                  <PriceInput
-                    value={precio}
-                    onChange={setPrecio}
-                    placeholder="0"
-                    wrapperClassName="w-full"
-                    inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
-                      ninosEnabled ? "text-slate-500" : "text-slate-300"
-                    }`}
-                  >
-                    Precio niño (USD)
-                  </label>
-                  <PriceInput
-                    value={precioNino}
-                    onChange={setPrecioNino}
-                    placeholder="0"
-                    disabled={!ninosEnabled}
-                    wrapperClassName="w-full"
-                    inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
-                      ninosEnabled
-                        ? "border-slate-200 text-slate-900"
-                        : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
-                    }`}
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500 -mt-2">
-                {ninosEnabled
-                  ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                  : "Precio por persona del vuelo (puedes editarlo más tarde)"}
-              </p>
-            </>
-          )}
-
-          {/* Observaciones */}
+          {/* Observaciones — always visible */}
           <div>
             <label className={lbl}>Observaciones</label>
             <textarea
@@ -624,11 +896,15 @@ export default function CustomItemModal({
               <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
                 <div
                   className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${notesImportant ? "bg-[#ef7b15]" : "bg-slate-200"}`}
-                  onClick={() => setNotesImportant(v => !v)}
+                  onClick={() => setNotesImportant((v) => !v)}
                 >
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${notesImportant ? "translate-x-4" : "translate-x-0.5"}`} />
+                  <div
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${notesImportant ? "translate-x-4" : "translate-x-0.5"}`}
+                  />
                 </div>
-                <span className={`text-[11px] font-medium transition-colors ${notesImportant ? "text-[#ef7b15]" : "text-slate-500"}`}>
+                <span
+                  className={`text-[11px] font-medium transition-colors ${notesImportant ? "text-[#ef7b15]" : "text-slate-500"}`}
+                >
                   Marcar como importante
                 </span>
               </label>

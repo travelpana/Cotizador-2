@@ -910,10 +910,12 @@ function buildPackageView(d: PropuestaData): string {
 
   const alojaInclItems: string[] = [];
   d.hoteles.forEach((h) => {
-    alojaInclItems.push(h.nombre);
-    if (h.noches) alojaInclItems.push(`${h.noches} ${h.noches === 1 ? "noche" : "noches"}`);
+    const parts: string[] = [];
+    if (h.noches) parts.push(`${h.noches} ${h.noches === 1 ? "noche" : "noches"}`);
+    parts.push(h.nombre);
     const reg = formatRegimen(h.desayuno);
-    if (reg) alojaInclItems.push(reg);
+    if (reg) parts.push(reg);
+    alojaInclItems.push(parts.join(" | "));
   });
 
   const trasladoInclItems = d.traslados.map((t) =>
