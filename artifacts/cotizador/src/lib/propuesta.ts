@@ -128,6 +128,30 @@ function formatNotasLineas(text: string, style: string): string {
   return lines.map((l) => `<div style="${style}">${escape(l)}</div>`).join("");
 }
 
+function renderNotasHTML(
+  notas?: string,
+  notesImportant?: boolean,
+  notasList?: Array<{ text: string; important: boolean }>,
+  styleNormal: string = "font-size:11px;color:#64748B;font-style:italic;margin-top:3px;",
+): string {
+  if (notasList && notasList.length > 0) {
+    return notasList
+      .map((n) =>
+        n.important
+          ? `<div style="font-size:12px;color:#ef7b15;font-weight:700;margin-top:4px;">⚠ ${escape(n.text)}</div>`
+          : `<div style="${styleNormal}margin-top:3px;">• ${escape(n.text)}</div>`,
+      )
+      .join("");
+  }
+  if (notas) {
+    const style = notesImportant
+      ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;`
+      : styleNormal;
+    return `<div style="${style}">${escape(notas)}</div>`;
+  }
+  return "";
+}
+
 function todayIso(): string {
   const t = new Date();
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
@@ -421,9 +445,7 @@ function alojamientoTable(d: PropuestaData): string {
           const regimenLine = regimenFmt
             ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
             : "";
-          const notasHotelLine = h.notas
-            ? `<div style="${h.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote}">${escape(h.notas)}</div>`
-            : "";
+          const notasHotelLine = renderNotasHTML(h.notas, h.notesImportant, h.notasList, STYLES.cellNote);
 
           return `<tr style="page-break-inside:avoid;">
             <td style="${STYLES.td};padding:8px 12px;width:50%;">
@@ -521,9 +543,7 @@ function adicionalesTable(
           ? `<div style="${STYLES.cellNote}">${escape(T.horario)}: ${escape(s.horario)}</div>`
           : "";
 
-      const notasLine = s.notas
-        ? `<div style="${s.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote}">${escape(s.notas)}</div>`
-        : "";
+      const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
 
       if (d.isCalc) {
         return `<tr style="page-break-inside:avoid;">
@@ -729,9 +749,7 @@ function buildTotalesView(d: PropuestaData): string {
           const fechaHotelLine = h.fechaInicio || h.fechaFin
             ? `<div style="font-size:11px;color:#64748B;font-weight:500;margin-top:4px;">${h.fechaInicio ? fmtFechaCompacta(h.fechaInicio) : "?"} → ${h.fechaFin ? fmtFechaCompacta(h.fechaFin) : "?"}</div>`
             : "";
-          const notasHotelLines = h.notas
-            ? formatNotasLineas(h.notas, h.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote)
-            : "";
+          const notasHotelLines = renderNotasHTML(h.notas, h.notesImportant, h.notasList, STYLES.cellNote);
           rows += `<tr style="page-break-inside:avoid;">
             <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${fechaHotelLine}${regimenLine}${notasHotelLines}</td>
             <td style="${tdCtr};width:9%;">${escape(h.estrellas || "—")}</td>
@@ -801,9 +819,7 @@ function buildTotalesView(d: PropuestaData): string {
             : "";
         return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">${escape(T.costoAdicionalEntradas)}: ${labelPart}${adultPart}${childPart}</div>`;
       })();
-      const notasLine = s.notas
-        ? `<div style="${s.notesImportant ? `font-size:12px;color:#ef7b15;font-weight:600;font-style:italic;margin-top:4px;` : STYLES.cellNote}">${escape(s.notas)}</div>`
-        : "";
+      const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
       rows += `<tr style="page-break-inside:avoid;">
         <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}</td>
         <td style="${tdBase};width:17%;">${escape(getTipo(s))}</td>
@@ -991,9 +1007,7 @@ function buildPackageView(d: PropuestaData): string {
     // ── Single option: compact premium card ───────────────────────────────
     const h = d.hoteles[0];
     const regimenFmt = formatRegimen(h.desayuno);
-    const notasHtml = h.notas
-      ? `<div style="font-size:11px;color:${h.notesImportant ? "#ef7b15" : C_LBL};font-weight:${h.notesImportant ? "600" : "400"};font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
-      : "";
+    const notasHtml = renderNotasHTML(h.notas, h.notesImportant, h.notasList);
 
     const nocheCompactRows = acoms.map((a) =>
       `<tr><td style="padding:4px 14px 4px 24px;white-space:nowrap;">` +

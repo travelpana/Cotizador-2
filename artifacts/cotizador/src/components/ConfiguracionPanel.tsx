@@ -79,17 +79,6 @@ export default function ConfiguracionPanel({
                 onPresentationModeChange("detailed");
               }}
             />
-            {/* Paquete → Individual + Totales + Paquete */}
-            <ModeCard
-              active={quotingMode === "individual" && modo === "calculo" && presentationMode === "package"}
-              icon={<Package className="w-4 h-4" />}
-              title="Paquete"
-              onClick={() => {
-                onQuotingModeChange("individual");
-                onModoChange("calculo");
-                onPresentationModeChange("package");
-              }}
-            />
             {/* Grupo → Grupo + Totales + Detallada */}
             <ModeCard
               active={quotingMode === "grupo"}
@@ -99,6 +88,17 @@ export default function ConfiguracionPanel({
                 onQuotingModeChange("grupo");
                 onModoChange("calculo");
                 onPresentationModeChange("detailed");
+              }}
+            />
+            {/* Paquete → Individual + Totales + Paquete */}
+            <ModeCard
+              active={quotingMode === "individual" && modo === "calculo" && presentationMode === "package"}
+              icon={<Package className="w-4 h-4" />}
+              title="Paquete"
+              onClick={() => {
+                onQuotingModeChange("individual");
+                onModoChange("calculo");
+                onPresentationModeChange("package");
               }}
             />
           </div>
@@ -221,18 +221,13 @@ function ModeCard({
       role="radio"
       aria-checked={active}
       onClick={onClick}
-      className={`relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+      className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
         active
           ? "border-[#0043BB] bg-[#0043BB]/5 shadow-sm"
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
       }`}
       data-testid={`mode-card-${title.toLowerCase().replace(/\s+/g, "-")}`}
     >
-      {active && (
-        <span className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0043BB" }}>
-          <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-        </span>
-      )}
       <div
         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
         style={active ? { backgroundColor: "rgba(0,67,187,0.12)", color: "#0043BB" } : { backgroundColor: "#f1f5f9", color: "#64748b" }}
@@ -240,7 +235,7 @@ function ModeCard({
         {icon}
       </div>
       <div
-        className="text-sm font-semibold leading-tight"
+        className="text-xs font-semibold leading-tight text-center"
         style={{ color: active ? "#0043BB" : "#1e293b" }}
       >
         {title}

@@ -37,6 +37,7 @@ import {
   List,
   X,
   Check,
+  AlertTriangle,
 } from "lucide-react";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
 import { loadObservaciones } from "@/lib/observaciones";
@@ -528,7 +529,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | null
+    "dates" | "price" | "notes" | "important-note" | "tickets" | "ubicacion" | "estrellas" | null
   >(null);
 
   const [editingName, setEditingName] = useState(false);
@@ -809,15 +810,31 @@ function ServicioRow({
           </div>
         ) : null}
 
-        {/* Notes line (all types) */}
-        {servicio.notas && (
+        {/* Notes list (multi-note system) */}
+        {(servicio.notasList && servicio.notasList.length > 0) ? (
+          <div className="mt-0.5 space-y-0.5">
+            {servicio.notasList.map((n, i) =>
+              n.important ? (
+                <div key={i} className="text-[11px] font-bold flex items-start gap-1 leading-tight" style={{ color: "#ef7b15" }}>
+                  <AlertTriangle className="w-2.5 h-2.5 flex-shrink-0 mt-[1px]" />
+                  <span>{n.text}</span>
+                </div>
+              ) : (
+                <div key={i} className="text-[11px] flex items-start gap-1 text-slate-600 leading-tight">
+                  <span className="text-slate-400 flex-shrink-0">•</span>
+                  <span>{n.text}</span>
+                </div>
+              )
+            )}
+          </div>
+        ) : servicio.notas ? (
           <div
             className="text-[11px] truncate mt-0.5 italic"
             style={{ color: servicio.notesImportant ? "#ef7b15" : "#92400e" }}
           >
             "{servicio.notas}"
           </div>
-        )}
+        ) : null}
 
         {/* Tour tickets add-on */}
         {servicio.tipo === "tour" &&
@@ -977,6 +994,7 @@ function ServicioRow({
           </Popover>
         )}
 
+        {/* 📝 Nota normal */}
         <Popover
           open={openEditor === "notes"}
           onOpenChange={(o) => setOpenEditor(o ? "notes" : null)}
@@ -985,33 +1003,67 @@ function ServicioRow({
             <button
               type="button"
               className={`p-1.5 rounded-lg transition-colors ${
-                servicio.notas
-                  ? servicio.notesImportant
-                    ? "opacity-100 hover:bg-orange-100"
-                    : "text-amber-600 bg-amber-50 hover:bg-amber-100 opacity-100"
+                (servicio.notasList ?? []).some(n => !n.important) || (servicio.notas && !servicio.notesImportant)
+                  ? "text-amber-600 bg-amber-50 hover:bg-amber-100 opacity-100"
                   : "text-slate-500 hover:bg-slate-100"
               }`}
-          style={servicio.notas && servicio.notesImportant ? { color: "#ef7b15", backgroundColor: "#fff3eb" } : {}}
-              aria-label="Notas"
-              title={servicio.notas ? "Editar notas" : "Agregar notas"}
+              aria-label="Agregar nota"
+              title="Agregar nota"
             >
               <StickyNote className="w-3.5 h-3.5" />
             </button>
           </PopoverTrigger>
           <PopoverContent
             align="end"
-            className="w-[300px] p-3 z-[60]"
+            className="w-[280px] p-3 z-[60]"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
-            <NotesEditor
-              value={servicio.notas ?? ""}
-              important={servicio.notesImportant ?? false}
-              onSave={(notas, important) => {
-                onUpdate({
-                  ...servicio,
-                  notas: notas.trim() ? notas : undefined,
-                  notesImportant: notas.trim() ? important : undefined,
-                });
+            <NoteAdder
+              tipo="normal"
+              onSave={(text) => {
+                const prev = servicio.notasList ?? [];
+                onUpdate({ ...servicio, notasList: [...prev, { text, important: false }] });
+                setOpenEditor(null);
+              }}
+              onClose={() => setOpenEditor(null)}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {/* ⚠ Nota importante */}
+        <Popover
+          open={openEditor === "important-note"}
+          onOpenChange={(o) => setOpenEditor(o ? "important-note" : null)}
+        >
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={`p-1.5 rounded-lg transition-colors ${
+                (servicio.notasList ?? []).some(n => n.important) || (servicio.notas && servicio.notesImportant)
+                  ? "opacity-100 hover:bg-orange-100"
+                  : "text-slate-500 hover:bg-slate-100"
+              }`}
+              style={
+                (servicio.notasList ?? []).some(n => n.important) || (servicio.notas && servicio.notesImportant)
+                  ? { color: "#ef7b15", backgroundColor: "#fff3eb" }
+                  : {}
+              }
+              aria-label="Agregar nota importante"
+              title="Agregar nota importante"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-[280px] p-3 z-[60]"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <NoteAdder
+              tipo="important"
+              onSave={(text) => {
+                const prev = servicio.notasList ?? [];
+                onUpdate({ ...servicio, notasList: [...prev, { text: text.toUpperCase(), important: true }] });
                 setOpenEditor(null);
               }}
               onClose={() => setOpenEditor(null)}
@@ -1323,56 +1375,53 @@ function UnitPriceEditor({
   );
 }
 
-function NotesEditor({
-  value,
-  important,
+function NoteAdder({
+  tipo,
   onSave,
   onClose,
 }: {
-  value: string;
-  important: boolean;
-  onSave: (notas: string, important: boolean) => void;
+  tipo: "normal" | "important";
+  onSave: (text: string) => void;
   onClose: () => void;
 }) {
-  const [text, setText] = useState(value);
-  const [isImportant, setIsImportant] = useState(important);
+  const [text, setText] = useState("");
 
   const handleApply = () => {
-    onSave(text, isImportant);
+    if (!text.trim()) { onClose(); return; }
+    onSave(text.trim());
     onClose();
   };
 
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between">
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
-          <StickyNote size={11} />
-          Notas
+        <div style={{ fontSize: 11, fontWeight: 700, color: tipo === "important" ? "#ef7b15" : "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
+          {tipo === "important"
+            ? <AlertTriangle size={11} />
+            : <StickyNote size={11} />
+          }
+          {tipo === "important" ? "Nota importante" : "Agregar nota"}
         </div>
         <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
       </div>
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Detalles, restricciones u observaciones para el cliente..."
-        rows={4}
+        placeholder={tipo === "important" ? "Texto de la nota importante..." : "Detalles, restricciones u observaciones..."}
+        rows={3}
         autoFocus
-        className="w-full px-2.5 py-2 rounded-md border border-[#D8E0EE] text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+        onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleApply(); }}
+        className="w-full px-2.5 py-2 rounded-md border text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 resize-none"
+        style={
+          tipo === "important"
+            ? { borderColor: "#f5c4a0", color: "#ef7b15", fontWeight: 600 }
+            : { borderColor: "#D8E0EE", color: "#1e293b" }
+        }
       />
-      {text.trim() && (
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <div
-            className={`relative w-8 h-[18px] rounded-full transition-colors flex-shrink-0 ${isImportant ? "bg-[#ef7b15]" : "bg-slate-200"}`}
-            onClick={() => setIsImportant(v => !v)}
-          >
-            <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${isImportant ? "translate-x-3.5" : "translate-x-0.5"}`} />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 500, color: isImportant ? "#ef7b15" : "#64748B", transition: "color 0.15s" }}>
-            Marcar como importante
-          </span>
-        </label>
+      {tipo === "important" && (
+        <p className="text-[10px] text-slate-400 -mt-1">Se guardará en MAYÚSCULAS</p>
       )}
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end">
         <button type="button" onClick={handleApply} style={btnApply} title="Guardar">✓</button>
       </div>
     </div>
