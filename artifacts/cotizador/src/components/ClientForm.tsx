@@ -842,52 +842,25 @@ export function AlojamientoBar({
   };
 
   const pillStyle: React.CSSProperties = {
-    fontSize: 10,
-    fontWeight: 600,
-    background: "rgba(255,255,255,0.15)",
+    fontSize: 9,
+    fontWeight: 700,
+    letterSpacing: "0.07em",
+    background: "rgba(255,255,255,0.2)",
     borderRadius: 99,
-    padding: "2px 8px",
-    color: "rgba(255,255,255,0.85)",
+    padding: "1px 7px",
+    color: "#fff",
     whiteSpace: "nowrap",
+    textTransform: "uppercase",
   };
 
-  const ROOM_ICONS: Record<Acomodacion, React.ReactNode> = {
-    SGL: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-        <path d="M3 14h18"/>
-        <path d="M8 8V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
-      </svg>
-    ),
-    DBL: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-        <path d="M3 14h18"/>
-        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <path d="M12 8v6"/>
-      </svg>
-    ),
-    TPL: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="7" r="2"/>
-        <path d="M5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
-        <circle cx="4" cy="9" r="1.5"/>
-        <circle cx="20" cy="9" r="1.5"/>
-        <path d="M1 20v-1.5a3 3 0 0 1 3-3"/>
-        <path d="M23 20v-1.5a3 3 0 0 0-3-3"/>
-      </svg>
-    ),
-    QDL: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="8" cy="7" r="2"/>
-        <circle cx="16" cy="7" r="2"/>
-        <path d="M4 20v-1a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v1"/>
-        <path d="M12 12v8"/>
-      </svg>
-    ),
-    CHD: <></>,
-  };
+  const BedIcon = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+      <path d="M3 14h18"/>
+      <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+      <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+    </svg>
+  );
 
   return (
     <section
@@ -913,33 +886,48 @@ export function AlojamientoBar({
             const active = acomodaciones.includes(p);
             const count = habitacionesPorAcomodacion[p] ?? 0;
             const pax = count * ROOM_PAX[p];
+            const hasRooms = count > 0;
 
             return (
               <div
                 key={p}
                 data-testid={`acomodacion-${p}`}
-                onClick={() => { if (!active) handleCardClick(p); }}
+                onClick={() => handleCardClick(p)}
                 style={{
-                  borderRadius: 12,
-                  padding: "8px 10px",
-                  cursor: active ? "default" : "pointer",
+                  borderRadius: 11,
+                  padding: "7px 9px",
+                  cursor: "pointer",
                   userSelect: "none",
-                  transition: "background 0.15s, box-shadow 0.15s, opacity 0.15s",
-                  ...(active
-                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 12px rgba(20,149,255,0.5)" }
-                    : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.3)", opacity: 0.72 }),
+                  transition: "background 0.25s ease-out, box-shadow 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out",
+                  ...(hasRooms
+                    ? {
+                        backgroundColor: "#1495ff",
+                        border: "1.5px solid #e6ae33",
+                        boxShadow: "0 0 0 2px rgba(230,174,51,0.25), 0 2px 12px rgba(20,149,255,0.45)",
+                      }
+                    : active
+                    ? {
+                        backgroundColor: "#1495ff",
+                        border: "1.5px solid transparent",
+                        boxShadow: "0 2px 10px rgba(20,149,255,0.4)",
+                      }
+                    : {
+                        backgroundColor: "rgba(0,30,90,0.45)",
+                        border: "1px solid rgba(147,197,253,0.3)",
+                        opacity: 0.72,
+                      }),
                 }}
               >
                 {/* Header row: icon + name on left, input on right */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
                   {/* Icon + label */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, minWidth: 0 }}>
-                    <span style={{ opacity: 0.85, flexShrink: 0 }}>{ROOM_ICONS[p]}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, minWidth: 0 }}>
+                    <span style={{ opacity: 0.8, flexShrink: 0, display: "flex" }}>{BedIcon}</span>
                     <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>
                       {p}
                     </span>
                   </div>
-                  {/* Numeric input */}
+                  {/* Numeric input — smaller, secondary */}
                   <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
                     <input
                       ref={(el) => { inputRefs.current[idx] = el; }}
@@ -966,21 +954,22 @@ export function AlojamientoBar({
                         }
                       }}
                       style={{
-                        width: 46, textAlign: "center",
-                        fontSize: 18, fontWeight: 800, color: "#fff",
+                        width: 38, textAlign: "center",
+                        fontSize: 15, fontWeight: 800, color: "#fff",
                         background: "rgba(255,255,255,0.18)",
-                        border: "1px solid rgba(255,255,255,0.35)",
-                        borderRadius: 7, padding: "3px 4px",
+                        border: "1px solid rgba(255,255,255,0.3)",
+                        borderRadius: 6, padding: "2px 3px",
                         outline: "none",
+                        transition: "border-color 0.25s ease-out",
                       }}
                     />
                   </div>
                 </div>
 
                 {/* Pills row */}
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  <span style={pillStyle}>{count} {count === 1 ? "hab." : "hab."}</span>
-                  <span style={pillStyle}>{pax} {pax === 1 ? "pax" : "pax"}</span>
+                <div style={{ display: "flex", gap: 3 }}>
+                  <span style={pillStyle}>{count} HAB</span>
+                  <span style={pillStyle}>{pax} PAX</span>
                 </div>
               </div>
             );
@@ -992,6 +981,7 @@ export function AlojamientoBar({
           marginTop: 8, paddingTop: 7, paddingBottom: 10,
           borderTop: "1px solid rgba(255,255,255,0.15)",
           display: "flex", alignItems: "center", flexWrap: "wrap",
+          gap: "2px 0",
         }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", opacity: 0.85 }}>
             Habitaciones: <strong>{totalHabitaciones}</strong>
@@ -1015,7 +1005,7 @@ export function AlojamientoBar({
           {cap > 0 && distribCompleta && (
             <>
               <span style={sepStyle}>|</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(167,243,208,1)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(134,239,172,1)" }}>
                 ✓ Distribución completa
               </span>
             </>
@@ -1023,8 +1013,8 @@ export function AlojamientoBar({
 
           <span style={sepStyle}>|</span>
 
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>
-            Total grupo: <strong>USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#e6ae33" }}>
+            Total grupo: USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
       </div>
