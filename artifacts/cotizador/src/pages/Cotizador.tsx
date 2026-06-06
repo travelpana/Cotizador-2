@@ -11,6 +11,7 @@ import ConfiguracionPanel from "@/components/ConfiguracionPanel";
 import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
+import GrupoResumenCard from "@/components/GrupoResumenCard";
 import Seguimiento from "@/components/Seguimiento";
 import NotificationBell from "@/components/NotificationBell";
 import Plantillas from "@/components/Plantillas";
@@ -37,6 +38,7 @@ import {
   type EstadoCRM,
   type ModoCotizacion,
   type PresentationMode,
+  type QuotingMode,
   type Prioridad,
   type ActividadTipo,
   type OppHistorialEntry,
@@ -160,6 +162,7 @@ export default function CotizadorPage() {
   const [servicios, setServicios] = useState<ServicioSeleccionado[]>([]);
   const [modo, setModo] = useState<ModoCotizacion>("tarifas");
   const [presentationMode, setPresentationMode] = useState<PresentationMode>("detailed");
+  const [quotingMode, setQuotingMode] = useState<QuotingMode>("individual");
   const [incluirItinerario, setIncluirItinerario] = useState(false);
   const [incluirDescriptivos, setIncluirDescriptivos] = useState(false);
   const [incluirDescriptivoCompleto, setIncluirDescriptivoCompleto] =
@@ -842,6 +845,7 @@ export default function CotizadorPage() {
     setAcomodaciones(["DBL"]);
     setServicios([]);
     setModo("tarifas");
+    setQuotingMode("individual");
     setCurrentNumero(null);
     setSavedId(null);
     setSavedOppId(null);
@@ -1176,6 +1180,13 @@ export default function CotizadorPage() {
                   acomodaciones={acomodaciones}
                   onAcomodacionesChange={setAcomodaciones}
                 />
+                {quotingMode === "grupo" && servicios.length > 0 && (
+                  <GrupoResumenCard
+                    cliente={cliente}
+                    acomodaciones={acomodaciones}
+                    result={result}
+                  />
+                )}
                 {langFallback && (
                   <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
                     <span className="text-base shrink-0">⚠️</span>
@@ -1227,6 +1238,8 @@ export default function CotizadorPage() {
                   onModoChange={setModo}
                   presentationMode={presentationMode}
                   onPresentationModeChange={setPresentationMode}
+                  quotingMode={quotingMode}
+                  onQuotingModeChange={setQuotingMode}
                   incluirItinerario={incluirItinerario}
                   onToggleItinerario={() => setIncluirItinerario((v) => !v)}
                   incluirDescriptivos={incluirDescriptivos}
@@ -1250,6 +1263,7 @@ export default function CotizadorPage() {
                   result={result}
                   modo={modo}
                   presentationMode={presentationMode}
+                  quotingMode={quotingMode}
                   incluirItinerario={incluirItinerario}
                   incluirDescriptivos={incluirDescriptivos}
                   incluirDescriptivoCompleto={incluirDescriptivoCompleto}
@@ -1330,6 +1344,7 @@ export default function CotizadorPage() {
         result={previewResult}
         modo={previewModo}
         presentationMode={presentationMode}
+        quotingMode={quotingMode}
         incluirItinerario={incluirItinerario}
         incluirDescriptivos={incluirDescriptivos}
         incluirDescriptivoCompleto={incluirDescriptivoCompleto}

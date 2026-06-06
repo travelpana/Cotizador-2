@@ -37,6 +37,8 @@ export interface PropuestaInput {
   personalizarTraslados?: boolean;
   /** Presentation mode: detailed shows individual prices, package hides them and shows a final price block */
   presentationMode?: PresentationMode;
+  /** Quoting mode: group adds total-group and per-person summary blocks */
+  quotingMode?: "individual" | "grupo";
 }
 
 export interface PropuestaData {
@@ -59,6 +61,13 @@ export interface PropuestaData {
   primary: Acomodacion;
   isCalc: boolean;
   isPackage: boolean;
+  isGrupo: boolean;
+  grupoAdultos: number;
+  grupoNinos: number;
+  grupoTotalPax: number;
+  grupoHabitaciones: number;
+  grupoTotal: number;
+  grupoPrecioPorPersona: number;
   itinerario: ItinerarioDia[];
   result: CotizacionResult;
   cliente: Cliente;
@@ -239,6 +248,18 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     input.numeroCotizacion ??
     `RGE-${Date.now().toString(36).slice(-6).toUpperCase()}`;
 
+  const isGrupo = input.quotingMode === "grupo";
+  const grupoAdultos = cliente.pasajeros ?? 0;
+  const grupoNinos = cliente.ninos ?? 0;
+  const grupoTotalPax = grupoAdultos + grupoNinos;
+  const grupoTotal = result.totalesPorAcomodacion[primary] ?? 0;
+  const grupoPrecioPorPersona = grupoTotalPax > 0 ? Math.round(grupoTotal / grupoTotalPax) : 0;
+  const grupoHabitaciones = (() => {
+    if (String(primary) === "SGL") return grupoTotalPax;
+    if (String(primary) === "TPL") return Math.ceil(grupoTotalPax / 3);
+    return Math.ceil(grupoTotalPax / 2);
+  })();
+
   return {
     fechaEmision: fmtFecha(todayIso()),
     destino: deriveDestino(hoteles),
@@ -259,6 +280,13 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     primary,
     isCalc,
     isPackage: input.presentationMode === "package",
+    isGrupo,
+    grupoAdultos,
+    grupoNinos,
+    grupoTotalPax,
+    grupoHabitaciones,
+    grupoTotal,
+    grupoPrecioPorPersona,
     itinerario,
     result,
     cliente,
@@ -1070,6 +1098,122 @@ function buildPackageView(d: PropuestaData): string {
   return html;
 }
 
+function grupoDatosBlock(d: PropuestaData): string {
+  if (!d.isGrupo) return "";
+  const C_BG = "#f5f7fb";
+  const C_DARK = "#041941";
+  const C_BLUE = "#1E3A8A";
+  const C_BORDER = "#e2e8f0";
+  const C_LBL = "#64748b";
+  const cell = (lbl: string, val: string) =>
+    `<td style="padding:12px 16px;text-align:center;border-right:1px solid ${C_BORDER};vertical-align:middle;">` +
+    `<div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">${escape(lbl)}</div>` +
+    `<div style="font-size:13px;font-weight:700;color:${C_DARK};">${escape(val)}</div></td>`;
+
+  return `
+  <div style="margin-bottom:20px;">
+    ${sectionBar("Datos del Grupo", C_BLUE)}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"
+      style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:${C_BG};">
+      <tbody>
+        <tr>
+          ${cell("Destino", d.destino)}
+          ${cell("Fechas", d.fechaViaje)}
+          ${cell("Noches", d.noches)}
+          <td style="padding:12px 16px;text-align:center;vertical-align:middle;">
+            <div style="font-size:9px;font-weight:700;color:${C_LBL};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Acomodación base</div>
+            <div style="font-size:13px;font-weight:700;color:${C_DARK};">${escape(String(d.primary))}</div>
+          </td>
+        </tr>
+        <tr style="border-top:1px solid ${C_BORDER};">
+          ${cell("Adultos", String(d.grupoAdultos))}
+          ${cell("Niños", String(d.grupoNinos))}
+          ${cell("Total pasajeros", String(d.grupoTotalPax))}
+          ${cell("Habitaciones", String(d.grupoHabitaciones))}
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function grupoResumenEconomicoBlock(d: PropuestaData): string {
+  if (!d.isGrupo) return "";
+  const C_DARK = "#041941";
+  const C_BLUE = "#1E3A8A";
+  const C_BORDER = "#e2e8f0";
+  const C_PRICE_BG = "#eef2f8";
+  return `
+  <div style="margin-bottom:20px;">
+    ${sectionBar("Resumen Económico", C_BLUE)}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"
+      style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+      <tbody>
+        <tr>
+          <td style="padding:18px 24px;width:50%;border-right:1px solid ${C_BORDER};vertical-align:middle;">
+            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Total del Grupo</div>
+            <div style="font-size:26px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(d.grupoTotal))}</div>
+          </td>
+          <td style="padding:18px 24px;width:50%;vertical-align:middle;background:${C_PRICE_BG};">
+            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Precio por Persona</div>
+            <div style="font-size:22px;font-weight:800;color:${C_BLUE};">USD ${escape(fmt(d.grupoPrecioPorPersona))}</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function buildGrupoPackageView(d: PropuestaData): string {
+  const C_BLUE = "#334196";
+  const C_DARK = "#041941";
+  const C_BORDER = "#e2e8f0";
+  const C_PRICE_BG = "#eef2f8";
+  const TICK = `<span style="color:${C_BLUE};font-weight:800;margin-right:7px;">&#10003;</span>`;
+
+  const includeItems: string[] = [];
+  if (d.hoteles.length > 0) includeItems.push("Hotel");
+  if (d.traslados.length > 0) includeItems.push("Traslados");
+  if (d.tours.length > 0 || d.catamarans.length > 0) includeItems.push("Tours");
+  if (d.vuelos.length > 0) includeItems.push("Vuelos");
+
+  const checkTd = (text: string) =>
+    `<tr><td style="padding:10px 14px;font-size:14px;color:${C_DARK};border-bottom:1px solid ${C_BORDER};">${TICK}${escape(text)}</td></tr>`;
+
+  const inclusionBlock = includeItems.length
+    ? `<div style="margin-bottom:20px;">
+        ${sectionBar("Incluye", C_BLUE)}
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+          <tbody>${includeItems.map(checkTd).join("")}</tbody>
+        </table>
+      </div>`
+    : "";
+
+  let html = inclusionBlock;
+  html += `
+  <div style="margin-bottom:20px;">
+    ${sectionBar("Resumen Económico", C_BLUE)}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"
+      style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+      <tbody>
+        <tr>
+          <td style="padding:18px 24px;width:50%;border-right:1px solid ${C_BORDER};vertical-align:middle;">
+            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Total del Grupo</div>
+            <div style="font-size:26px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(d.grupoTotal))}</div>
+          </td>
+          <td style="padding:18px 24px;width:50%;vertical-align:middle;background:${C_PRICE_BG};">
+            <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Precio por Persona</div>
+            <div style="font-size:22px;font-weight:800;color:${C_BLUE};">USD ${escape(fmt(d.grupoPrecioPorPersona))}</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+  html += observacionesBlock(d, C_TOT_OBSERVACIONES);
+  html += itinerarioTable(d, C_TOT_ITINERARIO, "#ffffff");
+  return html;
+}
+
 function observacionesBlock(d: PropuestaData, barColor = C_TOT_OBSERVACIONES, barTextColor = C_TOT_OBSERVACIONES_TEXT): string {
   if (!d.observaciones || d.observaciones.length === 0) return "";
   const { T } = d;
@@ -1148,6 +1292,39 @@ function infoBar(d: PropuestaData): string {
 
 export function buildPropuestaBody(d: PropuestaData): string {
   const { T } = d;
+
+  let bodyContent: string;
+  if (d.isGrupo && d.isPackage) {
+    bodyContent = `<tr><td>${grupoDatosBlock(d)}</td></tr>
+      <tr><td>${buildGrupoPackageView(d)}</td></tr>`;
+  } else if (d.isGrupo) {
+    bodyContent = `<tr><td>${grupoDatosBlock(d)}</td></tr>
+      ${d.isCalc
+        ? `<tr><td>${buildTotalesView(d)}</td></tr>`
+        : `<tr><td>${alojamientoTable(d)}</td></tr>
+      <tr><td>${adicionalesTable(T.traslados, d.traslados, d, C_TOT_TRASLADOS)}</td></tr>
+      <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
+      <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${itinerarioTable(d)}</td></tr>
+      <tr><td>${descriptivosBlock(d)}</td></tr>
+      <tr><td>${observacionesBlock(d)}</td></tr>`}
+      <tr><td>${grupoResumenEconomicoBlock(d)}</td></tr>`;
+  } else if (d.isPackage) {
+    bodyContent = `<tr><td>${buildPackageView(d)}</td></tr>`;
+  } else if (d.isCalc) {
+    bodyContent = `<tr><td>${buildTotalesView(d)}</td></tr>`;
+  } else {
+    bodyContent = `<tr><td>${alojamientoTable(d)}</td></tr>
+      <tr><td>${adicionalesTable(T.traslados, d.traslados, d, C_TOT_TRASLADOS)}</td></tr>
+      <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
+      <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${itinerarioTable(d)}</td></tr>
+      <tr><td>${descriptivosBlock(d)}</td></tr>
+      <tr><td>${observacionesBlock(d)}</td></tr>`;
+  }
+
   return `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;">
     <tr>
@@ -1169,19 +1346,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
               </td>
             </tr>
 
-            ${d.isPackage
-              ? `<tr><td>${buildPackageView(d)}</td></tr>`
-              : d.isCalc
-              ? `<tr><td>${buildTotalesView(d)}</td></tr>`
-              : `<tr><td>${alojamientoTable(d)}</td></tr>
-            <tr><td>${adicionalesTable(T.traslados, d.traslados, d, C_TOT_TRASLADOS)}</td></tr>
-            <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
-            <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
-            <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
-            <tr><td>${itinerarioTable(d)}</td></tr>
-            <tr><td>${descriptivosBlock(d)}</td></tr>
-            <tr><td>${observacionesBlock(d)}</td></tr>`
-            }
+            ${bodyContent}
 
             <tr>
               <td style="padding-top:24px;text-align:right;color:#9ca3af;font-size:11px;line-height:1.5;">

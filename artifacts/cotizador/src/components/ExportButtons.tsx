@@ -20,7 +20,7 @@ import type {
   Descriptivo,
   ServicioSeleccionado,
 } from "@/lib/types";
-import type { ModoCotizacion, ActividadTipo, PresentationMode } from "./Guardadas";
+import type { ModoCotizacion, ActividadTipo, PresentationMode, QuotingMode } from "./Guardadas";
 import { fmt } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
@@ -33,6 +33,7 @@ interface Props {
   result: CotizacionResult;
   modo: ModoCotizacion;
   presentationMode?: PresentationMode;
+  quotingMode?: QuotingMode;
   incluirItinerario: boolean;
   incluirDescriptivos: boolean;
   incluirDescriptivoCompleto: boolean;
@@ -98,6 +99,7 @@ export default function ExportButtons({
   result,
   modo,
   presentationMode = "detailed",
+  quotingMode = "individual",
   incluirItinerario,
   incluirDescriptivos,
   incluirDescriptivoCompleto,
@@ -400,6 +402,27 @@ export default function ExportButtons({
       }
     }
 
+    // ── Resumen del Grupo ─────────────────────────────────────────
+    if (quotingMode === "grupo") {
+      const grupoAdultos = cliente.pasajeros ?? 0;
+      const grupoNinos = cliente.ninos ?? 0;
+      const grupoTotalPax = grupoAdultos + grupoNinos;
+      const grupoTotal = result.totalesPorAcomodacion[primary] ?? 0;
+      const grupoPrecioPorPersona = grupoTotalPax > 0 ? Math.round(grupoTotal / grupoTotalPax) : 0;
+      lines.push("");
+      lines.push(SEP);
+      lines.push("👥 *RESUMEN DEL GRUPO*");
+      lines.push(SEP);
+      lines.push("");
+      lines.push(`• Adultos: *${grupoAdultos}*`);
+      if (grupoNinos > 0) lines.push(`• Niños: *${grupoNinos}*`);
+      lines.push(`• Total pasajeros: *${grupoTotalPax}*`);
+      lines.push(`• Acomodación base: *${String(primary)}*`);
+      lines.push("");
+      lines.push(`💵 *TOTAL DEL GRUPO: ${fmt(grupoTotal)}*`);
+      lines.push(`👤 *PRECIO POR PERSONA: ${fmt(grupoPrecioPorPersona)}*`);
+    }
+
     // ── Itinerario ───────────────────────────────────────────────
     const overrides = actividadesOverride ?? {};
     const it = incluirItinerario
@@ -512,6 +535,7 @@ export default function ExportButtons({
       result,
       modo,
       presentationMode,
+      quotingMode,
       incluirItinerario,
       incluirDescriptivos,
       incluirDescriptivoCompleto,

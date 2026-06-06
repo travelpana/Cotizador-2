@@ -11,8 +11,10 @@ import {
   Bus,
   Package,
   List,
+  User,
+  Users,
 } from "lucide-react";
-import type { ModoCotizacion, PresentationMode } from "./Guardadas";
+import type { ModoCotizacion, PresentationMode, QuotingMode } from "./Guardadas";
 import { type Idioma, IDIOMA_LABELS } from "@/lib/i18n";
 import { useRef, useState } from "react";
 
@@ -21,6 +23,8 @@ interface Props {
   onModoChange: (m: ModoCotizacion) => void;
   presentationMode: PresentationMode;
   onPresentationModeChange: (m: PresentationMode) => void;
+  quotingMode: QuotingMode;
+  onQuotingModeChange: (m: QuotingMode) => void;
   incluirItinerario: boolean;
   onToggleItinerario: () => void;
   incluirDescriptivos: boolean;
@@ -38,6 +42,8 @@ export default function ConfiguracionPanel({
   onModoChange,
   presentationMode,
   onPresentationModeChange,
+  quotingMode,
+  onQuotingModeChange,
   incluirItinerario,
   onToggleItinerario,
   incluirDescriptivos,
@@ -59,6 +65,26 @@ export default function ConfiguracionPanel({
       </div>
 
       <div className="p-5 space-y-5">
+        <section>
+          <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
+            Tipo de cotización
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <ModeCard
+              active={quotingMode === "individual"}
+              icon={<User className="w-4 h-4" />}
+              title="Individual"
+              onClick={() => onQuotingModeChange("individual")}
+            />
+            <ModeCard
+              active={quotingMode === "grupo"}
+              icon={<Users className="w-4 h-4" />}
+              title="Grupo"
+              onClick={() => onQuotingModeChange("grupo")}
+            />
+          </div>
+        </section>
+
         <section>
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">
             Modo

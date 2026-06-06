@@ -2,6 +2,7 @@ import type { Acomodacion, Cliente, ServicioSeleccionado } from "@/lib/types";
 
 export type ModoCotizacion = "tarifas" | "calculo";
 export type PresentationMode = "detailed" | "package";
+export type QuotingMode = "individual" | "grupo";
 
 /** Legacy status — kept for backward compat */
 export type EstadoCotizacion =
