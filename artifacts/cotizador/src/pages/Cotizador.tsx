@@ -346,33 +346,68 @@ export default function CotizadorPage() {
     setLoading(true);
     setError(null);
     try {
+      const safeArray = <T,>(p: Promise<T[]>): Promise<T[] | null> =>
+        p.then((v) => v).catch(() => null);
+
       const [h, t, tr, ds, allInfo, brasilInfo] = await Promise.all([
-        api.hoteles(),
-        api.tours(),
-        api.traslados(),
+        safeArray(api.hoteles()),
+        safeArray(api.tours()),
+        safeArray(api.traslados()),
         api.descriptivos().catch(() => [] as Descriptivo[]),
         api.catalogInfoAll().catch(() => null),
         api.catalogInfoBrasil().catch(() => null),
       ]);
-      setHoteles(h);
-      setTours(t);
-      setTraslados(tr);
+
+      // If all three core catalogs failed it means the backend is unreachable — show the blocking error
+      if (h === null && t === null && tr === null) {
+        setError("No se pudo conectar con el servidor. Verifica que el backend esté activo.");
+        return;
+      }
+
+      // Apply data, using empty arrays for any that failed individually
+      setHoteles(h ?? []);
+      setTours(t ?? []);
+      setTraslados(tr ?? []);
       setDescriptivos(ds);
       setFileInfo(allInfo?.es ?? null);
       setFileInfoEn(allInfo?.en ?? null);
       setFileInfoPt(allInfo?.pt ?? null);
       setFileInfoBrasil(brasilInfo);
 
+      // Warn about any partial failures without blocking the UI
+      const partial: string[] = [];
+      if (h === null) partial.push("hoteles");
+      if (t === null) partial.push("tours");
+      if (tr === null) partial.push("traslados");
+      if (partial.length > 0) {
+        showToast(
+          `No se pudieron cargar: ${partial.join(", ")}. Intenta recargar el tarifario.`,
+          "warning",
+        );
+      }
+
       const fetchLang = async (info: { counts?: { hoteles: number } | null } | null, lang: "en" | "pt", setH: (v: Hotel[]) => void, setT: (v: Tour[]) => void, setTr: (v: Traslado[]) => void) => {
         if (info?.counts && info.counts.hoteles > 0) {
-          const [lh, lt, ltr] = await Promise.all([api.hotelesLang(lang), api.toursLang(lang), api.trasladosLang(lang)]);
-          setH(lh); setT(lt); setTr(ltr);
+          const [lh, lt, ltr] = await Promise.all([
+            safeArray(api.hotelesLang(lang)),
+            safeArray(api.toursLang(lang)),
+            safeArray(api.trasladosLang(lang)),
+          ]);
+          setH(lh ?? []); setT(lt ?? []); setTr(ltr ?? []);
         }
       };
 
       await Promise.all([
         brasilInfo?.counts && brasilInfo.counts.hoteles > 0
-          ? Promise.all([api.hotelesBrasil(), api.toursBrasil(), api.trasladosBrasil()]).then(([hb, tb, trb]) => { setHotelesBrasil(hb); setToursBrasil(tb); setTrasladosBrasil(trb); })
+          ? Promise.all([
+              safeArray(api.hotelesBrasil()),
+              safeArray(api.toursBrasil()),
+              safeArray(api.trasladosBrasil()),
+            ]).then(([hb, tb, trb]) => {
+              setHotelesBrasil(hb ?? []);
+              setToursBrasil(tb ?? []);
+              setTrasladosBrasil(trb ?? []);
+            })
           : Promise.resolve(),
         fetchLang(allInfo?.en ?? null, "en", setHotelesEn, setToursEn, setTrasladosEn),
         fetchLang(allInfo?.pt ?? null, "pt", setHotelesPt, setToursPt, setTrasladosPt),

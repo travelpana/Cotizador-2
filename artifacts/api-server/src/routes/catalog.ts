@@ -40,18 +40,30 @@ function loadCatalogForLang(lang: Lang) {
 }
 
 router.get("/hoteles", (req, res) => {
-  if (isBrasil(req)) { res.json(loadBrasilCatalog().hoteles); return; }
-  res.json(loadCatalogForLang(getLang(req)).hoteles);
+  try {
+    if (isBrasil(req)) { res.json(loadBrasilCatalog().hoteles); return; }
+    res.json(loadCatalogForLang(getLang(req)).hoteles);
+  } catch (e) {
+    res.status(500).json({ error: true, message: "No se pudieron cargar los hoteles", detail: (e as Error).message });
+  }
 });
 
 router.get("/tours", (req, res) => {
-  if (isBrasil(req)) { res.json(loadBrasilCatalog().tours); return; }
-  res.json(loadCatalogForLang(getLang(req)).tours);
+  try {
+    if (isBrasil(req)) { res.json(loadBrasilCatalog().tours); return; }
+    res.json(loadCatalogForLang(getLang(req)).tours);
+  } catch (e) {
+    res.status(500).json({ error: true, message: "No se pudieron cargar los tours", detail: (e as Error).message });
+  }
 });
 
 router.get("/traslados", (req, res) => {
-  if (isBrasil(req)) { res.json(loadBrasilCatalog().traslados); return; }
-  res.json(loadCatalogForLang(getLang(req)).traslados);
+  try {
+    if (isBrasil(req)) { res.json(loadBrasilCatalog().traslados); return; }
+    res.json(loadCatalogForLang(getLang(req)).traslados);
+  } catch (e) {
+    res.status(500).json({ error: true, message: "No se pudieron cargar los traslados", detail: (e as Error).message });
+  }
 });
 
 router.get("/catalog", (req, res) => {
