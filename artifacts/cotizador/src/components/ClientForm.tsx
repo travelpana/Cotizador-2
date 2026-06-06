@@ -840,14 +840,14 @@ export function AlojamientoBar({
 
   const ROOM_ICONS: Record<Acomodacion, React.ReactNode> = {
     SGL: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
         <path d="M3 14h18"/>
         <path d="M10 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/>
       </svg>
     ),
     DBL: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
         <path d="M3 14h18"/>
         <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
@@ -855,21 +855,21 @@ export function AlojamientoBar({
       </svg>
     ),
     TPL: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
         <path d="M3 14h18"/>
         <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
         <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <text x="19" y="9" fontSize="7" fontWeight="700" fill="currentColor" stroke="none" textAnchor="middle">3</text>
+        <text x="19" y="9" fontSize="7" fontWeight="700" fill="#ffffff" stroke="none" textAnchor="middle">3</text>
       </svg>
     ),
     QDL: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
         <path d="M3 14h18"/>
         <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
         <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-        <text x="19" y="9" fontSize="7" fontWeight="700" fill="currentColor" stroke="none" textAnchor="middle">4</text>
+        <text x="19" y="9" fontSize="7" fontWeight="700" fill="#ffffff" stroke="none" textAnchor="middle">4</text>
       </svg>
     ),
     CHD: <></>,
@@ -935,12 +935,12 @@ export function AlojamientoBar({
                 onClick={() => handleCardClick(p)}
                 style={{
                   borderRadius: 12,
-                  padding: "10px 10px",
+                  padding: "12px 10px 10px",
                   cursor: "pointer",
                   userSelect: "none",
                   display: "flex",
-                  alignItems: "center",
-                  gap: 8,
+                  flexDirection: "column",
+                  gap: 9,
                   transition: "background 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out, box-shadow 0.25s ease-out",
                   ...(hasRooms
                     ? {
@@ -960,69 +960,75 @@ export function AlojamientoBar({
                       }),
                 }}
               >
-                {/* LEFT: icon + label stacked */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3, flex: "0 0 auto", minWidth: 0 }}>
-                  <span style={{ color: "rgba(255,255,255,0.8)", display: "flex", lineHeight: 0 }}>
-                    {ROOM_ICONS[p]}
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>
-                    {p}
-                  </span>
-                </div>
+                {/* TOP ROW: icon + label left, counter right — all vertically centered */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                  {/* Left: bed icon + accommodation label on same line */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                    <span style={{ display: "flex", lineHeight: 0, flexShrink: 0 }}>
+                      {ROOM_ICONS[p]}
+                    </span>
+                    <span style={{ fontSize: 24, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", lineHeight: 1, textTransform: "uppercase" }}>
+                      {p}
+                    </span>
+                  </div>
 
-                {/* CENTER: large counter — the star of the card */}
-                <div
-                  style={{ flex: 1, display: "flex", justifyContent: "center" }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    ref={(el) => { inputRefs.current[idx] = el; }}
-                    type="number"
-                    className="grupo-input"
-                    min={0}
-                    value={count === 0 ? "" : count}
-                    placeholder="0"
-                    tabIndex={idx + 1}
-                    onChange={(e) => handleInputChange(p, e.target.value)}
+                  {/* Right: counter input */}
+                  <div
+                    style={{ flexShrink: 0 }}
                     onClick={(e) => e.stopPropagation()}
-                    onFocus={(e) => e.target.select()}
-                    onKeyDown={(e) => {
-                      e.stopPropagation();
-                      if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
-                        e.preventDefault();
-                        const next = inputRefs.current[idx + 1];
-                        if (next) { next.focus(); next.select(); }
-                      }
-                      if (e.key === "Tab" && e.shiftKey) {
-                        e.preventDefault();
-                        const prev = inputRefs.current[idx - 1];
-                        if (prev) { prev.focus(); prev.select(); }
-                      }
-                    }}
-                    style={{
-                      width: 52, height: 52,
-                      textAlign: "center",
-                      fontSize: 22, fontWeight: 800, color: "#fff",
-                      background: "rgba(0,0,0,0.2)",
-                      border: "1px solid rgba(255,255,255,0.22)",
-                      borderRadius: 10,
-                      padding: "0",
-                      outline: "none",
-                      lineHeight: "52px",
-                      boxSizing: "border-box",
-                    }}
-                  />
+                  >
+                    <input
+                      ref={(el) => { inputRefs.current[idx] = el; }}
+                      type="number"
+                      className="grupo-input"
+                      min={0}
+                      value={count === 0 ? "" : count}
+                      placeholder="0"
+                      tabIndex={idx + 1}
+                      onChange={(e) => handleInputChange(p, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.target.select()}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
+                          e.preventDefault();
+                          const next = inputRefs.current[idx + 1];
+                          if (next) { next.focus(); next.select(); }
+                        }
+                        if (e.key === "Tab" && e.shiftKey) {
+                          e.preventDefault();
+                          const prev = inputRefs.current[idx - 1];
+                          if (prev) { prev.focus(); prev.select(); }
+                        }
+                      }}
+                      style={{
+                        width: 48, height: 48,
+                        textAlign: "center",
+                        fontSize: 22, fontWeight: 800, color: "#fff",
+                        background: "rgba(0,0,0,0.2)",
+                        border: "1px solid rgba(255,255,255,0.22)",
+                        borderRadius: 10,
+                        padding: "0",
+                        outline: "none",
+                        lineHeight: "48px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
                 </div>
 
-                {/* RIGHT: HAB / PAX stacked */}
-                <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0, minWidth: 34 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.92)", lineHeight: 1.4, whiteSpace: "nowrap" }}>
-                    {count} HAB
-                  </span>
-                  <div style={{ width: "100%", height: "1px", background: "rgba(255,255,255,0.3)", margin: "2px 0" }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.65)", lineHeight: 1.4, whiteSpace: "nowrap" }}>
-                    {pax} PAX
-                  </span>
+                {/* BOTTOM ROW: X HABITACIONES | Y PASAJEROS */}
+                <div style={{
+                  textAlign: "center",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.85)",
+                  letterSpacing: "0.03em",
+                  lineHeight: 1,
+                }}>
+                  {count} HABITACIONES
+                  <span style={{ color: "rgba(255,255,255,0.35)", marginInline: 5, fontWeight: 300 }}>|</span>
+                  {pax} PASAJEROS
                 </div>
               </div>
             );
