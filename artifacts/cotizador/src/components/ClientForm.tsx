@@ -766,23 +766,17 @@ export function AlojamientoBar({
     }
   };
 
-  const handleIncrement = (e: React.MouseEvent, p: Acomodacion) => {
-    e.stopPropagation();
-    const count = habitacionesPorAcomodacion[p] ?? 0;
-    if (cap > 0 && totalAsignados + ROOM_PAX[p] > cap) {
-      onShowToast?.("La distribución supera el total de pasajeros.", "warning");
+  const handleInputChange = (p: Acomodacion, raw: string) => {
+    const val = parseInt(raw, 10);
+    const next = isNaN(val) ? 0 : Math.max(0, val);
+    const currentContrib = (habitacionesPorAcomodacion[p] ?? 0) * ROOM_PAX[p];
+    const newTotal = totalAsignados - currentContrib + next * ROOM_PAX[p];
+    if (cap > 0 && newTotal > cap) {
+      onShowToast?.("La distribución supera el total de pasajeros configurados.", "warning");
       return;
     }
-    onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: count + 1 });
-    if (!acomodaciones.includes(p)) onAcomodacionesChange([...acomodaciones, p]);
-  };
-
-  const handleDecrement = (e: React.MouseEvent, p: Acomodacion) => {
-    e.stopPropagation();
-    const count = habitacionesPorAcomodacion[p] ?? 0;
-    if (count === 0) return;
-    const next = count - 1;
     onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: next });
+    if (next > 0 && !acomodaciones.includes(p)) onAcomodacionesChange([...acomodaciones, p]);
     if (next === 0 && acomodaciones.includes(p) && acomodaciones.length > 1)
       onAcomodacionesChange(acomodaciones.filter((x) => x !== p));
   };
@@ -895,47 +889,39 @@ export function AlojamientoBar({
                     : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.3)", opacity: 0.75 }),
                 }}
               >
-                {/* Top row: name (big, gold) + counter */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, marginBottom: 6 }}>
-                  <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", color: "#e6ae33", lineHeight: 1 }}>
-                    {p}
-                  </span>
+                {/* Type label */}
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#e6ae33", lineHeight: 1, marginBottom: 4, display: "block" }}>
+                  {p}
+                </span>
 
-                  {/* Counter [- N +] */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={(e) => handleDecrement(e, p)}
-                      style={{
-                        width: 24, height: 24, borderRadius: 7,
-                        background: "rgba(255,255,255,0.18)",
-                        border: "1px solid rgba(255,255,255,0.28)",
-                        color: "#fff", fontSize: 16, fontWeight: 700,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", lineHeight: 1, flexShrink: 0,
-                      }}
-                    >−</button>
-                    <span style={{ minWidth: 20, textAlign: "center", fontSize: 14, fontWeight: 800, color: "#fff" }}>
-                      {count}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => handleIncrement(e, p)}
-                      style={{
-                        width: 24, height: 24, borderRadius: 7,
-                        background: "rgba(255,255,255,0.18)",
-                        border: "1px solid rgba(255,255,255,0.28)",
-                        color: "#fff", fontSize: 16, fontWeight: 700,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", lineHeight: 1, flexShrink: 0,
-                      }}
-                    >+</button>
-                  </div>
+                {/* "Habitaciones" label */}
+                <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4 }}>
+                  Habitaciones
+                </span>
+
+                {/* Numeric input */}
+                <div onClick={(e) => e.stopPropagation()} style={{ marginBottom: 6 }}>
+                  <input
+                    type="number"
+                    min={0}
+                    value={count === 0 ? "" : count}
+                    placeholder="0"
+                    onChange={(e) => handleInputChange(p, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.target.select()}
+                    style={{
+                      width: "100%", textAlign: "center",
+                      fontSize: 22, fontWeight: 800, color: "#fff",
+                      background: "rgba(255,255,255,0.15)",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      borderRadius: 8, padding: "4px 0",
+                      outline: "none", appearance: "textfield",
+                    }}
+                  />
                 </div>
 
-                {/* Pills row: habitaciones · pasajeros */}
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  <span style={pillStyle}>{count} {count === 1 ? "habitación" : "habitaciones"}</span>
+                {/* Pasajeros pill */}
+                <div style={{ display: "flex", justifyContent: "center" }}>
                   <span style={pillStyle}>{pax} {pax === 1 ? "pasajero" : "pasajeros"}</span>
                 </div>
               </div>
