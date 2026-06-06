@@ -165,10 +165,12 @@ export default function PlantillaSelectorModal({
               <p className="text-sm text-slate-500 mt-0.5">Busca y aplica una plantilla guardada.</p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors mt-0.5"
+              aria-label="Cerrar"
+              className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors flex-shrink-0"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 

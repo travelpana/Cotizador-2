@@ -308,7 +308,7 @@ export default function CustomItemModal({
         {/* Header */}
         <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#004FBB]/10 text-[#004FBB] flex items-center justify-center">
               {isVuelo ? (
                 <Plane className="w-4 h-4" />
               ) : (

@@ -890,53 +890,54 @@ function buildPackageView(d: PropuestaData): string {
   const C_LBL     = "#64748b";
   const C_PRICE_BG = "#eef2f8";
 
-  // Reusable checkmark HTML entity (&#10003; = ✓, no SVG)
-  const TICK = `<span style="color:${C_BLUE};font-weight:800;margin-right:7px;">&#10003;</span>`;
+  // ── 1. GROUPED INCLUSION BLOCK ────────────────────────────────────────────
+  const C_INCL_CAT  = "#334196";
+  const C_INCL_DIV  = "#e5eaf2";
 
-  // ── 1. TWO-COLUMN INCLUSION BLOCK ────────────────────────────────────────
-  // Left column: real names of each service
-  const includeItems: string[] = [];
-  d.hoteles.forEach((h) => includeItems.push(h.nombre));
-  d.traslados.forEach((t) =>
-    includeItems.push(
-      personalizarNombreTraslado(formatTrasladoNombre(t.nombre), d.hoteles, d.personalizarTraslados),
-    ),
+  function inclCatGroup(title: string, rows: string[]): string {
+    if (!rows.length) return "";
+    const itemRows = rows.map((r) =>
+      `<tr><td style="padding:4px 14px 5px 20px;font-size:13px;color:${C_DARK};">` +
+      `<span style="color:${C_INCL_CAT};font-weight:700;margin-right:8px;">&#10003;</span>${escape(r)}</td></tr>`,
+    ).join("");
+    return (
+      `<tr><td style="padding:9px 14px 5px 14px;font-size:10px;font-weight:700;` +
+      `color:${C_INCL_CAT};text-transform:uppercase;letter-spacing:0.7px;` +
+      `border-top:1px solid ${C_INCL_DIV};">${escape(title)}</td></tr>` +
+      itemRows
+    );
+  }
+
+  const alojaInclItems: string[] = [];
+  d.hoteles.forEach((h) => {
+    alojaInclItems.push(h.nombre);
+    if (h.noches) alojaInclItems.push(`${h.noches} ${h.noches === 1 ? "noche" : "noches"}`);
+    const reg = formatRegimen(h.desayuno);
+    if (reg) alojaInclItems.push(reg);
+  });
+
+  const trasladoInclItems = d.traslados.map((t) =>
+    personalizarNombreTraslado(formatTrasladoNombre(t.nombre), d.hoteles, d.personalizarTraslados),
   );
-  [...d.tours, ...d.catamarans].forEach((s) => includeItems.push(s.nombre));
-  d.vuelos.forEach((v) => includeItems.push(v.nombre));
+  const tourInclItems = [...d.tours, ...d.catamarans].map((s) => s.nombre);
+  const vueloInclItems = d.vuelos.map((v) => v.nombre);
 
-  // Split includeItems evenly: left half / right half (no highlights column)
-  const midpoint  = Math.ceil(includeItems.length / 2);
-  const leftItems  = includeItems.slice(0, midpoint);
-  const rightItems = includeItems.slice(midpoint);
+  const inclRows = [
+    inclCatGroup("Alojamiento", alojaInclItems),
+    inclCatGroup("Traslados", trasladoInclItems),
+    inclCatGroup("Tours y Experiencias", tourInclItems),
+    inclCatGroup("Vuelos", vueloInclItems),
+  ].join("");
 
-  const checkTd = (text: string) =>
-    `<tr><td style="padding:6px 12px 6px 14px;font-size:13px;color:${C_DARK};` +
-    `border-bottom:1px solid ${C_BORDER};">${TICK}${escape(text)}</td></tr>`;
-
-  const leftRows  = leftItems.map(checkTd).join("");
-  const rightRows = rightItems.map(checkTd).join("");
-
-  const inclusionBlock = includeItems.length
+  const inclusionBlock = inclRows
     ? `<div style="margin-bottom:20px;">
         ${sectionBar("Incluye", C_BLUE)}
         <table cellpadding="0" cellspacing="0" border="0" width="100%"
-          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
           <tbody>
-            <tr valign="top">
-              <td width="50%" style="width:50%;border-right:1px solid ${C_BORDER};vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%"
-                  style="width:100%;border-collapse:collapse;">
-                  <tbody>${leftRows}</tbody>
-                </table>
-              </td>
-              <td width="50%" style="width:50%;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%"
-                  style="width:100%;border-collapse:collapse;">
-                  <tbody>${rightRows}</tbody>
-                </table>
-              </td>
-            </tr>
+            <tr><td style="padding:8px 14px 3px 14px;"></td></tr>
+            ${inclRows}
+            <tr><td style="padding:5px 14px 10px 14px;"></td></tr>
           </tbody>
         </table>
       </div>`
@@ -985,12 +986,26 @@ function buildPackageView(d: PropuestaData): string {
   let hotelBlock = "";
 
   if (d.hoteles.length === 1) {
-    // ── Single option: premium simple layout ──────────────────────────────
+    // ── Single option: compact premium card ───────────────────────────────
     const h = d.hoteles[0];
     const regimenFmt = formatRegimen(h.desayuno);
     const notasHtml = h.notas
       ? `<div style="font-size:11px;color:${h.notesImportant ? "#ef7b15" : C_LBL};font-weight:${h.notesImportant ? "600" : "400"};font-style:italic;margin-top:3px;">${escape(h.notas)}</div>`
       : "";
+
+    const nocheCompactRows = acoms.map((a) =>
+      `<tr><td style="padding:4px 14px 4px 24px;white-space:nowrap;">` +
+      `<span style="display:inline-block;min-width:44px;font-size:10px;font-weight:700;color:${C_LBL};text-transform:uppercase;vertical-align:middle;">${escape(String(a))}</span>` +
+      `<span style="font-size:13px;font-weight:600;color:${C_DARK};vertical-align:middle;">USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</span>` +
+      `</td></tr>`
+    ).join("");
+
+    const precioCompactRows = acoms.map((a) =>
+      `<tr><td style="padding:6px 14px 6px 24px;white-space:nowrap;background:${C_PRICE_BG};">` +
+      `<span style="display:inline-block;min-width:44px;font-size:10px;font-weight:700;color:${C_LBL};text-transform:uppercase;vertical-align:middle;">${escape(String(a))}</span>` +
+      `<span style="font-size:17px;font-weight:800;color:${C_DARK};vertical-align:middle;">USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</span>` +
+      `</td></tr>`
+    ).join("");
 
     hotelBlock = `
     <div style="margin-bottom:20px;">
@@ -998,26 +1013,28 @@ function buildPackageView(d: PropuestaData): string {
       <table cellpadding="0" cellspacing="0" border="0" width="100%"
         style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
         <tbody>
-
           <tr>
-            <td colspan="${nAcoms}" style="padding:12px 14px 12px 24px;border-bottom:1px solid ${C_BORDER};">
+            <td style="padding:12px 14px 12px 24px;border-bottom:1px solid ${C_BORDER};">
               <div style="font-size:14px;font-weight:700;color:${C_DARK};">${escape(h.nombre)}</div>
               ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};margin-top:2px;">${escape(h.estrellas)}</div>` : ""}
+              ${h.ubicacion ? `<div style="font-size:11px;color:${C_LBL};margin-top:1px;">${escape(h.ubicacion)}</div>` : ""}
               ${h.noches ? `<div style="font-size:11px;color:${C_LBL};margin-top:1px;">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
               ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:3px;">${escape(regimenFmt)}</div>` : ""}
               ${notasHtml}
             </td>
           </tr>
-
-          ${subHeader("Noche adicional por persona")}
           <tr>
-            <td colspan="${nAcoms}" style="padding:5px 14px 2px 24px;font-size:11px;font-weight:600;color:${C_LBL};background:${C_SEP_BG};border-bottom:1px solid ${C_BORDER};">${escape(h.nombre)}</td>
+            <td style="padding:7px 14px 5px 14px;font-size:10px;font-weight:700;color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">
+              Noche adicional por persona
+            </td>
           </tr>
-          <tr>${nocheCells(h.preciosPorAcomodacion)}</tr>
-
-          ${subHeader("Precio total por persona", C_PRICE_BG)}
-          <tr>${precioCells(d.result.totalesPorAcomodacion)}</tr>
-
+          ${nocheCompactRows}
+          <tr>
+            <td style="padding:7px 14px 5px 14px;font-size:10px;font-weight:700;color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;background:${C_PRICE_BG};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">
+              Precio total por persona
+            </td>
+          </tr>
+          ${precioCompactRows}
         </tbody>
       </table>
     </div>`;

@@ -233,15 +233,6 @@ export default function VistaPreviaModal({
           />
         </div>
       </div>
-      <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
-        <button
-          onClick={onClose}
-          title="Cerrar"
-          className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
     </Modal>
   );
 }
