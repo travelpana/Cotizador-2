@@ -1032,12 +1032,19 @@ export function AlojamientoBar({
             <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)" }}>
               Distribución
             </span>
-            <span style={{
-              fontSize: 11, fontWeight: 700, lineHeight: 1.2, textAlign: "center", letterSpacing: "0.04em",
-              color: cap > 0 && distribCompleta ? "#8cd9fa" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.35)",
-            }}>
-              {cap > 0 && distribCompleta ? "✓ COMPLETA" : cap > 0 && falta > 0 ? `⚠ FALTAN ${falta}` : "—"}
-            </span>
+            {cap > 0 && distribCompleta ? (
+              <>
+                <span style={{ fontSize: 14, lineHeight: 1, color: "#8cd9fa" }}>✓</span>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textAlign: "center", color: "#8cd9fa" }}>COMPLETA</span>
+              </>
+            ) : cap > 0 && falta > 0 ? (
+              <>
+                <span style={{ fontSize: 14, lineHeight: 1, color: "#f8d616" }}>⚠</span>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textAlign: "center", color: "#f8d616" }}>FALTAN {falta}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>—</span>
+            )}
           </div>
 
           {/* Block 4: Total grupo — most prominent */}
