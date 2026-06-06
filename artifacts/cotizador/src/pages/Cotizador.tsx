@@ -1190,6 +1190,7 @@ export default function CotizadorPage() {
                     result={result}
                     habitaciones={habitacionesPorAcomodacion}
                     onHabitacionesChange={setHabitacionesPorAcomodacion}
+                    ninos={cliente.ninos ?? 0}
                   />
                 )}
                 {langFallback && (

@@ -405,35 +405,43 @@ export default function ExportButtons({
       }
     }
 
-    // ── Configuración del Grupo ───────────────────────────────────
+    // ── Detalle del Grupo ─────────────────────────────────────────
     if (quotingMode === "grupo") {
-      const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, CHD: 1 };
+      const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3 };
+      const ROOM_ACOMS: Acomodacion[] = (["SGL", "DBL", "TPL"] as Acomodacion[]).filter((a) => acoms.includes(a));
       const rp = (a: Acomodacion) => ROOM_PAX[a] ?? 1;
       const hab = habitacionesPorAcomodacion ?? {};
-      const activeAcoms = acoms.filter((a) => (hab[a] ?? 0) > 0);
-      const grupoTotalPax = activeAcoms.reduce((s, a) => s + (hab[a] ?? 0) * rp(a), 0);
-      const grupoTotal = activeAcoms.reduce(
-        (s, a) => s + (result.totalesPorAcomodacion[a] ?? 0) * (hab[a] ?? 0) * rp(a),
-        0,
-      );
+      const activeRoomAcoms = ROOM_ACOMS.filter((a) => (hab[a] ?? 0) > 0);
+      const ninos = cliente.ninos ?? 0;
+      const chdRate = result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0;
+      const grupoAdultoPax = activeRoomAcoms.reduce((s, a) => s + (hab[a] ?? 0) * rp(a), 0);
+      const grupoTotalPax = grupoAdultoPax + ninos;
+      const grupoTotal =
+        activeRoomAcoms.reduce(
+          (s, a) => s + (result.totalesPorAcomodacion[a] ?? 0) * (hab[a] ?? 0) * rp(a),
+          0,
+        ) + ninos * chdRate;
 
       lines.push("");
       lines.push(SEP);
-      lines.push("👥 *CONFIGURACIÓN DEL GRUPO*");
+      lines.push("👥 *DETALLE DEL GRUPO*");
       lines.push(SEP);
       lines.push("");
-      for (const a of activeAcoms) {
-        lines.push(`• ${String(a)} × ${hab[a]} habitaciones (${(hab[a] ?? 0) * rp(a)} pax)`);
+      for (const a of activeRoomAcoms) {
+        const habCount = hab[a] ?? 0;
+        lines.push(`• ${String(a)}: ${habCount} hab × ${rp(a)} pax = ${habCount * rp(a)} pasajeros`);
       }
+      if (ninos > 0) lines.push(`• Niños (CHD): ${ninos}`);
       if (grupoTotalPax > 0) lines.push(`• *Total pasajeros: ${grupoTotalPax}*`);
 
-      if (activeAcoms.length > 0) {
+      if (activeRoomAcoms.length > 0) {
         lines.push("");
-        lines.push("*Precio por persona:*");
-        for (const a of activeAcoms) {
+        lines.push("*Tarifas por persona:*");
+        for (const a of activeRoomAcoms) {
           const pp = result.totalesPorAcomodacion[a] ?? 0;
           if (pp > 0) lines.push(`  ${String(a)}: ${fmt(pp)}`);
         }
+        if (ninos > 0 && chdRate > 0) lines.push(`  Tarifa niño: ${fmt(chdRate)}`);
       }
 
       lines.push("");
