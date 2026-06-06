@@ -38,6 +38,7 @@ import {
   X,
   Check,
   AlertTriangle,
+  Copy,
 } from "lucide-react";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
 import { loadObservaciones } from "@/lib/observaciones";
@@ -131,6 +132,17 @@ export default function ServiciosSeleccionados({
 
   const remove = (s: ServicioSeleccionado) => {
     onChange(servicios.filter((x) => !(x.tipo === s.tipo && x.id === s.id)));
+  };
+
+  const duplicate = (s: ServicioSeleccionado) => {
+    const copy: ServicioSeleccionado = JSON.parse(JSON.stringify(s));
+    const newId = `${s.id}-dup-${Date.now()}`;
+    copy.id = newId;
+    copy.codigo = newId;
+    const idx = servicios.findIndex((x) => x.tipo === s.tipo && x.id === s.id);
+    const newList = [...servicios];
+    newList.splice(idx + 1, 0, copy);
+    onChange(newList);
   };
 
   const update = (s: ServicioSeleccionado) => {
@@ -263,6 +275,7 @@ export default function ServiciosSeleccionados({
                       }}
                       onEdit={() => onEdit(s)}
                       onRemove={() => remove(s)}
+                      onDuplicate={() => duplicate(s)}
                       onUpdate={update}
                       hoteles={hotelesServs}
                       personalizarTraslados={personalizarTraslados}
@@ -497,6 +510,7 @@ function ServicioRow({
   onDragEnd,
   onEdit,
   onRemove,
+  onDuplicate,
   onUpdate,
   hoteles = [],
   personalizarTraslados = true,
@@ -514,6 +528,7 @@ function ServicioRow({
   onDragEnd: () => void;
   onEdit: () => void;
   onRemove: () => void;
+  onDuplicate: () => void;
   onUpdate: (s: ServicioSeleccionado) => void;
   hoteles?: ServicioSeleccionado[];
   personalizarTraslados?: boolean;
@@ -954,6 +969,17 @@ function ServicioRow({
 
       {/* Action icons — all service types */}
       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0">
+        {/* Duplicar */}
+        <button
+          type="button"
+          onClick={onDuplicate}
+          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          aria-label="Duplicar servicio"
+          title="Duplicar servicio"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
+
         {servicio.tipo === "tour" && (
           <Popover
             open={openEditor === "tickets"}

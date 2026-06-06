@@ -57,9 +57,9 @@ const UBICACIONES = [
 ];
 
 const CATEGORIAS = [
-  { value: "★★★", label: "★★★ Tres estrellas" },
-  { value: "★★★★", label: "★★★★ Cuatro estrellas" },
-  { value: "★★★★★", label: "★★★★★ Cinco estrellas" },
+  { value: "★★★", label: "★★★" },
+  { value: "★★★★", label: "★★★★" },
+  { value: "★★★★★", label: "★★★★★" },
 ];
 
 const lbl =
@@ -334,6 +334,14 @@ export default function CustomItemModal({
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
   }, [open, initial]);
+
+  useEffect(() => {
+    if (!open || isEdit || tipo !== "hotel") return;
+    setUbicacion((v) => v || "CIUDAD DE PANAMÁ");
+    setEstrellas((v) => v || "★★★");
+    setTipoHabitacion((v) => v || "Standard");
+    setDesayuno((v) => v || "Desayuno incluido");
+  }, [tipo, open, isEdit]);
 
   useEffect(() => {
     if (!ninosEnabled && precioNino !== "") {
