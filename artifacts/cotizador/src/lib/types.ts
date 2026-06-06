@@ -1,4 +1,4 @@
-export type Acomodacion = "SGL" | "DBL" | "TPL" | "CHD";
+export type Acomodacion = "SGL" | "DBL" | "TPL" | "QDL" | "CHD";
 export type Tier = "p1" | "p2_5" | "p6_10";
 
 export interface Hotel {

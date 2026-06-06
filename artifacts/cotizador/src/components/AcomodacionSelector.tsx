@@ -11,6 +11,7 @@ const PILLS: { value: Acomodacion; label: string; full: string }[] = [
   { value: "SGL", label: "SGL", full: "Sencilla" },
   { value: "DBL", label: "DBL", full: "Doble" },
   { value: "TPL", label: "TPL", full: "Triple" },
+  { value: "QDL", label: "QDL", full: "Cuádruple" },
   { value: "CHD", label: "CHD", full: "Niño" },
 ];
 

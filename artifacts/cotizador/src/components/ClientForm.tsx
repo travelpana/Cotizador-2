@@ -699,7 +699,7 @@ export function AlojamientoBar({
   acomodaciones: Acomodacion[];
   onAcomodacionesChange: (a: Acomodacion[]) => void;
 }) {
-  const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
+  const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL", "CHD"];
 
   const togglePill = (a: Acomodacion) => {
     if (acomodaciones.includes(a)) {

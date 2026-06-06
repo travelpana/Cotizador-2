@@ -48,6 +48,7 @@ const EMPTY_ACOM = (): Record<Acomodacion, number> => ({
   SGL: 0,
   DBL: 0,
   TPL: 0,
+  QDL: 0,
   CHD: 0,
 });
 
@@ -80,6 +81,7 @@ export function calcularLocal(
       preciosPorAcom.SGL = s.precios.SGL ?? 0;
       preciosPorAcom.DBL = s.precios.DBL ?? 0;
       preciosPorAcom.TPL = s.precios.TPL ?? 0;
+      preciosPorAcom.QDL = s.precios.TPL ?? 0; // QDL uses TPL tarifa
       preciosPorAcom.CHD = s.precios.CHD ?? 0;
       const hotelNoches =
         s.fechaInicio && s.fechaFin
@@ -129,6 +131,7 @@ export function calcularLocal(
       preciosPorAcom.SGL = unit;
       preciosPorAcom.DBL = unit;
       preciosPorAcom.TPL = unit;
+      preciosPorAcom.QDL = unit;
       preciosPorAcom.CHD = chdUnit;
       const totalUnit =
         (unit + ticketsAdult) * paxLocal + (chdUnit + ticketsChild) * ninos;
