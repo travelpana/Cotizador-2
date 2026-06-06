@@ -701,6 +701,8 @@ export function AlojamientoBar({
   onHabitacionesChange,
   result,
   ninos = 0,
+  adultos = 0,
+  onShowToast,
 }: {
   cliente?: Cliente;
   onClienteChange?: (c: Cliente) => void;
@@ -711,10 +713,13 @@ export function AlojamientoBar({
   onHabitacionesChange?: (h: Partial<Record<Acomodacion, number>>) => void;
   result?: CotizacionResult;
   ninos?: number;
+  adultos?: number;
+  onShowToast?: (msg: string, tone: "error" | "warning" | "success" | "info") => void;
 }) {
   const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
   const isGrupo = quotingMode === "grupo";
 
+  // ── shared: individual mode toggle ────────────────────────────────────────
   const togglePill = (a: Acomodacion) => {
     if (acomodaciones.includes(a)) {
       if (acomodaciones.length === 1) return;
@@ -724,21 +729,65 @@ export function AlojamientoBar({
     }
   };
 
-  const setHab = (a: Acomodacion, val: number) => {
-    onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [a]: Math.max(0, val) });
-  };
-
-  // Summary calculations for grupo mode
-  const totalAdultos = PILLS.filter((a) => acomodaciones.includes(a))
-    .reduce((s, a) => s + (habitacionesPorAcomodacion[a] ?? 0) * ROOM_PAX[a], 0);
-  const totalPax = totalAdultos + ninos;
+  // ── grupo mode derived values ──────────────────────────────────────────────
+  const cap = adultos + ninos; // 0 = sin límite configurado
+  const totalHabitaciones = PILLS.reduce((s, p) => s + (habitacionesPorAcomodacion[p] ?? 0), 0);
+  const totalAsignados = PILLS.reduce(
+    (s, p) => s + (habitacionesPorAcomodacion[p] ?? 0) * ROOM_PAX[p],
+    0,
+  );
   const totalGrupo = result
-    ? PILLS.filter((a) => acomodaciones.includes(a)).reduce(
-        (s, a) => s + (result.totalesPorAcomodacion[a] ?? 0) * (habitacionesPorAcomodacion[a] ?? 0) * ROOM_PAX[a],
+    ? PILLS.reduce(
+        (s, p) =>
+          s + (result.totalesPorAcomodacion[p] ?? 0) * (habitacionesPorAcomodacion[p] ?? 0) * ROOM_PAX[p],
         0,
       ) + ninos * (result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0)
     : 0;
 
+  const falta = cap > 0 ? cap - totalAsignados : 0;
+  const distribCompleta = cap > 0 && falta === 0;
+
+  // ── grupo handlers ─────────────────────────────────────────────────────────
+  const handleCardClick = (p: Acomodacion) => {
+    const count = habitacionesPorAcomodacion[p] ?? 0;
+    if (count === 0) {
+      // Activate: add 1 room if cap allows
+      if (cap > 0 && totalAsignados + ROOM_PAX[p] > cap) {
+        onShowToast?.("La distribución supera el total de pasajeros.", "warning");
+        return;
+      }
+      onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: 1 });
+      if (!acomodaciones.includes(p)) onAcomodacionesChange([...acomodaciones, p]);
+    } else {
+      // Deactivate: reset rooms to 0
+      onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: 0 });
+      if (acomodaciones.includes(p) && acomodaciones.length > 1)
+        onAcomodacionesChange(acomodaciones.filter((x) => x !== p));
+    }
+  };
+
+  const handleIncrement = (e: React.MouseEvent, p: Acomodacion) => {
+    e.stopPropagation();
+    const count = habitacionesPorAcomodacion[p] ?? 0;
+    if (cap > 0 && totalAsignados + ROOM_PAX[p] > cap) {
+      onShowToast?.("La distribución supera el total de pasajeros.", "warning");
+      return;
+    }
+    onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: count + 1 });
+    if (!acomodaciones.includes(p)) onAcomodacionesChange([...acomodaciones, p]);
+  };
+
+  const handleDecrement = (e: React.MouseEvent, p: Acomodacion) => {
+    e.stopPropagation();
+    const count = habitacionesPorAcomodacion[p] ?? 0;
+    if (count === 0) return;
+    const next = count - 1;
+    onHabitacionesChange?.({ ...habitacionesPorAcomodacion, [p]: next });
+    if (next === 0 && acomodaciones.includes(p) && acomodaciones.length > 1)
+      onAcomodacionesChange(acomodaciones.filter((x) => x !== p));
+  };
+
+  // ── shared: decorations & container style ─────────────────────────────────
   const sectionStyle: React.CSSProperties = {
     background: "linear-gradient(135deg, #0034b8 0%, #005be8 50%, #0a7eff 100%)",
     boxShadow: "0 4px 20px rgba(0,52,184,0.35)",
@@ -752,7 +801,7 @@ export function AlojamientoBar({
     </>
   );
 
-  // ── MODO INDIVIDUAL: simple pill row ──────────────────────────────────────
+  // ── MODO INDIVIDUAL ────────────────────────────────────────────────────────
   if (!isGrupo) {
     return (
       <section className="relative rounded-2xl overflow-hidden text-white" style={sectionStyle}>
@@ -767,18 +816,11 @@ export function AlojamientoBar({
                 onClick={() => togglePill(p)}
                 data-testid={`acomodacion-${p}`}
                 style={{
-                  flex: 1,
-                  height: 44,
-                  minWidth: 0,
+                  flex: 1, height: 44, minWidth: 0,
                   borderRadius: 9999,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "#fff",
-                  textTransform: "uppercase",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, letterSpacing: "0.08em",
+                  color: "#fff", textTransform: "uppercase",
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.15s",
                   ...(active
                     ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.55)" }
@@ -794,92 +836,91 @@ export function AlojamientoBar({
     );
   }
 
-  // ── MODO GRUPO: integrated distribution ───────────────────────────────────
+  // ── MODO GRUPO ─────────────────────────────────────────────────────────────
   return (
     <section className="relative rounded-2xl overflow-hidden text-white" style={sectionStyle}>
       {decorations}
-      <div className="relative" style={{ padding: "12px 16px 0" }}>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.7, marginBottom: 10 }}>
+      <div className="relative" style={{ padding: "12px 14px 0" }}>
+        {/* Title */}
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.65, marginBottom: 10 }}>
           Distribución del Grupo
         </p>
-        <div className="flex gap-2">
+
+        {/* Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
           {PILLS.map((p) => {
             const active = acomodaciones.includes(p);
             const count = habitacionesPorAcomodacion[p] ?? 0;
             const pax = count * ROOM_PAX[p];
+
             return (
               <div
                 key={p}
+                role="button"
+                tabIndex={0}
+                data-testid={`acomodacion-${p}`}
+                onClick={() => handleCardClick(p)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleCardClick(p); }}
                 style={{
-                  flex: 1,
                   borderRadius: 14,
-                  padding: "10px 6px 8px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 6,
+                  padding: "10px 10px 8px",
+                  cursor: "pointer",
+                  userSelect: "none",
                   transition: "all 0.15s",
+                  outline: "none",
                   ...(active
-                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 10px rgba(20,149,255,0.45)" }
-                    : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
+                    ? { backgroundColor: "#1495ff", boxShadow: "0 2px 12px rgba(20,149,255,0.5)" }
+                    : { backgroundColor: "rgba(0,30,90,0.45)", border: "1px solid rgba(147,197,253,0.3)", opacity: 0.75 }),
                 }}
               >
-                {/* Label — click to toggle */}
-                <button
-                  type="button"
-                  onClick={() => togglePill(p)}
-                  data-testid={`acomodacion-${p}`}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    padding: 0,
-                    opacity: active ? 1 : 0.55,
-                  }}
-                >
-                  {p}
-                </button>
-
-                {/* Counter */}
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <button
-                    type="button"
-                    onClick={() => setHab(p, count - 1)}
-                    style={{
-                      width: 22, height: 22, borderRadius: 6,
-                      background: "rgba(255,255,255,0.18)",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      color: "#fff", fontSize: 14, fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      cursor: "pointer", lineHeight: 1,
-                    }}
-                  >−</button>
-                  <span style={{ minWidth: 20, textAlign: "center", fontSize: 14, fontWeight: 800, color: "#fff" }}>
-                    {count}
+                {/* Top row: name left, counter right */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 5 }}>
+                  {/* Name */}
+                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff" }}>
+                    {p}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setHab(p, count + 1)}
-                    style={{
-                      width: 22, height: 22, borderRadius: 6,
-                      background: "rgba(255,255,255,0.18)",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      color: "#fff", fontSize: 14, fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      cursor: "pointer", lineHeight: 1,
-                    }}
-                  >+</button>
+
+                  {/* Counter [- N +] */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 3 }} onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDecrement(e, p)}
+                      style={{
+                        width: 22, height: 22, borderRadius: 6,
+                        background: "rgba(255,255,255,0.2)",
+                        border: "1px solid rgba(255,255,255,0.3)",
+                        color: "#fff", fontSize: 15, fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", lineHeight: 1, flexShrink: 0,
+                      }}
+                    >−</button>
+                    <span style={{ minWidth: 18, textAlign: "center", fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                      {count}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleIncrement(e, p)}
+                      style={{
+                        width: 22, height: 22, borderRadius: 6,
+                        background: "rgba(255,255,255,0.2)",
+                        border: "1px solid rgba(255,255,255,0.3)",
+                        color: "#fff", fontSize: 15, fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", lineHeight: 1, flexShrink: 0,
+                      }}
+                    >+</button>
+                  </div>
                 </div>
 
-                {/* Pax */}
-                <span style={{ fontSize: 10, opacity: 0.75, color: "#fff", fontWeight: 600 }}>
+                {/* Rooms count */}
+                <div style={{ fontSize: 10, opacity: 0.75, color: "#fff", fontWeight: 500 }}>
+                  {count} {count === 1 ? "habitación" : "habitaciones"}
+                </div>
+
+                {/* Pax count */}
+                <div style={{ fontSize: 10, opacity: 0.75, color: "#fff", fontWeight: 500, marginTop: 2 }}>
                   {pax} {pax === 1 ? "pasajero" : "pasajeros"}
-                </span>
+                </div>
               </div>
             );
           })}
@@ -887,16 +928,38 @@ export function AlojamientoBar({
 
         {/* Summary row */}
         <div style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
           marginTop: 10, paddingTop: 8, paddingBottom: 12,
           borderTop: "1px solid rgba(255,255,255,0.15)",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+          flexWrap: "wrap",
         }}>
-          <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>
-            Total pasajeros: <strong style={{ opacity: 1 }}>{totalPax}</strong>
-          </span>
-          <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>
-            Total grupo: <strong style={{ opacity: 1 }}>USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-          </span>
+          <div style={{ display: "flex", gap: 16 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, color: "#fff" }}>
+              Habitaciones: <strong>{totalHabitaciones}</strong>
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, color: "#fff" }}>
+              Pasajeros: <strong>{totalAsignados}{cap > 0 ? ` / ${cap}` : ""}</strong>
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Validation status */}
+            {cap > 0 && (
+              distribCompleta ? (
+                <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(167,243,208,1)", letterSpacing: "0.04em" }}>
+                  ✓ Distribución completa
+                </span>
+              ) : falta > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#fcd34d", letterSpacing: "0.04em" }}>
+                  Faltan {falta} {falta === 1 ? "pasajero" : "pasajeros"}
+                </span>
+              ) : null
+            )}
+
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>
+              Total grupo: <strong>USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            </span>
+          </div>
         </div>
       </div>
     </section>

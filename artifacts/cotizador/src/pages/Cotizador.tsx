@@ -1187,6 +1187,8 @@ export default function CotizadorPage() {
                   onHabitacionesChange={setHabitacionesPorAcomodacion}
                   result={result}
                   ninos={cliente.ninos ?? 0}
+                  adultos={cliente.pasajeros ?? 0}
+                  onShowToast={showToast}
                 />
                 {langFallback && (
                   <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
