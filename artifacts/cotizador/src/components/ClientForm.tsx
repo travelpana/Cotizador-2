@@ -838,23 +838,74 @@ export function AlojamientoBar({
     userSelect: "none",
   };
 
-  const BedIcon = (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
-      <path d="M3 14h18"/>
-      <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
-      <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+  const ROOM_ICONS: Record<Acomodacion, React.ReactNode> = {
+    SGL: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+        <path d="M3 14h18"/>
+        <path d="M10 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/>
+      </svg>
+    ),
+    DBL: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+        <path d="M3 14h18"/>
+        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+      </svg>
+    ),
+    TPL: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+        <path d="M3 14h18"/>
+        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <text x="19" y="9" fontSize="7" fontWeight="700" fill="currentColor" stroke="none" textAnchor="middle">3</text>
+      </svg>
+    ),
+    QDL: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+        <path d="M3 14h18"/>
+        <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+        <text x="19" y="9" fontSize="7" fontWeight="700" fill="currentColor" stroke="none" textAnchor="middle">4</text>
+      </svg>
+    ),
+    CHD: <></>,
+  };
+
+  const IconHab = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 18V10a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M3 14h18"/>
+      <path d="M7 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/><path d="M13 8V6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>
+    </svg>
+  );
+  const IconPax = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/>
+    </svg>
+  );
+  const IconCheck = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+  );
+  const IconDollar = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15.5 9.5A3.5 3.5 0 0 0 9 10c0 2 2 3 3 3s3 1 3 3a3.5 3.5 0 0 1-6.5 1.5"/>
     </svg>
   );
 
   return (
     <section
       className="relative rounded-2xl overflow-hidden text-white"
-      style={{ ...sectionStyle, animation: "grupoEnter 0.32s ease-out" }}
+      style={{ ...sectionStyle, animation: "grupoEnter 0.25s ease-out" }}
     >
       <style>{`
         @keyframes grupoEnter {
-          from { opacity: 0; transform: translateY(-6px); }
+          from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .grupo-input::-webkit-outer-spin-button,
@@ -862,14 +913,15 @@ export function AlojamientoBar({
         .grupo-input[type=number] { -moz-appearance: textfield; }
       `}</style>
       {decorations}
-      <div className="relative" style={{ padding: "10px 12px 0" }}>
+      <div className="relative" style={{ padding: "12px 14px 0" }}>
+
         {/* Title */}
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.45, marginBottom: 8 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.4, marginBottom: 10 }}>
           Distribución del Grupo
         </p>
 
-        {/* Cards — 4-column grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+        {/* Accommodation cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
           {PILLS.map((p, idx) => {
             const active = acomodaciones.includes(p);
             const count = habitacionesPorAcomodacion[p] ?? 0;
@@ -882,42 +934,43 @@ export function AlojamientoBar({
                 data-testid={`acomodacion-${p}`}
                 onClick={() => handleCardClick(p)}
                 style={{
-                  borderRadius: 10,
-                  padding: "8px 10px",
+                  borderRadius: 12,
+                  padding: "10px 10px",
                   cursor: "pointer",
                   userSelect: "none",
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
-                  transition: "background 0.28s ease-out, border-color 0.28s ease-out, opacity 0.28s ease-out, box-shadow 0.28s ease-out",
+                  gap: 8,
+                  transition: "background 0.25s ease-out, border-color 0.25s ease-out, opacity 0.25s ease-out, box-shadow 0.25s ease-out",
                   ...(hasRooms
                     ? {
-                        backgroundColor: "rgba(20,149,255,0.85)",
+                        backgroundColor: "rgba(20,149,255,0.88)",
                         border: "1px solid #49c6ff",
-                        boxShadow: "0 0 0 2px rgba(73,198,255,0.18), 0 2px 10px rgba(20,149,255,0.35)",
+                        boxShadow: "0 0 0 2px rgba(73,198,255,0.15), 0 2px 12px rgba(20,149,255,0.3)",
                       }
                     : active
                     ? {
-                        backgroundColor: "rgba(20,149,255,0.7)",
-                        border: "1px solid rgba(73,198,255,0.4)",
-                        boxShadow: "0 1px 8px rgba(20,149,255,0.28)",
+                        backgroundColor: "rgba(20,149,255,0.65)",
+                        border: "1px solid rgba(73,198,255,0.35)",
                       }
                     : {
-                        backgroundColor: "rgba(0,25,70,0.5)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        opacity: 0.55,
+                        backgroundColor: "rgba(0,20,60,0.55)",
+                        border: "1px solid rgba(255,255,255,0.13)",
+                        opacity: 0.52,
                       }),
                 }}
               >
-                {/* LEFT — bed icon + room type label */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, flex: "0 0 auto" }}>
-                  <span style={{ opacity: 0.75, display: "flex", color: "#fff" }}>{BedIcon}</span>
+                {/* LEFT: icon + label stacked */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3, flex: "0 0 auto", minWidth: 0 }}>
+                  <span style={{ color: "rgba(255,255,255,0.8)", display: "flex", lineHeight: 0 }}>
+                    {ROOM_ICONS[p]}
+                  </span>
                   <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>
                     {p}
                   </span>
                 </div>
 
-                {/* CENTER — large numeric input, main element */}
+                {/* CENTER: large counter — the star of the card */}
                 <div
                   style={{ flex: 1, display: "flex", justifyContent: "center" }}
                   onClick={(e) => e.stopPropagation()}
@@ -947,24 +1000,27 @@ export function AlojamientoBar({
                       }
                     }}
                     style={{
-                      width: 36, textAlign: "center",
-                      fontSize: 20, fontWeight: 800, color: "#fff",
-                      background: "rgba(255,255,255,0.14)",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      borderRadius: 7, padding: "3px 2px",
+                      width: 52, height: 52,
+                      textAlign: "center",
+                      fontSize: 22, fontWeight: 800, color: "#fff",
+                      background: "rgba(0,0,0,0.2)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      borderRadius: 10,
+                      padding: "0",
                       outline: "none",
-                      lineHeight: 1,
+                      lineHeight: "52px",
+                      boxSizing: "border-box",
                     }}
                   />
                 </div>
 
-                {/* RIGHT — stacked HAB / PAX counts */}
-                <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.9)", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                {/* RIGHT: HAB / PAX stacked */}
+                <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0, minWidth: 34 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.92)", lineHeight: 1.4, whiteSpace: "nowrap" }}>
                     {count} HAB
                   </span>
-                  <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.25)", margin: "1px 0" }} />
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.7)", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                  <div style={{ width: "100%", height: "1px", background: "rgba(255,255,255,0.3)", margin: "2px 0" }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.65)", lineHeight: 1.4, whiteSpace: "nowrap" }}>
                     {pax} PAX
                   </span>
                 </div>
@@ -973,141 +1029,60 @@ export function AlojamientoBar({
           })}
         </div>
 
-        {/* Summary — ordered by importance: Total → Distribución → Pasajeros → Habitaciones */}
+        {/* 4-block summary bar */}
         <div style={{
-          marginTop: 8, paddingTop: 7, paddingBottom: 10,
-          borderTop: "1px solid rgba(255,255,255,0.13)",
-          display: "flex", alignItems: "center", flexWrap: "wrap",
-          gap: "2px 0",
+          marginTop: 10,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr 1fr",
+          borderTop: "1px solid rgba(255,255,255,0.12)",
+          paddingBottom: 12,
         }}>
-          <span style={{ fontSize: 12, fontWeight: 800, color: "#e6ae33", letterSpacing: "0.01em" }}>
-            USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
+          {/* Block 1: Habitaciones */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, paddingRight: 8 }}>
+            <span style={{ color: "rgba(255,255,255,0.55)", display: "flex" }}>{IconHab}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Habitaciones
+            </span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+              {totalHabitaciones}
+            </span>
+          </div>
 
-          {cap > 0 && distribCompleta && (
-            <>
-              <span style={sepStyle}>|</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#49c6ff" }}>
-                ✓ Distribución completa
-              </span>
-            </>
-          )}
+          {/* Block 2: Pasajeros */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8, paddingRight: 8 }}>
+            <span style={{ color: "rgba(255,255,255,0.55)", display: "flex" }}>{IconPax}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Pasajeros
+            </span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+              {totalAsignados}{cap > 0 ? <span style={{ fontSize: 12, fontWeight: 500, opacity: 0.6 }}> / {cap}</span> : ""}
+            </span>
+          </div>
 
-          {cap > 0 && falta > 0 && (
-            <>
-              <span style={sepStyle}>|</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#e6ae33" }}>
-                Faltan: {falta} {falta === 1 ? "pax" : "pax"}
-              </span>
-            </>
-          )}
+          {/* Block 3: Distribución */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8, paddingRight: 8 }}>
+            <span style={{ color: cap > 0 && distribCompleta ? "#49c6ff" : "rgba(255,255,255,0.4)", display: "flex" }}>{IconCheck}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Distribución
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.2, textAlign: "center",
+              color: cap > 0 && distribCompleta ? "#49c6ff" : cap > 0 && falta > 0 ? "#e6ae33" : "rgba(255,255,255,0.5)" }}>
+              {cap > 0 && distribCompleta ? "Completa" : cap > 0 && falta > 0 ? `Faltan ${falta}` : "—"}
+            </span>
+          </div>
 
-          <span style={sepStyle}>|</span>
-
-          <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)" }}>
-            {totalAsignados}{cap > 0 ? ` / ${cap}` : ""} pax
-          </span>
-
-          <span style={sepStyle}>|</span>
-
-          <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>
-            {totalHabitaciones} hab
-          </span>
+          {/* Block 4: Total grupo */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, paddingTop: 10, borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 8 }}>
+            <span style={{ color: "#e6ae33", display: "flex" }}>{IconDollar}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Total grupo
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#e6ae33", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
+              USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
 
-        {/* ── DEBUG subtotales (temporal) ────────────────────────────── */}
-        {grupoSubtotales && (
-          <details
-            style={{
-              marginTop: 6,
-              marginBottom: 8,
-              background: "rgba(0,0,0,0.35)",
-              borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.12)",
-              fontSize: 10,
-              color: "rgba(255,255,255,0.75)",
-            }}
-          >
-            <summary
-              style={{
-                cursor: "pointer",
-                padding: "4px 8px",
-                fontWeight: 700,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "#e6ae33",
-                userSelect: "none",
-              }}
-            >
-              🔍 DEBUG — Desglose total grupo
-            </summary>
-            <div style={{ padding: "6px 10px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
-              {[
-                ["Hotelería", grupoSubtotales.hoteleria],
-                ["Traslados", grupoSubtotales.traslados],
-                ["Tours", grupoSubtotales.tours],
-                ["Vuelos", grupoSubtotales.vuelos],
-                ["Extras", grupoSubtotales.extras],
-              ].map(([label, val]) => (
-                <div key={label as string} style={{ display: "flex", justifyContent: "space-between", gap: 12, opacity: (val as number) === 0 ? 0.35 : 1 }}>
-                  <span>{label as string}</span>
-                  <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                    USD {(val as number).toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-              ))}
-              <div
-                style={{
-                  display: "flex", justifyContent: "space-between", gap: 12,
-                  marginTop: 4, paddingTop: 4,
-                  borderTop: "1px solid rgba(255,255,255,0.2)",
-                  fontWeight: 800, color: "#e6ae33",
-                }}
-              >
-                <span>TOTAL GRUPO</span>
-                <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                  USD {grupoSubtotales.total.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              </div>
-              {result && (
-                <div style={{ marginTop: 6, paddingTop: 4, borderTop: "1px solid rgba(255,255,255,0.12)", display: "flex", flexDirection: "column", gap: 2, opacity: 0.6 }}>
-                  <span style={{ fontWeight: 700, marginBottom: 2 }}>Por servicio:</span>
-                  {result.servicios.map((svc) => {
-                    const RPAX: Record<string, number> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
-                    let lineCost = 0;
-                    if (svc.tipo === "hotel") {
-                      const hn = svc.noches ?? 0;
-                      const adultCost = (["SGL","DBL","TPL","QDL"] as Acomodacion[]).reduce((s, a) => {
-                        const rooms = habitacionesPorAcomodacion[a] ?? 0;
-                        return s + (svc.preciosPorAcomodacion[a] ?? 0) * rooms * (RPAX[a] ?? 1) * hn;
-                      }, 0);
-                      const chdCost = (svc.preciosPorAcomodacion.CHD ?? 0) * ninos * hn;
-                      lineCost = adultCost + chdCost;
-                    } else {
-                      const unit = svc.unitAplicado ?? (svc.preciosPorAcomodacion.DBL ?? 0);
-                      const ta = svc.tipo === "tour" && svc.tickets?.enabled ? (svc.tickets.adultPrice ?? 0) : 0;
-                      const tc = svc.tipo === "tour" && svc.tickets?.enabled ? (svc.tickets.childPrice ?? ta) : 0;
-                      const chdUnit = svc.preciosPorAcomodacion.CHD ?? 0;
-                      const gAP = (["SGL","DBL","TPL","QDL"] as Acomodacion[]).reduce((s, a) => s + (habitacionesPorAcomodacion[a] ?? 0) * (RPAX[a] ?? 1), 0);
-                      lineCost = (unit + ta) * gAP + (chdUnit + tc) * ninos;
-                    }
-                    return (
-                      <div key={svc.id} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
-                          [{svc.tipo}] {svc.nombre}
-                        </span>
-                        <span style={{ fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
-                          {lineCost.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </details>
-        )}
-        {/* ── FIN DEBUG ──────────────────────────────────────────────── */}
       </div>
     </section>
   );
