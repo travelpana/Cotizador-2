@@ -1183,6 +1183,8 @@ export default function CotizadorPage() {
                   onClienteChange={handleClienteChange}
                   acomodaciones={acomodaciones}
                   onAcomodacionesChange={setAcomodaciones}
+                  quotingMode={quotingMode}
+                  habitacionesPorAcomodacion={habitacionesPorAcomodacion}
                 />
                 {quotingMode === "grupo" && (
                   <GrupoResumenCard

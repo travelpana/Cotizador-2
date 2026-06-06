@@ -693,11 +693,15 @@ export function AlojamientoBar({
   onClienteChange: _onClienteChange,
   acomodaciones,
   onAcomodacionesChange,
+  quotingMode,
+  habitacionesPorAcomodacion = {},
 }: {
   cliente?: Cliente;
   onClienteChange?: (c: Cliente) => void;
   acomodaciones: Acomodacion[];
   onAcomodacionesChange: (a: Acomodacion[]) => void;
+  quotingMode?: string;
+  habitacionesPorAcomodacion?: Partial<Record<Acomodacion, number>>;
 }) {
   const PILLS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
 
@@ -762,9 +766,22 @@ export function AlojamientoBar({
               }}
               data-testid={`acomodacion-${p}`}
             >
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
                 {BED_ICONS[p]}
-                {p}
+                <span>{p}</span>
+                {quotingMode === "grupo" && (habitacionesPorAcomodacion[p] ?? 0) > 0 && (
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    opacity: 0.85,
+                    background: "rgba(255,255,255,0.2)",
+                    borderRadius: 99,
+                    padding: "1px 6px",
+                    letterSpacing: "0.03em",
+                  }}>
+                    {habitacionesPorAcomodacion[p]} hab
+                  </span>
+                )}
               </div>
             </button>
           );
