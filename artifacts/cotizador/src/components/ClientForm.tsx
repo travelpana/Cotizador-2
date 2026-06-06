@@ -14,7 +14,7 @@ import {
   type Cliente,
   type ClienteValidationErrors,
 } from "@/lib/types";
-import { diffNoches } from "@/lib/calc";
+import { diffNoches, calcGrupoTotalFromResult } from "@/lib/calc";
 import SingleDatePicker from "./SingleDatePicker";
 
 interface Props {
@@ -736,13 +736,10 @@ export function AlojamientoBar({
     (s, p) => s + (habitacionesPorAcomodacion[p] ?? 0) * ROOM_PAX[p],
     0,
   );
-  const totalGrupo = result
-    ? PILLS.reduce(
-        (s, p) =>
-          s + (result.totalesPorAcomodacion[p] ?? 0) * (habitacionesPorAcomodacion[p] ?? 0) * ROOM_PAX[p],
-        0,
-      ) + ninos * (result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0)
-    : 0;
+  const grupoSubtotales = result
+    ? calcGrupoTotalFromResult(result, habitacionesPorAcomodacion, ninos)
+    : null;
+  const totalGrupo = grupoSubtotales?.total ?? 0;
 
   const falta = cap > 0 ? cap - totalAsignados : 0;
   const distribCompleta = cap > 0 && falta === 0;
@@ -1017,6 +1014,100 @@ export function AlojamientoBar({
             Total grupo: USD {totalGrupo.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
+
+        {/* ── DEBUG subtotales (temporal) ────────────────────────────── */}
+        {grupoSubtotales && (
+          <details
+            style={{
+              marginTop: 6,
+              marginBottom: 8,
+              background: "rgba(0,0,0,0.35)",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.12)",
+              fontSize: 10,
+              color: "rgba(255,255,255,0.75)",
+            }}
+          >
+            <summary
+              style={{
+                cursor: "pointer",
+                padding: "4px 8px",
+                fontWeight: 700,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "#e6ae33",
+                userSelect: "none",
+              }}
+            >
+              🔍 DEBUG — Desglose total grupo
+            </summary>
+            <div style={{ padding: "6px 10px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
+              {[
+                ["Hotelería", grupoSubtotales.hoteleria],
+                ["Traslados", grupoSubtotales.traslados],
+                ["Tours", grupoSubtotales.tours],
+                ["Vuelos", grupoSubtotales.vuelos],
+                ["Extras", grupoSubtotales.extras],
+              ].map(([label, val]) => (
+                <div key={label as string} style={{ display: "flex", justifyContent: "space-between", gap: 12, opacity: (val as number) === 0 ? 0.35 : 1 }}>
+                  <span>{label as string}</span>
+                  <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                    USD {(val as number).toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              ))}
+              <div
+                style={{
+                  display: "flex", justifyContent: "space-between", gap: 12,
+                  marginTop: 4, paddingTop: 4,
+                  borderTop: "1px solid rgba(255,255,255,0.2)",
+                  fontWeight: 800, color: "#e6ae33",
+                }}
+              >
+                <span>TOTAL GRUPO</span>
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  USD {grupoSubtotales.total.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              {result && (
+                <div style={{ marginTop: 6, paddingTop: 4, borderTop: "1px solid rgba(255,255,255,0.12)", display: "flex", flexDirection: "column", gap: 2, opacity: 0.6 }}>
+                  <span style={{ fontWeight: 700, marginBottom: 2 }}>Por servicio:</span>
+                  {result.servicios.map((svc) => {
+                    const RPAX: Record<string, number> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+                    let lineCost = 0;
+                    if (svc.tipo === "hotel") {
+                      const hn = svc.noches ?? 0;
+                      const adultCost = (["SGL","DBL","TPL","QDL"] as Acomodacion[]).reduce((s, a) => {
+                        const rooms = habitacionesPorAcomodacion[a] ?? 0;
+                        return s + (svc.preciosPorAcomodacion[a] ?? 0) * rooms * (RPAX[a] ?? 1) * hn;
+                      }, 0);
+                      const chdCost = (svc.preciosPorAcomodacion.CHD ?? 0) * ninos * hn;
+                      lineCost = adultCost + chdCost;
+                    } else {
+                      const unit = svc.unitAplicado ?? (svc.preciosPorAcomodacion.DBL ?? 0);
+                      const ta = svc.tipo === "tour" && svc.tickets?.enabled ? (svc.tickets.adultPrice ?? 0) : 0;
+                      const tc = svc.tipo === "tour" && svc.tickets?.enabled ? (svc.tickets.childPrice ?? ta) : 0;
+                      const chdUnit = svc.preciosPorAcomodacion.CHD ?? 0;
+                      const gAP = (["SGL","DBL","TPL","QDL"] as Acomodacion[]).reduce((s, a) => s + (habitacionesPorAcomodacion[a] ?? 0) * (RPAX[a] ?? 1), 0);
+                      lineCost = (unit + ta) * gAP + (chdUnit + tc) * ninos;
+                    }
+                    return (
+                      <div key={svc.id} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+                          [{svc.tipo}] {svc.nombre}
+                        </span>
+                        <span style={{ fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
+                          {lineCost.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+        {/* ── FIN DEBUG ──────────────────────────────────────────────── */}
       </div>
     </section>
   );

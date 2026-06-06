@@ -22,7 +22,7 @@ import type {
   ServicioSeleccionado,
 } from "@/lib/types";
 import type { ModoCotizacion, ActividadTipo, PresentationMode, QuotingMode } from "./Guardadas";
-import { fmt } from "@/lib/calc";
+import { fmt, calcGrupoTotalFromResult } from "@/lib/calc";
 import { buildItinerario } from "./Itinerario";
 import { buildPropuestaHtml } from "@/lib/propuesta";
 import { formatRegimen } from "@/lib/regimen";
@@ -413,14 +413,10 @@ export default function ExportButtons({
       const hab = habitacionesPorAcomodacion ?? {};
       const activeRoomAcoms = ROOM_ACOMS.filter((a) => (hab[a] ?? 0) > 0);
       const ninos = cliente.ninos ?? 0;
-      const chdRate = result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0;
       const grupoAdultoPax = activeRoomAcoms.reduce((s, a) => s + (hab[a] ?? 0) * rp(a), 0);
       const grupoTotalPax = grupoAdultoPax + ninos;
-      const grupoTotal =
-        activeRoomAcoms.reduce(
-          (s, a) => s + (result.totalesPorAcomodacion[a] ?? 0) * (hab[a] ?? 0) * rp(a),
-          0,
-        ) + ninos * chdRate;
+      const grupoSubs = calcGrupoTotalFromResult(result, hab, ninos);
+      const grupoTotal = grupoSubs.total;
 
       lines.push("");
       lines.push(SEP);

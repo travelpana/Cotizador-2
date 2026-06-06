@@ -52,6 +52,75 @@ const EMPTY_ACOM = (): Record<Acomodacion, number> => ({
   CHD: 0,
 });
 
+const GRUPO_ROOM_PAX: Partial<Record<string, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+const rpGrupo = (a: string) => GRUPO_ROOM_PAX[a] ?? 1;
+
+export interface GrupoSubtotales {
+  hoteleria: number;
+  traslados: number;
+  tours: number;
+  vuelos: number;
+  extras: number;
+  total: number;
+}
+
+/**
+ * Calcula el total del grupo correctamente a partir de los servicios individuales.
+ *
+ * Reglas:
+ *   Hotel    → tarifa_por_persona × noches × (habitaciones × pax_por_hab)
+ *   No-hotel → unitAplicado × totalPaxAdultos + chdUnit × ninos
+ *
+ * NO usa totalesPorAcomodacion porque ese campo ya fue multiplicado
+ * por globalPax en calcularLocal y volver a multiplicar causaría doble conteo.
+ */
+export function calcGrupoTotalFromResult(
+  result: CotizacionResult,
+  habitacionesPorAcomodacion: Partial<Record<Acomodacion, number>>,
+  ninos: number,
+): GrupoSubtotales {
+  const ROOM_ACOMS: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL"];
+
+  const groupAdultPax = ROOM_ACOMS.reduce(
+    (s, a) => s + (habitacionesPorAcomodacion[a] ?? 0) * rpGrupo(a),
+    0,
+  );
+
+  const subs: GrupoSubtotales = { hoteleria: 0, traslados: 0, tours: 0, vuelos: 0, extras: 0, total: 0 };
+
+  for (const svc of result.servicios) {
+    if (svc.tipo === "hotel") {
+      const hotelNoches = svc.noches ?? 0;
+      let svcCost = 0;
+      for (const a of ROOM_ACOMS) {
+        const rooms = habitacionesPorAcomodacion[a] ?? 0;
+        if (rooms === 0) continue;
+        const rate = svc.preciosPorAcomodacion[a] ?? 0;
+        svcCost += rate * rooms * rpGrupo(a) * hotelNoches;
+      }
+      svcCost += (svc.preciosPorAcomodacion.CHD ?? 0) * ninos * hotelNoches;
+      subs.hoteleria += svcCost;
+    } else {
+      const unit = svc.unitAplicado ?? (svc.preciosPorAcomodacion.DBL ?? 0);
+      const ticketsAdult =
+        svc.tipo === "tour" && svc.tickets?.enabled ? (svc.tickets.adultPrice ?? 0) : 0;
+      const ticketsChild =
+        svc.tipo === "tour" && svc.tickets?.enabled
+          ? (svc.tickets.childPrice ?? ticketsAdult)
+          : 0;
+      const chdUnit = svc.preciosPorAcomodacion.CHD ?? 0;
+      const svcCost = (unit + ticketsAdult) * groupAdultPax + (chdUnit + ticketsChild) * ninos;
+      if (svc.tipo === "traslado") subs.traslados += svcCost;
+      else if (svc.tipo === "tour") subs.tours += svcCost;
+      else if (svc.tipo === "vuelo") subs.vuelos += svcCost;
+      else subs.extras += svcCost;
+    }
+  }
+
+  subs.total = subs.hoteleria + subs.traslados + subs.tours + subs.vuelos + subs.extras;
+  return subs;
+}
+
 export function calcularLocal(
   servicios: ServicioSeleccionado[],
   acomodaciones: Acomodacion[],

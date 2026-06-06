@@ -7,7 +7,7 @@ import type {
   ServicioSeleccionado,
 } from "./types";
 import { formatRegimen } from "./regimen";
-import { fmt } from "./calc";
+import { fmt, calcGrupoTotalFromResult } from "./calc";
 import { formatTrasladoNombre, personalizarNombreTraslado } from "./utils";
 import { buildItinerario, type ItinerarioDia } from "@/components/Itinerario";
 import type { ModoCotizacion, PresentationMode } from "@/components/Guardadas";
@@ -260,13 +260,8 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     0,
   );
   const grupoTotalPax = grupoAdultoPax + grupoNinos;
-  const chdRate = result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0;
-  const grupoTotal =
-    ROOM_ACOMS.reduce(
-      (s, a) =>
-        s + (result.totalesPorAcomodacion[a] ?? 0) * (grupoHabitacionesPorAcom[a] ?? 0) * rp(a),
-      0,
-    ) + grupoNinos * chdRate;
+  const grupoSubs = calcGrupoTotalFromResult(result, grupoHabitacionesPorAcom, grupoNinos);
+  const grupoTotal = grupoSubs.total;
 
   return {
     fechaEmision: fmtFecha(todayIso()),
