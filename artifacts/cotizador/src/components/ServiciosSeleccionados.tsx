@@ -37,7 +37,7 @@ import {
   List,
   X,
   Check,
-  AlertTriangle,
+  Flag,
   Copy,
 } from "lucide-react";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
@@ -828,14 +828,21 @@ function ServicioRow({
         {/* Notes list (multi-note system) */}
         {(servicio.notasList && servicio.notasList.length > 0) ? (
           <div className="mt-0.5 space-y-0.5">
-            {servicio.notasList.map((n, i) => (
+            {[...(servicio.notasList)]
+              .map((n, origIdx) => ({ n, origIdx }))
+              .sort(({ n: a }, { n: b }) => {
+                const aImp = (a.type === "important" || a.important === true) ? 0 : 1;
+                const bImp = (b.type === "important" || b.important === true) ? 0 : 1;
+                return aImp - bImp;
+              })
+              .map(({ n, origIdx }) => (
               <NoteItem
-                key={n.id ?? i}
+                key={n.id ?? origIdx}
                 note={n}
                 onEdit={(newText) => {
                   const now = new Date().toISOString();
                   const updated = (servicio.notasList ?? []).map((x, xi) =>
-                    (x.id && n.id ? x.id === n.id : xi === i)
+                    (x.id && n.id ? x.id === n.id : xi === origIdx)
                       ? { ...x, text: newText, updatedAt: now }
                       : x
                   );
@@ -843,7 +850,7 @@ function ServicioRow({
                 }}
                 onDelete={() => {
                   const updated = (servicio.notasList ?? []).filter((x, xi) =>
-                    x.id && n.id ? x.id !== n.id : xi !== i
+                    x.id && n.id ? x.id !== n.id : xi !== origIdx
                   );
                   onUpdate({ ...servicio, notasList: updated });
                 }}
@@ -1054,10 +1061,17 @@ function ServicioRow({
           >
             <NoteEditor
               tipo="normal"
-              onSave={(text) => {
+              onSave={(lines) => {
                 const now = new Date().toISOString();
                 const prev = servicio.notasList ?? [];
-                onUpdate({ ...servicio, notasList: [...prev, { id: `note-${Date.now()}`, type: "normal" as const, text, important: false, createdAt: now }] });
+                const newNotes = lines.map((text, idx) => ({
+                  id: `note-${Date.now()}-${idx}`,
+                  type: "normal" as const,
+                  text,
+                  important: false,
+                  createdAt: now,
+                }));
+                onUpdate({ ...servicio, notasList: [...prev, ...newNotes] });
                 setOpenEditor(null);
               }}
               onClose={() => setOpenEditor(null)}
@@ -1086,7 +1100,7 @@ function ServicioRow({
               aria-label="Agregar nota importante"
               title="Agregar nota importante"
             >
-              <AlertTriangle className="w-3.5 h-3.5" />
+              <Flag className="w-3.5 h-3.5" />
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -1096,10 +1110,17 @@ function ServicioRow({
           >
             <NoteEditor
               tipo="important"
-              onSave={(text) => {
+              onSave={(lines) => {
                 const now = new Date().toISOString();
                 const prev = servicio.notasList ?? [];
-                onUpdate({ ...servicio, notasList: [...prev, { id: `note-${Date.now()}`, type: "important" as const, text, important: true, createdAt: now }] });
+                const newNotes = lines.map((text, idx) => ({
+                  id: `note-${Date.now()}-${idx}`,
+                  type: "important" as const,
+                  text,
+                  important: true,
+                  createdAt: now,
+                }));
+                onUpdate({ ...servicio, notasList: [...prev, ...newNotes] });
                 setOpenEditor(null);
               }}
               onClose={() => setOpenEditor(null)}
@@ -1428,7 +1449,7 @@ function NoteItem({
   return (
     <div className="group/note flex items-start gap-1 min-w-0">
       {imp ? (
-        <AlertTriangle
+        <Flag
           className="w-2.5 h-2.5 flex-shrink-0 mt-[2px]"
           style={{ color: "#ef7b15" }}
         />
@@ -1460,8 +1481,8 @@ function NoteItem({
             <NoteEditor
               tipo={imp ? "important" : "normal"}
               initialText={note.text}
-              onSave={(text) => {
-                onEdit(text);
+              onSave={(lines) => {
+                onEdit(lines[0] ?? "");
                 setEditOpen(false);
               }}
               onClose={() => setEditOpen(false)}
@@ -1491,24 +1512,28 @@ function NoteEditor({
 }: {
   tipo: "normal" | "important";
   initialText?: string;
-  onSave: (text: string) => void;
+  onSave: (lines: string[]) => void;
   onClose: () => void;
 }) {
   const [text, setText] = useState(initialText);
   const isEdit = initialText.length > 0;
 
   const handleApply = () => {
-    if (!text.trim()) { onClose(); return; }
-    onSave(tipo === "important" ? text.trim().toUpperCase() : text.trim());
+    const lines = text
+      .split("\n")
+      .map((l) => (tipo === "important" ? l.trim().toUpperCase() : l.trim()))
+      .filter(Boolean);
+    if (lines.length === 0) { onClose(); return; }
+    onSave(lines);
     onClose();
   };
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div style={{ fontSize: 11, fontWeight: 700, color: tipo === "important" ? "#ef7b15" : "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
           {tipo === "important"
-            ? <AlertTriangle size={11} />
+            ? <Flag size={11} />
             : <StickyNote size={11} />
           }
           {isEdit
@@ -1522,19 +1547,42 @@ function NoteEditor({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={tipo === "important" ? "Texto de la nota importante..." : "Detalles, restricciones u observaciones..."}
-        rows={3}
+        rows={2}
         autoFocus
-        onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleApply(); }}
-        className="w-full px-2.5 py-2 rounded-md border text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 resize-none"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleApply();
+          }
+        }}
+        className={`w-full px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 resize-none ${
+          tipo === "important"
+            ? "placeholder:text-orange-300 focus:ring-orange-400"
+            : "placeholder:text-slate-300 focus:ring-blue-500"
+        }`}
         style={
           tipo === "important"
-            ? { borderColor: "#f5c4a0", color: "#ef7b15", fontWeight: 600 }
-            : { borderColor: "#D8E0EE", color: "#1e293b" }
+            ? {
+                borderRadius: 14,
+                border: "1px solid #EF7B15",
+                color: "#ef7b15",
+                fontWeight: 600,
+                backgroundColor: "rgba(239,123,21,0.04)",
+              }
+            : {
+                borderRadius: 14,
+                border: "1px solid #D8E0EE",
+                color: "#1e293b",
+                backgroundColor: "#FFFFFF",
+              }
         }
       />
-      {tipo === "important" && (
-        <p className="text-[10px] text-slate-400 -mt-1">Se guardará en MAYÚSCULAS</p>
-      )}
+      <p className="text-[10px] text-slate-400 -mt-0.5">
+        {isEdit
+          ? "Enter para guardar · Shift+Enter nueva línea"
+          : "Enter para guardar · Shift+Enter nueva línea · varias líneas = varias notas"
+        }
+      </p>
       <div className="flex justify-end">
         <button type="button" onClick={handleApply} style={btnApply} title="Guardar">✓</button>
       </div>

@@ -135,11 +135,16 @@ function renderNotasHTML(
   styleNormal: string = "font-size:11px;color:#64748B;font-style:italic;margin-top:3px;",
 ): string {
   if (notasList && notasList.length > 0) {
-    return notasList
+    const sorted = [...notasList].sort((a, b) => {
+      const aImp = (a.type === "important" || a.important === true) ? 0 : 1;
+      const bImp = (b.type === "important" || b.important === true) ? 0 : 1;
+      return aImp - bImp;
+    });
+    return sorted
       .map((n) => {
         const imp = n.type === "important" || n.important === true;
         return imp
-          ? `<div style="font-size:12px;color:#ef7b15;font-weight:700;margin-top:4px;">⚠ ${escape(n.text)}</div>`
+          ? `<div style="font-size:12px;color:#ef7b15;font-weight:700;margin-top:4px;">★ ${escape(n.text)}</div>`
           : `<div style="${styleNormal}margin-top:3px;">• ${escape(n.text)}</div>`;
       })
       .join("");
