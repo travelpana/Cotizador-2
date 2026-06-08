@@ -50,6 +50,7 @@ export interface ActividadEntry {
   fecha: string;
   tipo: ActividadTipo;
   detalle?: string;
+  byUser?: string;
 }
 
 // ─── Opportunity history types ─────────────────────────────────────────────────
@@ -77,6 +78,7 @@ export interface OppHistorialEntry {
   tipo?: OppActividadTipo;
   detalle?: string;
   cambios?: string[];
+  byUser?: string;
 }
 
 export interface CotizacionGuardada {
@@ -116,6 +118,10 @@ export interface CotizacionGuardada {
   anulada?: boolean;
   fechaAnulacion?: string;
   motivoAnulacion?: string;
+  /** Name of user who created this quotation */
+  createdByName?: string;
+  /** Name of user who last updated this quotation */
+  updatedByName?: string;
   /** Link to parent opportunity */
   opportunityId?: string;
   /** Presentation mode: detailed shows all prices, package hides individual prices */
@@ -388,6 +394,8 @@ export interface Opportunity {
   recordatorio?: string;
   proximaAccion?: string;
   historial?: OppHistorialEntry[];
+  /** Name of user who created this opportunity */
+  createdByName?: string;
 }
 
 // ─── Urgency ──────────────────────────────────────────────────────────────────
@@ -438,6 +446,7 @@ export interface UpsertOpportunityInput {
   quoteName: string;
   destination: string;
   total?: number;
+  createdByName?: string;
 }
 
 function oppKey(agencyName: string, agentName: string, quoteName: string): string {
@@ -503,6 +512,7 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
       totalLatest: input.total,
       latestQuoteCode: input.numeroCotizacion,
       historial: [{ fecha: now, tipo: "oportunidad_creada" }],
+      createdByName: input.createdByName,
     };
     next = [opp, ...opps];
   }

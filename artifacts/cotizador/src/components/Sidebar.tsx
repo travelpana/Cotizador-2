@@ -8,9 +8,12 @@ import {
   Settings2,
   ChevronDown,
   Building2,
+  LogOut,
+  User,
 } from "lucide-react";
 import logoRge from "@assets/style-travel-blue-2_1780272470978.png";
 import { useState } from "react";
+import type { ActiveUser } from "@/lib/auth";
 
 export type View = "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
 
@@ -20,9 +23,11 @@ interface Props {
   view: View;
   onView: (v: View) => void;
   seguimientoFlash?: boolean;
+  user?: ActiveUser | null;
+  onLogout?: () => void;
 }
 
-export default function Sidebar({ view, onView, seguimientoFlash = false }: Props) {
+export default function Sidebar({ view, onView, seguimientoFlash = false, user, onLogout }: Props) {
   const isConfigView = CONFIG_VIEWS.includes(view);
   const [configOpen, setConfigOpen] = useState(isConfigView);
 
@@ -67,7 +72,7 @@ export default function Sidebar({ view, onView, seguimientoFlash = false }: Prop
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto" style={{ padding: "10px 10px" }}>
+        <nav className="flex-1 min-h-0 overflow-y-auto" style={{ padding: "10px 10px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <NavItem
               active={view === "cotizador"}
@@ -171,6 +176,90 @@ export default function Sidebar({ view, onView, seguimientoFlash = false }: Prop
             )}
           </div>
         </nav>
+
+        {/* ── Active user ──────────────────────────────────────────────── */}
+        {user && (
+          <div
+            style={{
+              borderTop: "1px solid rgba(4,25,65,0.08)",
+              padding: "10px 12px",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 10,
+                background: "#EDF4FF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <User className="w-4 h-4" style={{ color: "#004FBB" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#07152f",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {user.nombre}
+              </div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "#94a3b8",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {user.correo}
+              </div>
+            </div>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Cerrar sesión"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: "#94a3b8",
+                  flexShrink: 0,
+                  transition: "background 0.15s, color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#fee2e2";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#b91c1c";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+                }}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
       </aside>
     </div>
   );

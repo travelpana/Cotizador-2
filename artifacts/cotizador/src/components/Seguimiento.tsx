@@ -310,6 +310,12 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                 <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD</span>
               </>
             )}
+            {opp.createdByName && (
+              <>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] text-slate-400">Por: {opp.createdByName}</span>
+              </>
+            )}
           </div>
         </div>
 

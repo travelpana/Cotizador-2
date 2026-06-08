@@ -19,10 +19,16 @@ import {
 
 export type BackupType = "full" | "plantillas";
 
+export interface RgeBackupUser {
+  nombre: string;
+  correo: string;
+}
+
 export interface RgeBackup {
   version: 2;
   type: BackupType;
   exportedAt: string;
+  activeUser?: RgeBackupUser;
   plantillas?: ReturnType<typeof loadPlantillas>;
   descriptivos?: ReturnType<typeof loadDescriptivosLS>;
   observaciones?: ReturnType<typeof loadObservaciones>;
@@ -61,11 +67,24 @@ function downloadJson(data: unknown, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
+function getActiveUserForBackup(): RgeBackupUser | undefined {
+  try {
+    const raw = localStorage.getItem("cotizador.activeUser");
+    if (!raw) return undefined;
+    const u = JSON.parse(raw) as { nombre?: string; correo?: string };
+    if (u.nombre && u.correo) return { nombre: u.nombre, correo: u.correo };
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function exportarRespaldoCompleto(): void {
   const backup: RgeBackup = {
     version: 2,
     type: "full",
     exportedAt: new Date().toISOString(),
+    activeUser: getActiveUserForBackup(),
     plantillas: loadPlantillas(),
     descriptivos: loadDescriptivosLS(),
     observaciones: loadObservaciones(),

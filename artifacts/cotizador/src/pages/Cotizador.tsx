@@ -78,6 +78,7 @@ import { validateCliente } from "@/lib/types";
 import { api, type CatalogInfo, type LangCode } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 function addTwoMonths(date: Date): string {
   const d = new Date(date);
@@ -128,6 +129,7 @@ const CLOSED_FORM: FormState = {
 };
 
 export default function CotizadorPage() {
+  const { user, logout } = useAuth();
   const [hoteles, setHoteles] = useState<Hotel[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
   const [traslados, setTraslados] = useState<Traslado[]>([]);
@@ -673,6 +675,7 @@ export default function CotizadorPage() {
     quoteName: cliente.cotizacionNombre || "",
     destination: cliente.cotizacionNombre || "",
     total: total > 0 ? total : undefined,
+    createdByName: user?.nombre,
   });
 
   const handleSave = (opts: { silent?: boolean } = {}): { ok: boolean; isNew: boolean } => {
@@ -699,8 +702,9 @@ export default function CotizadorPage() {
                   : undefined,
               observacionManual: observacionManual.trim() || undefined,
               prioridad: autoPriority,
+              updatedByName: user?.nombre,
               ultimoSeguimiento: now,
-              historial: [...(g.historial ?? []), { fecha: now, tipo: "editada" as const }],
+              historial: [...(g.historial ?? []), { fecha: now, tipo: "editada" as const, byUser: user?.nombre }],
               presentationMode,
               opcionesPaquete: opcionesPaquete.length > 1 ? [...opcionesPaquete] : undefined,
             }
@@ -740,6 +744,7 @@ export default function CotizadorPage() {
                 tipo: "cotizacion_modificada",
                 detalle: `${cambios.length} cambio${cambios.length !== 1 ? "s" : ""}`,
                 cambios,
+                byUser: user?.nombre,
               };
               nextOpps = updateOpportunity(oppId, {
                 historial: [modEntry, ...(opp.historial ?? [])].slice(0, 100),
@@ -767,9 +772,10 @@ export default function CotizadorPage() {
         estadoCRM: "esperando_cliente",
         sentAt: now,
         prioridad: autoPriority,
+        createdByName: user?.nombre,
         valorCotizacion: total,
         ultimoSeguimiento: now,
-        historial: [{ fecha: now, tipo: "creada" }],
+        historial: [{ fecha: now, tipo: "creada", byUser: user?.nombre }],
         presentationMode,
         opcionesPaquete: opcionesPaquete.length > 1 ? [...opcionesPaquete] : undefined,
       };
@@ -1184,6 +1190,8 @@ export default function CotizadorPage() {
           setView(v);
         }}
         seguimientoFlash={seguimientoFlash}
+        user={user}
+        onLogout={logout}
       />
 
       <main className="flex-1 overflow-x-hidden bg-[#e8eef6]">
