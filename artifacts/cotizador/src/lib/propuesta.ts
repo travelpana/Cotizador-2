@@ -1050,61 +1050,9 @@ function buildPackageView(d: PropuestaData): string {
 
   let hotelBlock = "";
 
-  if (d.hoteles.length === 1) {
-    // ── Single option: compact premium card ───────────────────────────────
-    const h = d.hoteles[0];
-    const regimenFmt = formatRegimen(h.desayuno);
-    const notasHtml = renderNotasHTML(h.notas, h.notesImportant, h.notasList);
+  if (d.hoteles.length > 0) {
+    const numOpciones = d.opcionesHoteleras?.length ?? 1;
 
-    const nocheCompactRows = acoms.map((a) =>
-      `<tr><td style="padding:4px 14px 4px 24px;white-space:nowrap;">` +
-      `<span style="display:inline-block;min-width:44px;font-size:10px;font-weight:700;color:${C_LBL};text-transform:uppercase;vertical-align:middle;">${escape(String(a))}</span>` +
-      `<span style="font-size:13px;font-weight:600;color:${C_DARK};vertical-align:middle;">USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</span>` +
-      `</td></tr>`
-    ).join("");
-
-    const precioCompactRows = acoms.map((a) =>
-      `<tr><td style="padding:6px 14px 6px 24px;white-space:nowrap;background:${C_PRICE_BG};">` +
-      `<span style="display:inline-block;min-width:44px;font-size:10px;font-weight:700;color:${C_LBL};text-transform:uppercase;vertical-align:middle;">${escape(String(a))}</span>` +
-      `<span style="font-size:17px;font-weight:800;color:${C_DARK};vertical-align:middle;">USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</span>` +
-      `</td></tr>`
-    ).join("");
-
-    hotelBlock = `
-    <div style="margin-bottom:20px;">
-      ${sectionBar("Alojamiento", "#363765")}
-      <table cellpadding="0" cellspacing="0" border="0" width="100%"
-        style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
-        <tbody>
-          <tr>
-            <td style="padding:12px 14px 12px 24px;border-bottom:1px solid ${C_BORDER};">
-              <div style="font-size:14px;font-weight:700;color:${C_DARK};">${escape(h.nombre)}</div>
-              ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};margin-top:2px;">${escape(h.estrellas)}</div>` : ""}
-              ${h.ubicacion ? `<div style="font-size:11px;color:${C_LBL};margin-top:1px;">${escape(h.ubicacion)}</div>` : ""}
-              ${h.noches ? `<div style="font-size:11px;color:${C_LBL};margin-top:1px;">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
-              ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:3px;">${escape(regimenFmt)}</div>` : ""}
-              ${notasHtml}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:7px 14px 5px 14px;font-size:10px;font-weight:700;color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">
-              Noche adicional por persona
-            </td>
-          </tr>
-          ${nocheCompactRows}
-          <tr>
-            <td style="padding:7px 14px 5px 14px;font-size:10px;font-weight:700;color:${C_DARK};text-transform:uppercase;letter-spacing:0.6px;background:${C_PRICE_BG};border-top:1px solid ${C_BORDER};border-bottom:1px solid ${C_BORDER};">
-              Precio total por persona
-            </td>
-          </tr>
-          ${precioCompactRows}
-        </tbody>
-      </table>
-    </div>`;
-
-  } else if (d.hoteles.length >= 2) {
-    // ── Multi-option: comparative table ───────────────────────────────────
-    // Column order: OPCIÓN | ALOJAMIENTO | NOCHE ADICIONAL | PRECIO FINAL PAQUETE
     const thBase = `padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:${C_LBL};` +
       `text-transform:uppercase;letter-spacing:0.6px;background:${C_HDR_BG};` +
       `border-bottom:2px solid ${C_BORDER};border-right:1px solid ${C_BORDER};`;
@@ -1112,70 +1060,128 @@ function buildPackageView(d: PropuestaData): string {
       `text-transform:uppercase;letter-spacing:0.6px;background:${C_PRICE_BG};` +
       `border-bottom:2px solid ${C_BORDER};`;
 
-    const dataRows = d.hoteles
-      .map((h, idx) => {
+    if (numOpciones <= 1) {
+      // ── Single option: table WITHOUT Opción column ──────────────────────
+      const opHoteles = d.opcionesHoteleras?.[0]?.hoteles ?? d.hoteles;
+      const opTotales = (d.opcionesHoteleras?.[0]?.totalesPorAcomodacion ?? d.result.totalesPorAcomodacion) as Record<string, number>;
+      const nHoteles = opHoteles.length;
+
+      const priceLinesHtml = acoms.map((a) =>
+        `<div style="white-space:nowrap;line-height:2.2;">` +
+        `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
+        ` <span style="font-size:15px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(opTotales[String(a)] ?? 0))}</span>` +
+        `</div>`
+      ).join("");
+
+      const dataRows = opHoteles.map((h, idx) => {
         const regimenFmt = formatRegimen(h.desayuno);
+        const notasHtml = renderNotasHTML(h.notas, h.notesImportant, h.notasList);
         const rowBg = idx % 2 === 0 ? "#ffffff" : C_HDR_BG;
+        const isFirst = idx === 0;
+        const rowspanAttr = nHoteles > 1 ? ` rowspan="${nHoteles}"` : "";
 
-        // Resolve option name + per-option totals (when opcionesHoteleras is available)
-        const matchingOp = d.opcionesHoteleras?.find((op) =>
-          op.hoteles.some((oh) => oh.id === h.id || oh.nombre === h.nombre),
-        );
-        const opTotales = matchingOp?.totalesPorAcomodacion ?? d.result.totalesPorAcomodacion;
-        const opLabel = matchingOp ? escape(matchingOp.nombre) : `Opci&#243;n ${idx + 1}`;
-
-        // NOCHE ADICIONAL column: per-hotel per-night rate
-        const nocheLinesHtml = acoms
-          .map(
-            (a) =>
-              `<div style="font-size:13px;color:${C_DARK};line-height:2.0;">` +
-              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
-              ` USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</div>`,
-          )
-          .join("");
-
-        // PRECIO FINAL PAQUETE column: per-option total (corrected when opcionesHoteleras available)
-        const priceLinesHtml = acoms
-          .map(
-            (a) =>
-              `<div style="font-size:15px;font-weight:800;color:${C_DARK};line-height:2.0;">` +
-              `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
-              ` USD ${escape(fmt((opTotales as Record<string, number>)[String(a)] ?? 0))}</div>`,
-          )
-          .join("");
+        const nocheLinesHtml = acoms.map((a) =>
+          `<div style="line-height:2.0;">` +
+          `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
+          ` USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</div>`
+        ).join("");
 
         return `<tr style="background:${rowBg};page-break-inside:avoid;">
-          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;white-space:nowrap;">
-            <div style="font-weight:700;color:${C_BLUE};font-size:13px;">${opLabel}</div>
-          </td>
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">
             <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>
             ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.estrellas)}</div>` : ""}
-            ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} noches</div>` : ""}
+            ${h.ubicacion ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.ubicacion)}</div>` : ""}
+            ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
             ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
+            ${notasHtml}
           </td>
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">${nocheLinesHtml}</td>
-          <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};vertical-align:top;background:${C_PRICE_BG};">${priceLinesHtml}</td>
+          ${isFirst ? `<td${rowspanAttr} style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};vertical-align:middle;background:${C_PRICE_BG};">${priceLinesHtml}</td>` : ""}
         </tr>`;
-      })
-      .join("");
+      }).join("");
 
-    hotelBlock = `
-    <div style="margin-bottom:20px;">
-      ${sectionBar("Opciones de alojamiento", "#363765")}
-      <table cellpadding="0" cellspacing="0" border="0" width="100%"
-        style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
-        <thead>
-          <tr>
-            <th style="${thBase}width:9%;">Opci&#243;n</th>
-            <th style="${thBase}width:30%;">Alojamiento</th>
-            <th style="${thBase}width:26%;">Noche adicional</th>
-            <th style="${thPrice}width:35%;">Precio total</th>
-          </tr>
-        </thead>
-        <tbody>${dataRows}</tbody>
-      </table>
-    </div>`;
+      hotelBlock = `
+      <div style="margin-bottom:20px;">
+        ${sectionBar("Alojamiento", "#363765")}
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
+          <thead>
+            <tr>
+              <th style="${thBase}width:40%;">Alojamiento</th>
+              <th style="${thBase}width:25%;">Noche adicional</th>
+              <th style="${thPrice}width:35%;">Precio total</th>
+            </tr>
+          </thead>
+          <tbody>${dataRows}</tbody>
+        </table>
+      </div>`;
+
+    } else {
+      // ── Multi option: grouped table with Opción column + rowspan ────────
+      const BLOCK_COLORS = ["#f5f8ff", "#fafafa"];
+
+      const dataRows = d.opcionesHoteleras!.map((op, opIdx) => {
+        const blockBg = BLOCK_COLORS[opIdx % 2];
+        const opTotales = op.totalesPorAcomodacion as Record<string, number>;
+        const nHoteles = op.hoteles.length;
+        const rowspanAttr = nHoteles > 1 ? ` rowspan="${nHoteles}"` : "";
+
+        const priceLinesHtml = acoms.map((a) =>
+          `<div style="white-space:nowrap;line-height:2.2;">` +
+          `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
+          ` <span style="font-size:15px;font-weight:800;color:${C_DARK};">USD ${escape(fmt(opTotales[String(a)] ?? 0))}</span>` +
+          `</div>`
+        ).join("");
+
+        return op.hoteles.map((h, hIdx) => {
+          const isFirst = hIdx === 0;
+          const isLast = hIdx === nHoteles - 1;
+          const regimenFmt = formatRegimen(h.desayuno);
+          const notasHtml = renderNotasHTML(h.notas, h.notesImportant, h.notasList);
+          const rowBorderBottom = isLast
+            ? `border-bottom:2px solid ${C_BORDER};`
+            : `border-bottom:1px dashed ${C_BORDER};`;
+
+          const nocheLinesHtml = acoms.map((a) =>
+            `<div style="line-height:2.0;">` +
+            `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
+            ` USD ${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</div>`
+          ).join("");
+
+          return `<tr style="background:${blockBg};page-break-inside:avoid;">
+            ${isFirst ? `<td${rowspanAttr} style="padding:12px 14px;border-bottom:2px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:middle;background:${blockBg};white-space:nowrap;">
+              <div style="font-weight:700;color:${C_BLUE};font-size:13px;">${escape(op.nombre)}</div>
+            </td>` : ""}
+            <td style="padding:12px 14px;${rowBorderBottom}border-right:1px solid ${C_BORDER};vertical-align:top;background:${blockBg};">
+              <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>
+              ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.estrellas)}</div>` : ""}
+              ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
+              ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
+              ${notasHtml}
+            </td>
+            <td style="padding:12px 14px;${rowBorderBottom}border-right:1px solid ${C_BORDER};vertical-align:top;background:${blockBg};">${nocheLinesHtml}</td>
+            ${isFirst ? `<td${rowspanAttr} style="padding:12px 14px;border-bottom:2px solid ${C_BORDER};vertical-align:middle;background:${C_PRICE_BG};">${priceLinesHtml}</td>` : ""}
+          </tr>`;
+        }).join("");
+      }).join("");
+
+      hotelBlock = `
+      <div style="margin-bottom:20px;">
+        ${sectionBar("Opciones de alojamiento", "#363765")}
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"
+          style="width:100%;border-collapse:collapse;border:1px solid ${C_BORDER};border-top:none;">
+          <thead>
+            <tr>
+              <th style="${thBase}width:9%;">Opci&#243;n</th>
+              <th style="${thBase}width:31%;">Alojamiento</th>
+              <th style="${thBase}width:25%;">Noche adicional</th>
+              <th style="${thPrice}width:35%;">Precio total</th>
+            </tr>
+          </thead>
+          <tbody>${dataRows}</tbody>
+        </table>
+      </div>`;
+    }
   }
 
   // ── Compose ───────────────────────────────────────────────────────────────
