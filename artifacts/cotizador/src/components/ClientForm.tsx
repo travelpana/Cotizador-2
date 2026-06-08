@@ -954,12 +954,12 @@ export function AlojamientoBar({
                 onClick={() => handleCardClick(p)}
                 style={{
                   borderRadius: 10,
-                  padding: "9px 10px",
+                  padding: "8px 6px",
                   cursor: "pointer",
                   userSelect: "none",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  justifyContent: "center",
                   gap: 6,
                   transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s",
                   ...(hasRooms
@@ -975,17 +975,17 @@ export function AlojamientoBar({
                       }),
                 }}
               >
-                {/* Icon + Label (left) */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                  <span style={{ display: "flex", lineHeight: 0, flexShrink: 0, opacity: 0.90 }}>
-                    {ROOM_ICONS[p]}
-                  </span>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", lineHeight: 1 }}>
-                    {p}
-                  </span>
-                </div>
+                {/* Icon */}
+                <span style={{ display: "flex", lineHeight: 0, flexShrink: 0, opacity: 0.90 }}>
+                  {ROOM_ICONS[p]}
+                </span>
 
-                {/* Counter input (right) */}
+                {/* Label */}
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", lineHeight: 1 }}>
+                  {p}
+                </span>
+
+                {/* Counter input */}
                 <div style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                   <input
                     ref={(el) => { inputRefs.current[idx] = el; }}
