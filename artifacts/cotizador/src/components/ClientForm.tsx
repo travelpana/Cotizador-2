@@ -898,46 +898,13 @@ export function AlojamientoBar({
       `}</style>
       {decorations}
 
-      {/* ── Pills row — identical to individual mode, active state more prominent ── */}
-      <div className="relative flex items-center justify-evenly gap-3" style={{ padding: "10px 6px 0" }}>
-        {PILLS.map((p) => {
-          const active = acomodaciones.includes(p);
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => togglePillGrupo(p)}
-              data-testid={`acomodacion-pill-grupo-${p}`}
-              style={{
-                flex: 1, height: 44, minWidth: 0,
-                borderRadius: 9999,
-                fontSize: 13, fontWeight: 700, letterSpacing: "0.08em",
-                color: "#fff", textTransform: "uppercase" as const,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.15s",
-                ...(active
-                  ? {
-                      backgroundColor: "#22b4ff",
-                      boxShadow: "0 4px 16px rgba(20,149,255,0.75), inset 0 0 0 1.5px rgba(140,230,255,0.55)",
-                    }
-                  : { backgroundColor: "rgba(0,30,90,0.5)", border: "1px solid rgba(147,197,253,0.35)" }),
-              }}
-            >
-              {p}
-            </button>
-          );
-        })}
-      </div>
-
       {/* ── Expansion: Distribución del Grupo ── */}
       <div className="relative" style={{ padding: "9px 6px 0" }}>
 
-        {/* Divider + title */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 8, marginBottom: 6 }}>
-          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.80)", margin: 0 }}>
-            Distribución del Grupo
-          </p>
-        </div>
+        {/* Title */}
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.80)", marginBottom: 6 }}>
+          Distribución del Grupo
+        </p>
 
         {/* Accommodation cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
