@@ -954,17 +954,19 @@ export function AlojamientoBar({
                 onClick={() => handleCardClick(p)}
                 style={{
                   borderRadius: 10,
-                  padding: "7px 7px 6px",
+                  padding: "8px 6px",
                   cursor: "pointer",
                   userSelect: "none",
                   display: "flex",
-                  flexDirection: "column",
-                  gap: 3,
-                  transition: "background 0.2s, border-color 0.2s, opacity 0.2s",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s",
                   ...(hasRooms
                     ? {
                         backgroundColor: "rgba(20,149,255,0.82)",
                         border: "1px solid rgba(73,198,255,0.70)",
+                        boxShadow: "0 2px 8px rgba(20,149,255,0.40)",
                       }
                     : {
                         backgroundColor: "rgba(0,20,60,0.50)",
@@ -973,70 +975,55 @@ export function AlojamientoBar({
                       }),
                 }}
               >
-                {/* TOP ROW: icon + label left, counter right */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 3, minWidth: 0 }}>
-                    <span style={{ display: "flex", lineHeight: 0, flexShrink: 0, opacity: 0.90 }}>
-                      {ROOM_ICONS[p]}
-                    </span>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", lineHeight: 1, textTransform: "uppercase" }}>
-                      {p}
-                    </span>
-                  </div>
+                {/* Icon */}
+                <span style={{ display: "flex", lineHeight: 0, flexShrink: 0, opacity: 0.90 }}>
+                  {ROOM_ICONS[p]}
+                </span>
 
-                  <div style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                    <input
-                      ref={(el) => { inputRefs.current[idx] = el; }}
-                      type="number"
-                      className="grupo-input"
-                      min={0}
-                      value={count === 0 ? "" : count}
-                      placeholder="0"
-                      tabIndex={idx + 1}
-                      onChange={(e) => handleInputChange(p, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      onFocus={(e) => e.target.select()}
-                      onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
-                          e.preventDefault();
-                          const next = inputRefs.current[idx + 1];
-                          if (next) { next.focus(); next.select(); }
-                        }
-                        if (e.key === "Tab" && e.shiftKey) {
-                          e.preventDefault();
-                          const prev = inputRefs.current[idx - 1];
-                          if (prev) { prev.focus(); prev.select(); }
-                        }
-                      }}
-                      style={{
-                        width: 38, height: 38,
-                        textAlign: "center",
-                        fontSize: 18, fontWeight: 800, color: "#fff",
-                        background: "rgba(0,0,0,0.18)",
-                        border: "1px solid rgba(255,255,255,0.20)",
-                        borderRadius: 8,
-                        padding: "0",
-                        outline: "none",
-                        lineHeight: "38px",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
+                {/* Label */}
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", lineHeight: 1 }}>
+                  {p}
+                </span>
 
-                {/* BOTTOM ROW: X HAB | Y PAX */}
-                <div style={{
-                  textAlign: "center",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.80)",
-                  letterSpacing: "0.04em",
-                  lineHeight: 1,
-                }}>
-                  {count} HAB
-                  <span style={{ color: "rgba(255,255,255,0.30)", marginInline: 3, fontWeight: 300 }}>|</span>
-                  {pax} PAX
+                {/* Counter input */}
+                <div style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                  <input
+                    ref={(el) => { inputRefs.current[idx] = el; }}
+                    type="number"
+                    className="grupo-input"
+                    min={0}
+                    value={count === 0 ? "" : count}
+                    placeholder="0"
+                    tabIndex={idx + 1}
+                    onChange={(e) => handleInputChange(p, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
+                        e.preventDefault();
+                        const next = inputRefs.current[idx + 1];
+                        if (next) { next.focus(); next.select(); }
+                      }
+                      if (e.key === "Tab" && e.shiftKey) {
+                        e.preventDefault();
+                        const prev = inputRefs.current[idx - 1];
+                        if (prev) { prev.focus(); prev.select(); }
+                      }
+                    }}
+                    style={{
+                      width: 34, height: 34,
+                      textAlign: "center",
+                      fontSize: 16, fontWeight: 800, color: "#fff",
+                      background: "rgba(0,0,0,0.22)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      borderRadius: 7,
+                      padding: 0,
+                      outline: "none",
+                      lineHeight: "34px",
+                      boxSizing: "border-box",
+                    }}
+                  />
                 </div>
               </div>
             );
