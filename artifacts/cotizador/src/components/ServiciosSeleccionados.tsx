@@ -898,14 +898,14 @@ function ServicioRow({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="text-[11px] text-slate-500 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
+                  className="text-[11px] hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
                   title="Editar fechas de estadía"
                 >
                   {servicio.fechaInicio && servicio.fechaFin ? (
-                    <>
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
                       <Calendar className="w-3 h-3" />
                       {fmtDMA(servicio.fechaInicio)} → {fmtDMA(servicio.fechaFin)}
-                    </>
+                    </span>
                   ) : (
                     <span className="italic text-slate-400">Fechas</span>
                   )}

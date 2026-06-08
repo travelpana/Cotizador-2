@@ -910,25 +910,27 @@ function buildTotalesView(d: PropuestaData): string {
     (s) => s.nombre,
   );
 
-  // ── 3. TOTALES SEGÚN ACOMODACIÓN ────────────────────────────────
-  const totalLabelStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:14px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
-  const totalValStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:16px;background:#f0f4ff;`;
-  const totalRows = d.acoms
-    .map(
-      (a) => `<tr>
-        <td style="${totalLabelStyle}">${escape(String(a))}</td>
-        <td style="${totalValStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
-      </tr>`,
-    )
-    .join("");
+  // ── 3. TOTALES SEGÚN ACOMODACIÓN (individual/tarifario only) ────
+  if (!d.isGrupo) {
+    const totalLabelStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:14px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
+    const totalValStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:16px;background:#f0f4ff;`;
+    const totalRows = d.acoms
+      .map(
+        (a) => `<tr>
+          <td style="${totalLabelStyle}">${escape(String(a))}</td>
+          <td style="${totalValStyle}">${escape(fmt(d.result.totalesPorAcomodacion[a]))}</td>
+        </tr>`,
+      )
+      .join("");
 
-  html += `
-  <div style="${STYLES.block}">
-    ${sectionBar(T.totalesSegunAcomodacion)}
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:2px solid ${COLOR_AZUL};border-radius:4px;">
-      <tfoot>${totalRows}</tfoot>
-    </table>
-  </div>`;
+    html += `
+    <div style="${STYLES.block}">
+      ${sectionBar(T.totalesSegunAcomodacion)}
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;border-collapse:collapse;border:2px solid ${COLOR_AZUL};border-radius:4px;">
+        <tfoot>${totalRows}</tfoot>
+      </table>
+    </div>`;
+  }
 
   // ── 4. OBSERVACIONES ────────────────────────────────────────────
   html += observacionesBlock(d, C_TOT_OBSERVACIONES);
@@ -1197,67 +1199,91 @@ function grupoDetalleBlock(d: PropuestaData): string {
   const C_DARK = "#041941";
   const C_BLUE = "#1E3A8A";
   const C_BORDER = "#e2e8f0";
+  const C_HDR_BG = "#f0f4ff";
 
-  const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3 };
+  const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
   const rp = (a: Acomodacion) => ROOM_PAX[a] ?? 1;
 
-  const roomAcoms = (["SGL", "DBL", "TPL"] as Acomodacion[]).filter(
+  const roomAcoms = (["SGL", "DBL", "TPL", "QDL"] as Acomodacion[]).filter(
     (a) => d.acoms.includes(a) && (d.grupoHabitacionesPorAcom[a] ?? 0) > 0,
   );
-  const chdRate = d.result.totalesPorAcomodacion["CHD" as Acomodacion] ?? 0;
 
   if (roomAcoms.length === 0 && d.grupoNinos === 0) return "";
 
-  // ── Card grid ──────────────────────────────────────────────────
-  const card = (label: string, bigNum: string | number, sub1: string, sub2?: string, accent = false) =>
-    `<td style="padding:14px 12px;text-align:center;vertical-align:top;border-right:1px solid ${C_BORDER};width:${accent ? "120px" : "auto"};">
-      <div style="font-size:9px;font-weight:700;color:${accent ? C_BLUE : "#64748b"};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">${label}</div>
-      <div style="font-size:22px;font-weight:800;color:${accent ? C_BLUE : C_DARK};line-height:1;">${bigNum}</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">${sub1}</div>
-      ${sub2 ? `<div style="font-size:11px;color:#64748b;font-weight:600;margin-top:2px;">${sub2}</div>` : ""}
-    </td>`;
-
-  const roomCards = roomAcoms
-    .map((a) => {
-      const hab = d.grupoHabitacionesPorAcom[a] ?? 0;
-      const pax = hab * rp(a);
-      return card(String(a), hab, "habitaciones", `${pax} pax`);
-    })
-    .join("");
-
-  const ninosCard = d.grupoNinos > 0
-    ? card("Niños", d.grupoNinos, "CHD", undefined)
-    : "";
-
-  const pasajerosCard = card("Pasajeros", d.grupoTotalPax, "total", undefined, true);
-
-  // ── Compact tarifa line ────────────────────────────────────────
-  const tarifaParts = roomAcoms
-    .filter((a) => (d.result.totalesPorAcomodacion[a] ?? 0) > 0)
-    .map((a) => `${escape(String(a))} USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}`);
-  if (d.grupoNinos > 0 && chdRate > 0) {
-    tarifaParts.push(`Tarifa niño USD ${escape(fmt(chdRate))}`);
+  // ── Per-accommodation totals (each acom uses its own pax count) ──
+  const acTotals: Partial<Record<Acomodacion, number>> = {};
+  for (const a of roomAcoms) {
+    let total = 0;
+    const rooms = d.grupoHabitacionesPorAcom[a] ?? 0;
+    const paxForAcom = rooms * rp(a);
+    for (const svc of d.result.servicios) {
+      if (svc.tipo === "hotel") {
+        const rate = svc.preciosPorAcomodacion[a] ?? 0;
+        total += rate * paxForAcom * (svc.noches ?? 0);
+      } else {
+        const unit = svc.unitAplicado ?? (svc.preciosPorAcomodacion.DBL ?? 0);
+        const ticketsAdult =
+          svc.tipo === "tour" && svc.tickets?.enabled
+            ? (svc.tickets.adultPrice ?? 0)
+            : 0;
+        total += (unit + ticketsAdult) * paxForAcom;
+      }
+    }
+    acTotals[a] = total;
   }
-  const tarifaLine = tarifaParts.length > 0
-    ? `<div style="border-top:1px solid ${C_BORDER};padding:9px 16px;text-align:center;font-size:11px;color:#94a3b8;letter-spacing:0.2px;background:#fafbff;">
-        ${tarifaParts.join(" &nbsp;·&nbsp; ")}
-      </div>`
-    : "";
+
+  const totalHabs = roomAcoms.reduce((s, a) => s + (d.grupoHabitacionesPorAcom[a] ?? 0), 0);
+  const adultosPax = roomAcoms.reduce((s, a) => s + (d.grupoHabitacionesPorAcom[a] ?? 0) * rp(a), 0);
+  const totalPax = adultosPax + d.grupoNinos;
+
+  // ── Table styles ──────────────────────────────────────────────
+  const thStyle = `padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#64748b;background:${C_HDR_BG};border-bottom:1px solid ${C_BORDER};text-align:left;`;
+  const tdStyle = `padding:10px 14px;font-size:13px;color:${C_DARK};border-bottom:1px solid ${C_BORDER};vertical-align:middle;`;
+  const tdRightStyle = `padding:10px 14px;font-size:13px;font-weight:700;color:${C_BLUE};border-bottom:1px solid ${C_BORDER};vertical-align:middle;text-align:right;`;
+
+  const dataRows = roomAcoms.map((a) => {
+    const hab = d.grupoHabitacionesPorAcom[a] ?? 0;
+    const pax = hab * rp(a);
+    const total = acTotals[a] ?? 0;
+    return `<tr>
+      <td style="${tdStyle}">
+        <span style="display:inline-block;background:#e8eeff;color:${C_BLUE};padding:3px 10px;border-radius:5px;font-size:12px;font-weight:800;letter-spacing:0.5px;">${escape(String(a))}</span>
+      </td>
+      <td style="${tdStyle}">${escape(String(hab))} hab</td>
+      <td style="${tdStyle}">${escape(String(pax))} pax</td>
+      <td style="${tdRightStyle}">USD ${escape(fmt(total))}</td>
+    </tr>`;
+  }).join("");
 
   return `
   <div style="margin-bottom:20px;">
     ${sectionBar("Detalle del Grupo", C_BLUE)}
-    <div style="border:1px solid ${C_BORDER};border-top:none;background:#f8faff;">
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border-bottom:1px solid ${C_BORDER};">
-        <tbody>
-          <tr>${roomCards}${ninosCard}${pasajerosCard}</tr>
-        </tbody>
+    <div style="border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="${thStyle}width:18%;">Acomodación</th>
+            <th style="${thStyle}width:22%;">Habitaciones</th>
+            <th style="${thStyle}width:20%;">Pax</th>
+            <th style="${thStyle}width:40%;text-align:right;">Tarifa por acomodación</th>
+          </tr>
+        </thead>
+        <tbody>${dataRows}</tbody>
       </table>
-      <div style="padding:22px 24px;text-align:center;background:#ffffff;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border-top:1px solid ${C_BORDER};background:#f8faff;">
+        <tr>
+          <td style="padding:10px 14px;font-size:12px;color:#64748b;width:50%;">
+            Total habitaciones: <strong style="color:${C_DARK};">${totalHabs}</strong>
+          </td>
+          <td style="padding:10px 14px;font-size:12px;color:#64748b;width:50%;">
+            Total pasajeros: <strong style="color:${C_DARK};">${totalPax}</strong>
+          </td>
+        </tr>
+      </table>
+      <div style="padding:22px 24px;text-align:center;background:#ffffff;border-top:1px solid ${C_BORDER};">
         <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Total del Grupo</div>
         <div style="font-size:34px;font-weight:800;color:${C_DARK};letter-spacing:-0.5px;">USD ${escape(fmt(d.grupoTotal))}</div>
       </div>
-      ${tarifaLine}
     </div>
   </div>`;
 }
