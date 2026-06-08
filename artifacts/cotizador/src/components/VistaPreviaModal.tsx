@@ -36,6 +36,8 @@ interface Props {
   observaciones?: string[];
   /** Output language for all section labels */
   idioma?: Idioma;
+  /** Hotel options for Paquete mode */
+  opcionesPaquete?: Array<{ id: string; nombre: string }>;
 }
 
 export default function VistaPreviaModal({
@@ -57,6 +59,7 @@ export default function VistaPreviaModal({
   numeroCotizacion,
   observaciones,
   idioma,
+  opcionesPaquete,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const overrideRef = useRef(actividadesOverride);
@@ -123,6 +126,7 @@ export default function VistaPreviaModal({
       editable: true,
       numeroCotizacion,
       idioma,
+      opcionesPaquete,
     });
   }, [
     cliente,

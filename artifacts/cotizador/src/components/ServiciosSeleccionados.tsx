@@ -58,6 +58,14 @@ interface Props {
   observaciones?: string;
   onObservacionesChange?: (v: string) => void;
   personalizarTraslados?: boolean;
+  /** Enables hotel-option tabs in Paquete mode */
+  presentationMode?: "detailed" | "package";
+  opcionesPaquete?: Array<{ id: string; nombre: string }>;
+  activeOpcionPaquete?: string;
+  onActiveOpcionChange?: (id: string) => void;
+  onAddOpcion?: () => void;
+  onRenameOpcion?: (id: string, nombre: string) => void;
+  onDeleteOpcion?: (id: string) => void;
 }
 
 function plantillaResumen(p: Plantilla) {
@@ -106,12 +114,21 @@ export default function ServiciosSeleccionados({
   observaciones = "",
   onObservacionesChange,
   personalizarTraslados = true,
+  presentationMode,
+  opcionesPaquete,
+  activeOpcionPaquete,
+  onActiveOpcionChange,
+  onAddOpcion,
+  onRenameOpcion,
+  onDeleteOpcion,
 }: Props) {
   const hotelesServs = servicios.filter((s) => s.tipo === "hotel");
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [plantillaModalOpen, setPlantillaModalOpen] = useState(false);
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
+  const [editingOpId, setEditingOpId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const handleOpenPlantillaModal = () => {
     setPlantillas(loadPlantillas());
@@ -243,48 +260,144 @@ export default function ServiciosSeleccionados({
         </div>
       ) : (
         <div className="space-y-5">
-          {groups.map((g) => (
+          {groups.map((g) => {
+            const isPaqueteHotel =
+              g.tipo === "hotel" &&
+              presentationMode === "package" &&
+              opcionesPaquete &&
+              opcionesPaquete.length > 0;
+
+            const firstOpId = opcionesPaquete?.[0]?.id;
+            const displayItems = isPaqueteHotel
+              ? g.items.filter((s) =>
+                  s.paqueteOpcionId === activeOpcionPaquete ||
+                  (activeOpcionPaquete === firstOpId && !s.paqueteOpcionId),
+                )
+              : g.items;
+
+            return (
             <div key={g.tipo}>
               <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-2 px-1">
                 {GROUP_TITLE[g.tipo]}
               </div>
+
+              {isPaqueteHotel && (
+                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                  {opcionesPaquete!.map((op) => {
+                    const isActive = op.id === activeOpcionPaquete;
+                    const isEditing = editingOpId === op.id;
+                    return (
+                      <div key={op.id} className="relative flex items-center">
+                        {isEditing ? (
+                          <input
+                            autoFocus
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onBlur={() => {
+                              if (editingName.trim()) {
+                                onRenameOpcion?.(op.id, editingName.trim());
+                              }
+                              setEditingOpId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                if (editingName.trim()) {
+                                  onRenameOpcion?.(op.id, editingName.trim());
+                                }
+                                setEditingOpId(null);
+                              } else if (e.key === "Escape") {
+                                setEditingOpId(null);
+                              }
+                            }}
+                            className="h-7 px-2 text-xs font-semibold rounded-full border-2 border-blue-500 outline-none bg-white min-w-[80px] max-w-[140px]"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onActiveOpcionChange?.(op.id)}
+                            onDoubleClick={() => {
+                              setEditingOpId(op.id);
+                              setEditingName(op.nombre);
+                            }}
+                            title="Clic para activar · Doble clic para renombrar"
+                            className={`h-7 px-3 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
+                              isActive
+                                ? "text-white shadow-sm"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                            style={isActive ? { backgroundColor: "#1e3a8a" } : undefined}
+                          >
+                            {op.nombre}
+                          </button>
+                        )}
+                        {opcionesPaquete!.length > 1 && !isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => onDeleteOpcion?.(op.id)}
+                            title="Eliminar esta opción"
+                            className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={onAddOpcion}
+                    className="h-7 px-2.5 text-xs font-semibold rounded-full border border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-all flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Nueva opción
+                  </button>
+                </div>
+              )}
+
               <div className="rounded-2xl bg-slate-50/70 border border-slate-100 overflow-hidden divide-y divide-slate-100">
-                {g.items.map((s) => {
-                  const rowKey = `${s.tipo}-${s.id}`;
-                  const dragKey = `${s.tipo}|${s.id}`;
-                  return (
-                    <ServicioRow
-                      key={rowKey}
-                      servicio={s}
-                      acomodaciones={acomodaciones}
-                      pasajeros={pasajeros}
-                      ninos={ninos}
-                      highlight={highlightedId === s.id}
-                      isDragging={dragId === dragKey}
-                      isDragOver={dragOverKey === rowKey}
-                      onDragStart={() => setDragId(dragKey)}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = "move";
-                        setDragOverKey(rowKey);
-                      }}
-                      onDrop={() => handleDrop(s.tipo, s.id)}
-                      onDragEnd={() => {
-                        setDragId(null);
-                        setDragOverKey(null);
-                      }}
-                      onEdit={() => onEdit(s)}
-                      onRemove={() => remove(s)}
-                      onDuplicate={() => duplicate(s)}
-                      onUpdate={update}
-                      hoteles={hotelesServs}
-                      personalizarTraslados={personalizarTraslados}
-                    />
-                  );
-                })}
+                {displayItems.length === 0 && isPaqueteHotel ? (
+                  <div className="px-4 py-5 text-center text-sm text-slate-400 italic">
+                    Sin hotel para esta opción. Buscá y agregá uno arriba.
+                  </div>
+                ) : (
+                  displayItems.map((s) => {
+                    const rowKey = `${s.tipo}-${s.id}`;
+                    const dragKey = `${s.tipo}|${s.id}`;
+                    return (
+                      <ServicioRow
+                        key={rowKey}
+                        servicio={s}
+                        acomodaciones={acomodaciones}
+                        pasajeros={pasajeros}
+                        ninos={ninos}
+                        highlight={highlightedId === s.id}
+                        isDragging={dragId === dragKey}
+                        isDragOver={dragOverKey === rowKey}
+                        onDragStart={() => setDragId(dragKey)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          setDragOverKey(rowKey);
+                        }}
+                        onDrop={() => handleDrop(s.tipo, s.id)}
+                        onDragEnd={() => {
+                          setDragId(null);
+                          setDragOverKey(null);
+                        }}
+                        onEdit={() => onEdit(s)}
+                        onRemove={() => remove(s)}
+                        onDuplicate={() => duplicate(s)}
+                        onUpdate={update}
+                        hoteles={hotelesServs}
+                        personalizarTraslados={personalizarTraslados}
+                      />
+                    );
+                  })
+                )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
       <ObsPanel observaciones={observaciones} onObservacionesChange={onObservacionesChange} />

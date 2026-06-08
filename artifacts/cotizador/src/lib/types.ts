@@ -87,6 +87,8 @@ export interface ServicioSeleccionado {
     createdAt?: string;
     updatedAt?: string;
   }>;
+  /** In Paquete mode: which hotel option this hotel belongs to (e.g. "op1", "op2") */
+  paqueteOpcionId?: string;
 }
 
 export interface Descriptivo {

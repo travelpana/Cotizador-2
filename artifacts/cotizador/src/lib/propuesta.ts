@@ -7,7 +7,7 @@ import type {
   ServicioSeleccionado,
 } from "./types";
 import { formatRegimen } from "./regimen";
-import { fmt, calcGrupoTotalFromResult } from "./calc";
+import { fmt, calcGrupoTotalFromResult, calcularLocal } from "./calc";
 import { formatTrasladoNombre, personalizarNombreTraslado } from "./utils";
 import { buildItinerario, type ItinerarioDia } from "@/components/Itinerario";
 import type { ModoCotizacion, PresentationMode } from "@/components/Guardadas";
@@ -37,6 +37,8 @@ export interface PropuestaInput {
   personalizarTraslados?: boolean;
   /** Presentation mode: detailed shows individual prices, package hides them and shows a final price block */
   presentationMode?: PresentationMode;
+  /** Hotel options for Paquete mode — each option has its own hotels; shared services apply to all */
+  opcionesPaquete?: Array<{ id: string; nombre: string }>;
   /** Quoting mode: group adds room-distribution and total-group blocks */
   quotingMode?: "individual" | "grupo";
   /** Room counts per accommodation type (used in grupo mode) */
@@ -80,6 +82,13 @@ export interface PropuestaData {
   idioma: Idioma;
   T: Traducciones;
   personalizarTraslados: boolean;
+  /** Per-option computed data when in Paquete mode with named hotel options */
+  opcionesHoteleras?: Array<{
+    id: string;
+    nombre: string;
+    hoteles: ServicioCalculado[];
+    totalesPorAcomodacion: Partial<Record<Acomodacion, number>>;
+  }>;
 }
 
 const MESES_ES = [
@@ -293,6 +302,37 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const grupoSubs = calcGrupoTotalFromResult(result, grupoHabitacionesPorAcom, grupoNinos);
   const grupoTotal = grupoSubs.total;
 
+  // ── Per-option hotel data for Paquete mode ──────────────────────────────
+  let opcionesHoteleras: PropuestaData["opcionesHoteleras"];
+  const isPackageMode = input.presentationMode === "package";
+  if (isPackageMode && input.opcionesPaquete && input.opcionesPaquete.length > 0) {
+    const firstOpId = input.opcionesPaquete[0].id;
+    const sharedServices = servicios.filter((s) => s.tipo !== "hotel");
+    opcionesHoteleras = input.opcionesPaquete.map((op) => {
+      const opRawHotels = servicios.filter(
+        (s) =>
+          s.tipo === "hotel" &&
+          (s.paqueteOpcionId === op.id ||
+            (op.id === firstOpId && !s.paqueteOpcionId)),
+      );
+      if (opRawHotels.length === 0) return null;
+      const opResult = calcularLocal(
+        [...opRawHotels, ...sharedServices],
+        result.acomodaciones,
+        cliente,
+      );
+      return {
+        id: op.id,
+        nombre: op.nombre,
+        hoteles: opResult.servicios.filter((s) => s.tipo === "hotel"),
+        totalesPorAcomodacion: opResult.totalesPorAcomodacion as Partial<
+          Record<Acomodacion, number>
+        >,
+      };
+    }).filter((op): op is NonNullable<typeof op> => op !== null);
+    if (opcionesHoteleras.length === 0) opcionesHoteleras = undefined;
+  }
+
   return {
     fechaEmision: fmtFecha(todayIso()),
     destino: deriveDestino(hoteles),
@@ -330,6 +370,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     idioma,
     T,
     personalizarTraslados: input.personalizarTraslados !== false,
+    opcionesHoteleras,
   };
 }
 
@@ -1076,6 +1117,13 @@ function buildPackageView(d: PropuestaData): string {
         const regimenFmt = formatRegimen(h.desayuno);
         const rowBg = idx % 2 === 0 ? "#ffffff" : C_HDR_BG;
 
+        // Resolve option name + per-option totals (when opcionesHoteleras is available)
+        const matchingOp = d.opcionesHoteleras?.find((op) =>
+          op.hoteles.some((oh) => oh.id === h.id || oh.nombre === h.nombre),
+        );
+        const opTotales = matchingOp?.totalesPorAcomodacion ?? d.result.totalesPorAcomodacion;
+        const opLabel = matchingOp ? escape(matchingOp.nombre) : `Opci&#243;n ${idx + 1}`;
+
         // NOCHE ADICIONAL column: per-hotel per-night rate
         const nocheLinesHtml = acoms
           .map(
@@ -1086,19 +1134,19 @@ function buildPackageView(d: PropuestaData): string {
           )
           .join("");
 
-        // PRECIO FINAL PAQUETE column: global package total — prominent
+        // PRECIO FINAL PAQUETE column: per-option total (corrected when opcionesHoteleras available)
         const priceLinesHtml = acoms
           .map(
             (a) =>
               `<div style="font-size:15px;font-weight:800;color:${C_DARK};line-height:2.0;">` +
               `<span style="font-weight:700;color:${C_LBL};font-size:10px;text-transform:uppercase;width:36px;display:inline-block;">${escape(String(a))}:</span>` +
-              ` USD ${escape(fmt(d.result.totalesPorAcomodacion[a] ?? 0))}</div>`,
+              ` USD ${escape(fmt((opTotales as Record<string, number>)[String(a)] ?? 0))}</div>`,
           )
           .join("");
 
         return `<tr style="background:${rowBg};page-break-inside:avoid;">
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;white-space:nowrap;">
-            <div style="font-weight:700;color:${C_BLUE};font-size:13px;">Opci&#243;n ${idx + 1}</div>
+            <div style="font-weight:700;color:${C_BLUE};font-size:13px;">${opLabel}</div>
           </td>
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">
             <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>

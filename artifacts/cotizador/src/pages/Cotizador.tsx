@@ -204,6 +204,12 @@ export default function CotizadorPage() {
   const [highlightedServiceId, setHighlightedServiceId] = useState<string | null>(null);
   const [searchResetKey, setSearchResetKey] = useState(0);
 
+  const DEFAULT_OP_ID = "op1";
+  const [opcionesPaquete, setOpcionesPaquete] = useState<Array<{id: string; nombre: string}>>(
+    [{ id: DEFAULT_OP_ID, nombre: "Opción 1" }],
+  );
+  const [activeOpcionPaquete, setActiveOpcionPaquete] = useState(DEFAULT_OP_ID);
+
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   useEffect(() => {
@@ -695,6 +701,8 @@ export default function CotizadorPage() {
               prioridad: autoPriority,
               ultimoSeguimiento: now,
               historial: [...(g.historial ?? []), { fecha: now, tipo: "editada" as const }],
+              presentationMode,
+              opcionesPaquete: opcionesPaquete.length > 1 ? [...opcionesPaquete] : undefined,
             }
           : g,
       );
@@ -762,6 +770,8 @@ export default function CotizadorPage() {
         valorCotizacion: total,
         ultimoSeguimiento: now,
         historial: [{ fecha: now, tipo: "creada" }],
+        presentationMode,
+        opcionesPaquete: opcionesPaquete.length > 1 ? [...opcionesPaquete] : undefined,
       };
       const item = { ...base, estadoCRM: computeAutoEstado(base) };
       const next = [item, ...guardadas].slice(0, 30);
@@ -891,6 +901,8 @@ export default function CotizadorPage() {
     setSavedOppId(null);
     setObservacionesSeleccionadas([]);
     setObservacionManual("");
+    setOpcionesPaquete([{ id: DEFAULT_OP_ID, nombre: "Opción 1" }]);
+    setActiveOpcionPaquete(DEFAULT_OP_ID);
   };
 
   const ROOM_PAX_MAP: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
@@ -924,17 +936,46 @@ export default function CotizadorPage() {
     setQuotingMode(newMode);
   };
 
+  const handleAddOpcion = () => {
+    const nextIdx = opcionesPaquete.length + 1;
+    const newId = `op${Date.now()}`;
+    setOpcionesPaquete((prev) => [...prev, { id: newId, nombre: `Opción ${nextIdx}` }]);
+    setActiveOpcionPaquete(newId);
+  };
+
+  const handleRenameOpcion = (id: string, nombre: string) => {
+    setOpcionesPaquete((prev) =>
+      prev.map((op) => (op.id === id ? { ...op, nombre } : op)),
+    );
+  };
+
+  const handleDeleteOpcion = (id: string) => {
+    const remaining = opcionesPaquete.filter((op) => op.id !== id);
+    if (remaining.length === 0) return;
+    setOpcionesPaquete(remaining);
+    setServicios((prev) => prev.filter((s) => s.paqueteOpcionId !== id));
+    if (activeOpcionPaquete === id) {
+      setActiveOpcionPaquete(remaining[0].id);
+    }
+  };
+
   const handleQuickAdd = (s: ServicioSeleccionado) => {
+    const isHotelInPaquete = s.tipo === "hotel" && presentationMode === "package";
+    const instanceId = isHotelInPaquete ? `${s.id}__${activeOpcionPaquete}` : s.id;
+    const enriched: ServicioSeleccionado = isHotelInPaquete
+      ? { ...s, id: instanceId, codigo: s.codigo ?? s.id, paqueteOpcionId: activeOpcionPaquete }
+      : s;
+
     setServicios((prev) => {
-      const exists = prev.some((x) => x.tipo === s.tipo && x.id === s.id);
+      const exists = prev.some((x) => x.tipo === enriched.tipo && x.id === enriched.id);
       if (exists)
-        return prev.map((x) => (x.tipo === s.tipo && x.id === s.id ? s : x));
-      return [...prev, s];
+        return prev.map((x) => (x.tipo === enriched.tipo && x.id === enriched.id ? enriched : x));
+      return [...prev, enriched];
     });
-    setHighlightedServiceId(s.id);
+    setHighlightedServiceId(enriched.id);
     showToast(customEditing ? "Servicio actualizado" : "Servicio agregado");
     window.setTimeout(() => {
-      setHighlightedServiceId((curr) => (curr === s.id ? null : curr));
+      setHighlightedServiceId((curr) => (curr === enriched.id ? null : curr));
     }, 1500);
   };
 
@@ -984,6 +1025,13 @@ export default function CotizadorPage() {
     setSavedOppId(opp?.id ?? null);
     setObservacionesSeleccionadas(g.observacionesSeleccionadas ?? []);
     setObservacionManual(g.observacionManual ?? "");
+    if (g.opcionesPaquete && g.opcionesPaquete.length > 0) {
+      setOpcionesPaquete(g.opcionesPaquete);
+      setActiveOpcionPaquete(g.opcionesPaquete[0].id);
+    } else {
+      setOpcionesPaquete([{ id: DEFAULT_OP_ID, nombre: "Opción 1" }]);
+      setActiveOpcionPaquete(DEFAULT_OP_ID);
+    }
     setView("cotizador");
   };
   const seguimientoDelete = (id: string) => {
@@ -1292,6 +1340,13 @@ export default function CotizadorPage() {
                   observaciones={observacionManual}
                   onObservacionesChange={setObservacionManual}
                   personalizarTraslados={personalizarTraslados}
+                  presentationMode={presentationMode}
+                  opcionesPaquete={opcionesPaquete}
+                  activeOpcionPaquete={activeOpcionPaquete}
+                  onActiveOpcionChange={setActiveOpcionPaquete}
+                  onAddOpcion={handleAddOpcion}
+                  onRenameOpcion={handleRenameOpcion}
+                  onDeleteOpcion={handleDeleteOpcion}
                 />
                 {incluirItinerario && (
                   <Itinerario
@@ -1355,6 +1410,7 @@ export default function CotizadorPage() {
                   onSaveToSeguimiento={() => handleSave({ silent: true })}
                   getNumeroCotizacion={getOrCreateNumero}
                   idioma={idioma}
+                  opcionesPaquete={opcionesPaquete}
                 />
                 {servicios.length > 0 && (
                   <button
@@ -1427,6 +1483,7 @@ export default function CotizadorPage() {
         onActividadesOverrideChange={setActividadesOverride}
         numeroCotizacion={previewNumero}
         idioma={idioma}
+        opcionesPaquete={previewQuote?.opcionesPaquete ?? opcionesPaquete}
         observaciones={previewQuote
           ? resolveObservaciones(
               observacionesCatalog,
