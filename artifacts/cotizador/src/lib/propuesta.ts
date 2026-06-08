@@ -144,7 +144,7 @@ function renderNotasHTML(
       .map((n) => {
         const imp = n.type === "important" || n.important === true;
         return imp
-          ? `<div style="font-size:12px;color:#ef7b15;font-weight:700;margin-top:4px;">★ ${escape(n.text)}</div>`
+          ? `<div style="border-left:3px solid #EF7B15;padding-left:6px;font-size:12px;color:#ef7b15;font-weight:600;margin-top:4px;">${escape(n.text)}</div>`
           : `<div style="${styleNormal}margin-top:3px;">• ${escape(n.text)}</div>`;
       })
       .join("");

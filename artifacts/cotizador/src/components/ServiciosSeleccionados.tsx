@@ -1447,18 +1447,18 @@ function NoteItem({
   const [editOpen, setEditOpen] = useState(false);
 
   return (
-    <div className="group/note flex items-start gap-1 min-w-0">
+    <div className="group/note flex items-start gap-1.5 min-w-0">
       {imp ? (
-        <Flag
-          className="w-2.5 h-2.5 flex-shrink-0 mt-[2px]"
-          style={{ color: "#ef7b15" }}
+        <div
+          className="flex-shrink-0 self-stretch rounded-sm"
+          style={{ width: 2, backgroundColor: "#EF7B15", minHeight: 14 }}
         />
       ) : (
         <span className="text-slate-400 flex-shrink-0 text-[10px] leading-[1.6]">•</span>
       )}
       <span
         className="text-[11px] leading-snug flex-1 min-w-0 break-words"
-        style={{ color: imp ? "#ef7b15" : "#475569", fontWeight: imp ? 700 : 400 }}
+        style={{ color: imp ? "#ef7b15" : "#475569", fontWeight: imp ? 600 : 400 }}
       >
         {note.text}
       </span>
