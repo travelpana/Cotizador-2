@@ -28,6 +28,48 @@ const SEED_USERS: SeedUser[] = [
     activo: true,
   },
   {
+    nombre: "Jonathan",
+    username: "jonathan",
+    password: "4827",
+    activo: true,
+  },
+  {
+    nombre: "Johana",
+    username: "johana",
+    password: "9153",
+    activo: true,
+  },
+  {
+    nombre: "Melisa",
+    username: "melisa",
+    password: "6482",
+    activo: true,
+  },
+  {
+    nombre: "Gabriela",
+    username: "gabriela",
+    password: "3719",
+    activo: true,
+  },
+  {
+    nombre: "Ruth",
+    username: "ruth",
+    password: "8246",
+    activo: true,
+  },
+  {
+    nombre: "Yeni",
+    username: "yeni",
+    password: "5931",
+    activo: true,
+  },
+  {
+    nombre: "Annie",
+    username: "annie",
+    password: "7164",
+    activo: true,
+  },
+  {
     nombre: "María González",
     username: "maria",
     password: "maria2025",
@@ -55,7 +97,10 @@ export async function seedUsers(): Promise<void> {
 
       // Check by username (primary) or by correo (for migrated users)
       const conditions = u.correo
-        ? or(eq(usuariosTable.username, username), eq(usuariosTable.correo, u.correo.trim().toLowerCase()))
+        ? or(
+            eq(usuariosTable.username, username),
+            eq(usuariosTable.correo, u.correo.trim().toLowerCase()),
+          )
         : eq(usuariosTable.username, username);
 
       const [existing] = await db
