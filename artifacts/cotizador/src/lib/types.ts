@@ -89,6 +89,9 @@ export interface ServicioSeleccionado {
   }>;
   /** In Paquete mode: which hotel option this hotel belongs to (e.g. "op1", "op2") */
   paqueteOpcionId?: string;
+  /** Duplicated service marker — only used in the UI panel, never exported */
+  isDuplicate?: boolean;
+  duplicatedFromId?: string;
 }
 
 export interface Descriptivo {

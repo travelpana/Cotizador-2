@@ -156,6 +156,8 @@ export default function ServiciosSeleccionados({
     const newId = `${s.id}-dup-${Date.now()}`;
     copy.id = newId;
     copy.codigo = newId;
+    copy.isDuplicate = true;
+    copy.duplicatedFromId = s.id;
     const idx = servicios.findIndex((x) => x.tipo === s.tipo && x.id === s.id);
     const newList = [...servicios];
     newList.splice(idx + 1, 0, copy);
@@ -381,11 +383,10 @@ export default function ServiciosSeleccionados({
                   displayItems.map((s) => {
                     const rowKey = `${s.tipo}-${s.id}`;
                     const dragKey = `${s.tipo}|${s.id}`;
-                    const isDuplicate = s.id.includes("-dup-");
                     return (
                       <div
                         key={rowKey}
-                        style={isDuplicate ? { background: "rgba(4, 25, 65, 0.035)" } : undefined}
+                        style={s.isDuplicate ? { background: "rgba(4, 25, 65, 0.035)" } : undefined}
                       >
                         <ServicioRow
                           servicio={s}
@@ -830,6 +831,20 @@ function ServicioRow({
             title="Clic para editar el nombre"
           >
             <span className="text-sm font-semibold text-slate-900 truncate">{titleLabel}</span>
+            {servicio.isDuplicate && (
+              <span style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: "#dbeafe",
+                color: "#1e40af",
+                borderRadius: 999,
+                padding: "1px 8px",
+                flexShrink: 0,
+                letterSpacing: "0.03em",
+              }}>
+                COPIA
+              </span>
+            )}
             {!isHotel && (
               <button
                 type="button"
