@@ -102,14 +102,11 @@ export default function Login() {
               fontSize: 20,
               fontWeight: 700,
               color: "#07152f",
-              marginBottom: 6,
+              marginBottom: 28,
             }}
           >
             Bienvenido
           </h1>
-          <p style={{ textAlign: "center", fontSize: 13, color: "#64748b", marginBottom: 28 }}>
-            Ingresa tus credenciales para continuar
-          </p>
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginBottom: 16 }}>
@@ -125,7 +122,7 @@ export default function Login() {
                 spellCheck={false}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Ej: maria"
+                placeholder=""
                 style={inputStyle}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#004FBB";
@@ -148,7 +145,7 @@ export default function Login() {
                 autoComplete="current-password"
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
-                placeholder="••••••••"
+                placeholder=""
                 style={inputStyle}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#004FBB";
@@ -203,9 +200,6 @@ export default function Login() {
             </button>
           </form>
 
-          <p style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginTop: 24 }}>
-            RGE Style Travel · Sistema interno
-          </p>
         </div>
       </div>
     </div>
