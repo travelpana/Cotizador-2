@@ -478,33 +478,16 @@ function AgentesSection({
         </div>
       )}
 
-      {deleteConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
-        >
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <div className="text-sm font-semibold text-slate-900 mb-1">¿Eliminar agente?</div>
-            <div className="text-xs text-slate-500 mb-4">Esta acción no se puede deshacer.</div>
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(deleteConfirm)}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {deleteConfirm && (() => {
+        const agenteAEliminar = mine.find((a) => a.id === deleteConfirm);
+        return (
+          <DeleteAgenteModal
+            nombre={agenteAEliminar?.nombre ?? ""}
+            onConfirm={() => handleDelete(deleteConfirm)}
+            onClose={() => setDeleteConfirm(null)}
+          />
+        );
+      })()}
 
       {agenteModal.open && (
         <AgenteModal
@@ -514,6 +497,82 @@ function AgentesSection({
           onClose={() => setAgenteModal({ open: false })}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Delete Agent Confirmation Modal ──────────────────────────────────────────
+
+function DeleteAgenteModal({
+  nombre,
+  onConfirm,
+  onClose,
+}: {
+  nombre: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2 font-bold text-slate-900">
+            <span className="text-lg leading-none">⚠️</span>
+            Eliminar agente
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-5 space-y-3">
+          <p className="text-sm text-slate-700">
+            ¿Está seguro de que desea eliminar al agente{" "}
+            <span className="font-semibold text-slate-900">"{nombre}"</span>?
+          </p>
+          <p className="text-xs text-slate-500 font-medium">
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-2 justify-end px-5 py-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
+            style={{ backgroundColor: "#dc2626" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
+          >
+            Eliminar agente
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
