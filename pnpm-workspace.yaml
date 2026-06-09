@@ -157,3 +157,31 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+
+  # ============================================================================
+  # SECURITY: Vulnerability fixes via dependency overrides
+  # ============================================================================
+  # picomatch ReDoS via extglob quantifiers (GHSA-c2c7-rcm5-vvqj, GHSA-3v7f-55p6-f55p)
+  "picomatch@^2": "^2.3.2"
+  "picomatch@^4": "^4.0.4"
+  # path-to-regexp DoS via sequential optional groups / multiple wildcards
+  # (GHSA-j3q9-mxjg-w52f, GHSA-27v5-c462-wpq7)
+  "path-to-regexp@^8": "^8.4.0"
+  # fast-uri path traversal / host confusion (GHSA-q3j6-qgpj-74h6, GHSA-v39h-62p7-jpjc)
+  "fast-uri": "^3.1.1"
+  # lodash code injection / prototype pollution (GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh)
+  "lodash": "^4.18.0"
+  # basic-ftp vulnerability (GHSA-rpmf-866q-6p89)
+  "basic-ftp": "^5.3.1"
+  # yaml stack overflow via deeply nested collections (GHSA-48c2-rrv3-qjmp)
+  "yaml@^2": "^2.8.3"
+  # ws uninitialized memory disclosure (GHSA-58qx-3vcg-4xpx)
+  "ws@^8": "^8.20.1"
+  # brace-expansion ReDoS (GHSA-f886-m6hf-6m8v)
+  "brace-expansion@^2": "^2.0.3"
+  # qs DoS via stringify crash (GHSA-q8mj-m7cp-5q26)
+  "qs": "^6.15.2"
+  # postcss XSS via unescaped </style> (GHSA-qx2v-qp2m-jg93)
+  "postcss": "^8.5.10"
+  # ip-address XSS in Address6 HTML methods (GHSA-v2v4-37r5-5v8g)
+  "ip-address": "^10.1.1"
