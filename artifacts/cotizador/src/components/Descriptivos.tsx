@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Copy,
@@ -16,6 +16,7 @@ import {
   duplicarDescriptivo,
   fromDescriptivo,
   loadDescriptivosLS,
+  loadDescriptivosLSAsync,
   newDescriptivoLocal,
   saveDescriptivosLS,
 } from "@/lib/descriptivos";
@@ -41,16 +42,17 @@ function formatDate(iso: string) {
 }
 
 export default function Descriptivos({ apiDescriptivos, onChanged }: Props) {
-  const [items, setItems] = useState<DescriptivoLocal[]>(loadDescriptivosLS);
+  const [items, setItems] = useState<DescriptivoLocal[]>(() => loadDescriptivosLS());
   const [editing, setEditing] = useState<DescriptivoLocal | null>(null);
+  useEffect(() => { loadDescriptivosLSAsync().then(setItems); }, []);
   const [query, setQuery] = useState("");
   const [filterCat, setFilterCat] = useState("Todos");
   const [filterStatus, setFilterStatus] = useState<"todos" | "activo" | "inactivo">("todos");
 
   const persist = (next: DescriptivoLocal[]) => {
-    saveDescriptivosLS(next);
     setItems(next);
     onChanged();
+    void saveDescriptivosLS(next);
   };
 
   const handleSave = (d: DescriptivoLocal) => {

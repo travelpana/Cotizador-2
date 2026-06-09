@@ -1,4 +1,6 @@
 import type { Hotel, ServicioSeleccionado, Tour, Traslado } from "@/lib/types";
+import { apiAuth } from "@/lib/api-auth";
+import { queryClient } from "@/lib/queryClient";
 
 export type PlantillaBlockTipo =
   | "titulo"
@@ -71,7 +73,6 @@ export interface PlantillaLoadResult {
   noEncontrados: { tipo: string; nombre: string }[];
 }
 
-const LS_KEY = "rge_plantillas_v1";
 const LS_RECIENTES_KEY = "rge_plantillas_recientes_v1";
 const LS_FAVORITAS_KEY = "rge_plantillas_favoritas_v1";
 const MAX_RECIENTES = 5;
@@ -110,17 +111,25 @@ export function toggleFavorita(id: string): string[] {
 }
 
 export function loadPlantillas(): Plantilla[] {
+  return queryClient.getQueryData<Plantilla[]>(["plantillas"]) ?? [];
+}
+
+export async function loadPlantillasAsync(): Promise<Plantilla[]> {
+  const cached = queryClient.getQueryData<Plantilla[]>(["plantillas"]);
+  if (cached) return cached;
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as Plantilla[];
-  } catch {
+    const data = await apiAuth.plantillas.list() as Plantilla[];
+    queryClient.setQueryData(["plantillas"], data);
+    return data;
+  } catch (err) {
+    console.error("[plantillas] Error cargando:", err);
     return [];
   }
 }
 
 export function savePlantillas(items: Plantilla[]): void {
-  localStorage.setItem(LS_KEY, JSON.stringify(items));
+  queryClient.setQueryData(["plantillas"], items);
+  apiAuth.plantillas.bulkSync(items).catch(console.error);
 }
 
 let _counter = 0;

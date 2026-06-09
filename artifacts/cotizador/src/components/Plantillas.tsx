@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   Bus,
@@ -16,6 +16,7 @@ import {
   buildServiciosFromPlantilla,
   duplicarPlantilla,
   loadPlantillas,
+  loadPlantillasAsync,
   newPlantilla,
   savePlantillas,
 } from "@/lib/plantillas";
@@ -78,7 +79,8 @@ export default function Plantillas({
   traslados,
   onUsarPlantilla,
 }: Props) {
-  const [plantillas, setPlantillas] = useState<Plantilla[]>(loadPlantillas);
+  const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
+  useEffect(() => { loadPlantillasAsync().then(setPlantillas); }, []);
   const [editor, setEditor] = useState<EditorMode | null>(null);
   const [usandoId, setUsandoId] = useState<string | null>(null);
 

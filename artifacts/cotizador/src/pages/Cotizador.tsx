@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Sidebar, { type View } from "@/components/Sidebar";
 import ClientForm, { AlojamientoBar } from "@/components/ClientForm";
 import ServicioFormModal, {
@@ -19,9 +20,10 @@ import Tarifas from "@/components/Tarifas";
 import Respaldos from "@/components/Respaldos";
 import Agencias from "@/components/Agencias";
 import ToastStack, { type ToastItem, type ToastTone } from "@/components/ToastStack";
-import { loadObservaciones, resolveObservaciones } from "@/lib/observaciones";
+import { loadObservaciones, loadObservacionesAsync, resolveObservaciones } from "@/lib/observaciones";
 import {
   loadGuardadas,
+  loadGuardadasAsync,
   saveGuardadas,
   guardarEnSeguimiento,
   generateNumeroCotizacion,
@@ -29,6 +31,7 @@ import {
   registrarActividad,
   computeAutoEstado,
   loadOpportunities,
+  loadOpportunitiesAsync,
   saveOpportunities,
   upsertOpportunity,
   updateOpportunity,
@@ -45,6 +48,7 @@ import {
 } from "@/components/Guardadas";
 import {
   loadPlantillas,
+  loadPlantillasAsync,
   savePlantillas,
   serviciosToBlocks,
   newPlantilla,
@@ -53,12 +57,16 @@ import {
 } from "@/lib/plantillas";
 import {
   loadDescriptivosLS,
+  loadDescriptivosLSAsync,
   mergeDescriptivos,
 } from "@/lib/descriptivos";
 import {
   loadHotelesLS,
+  loadHotelesLSAsync,
   loadToursLS,
+  loadToursLSAsync,
   loadTrasladosLS,
+  loadTrasladosLSAsync,
   mergeHoteles,
   mergeTours,
   mergeTraslados,
@@ -179,7 +187,11 @@ export default function CotizadorPage() {
     string[]
   >([]);
   const [observacionManual, setObservacionManual] = useState("");
-  const observacionesCatalog = useMemo(() => loadObservaciones(), []);
+  const { data: observacionesCatalog = loadObservaciones() } = useQuery({
+    queryKey: ["observaciones"],
+    queryFn: loadObservacionesAsync,
+    placeholderData: loadObservaciones,
+  });
   const resolvedObservaciones = useMemo(
     () =>
       resolveObservaciones(
@@ -215,42 +227,45 @@ export default function CotizadorPage() {
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   useEffect(() => {
-    setGuardadas(loadGuardadas());
-    setOpportunities(loadOpportunities());
+    loadGuardadasAsync().then(setGuardadas);
+    loadOpportunitiesAsync().then(setOpportunities);
   }, []);
 
-  const [plantillasCount, setPlantillasCount] = useState(
-    () => loadPlantillas().length,
-  );
+  const [plantillasCount, setPlantillasCount] = useState(0);
+  useEffect(() => { loadPlantillasAsync().then((items) => setPlantillasCount(items.length)); }, []);
 
   const refreshPlantillasCount = () => {
     setPlantillasCount(loadPlantillas().length);
   };
 
-  const [lsDescriptivosVersion, setLsDescriptivosVersion] = useState(0);
-  const handleDescriptivosChanged = () => {
-    setLsDescriptivosVersion((v) => v + 1);
-  };
+  const { data: lsDescriptivos = loadDescriptivosLS() } = useQuery({
+    queryKey: ["descriptivos-custom"],
+    queryFn: loadDescriptivosLSAsync,
+    placeholderData: loadDescriptivosLS,
+  });
+  const handleDescriptivosChanged = () => {}; // no-op: React Query cache update triggers re-render
 
-  const mergedDescriptivos = useMemo(() => {
-    const lsItems = loadDescriptivosLS();
-    return mergeDescriptivos(lsItems, descriptivos);
-  }, [descriptivos, lsDescriptivosVersion]);
+  const mergedDescriptivos = useMemo(
+    () => mergeDescriptivos(lsDescriptivos, descriptivos),
+    [descriptivos, lsDescriptivos],
+  );
 
-  const [lsTarifasVersion, setLsTarifasVersion] = useState(0);
-  const handleTarifasChanged = () => setLsTarifasVersion((v) => v + 1);
+  const { data: hotelesLS = loadHotelesLS() } = useQuery({ queryKey: ["tarifas-hoteles"], queryFn: loadHotelesLSAsync, placeholderData: loadHotelesLS });
+  const { data: toursLS = loadToursLS() } = useQuery({ queryKey: ["tarifas-tours"], queryFn: loadToursLSAsync, placeholderData: loadToursLS });
+  const { data: trasladosLS = loadTrasladosLS() } = useQuery({ queryKey: ["tarifas-traslados"], queryFn: loadTrasladosLSAsync, placeholderData: loadTrasladosLS });
+  const handleTarifasChanged = () => {}; // no-op: React Query cache update triggers re-render
 
   const mergedHoteles = useMemo(
-    () => mergeHoteles(loadHotelesLS(), hoteles),
-    [hoteles, lsTarifasVersion],
+    () => mergeHoteles(hotelesLS, hoteles),
+    [hoteles, hotelesLS],
   );
   const mergedTours = useMemo(
-    () => mergeTours(loadToursLS(), tours),
-    [tours, lsTarifasVersion],
+    () => mergeTours(toursLS, tours),
+    [tours, toursLS],
   );
   const mergedTraslados = useMemo(
-    () => mergeTraslados(loadTrasladosLS(), traslados),
-    [traslados, lsTarifasVersion],
+    () => mergeTraslados(trasladosLS, traslados),
+    [traslados, trasladosLS],
   );
 
   const langFallback =
@@ -728,7 +743,7 @@ export default function CotizadorPage() {
       if (updatedQuote) {
         const targetOppId =
           savedOppId ??
-          loadOpportunities().find((o) => o.quotes.some((q) => q.id === savedId))?.id;
+          opportunities.find((o) => o.quotes.some((q) => q.id === savedId))?.id;
 
         let nextOpps = targetOppId
           ? updateOpportunity(targetOppId, {

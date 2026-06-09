@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import {
   loadAgencias,
+  loadAgenciasAsync,
   saveAgencias,
   loadAgentes,
+  loadAgentesAsync,
   saveAgentes,
   type Agencia,
   type AgenteAgencia,
@@ -680,21 +682,21 @@ export default function Agencias() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    setAgencias(loadAgencias());
-    setAgentes(loadAgentes());
+    loadAgenciasAsync().then(setAgencias);
+    loadAgentesAsync().then(setAgentes);
   }, []);
 
-  const persistAgencias = (list: Agencia[]) => {
-    saveAgencias(list);
+  const persistAgencias = async (list: Agencia[]) => {
     setAgencias(list);
+    await saveAgencias(list);
   };
 
-  const persistAgentes = (list: AgenteAgencia[]) => {
-    saveAgentes(list);
+  const persistAgentes = async (list: AgenteAgencia[]) => {
     setAgentes(list);
+    await saveAgentes(list);
   };
 
-  const handleSave = (a: Agencia) => {
+  const handleSave = async (a: Agencia) => {
     let updated = agencias.map((x) => (x.id === a.id ? a : x));
     if (agencias.findIndex((x) => x.id === a.id) < 0) {
       updated = [...agencias, a];
@@ -702,13 +704,13 @@ export default function Agencias() {
     if (a.predeterminada) {
       updated = updated.map((x) => (x.id === a.id ? x : { ...x, predeterminada: false }));
     }
-    persistAgencias(updated);
+    await persistAgencias(updated);
     setModal({ open: false });
   };
 
-  const handleDelete = (id: string) => {
-    persistAgencias(agencias.filter((a) => a.id !== id));
-    persistAgentes(agentes.filter((a) => a.agenciaId !== id));
+  const handleDelete = async (id: string) => {
+    await persistAgencias(agencias.filter((a) => a.id !== id));
+    await persistAgentes(agentes.filter((a) => a.agenciaId !== id));
     setDeleteConfirm(null);
   };
 

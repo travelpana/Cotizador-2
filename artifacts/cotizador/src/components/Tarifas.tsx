@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Copy,
   Download,
@@ -29,8 +29,11 @@ import {
   exportarRespaldo,
   hotelFromApi,
   loadHotelesLS,
+  loadHotelesLSAsync,
   loadToursLS,
+  loadToursLSAsync,
   loadTrasladosLS,
+  loadTrasladosLSAsync,
   newHotelLocal,
   newTourLocal,
   newTrasladoLocal,
@@ -146,9 +149,10 @@ function HotelesTab({
   newRef?: React.MutableRefObject<() => void>;
 }) {
   const activeApiHoteles = importMercado === "brasil" ? (apiHotelesBrasil ?? []) : apiHoteles;
-  const [items, setItems] = useState<HotelLocal[]>(loadHotelesLS);
+  const [items, setItems] = useState<HotelLocal[]>(() => loadHotelesLS());
   const [editing, setEditing] = useState<HotelLocal | null>(null);
   const [query, setQuery] = useState("");
+  useEffect(() => { loadHotelesLSAsync().then(setItems); }, []);
   const filtered = query.trim()
     ? items.filter(h => `${h.nombre} ${h.codigo ?? ""}`.toLowerCase().includes(query.toLowerCase()))
     : items;
@@ -327,8 +331,9 @@ function ToursTab({
   newRef?: React.MutableRefObject<() => void>;
 }) {
   const activeApiTours = importMercado === "brasil" ? (apiToursBrasil ?? []) : apiTours;
-  const [items, setItems] = useState<TourLocal[]>(loadToursLS);
+  const [items, setItems] = useState<TourLocal[]>(() => loadToursLS());
   const [editing, setEditing] = useState<TourLocal | null>(null);
+  useEffect(() => { loadToursLSAsync().then(setItems); }, []);
 
   const persist = (next: TourLocal[]) => { saveToursLS(next); setItems(next); onChanged(); };
 
@@ -483,9 +488,10 @@ function TrasladosTab({
   newRef?: React.MutableRefObject<() => void>;
 }) {
   const activeApiTraslados = importMercado === "brasil" ? (apiTrasladosBrasil ?? []) : apiTraslados;
-  const [items, setItems] = useState<TrasladoLocal[]>(loadTrasladosLS);
+  const [items, setItems] = useState<TrasladoLocal[]>(() => loadTrasladosLS());
   const [editing, setEditing] = useState<TrasladoLocal | null>(null);
   const [query, setQuery] = useState("");
+  useEffect(() => { loadTrasladosLSAsync().then(setItems); }, []);
   const filtered = query.trim()
     ? items.filter(t => `${t.nombre} ${t.codigo ?? ""}`.toLowerCase().includes(query.toLowerCase()))
     : items;

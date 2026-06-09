@@ -31,7 +31,7 @@ import type {
 } from "./Guardadas";
 import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
 import { exportarCotizacionesExcel } from "@/lib/exportExcel";
-import { loadAgencias, type Agencia } from "@/lib/agencias";
+import { loadAgenciasAsync, type Agencia } from "@/lib/agencias";
 import OportunidadDetailPanel from "./OportunidadDetailPanel";
 import { useAuth } from "@/lib/auth";
 
@@ -578,7 +578,7 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   const [agencias, setAgencias] = useState<Agencia[]>([]);
   const [openOppId, setOpenOppId] = useState<string | null>(null);
 
-  useEffect(() => { setAgencias(loadAgencias()); }, []);
+  useEffect(() => { loadAgenciasAsync().then(setAgencias); }, []);
 
   const agenciasMap = useMemo(() => {
     const map = new Map<string, Agencia>();

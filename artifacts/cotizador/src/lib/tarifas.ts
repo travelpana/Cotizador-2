@@ -1,4 +1,6 @@
 import type { Hotel, Tour, Traslado } from "@/lib/types";
+import { apiAuth } from "@/lib/api-auth";
+import { queryClient } from "@/lib/queryClient";
 
 /* ─── Extended local types ─── */
 
@@ -27,12 +29,6 @@ export interface TrasladoLocal extends Traslado {
   updatedAt: string;
 }
 
-/* ─── Storage keys ─── */
-
-const LS_HOTELES = "rge_tarifas_hoteles_v1";
-const LS_TOURS = "rge_tarifas_tours_v1";
-const LS_TRASLADOS = "rge_tarifas_traslados_v1";
-
 /* ─── ID generator ─── */
 
 let _cnt = 0;
@@ -40,27 +36,63 @@ function uid(prefix: string) {
   return `${prefix}_${Date.now()}_${++_cnt}`;
 }
 
-/* ─── Load / Save ─── */
+/* ─── Load / Save (API-backed, cache-first) ─── */
 
 export function loadHotelesLS(): HotelLocal[] {
-  try { return JSON.parse(localStorage.getItem(LS_HOTELES) ?? "[]"); } catch { return []; }
+  return queryClient.getQueryData<HotelLocal[]>(["tarifas-hoteles"]) ?? [];
 }
+
+export async function loadHotelesLSAsync(): Promise<HotelLocal[]> {
+  const cached = queryClient.getQueryData<HotelLocal[]>(["tarifas-hoteles"]);
+  if (cached) return cached;
+  try {
+    const data = await apiAuth.tarifas.listHoteles() as HotelLocal[];
+    queryClient.setQueryData(["tarifas-hoteles"], data);
+    return data;
+  } catch (err) { console.error("[tarifas/hoteles] load:", err); return []; }
+}
+
 export function saveHotelesLS(items: HotelLocal[]) {
-  localStorage.setItem(LS_HOTELES, JSON.stringify(items));
+  queryClient.setQueryData(["tarifas-hoteles"], items);
+  apiAuth.tarifas.bulkSyncHoteles(items).catch(console.error);
 }
 
 export function loadToursLS(): TourLocal[] {
-  try { return JSON.parse(localStorage.getItem(LS_TOURS) ?? "[]"); } catch { return []; }
+  return queryClient.getQueryData<TourLocal[]>(["tarifas-tours"]) ?? [];
 }
+
+export async function loadToursLSAsync(): Promise<TourLocal[]> {
+  const cached = queryClient.getQueryData<TourLocal[]>(["tarifas-tours"]);
+  if (cached) return cached;
+  try {
+    const data = await apiAuth.tarifas.listTours() as TourLocal[];
+    queryClient.setQueryData(["tarifas-tours"], data);
+    return data;
+  } catch (err) { console.error("[tarifas/tours] load:", err); return []; }
+}
+
 export function saveToursLS(items: TourLocal[]) {
-  localStorage.setItem(LS_TOURS, JSON.stringify(items));
+  queryClient.setQueryData(["tarifas-tours"], items);
+  apiAuth.tarifas.bulkSyncTours(items).catch(console.error);
 }
 
 export function loadTrasladosLS(): TrasladoLocal[] {
-  try { return JSON.parse(localStorage.getItem(LS_TRASLADOS) ?? "[]"); } catch { return []; }
+  return queryClient.getQueryData<TrasladoLocal[]>(["tarifas-traslados"]) ?? [];
 }
+
+export async function loadTrasladosLSAsync(): Promise<TrasladoLocal[]> {
+  const cached = queryClient.getQueryData<TrasladoLocal[]>(["tarifas-traslados"]);
+  if (cached) return cached;
+  try {
+    const data = await apiAuth.tarifas.listTraslados() as TrasladoLocal[];
+    queryClient.setQueryData(["tarifas-traslados"], data);
+    return data;
+  } catch (err) { console.error("[tarifas/traslados] load:", err); return []; }
+}
+
 export function saveTrasladosLS(items: TrasladoLocal[]) {
-  localStorage.setItem(LS_TRASLADOS, JSON.stringify(items));
+  queryClient.setQueryData(["tarifas-traslados"], items);
+  apiAuth.tarifas.bulkSyncTraslados(items).catch(console.error);
 }
 
 /* ─── Factory functions ─── */

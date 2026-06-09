@@ -1,4 +1,6 @@
 import type { Acomodacion, Cliente, ServicioSeleccionado } from "@/lib/types";
+import { apiAuth } from "@/lib/api-auth";
+import { queryClient } from "@/lib/queryClient";
 
 export type ModoCotizacion = "tarifas" | "calculo";
 export type PresentationMode = "detailed" | "package";
@@ -140,7 +142,9 @@ export interface CotizacionGuardada {
   opcionesPaquete?: Array<{ id: string; nombre: string }>;
 }
 
-const STORAGE_KEY = "cotizador.guardadas";
+// ─── Module-level caches for diff detection ──────────────────────────────────
+let _guardadasCache: CotizacionGuardada[] = [];
+let _oppCache: Opportunity[] = [];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -230,37 +234,56 @@ function deriveNumeroFromId(id: string): string {
   return generateNumeroCotizacion();
 }
 
+function normalizeGuardada(g: Partial<CotizacionGuardada> & { id: string; fechaCreacion: string; cliente: Cliente; servicios: ServicioSeleccionado[]; acomodaciones: Acomodacion[] }): CotizacionGuardada {
+  const base: CotizacionGuardada = {
+    ...g as CotizacionGuardada,
+    modoCotizacion: g.modoCotizacion ?? "calculo",
+    numeroCotizacion: g.numeroCotizacion || deriveNumeroFromId(g.id),
+    estadoCRM: migrarEstado(g.estadoCRM, (g as unknown as { estado?: EstadoCotizacion }).estado),
+    historial: g.historial ?? [],
+  };
+  return { ...base, estadoCRM: computeAutoEstado(base) };
+}
+
 export function loadGuardadas(): CotizacionGuardada[] {
+  const cached = queryClient.getQueryData<CotizacionGuardada[]>(["guardadas"]);
+  if (cached) { _guardadasCache = cached; return cached; }
+  return _guardadasCache;
+}
+
+export async function loadGuardadasAsync(): Promise<CotizacionGuardada[]> {
+  const cached = queryClient.getQueryData<CotizacionGuardada[]>(["guardadas"]);
+  if (cached) return cached;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const items = JSON.parse(raw) as Array<
-      Partial<CotizacionGuardada> & {
-        id: string;
-        fechaCreacion: string;
-        cliente: Cliente;
-        servicios: ServicioSeleccionado[];
-        acomodaciones: Acomodacion[];
-      }
-    >;
-    return items.map((g) => {
-      const base: CotizacionGuardada = {
-        ...g,
-        modoCotizacion: g.modoCotizacion ?? "calculo",
-        numeroCotizacion: g.numeroCotizacion || deriveNumeroFromId(g.id),
-        estadoCRM: migrarEstado(g.estadoCRM, g.estado),
-        historial: g.historial ?? [],
-      };
-      // Apply automatic state transitions (sticky states preserved inside computeAutoEstado)
-      return { ...base, estadoCRM: computeAutoEstado(base) };
-    });
-  } catch {
-    return [];
+    const raw = await apiAuth.guardadas.list() as Array<Partial<CotizacionGuardada> & { id: string; fechaCreacion: string; cliente: Cliente; servicios: ServicioSeleccionado[]; acomodaciones: Acomodacion[] }>;
+    const data = raw.map(normalizeGuardada);
+    _guardadasCache = data;
+    queryClient.setQueryData(["guardadas"], data);
+    return data;
+  } catch (err) {
+    console.error("[guardadas] Error cargando:", err);
+    return _guardadasCache;
   }
 }
 
 export function saveGuardadas(items: CotizacionGuardada[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  const prev = _guardadasCache;
+  _guardadasCache = items;
+  queryClient.setQueryData(["guardadas"], items);
+
+  // Diff-based background sync
+  const prevMap = new Map(prev.map((g) => [g.id, g]));
+  const newMap = new Map(items.map((g) => [g.id, g]));
+
+  for (const item of items) {
+    const p = prevMap.get(item.id);
+    if (!p || JSON.stringify(p) !== JSON.stringify(item)) {
+      apiAuth.guardadas.save(item).catch(console.error);
+    }
+  }
+  for (const id of prevMap.keys()) {
+    if (!newMap.has(id)) apiAuth.guardadas.remove(id).catch(console.error);
+  }
 }
 
 export function registrarActividad(
@@ -443,20 +466,43 @@ export function getOppUrgency(o: Opportunity): UrgencyLevel {
   return "green";
 }
 
-const OPP_STORAGE_KEY = "cotizador.oportunidades";
-
 export function loadOpportunities(): Opportunity[] {
+  const cached = queryClient.getQueryData<Opportunity[]>(["oportunidades"]);
+  if (cached) { _oppCache = cached; return cached; }
+  return _oppCache;
+}
+
+export async function loadOpportunitiesAsync(): Promise<Opportunity[]> {
+  const cached = queryClient.getQueryData<Opportunity[]>(["oportunidades"]);
+  if (cached) return cached;
   try {
-    const raw = localStorage.getItem(OPP_STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as Opportunity[];
-  } catch {
-    return [];
+    const data = await apiAuth.oportunidades.list() as Opportunity[];
+    _oppCache = data;
+    queryClient.setQueryData(["oportunidades"], data);
+    return data;
+  } catch (err) {
+    console.error("[oportunidades] Error cargando:", err);
+    return _oppCache;
   }
 }
 
 export function saveOpportunities(items: Opportunity[]) {
-  localStorage.setItem(OPP_STORAGE_KEY, JSON.stringify(items));
+  const prev = _oppCache;
+  _oppCache = items;
+  queryClient.setQueryData(["oportunidades"], items);
+
+  const prevMap = new Map(prev.map((o) => [o.id, o]));
+  const newMap = new Map(items.map((o) => [o.id, o]));
+
+  for (const item of items) {
+    const p = prevMap.get(item.id);
+    if (!p || JSON.stringify(p) !== JSON.stringify(item)) {
+      apiAuth.oportunidades.save(item).catch(console.error);
+    }
+  }
+  for (const id of prevMap.keys()) {
+    if (!newMap.has(id)) apiAuth.oportunidades.remove(id).catch(console.error);
+  }
 }
 
 export interface UpsertOpportunityInput {

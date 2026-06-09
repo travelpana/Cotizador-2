@@ -1,62 +1,19 @@
-import { loadPlantillas, savePlantillas } from "@/lib/plantillas";
-import { loadDescriptivosLS, saveDescriptivosLS } from "@/lib/descriptivos";
-import { loadObservaciones, saveObservaciones } from "@/lib/observaciones";
-import {
-  loadHotelesLS,
-  saveHotelesLS,
-  loadToursLS,
-  saveToursLS,
-  loadTrasladosLS,
-  saveTrasladosLS,
-} from "@/lib/tarifas";
-import { loadAgencias, saveAgencias, loadAgentes, saveAgentes } from "@/lib/agencias";
-import {
-  loadGuardadas,
-  saveGuardadas,
-  loadOpportunities,
-  saveOpportunities,
-} from "@/components/Guardadas";
+import { apiAuth } from "@/lib/api-auth";
 
 export type BackupType = "full" | "plantillas";
 
-export interface RgeBackupUser {
-  nombre: string;
-  correo: string;
-}
-
 export interface RgeBackup {
-  version: 2;
+  version: 2 | 3;
   type: BackupType;
   exportedAt: string;
-  activeUser?: RgeBackupUser;
-  plantillas?: ReturnType<typeof loadPlantillas>;
-  descriptivos?: ReturnType<typeof loadDescriptivosLS>;
-  observaciones?: ReturnType<typeof loadObservaciones>;
-  tarifas?: {
-    hoteles: ReturnType<typeof loadHotelesLS>;
-    tours: ReturnType<typeof loadToursLS>;
-    traslados: ReturnType<typeof loadTrasladosLS>;
-  };
-  agencias?: ReturnType<typeof loadAgencias>;
-  agentes?: ReturnType<typeof loadAgentes>;
-  seguimiento?: {
-    guardadas: ReturnType<typeof loadGuardadas>;
-    oportunidades: ReturnType<typeof loadOpportunities>;
-  };
 }
 
-function todayString(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
+export type ImportResult =
+  | { ok: true; tipo: BackupType }
+  | { ok: false; error: string };
 
 function downloadJson(data: unknown, filename: string): void {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
-  });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -67,108 +24,53 @@ function downloadJson(data: unknown, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-function getActiveUserForBackup(): RgeBackupUser | undefined {
+function todayString(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export async function exportarRespaldoCompleto(): Promise<void> {
   try {
-    const raw = localStorage.getItem("cotizador.activeUser");
-    if (!raw) return undefined;
-    const u = JSON.parse(raw) as { nombre?: string; correo?: string };
-    if (u.nombre && u.correo) return { nombre: u.nombre, correo: u.correo };
-    return undefined;
-  } catch {
-    return undefined;
+    const data = await apiAuth.backup.export();
+    downloadJson(data, `RGE_Backup_${todayString()}.json`);
+  } catch (err) {
+    console.error("[backup] Error exportando:", err);
+    alert("Error al exportar el respaldo. Revisa la conexión.");
   }
 }
 
-export function exportarRespaldoCompleto(): void {
-  const backup: RgeBackup = {
-    version: 2,
-    type: "full",
-    exportedAt: new Date().toISOString(),
-    activeUser: getActiveUserForBackup(),
-    plantillas: loadPlantillas(),
-    descriptivos: loadDescriptivosLS(),
-    observaciones: loadObservaciones(),
-    tarifas: {
-      hoteles: loadHotelesLS(),
-      tours: loadToursLS(),
-      traslados: loadTrasladosLS(),
-    },
-    agencias: loadAgencias(),
-    agentes: loadAgentes(),
-    seguimiento: {
-      guardadas: loadGuardadas(),
-      oportunidades: loadOpportunities(),
-    },
-  };
-  downloadJson(backup, `RGE_Backup_${todayString()}.json`);
-}
-
-export function exportarRespaldoPlantillas(): void {
-  const backup: Pick<RgeBackup, "version" | "type" | "exportedAt" | "plantillas"> = {
-    version: 2,
-    type: "plantillas",
-    exportedAt: new Date().toISOString(),
-    plantillas: loadPlantillas(),
-  };
-  downloadJson(backup, `RGE_Plantillas_${todayString()}.json`);
-}
-
-export type ImportResult =
-  | { ok: true; tipo: BackupType }
-  | { ok: false; error: string };
-
-function isValidBackup(data: unknown): data is RgeBackup {
-  if (typeof data !== "object" || data === null) return false;
-  const d = data as Record<string, unknown>;
-  if (d.version !== 1 && d.version !== 2) return false;
-  if (d.type !== "full" && d.type !== "plantillas") return false;
-  if (typeof d.exportedAt !== "string") return false;
-  return true;
+export async function exportarRespaldoPlantillas(): Promise<void> {
+  try {
+    const full = await apiAuth.backup.export() as { plantillas?: unknown[] };
+    const backup = {
+      version: 3,
+      type: "plantillas",
+      exportedAt: new Date().toISOString(),
+      plantillas: full.plantillas ?? [],
+    };
+    downloadJson(backup, `RGE_Plantillas_${todayString()}.json`);
+  } catch (err) {
+    console.error("[backup] Error exportando plantillas:", err);
+    alert("Error al exportar plantillas. Revisa la conexión.");
+  }
 }
 
 export async function importarRespaldo(file: File): Promise<ImportResult> {
   try {
     const text = await file.text();
-    const data = JSON.parse(text);
+    const data = JSON.parse(text) as Record<string, unknown>;
 
-    if (!isValidBackup(data)) {
-      return { ok: false, error: "Archivo de respaldo inválido" };
+    if (!data.version || (data.version !== 2 && data.version !== 3)) {
+      return { ok: false, error: "Archivo de respaldo inválido (versión no reconocida)" };
     }
 
-    if (data.plantillas !== undefined) {
-      savePlantillas(data.plantillas);
-    }
-
-    if (data.type === "full") {
-      if (data.descriptivos !== undefined) {
-        saveDescriptivosLS(data.descriptivos);
-      }
-      if (data.observaciones !== undefined) {
-        saveObservaciones(data.observaciones);
-      }
-      if (data.tarifas !== undefined) {
-        saveHotelesLS(data.tarifas.hoteles ?? []);
-        saveToursLS(data.tarifas.tours ?? []);
-        saveTrasladosLS(data.tarifas.traslados ?? []);
-      }
-      if (data.agencias !== undefined) {
-        saveAgencias(data.agencias);
-      }
-      if (data.agentes !== undefined) {
-        saveAgentes(data.agentes);
-      }
-      if (data.seguimiento !== undefined) {
-        if (data.seguimiento.guardadas !== undefined) {
-          saveGuardadas(data.seguimiento.guardadas);
-        }
-        if (data.seguimiento.oportunidades !== undefined) {
-          saveOpportunities(data.seguimiento.oportunidades);
-        }
-      }
-    }
-
-    return { ok: true, tipo: data.type };
-  } catch {
-    return { ok: false, error: "Archivo de respaldo inválido" };
+    await apiAuth.backup.import(data);
+    return { ok: true, tipo: (data.type as BackupType) ?? "full" };
+  } catch (err) {
+    console.error("[backup] Error importando:", err);
+    return { ok: false, error: "Error al importar el respaldo. Revisa el archivo." };
   }
 }
