@@ -397,7 +397,7 @@ function AutocompleteInput({
   const q = value.trim().toLowerCase();
   const filtered = suggestions
     .filter((s) => !q || s.label.toLowerCase().includes(q))
-    .slice(0, 8);
+    .slice(0, 4);
 
   const showDropdown = open && (filtered.length > 0 || (q.length > 0 && suggestions.length > 0));
 
