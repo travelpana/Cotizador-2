@@ -38,115 +38,94 @@ export function loadCounters(): Counter[] {
   return queryClient.getQueryData<Counter[]>(["counters"]) ?? [];
 }
 
-// ─── Async load (from API, updates cache) ────────────────────────────────────
+// ─── Async load (always from API, keeps cache fresh) ─────────────────────────
 
 export async function loadAgenciasAsync(): Promise<Agencia[]> {
-  const cached = queryClient.getQueryData<Agencia[]>(["agencias"]);
-  if (cached) return cached;
   try {
     const data = await apiAuth.agencias.list() as Agencia[];
     queryClient.setQueryData(["agencias"], data);
     return data;
   } catch (err) {
     console.error("[agencias] Error cargando:", err);
-    return [];
+    return queryClient.getQueryData<Agencia[]>(["agencias"]) ?? [];
   }
 }
 
 export async function loadAgentesAsync(): Promise<AgenteAgencia[]> {
-  const cached = queryClient.getQueryData<AgenteAgencia[]>(["agentes"]);
-  if (cached) return cached;
   try {
     const data = await apiAuth.agentes.list() as AgenteAgencia[];
     queryClient.setQueryData(["agentes"], data);
     return data;
   } catch (err) {
     console.error("[agentes] Error cargando:", err);
-    return [];
+    return queryClient.getQueryData<AgenteAgencia[]>(["agentes"]) ?? [];
   }
 }
 
 export async function loadCountersAsync(): Promise<Counter[]> {
-  const cached = queryClient.getQueryData<Counter[]>(["counters"]);
-  if (cached) return cached;
   try {
     const data = await apiAuth.counters.list() as Counter[];
     queryClient.setQueryData(["counters"], data);
     return data;
   } catch (err) {
     console.error("[counters] Error cargando:", err);
-    return [];
+    return queryClient.getQueryData<Counter[]>(["counters"]) ?? [];
   }
 }
 
-// ─── Save individual (API + cache) ───────────────────────────────────────────
+// ─── Save individual (API → invalidate cache so all users see fresh data) ────
 
 export async function saveAgencia(a: Agencia): Promise<void> {
-  const list = loadAgencias();
-  const next = list.some((x) => x.id === a.id)
-    ? list.map((x) => (x.id === a.id ? a : x))
-    : [a, ...list];
-  if (a.predeterminada) {
-    next.forEach((x) => { if (x.id !== a.id) x.predeterminada = false; });
-  }
-  queryClient.setQueryData(["agencias"], next);
-  try { await apiAuth.agencias.save(a); } catch (err) { console.error(err); }
+  await apiAuth.agencias.save(a);
+  await queryClient.invalidateQueries({ queryKey: ["agencias"] });
 }
 
 export async function deleteAgencia(id: string): Promise<void> {
-  queryClient.setQueryData(["agencias"], loadAgencias().filter((x) => x.id !== id));
-  queryClient.setQueryData(["agentes"], loadAgentes().filter((x) => x.agenciaId !== id));
-  try { await apiAuth.agencias.remove(id); } catch (err) { console.error(err); }
+  await apiAuth.agencias.remove(id);
+  await queryClient.invalidateQueries({ queryKey: ["agencias"] });
+  await queryClient.invalidateQueries({ queryKey: ["agentes"] });
 }
 
 export async function saveAgente(a: AgenteAgencia): Promise<void> {
-  const list = loadAgentes();
-  const next = list.some((x) => x.id === a.id)
-    ? list.map((x) => (x.id === a.id ? a : x))
-    : [...list, a];
-  queryClient.setQueryData(["agentes"], next);
-  try { await apiAuth.agentes.save(a); } catch (err) { console.error(err); }
+  await apiAuth.agentes.save(a);
+  await queryClient.invalidateQueries({ queryKey: ["agentes"] });
 }
 
 export async function deleteAgente(id: string): Promise<void> {
-  queryClient.setQueryData(["agentes"], loadAgentes().filter((x) => x.id !== id));
-  try { await apiAuth.agentes.remove(id); } catch (err) { console.error(err); }
+  await apiAuth.agentes.remove(id);
+  await queryClient.invalidateQueries({ queryKey: ["agentes"] });
 }
 
 export async function saveCounter(c: Counter): Promise<void> {
-  const list = loadCounters();
-  const next = list.some((x) => x.id === c.id)
-    ? list.map((x) => (x.id === c.id ? c : x))
-    : [...list, c];
-  queryClient.setQueryData(["counters"], next);
-  try { await apiAuth.counters.save(c); } catch (err) { console.error(err); }
+  await apiAuth.counters.save(c);
+  await queryClient.invalidateQueries({ queryKey: ["counters"] });
 }
 
 export async function deleteCounter(id: string): Promise<void> {
-  queryClient.setQueryData(["counters"], loadCounters().filter((x) => x.id !== id));
-  try { await apiAuth.counters.remove(id); } catch (err) { console.error(err); }
+  await apiAuth.counters.remove(id);
+  await queryClient.invalidateQueries({ queryKey: ["counters"] });
 }
 
-// ─── Bulk save (for backup import) ───────────────────────────────────────────
+// ─── Bulk save (for backup import only) ──────────────────────────────────────
 
 export async function saveAgencias(list: Agencia[]): Promise<void> {
-  queryClient.setQueryData(["agencias"], list);
   try {
     await apiAuth.post("/agencias/bulk-sync", { agencias: list, agentes: [] });
+    await queryClient.invalidateQueries({ queryKey: ["agencias"] });
   } catch (err) { console.error(err); }
 }
 
 export async function saveAgentes(list: AgenteAgencia[]): Promise<void> {
-  queryClient.setQueryData(["agentes"], list);
   try {
     await apiAuth.post("/agencias/bulk-sync", { agencias: [], agentes: list });
+    await queryClient.invalidateQueries({ queryKey: ["agentes"] });
   } catch (err) { console.error(err); }
 }
 
 export async function saveCounters(list: Counter[]): Promise<void> {
-  queryClient.setQueryData(["counters"], list);
   try {
     for (const c of list) await apiAuth.counters.save(c);
+    await queryClient.invalidateQueries({ queryKey: ["counters"] });
   } catch (err) { console.error(err); }
 }
 

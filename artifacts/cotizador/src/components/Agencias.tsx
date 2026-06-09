@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Building2,
   Plus,
@@ -16,15 +17,14 @@ import {
   User,
 } from "lucide-react";
 import {
-  loadAgencias,
-  loadAgenciasAsync,
-  saveAgencias,
-  loadAgentes,
-  loadAgentesAsync,
-  saveAgentes,
+  saveAgencia,
+  deleteAgencia,
+  saveAgente,
+  deleteAgente,
   type Agencia,
   type AgenteAgencia,
 } from "@/lib/agencias";
+import { apiAuth } from "@/lib/api-auth";
 
 function genId() {
   return Math.random().toString(36).slice(2, 10);
@@ -390,28 +390,26 @@ function AgenteModal({
 function AgentesSection({
   agencia,
   agentes,
-  onAgentesChange,
+  onAgenteSave,
+  onAgenteDelete,
 }: {
   agencia: Agencia;
   agentes: AgenteAgencia[];
-  onAgentesChange: (list: AgenteAgencia[]) => void;
+  onAgenteSave: (a: AgenteAgencia) => Promise<void>;
+  onAgenteDelete: (id: string) => Promise<void>;
 }) {
   const [agenteModal, setAgenteModal] = useState<{ open: boolean; editing?: AgenteAgencia }>({ open: false });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const mine = agentes.filter((a) => a.agenciaId === agencia.id);
 
-  const handleSave = (ag: AgenteAgencia) => {
-    const exists = agentes.findIndex((x) => x.id === ag.id) >= 0;
-    const updated = exists
-      ? agentes.map((x) => (x.id === ag.id ? ag : x))
-      : [...agentes, ag];
-    onAgentesChange(updated);
+  const handleSave = async (ag: AgenteAgencia) => {
+    await onAgenteSave(ag);
     setAgenteModal({ open: false });
   };
 
-  const handleDelete = (id: string) => {
-    onAgentesChange(agentes.filter((a) => a.id !== id));
+  const handleDelete = async (id: string) => {
+    await onAgenteDelete(id);
     setDeleteConfirm(null);
   };
 
@@ -675,43 +673,38 @@ function DeleteAgenciaModal({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Agencias() {
-  const [agencias, setAgencias] = useState<Agencia[]>([]);
-  const [agentes, setAgentes] = useState<AgenteAgencia[]>([]);
   const [modal, setModal] = useState<{ open: boolean; editing?: Agencia }>({ open: false });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadAgenciasAsync().then(setAgencias);
-    loadAgentesAsync().then(setAgentes);
-  }, []);
+  const { data: agencias = [] } = useQuery<Agencia[]>({
+    queryKey: ["agencias"],
+    queryFn: () => apiAuth.agencias.list() as Promise<Agencia[]>,
+    staleTime: 0,
+  });
 
-  const persistAgencias = async (list: Agencia[]) => {
-    setAgencias(list);
-    await saveAgencias(list);
-  };
-
-  const persistAgentes = async (list: AgenteAgencia[]) => {
-    setAgentes(list);
-    await saveAgentes(list);
-  };
+  const { data: agentes = [] } = useQuery<AgenteAgencia[]>({
+    queryKey: ["agentes"],
+    queryFn: () => apiAuth.agentes.list() as Promise<AgenteAgencia[]>,
+    staleTime: 0,
+  });
 
   const handleSave = async (a: Agencia) => {
-    let updated = agencias.map((x) => (x.id === a.id ? a : x));
-    if (agencias.findIndex((x) => x.id === a.id) < 0) {
-      updated = [...agencias, a];
-    }
-    if (a.predeterminada) {
-      updated = updated.map((x) => (x.id === a.id ? x : { ...x, predeterminada: false }));
-    }
-    await persistAgencias(updated);
+    await saveAgencia(a);
     setModal({ open: false });
   };
 
   const handleDelete = async (id: string) => {
-    await persistAgencias(agencias.filter((a) => a.id !== id));
-    await persistAgentes(agentes.filter((a) => a.agenciaId !== id));
+    await deleteAgencia(id);
     setDeleteConfirm(null);
+  };
+
+  const handleAgenteSave = async (ag: AgenteAgencia) => {
+    await saveAgente(ag);
+  };
+
+  const handleAgenteDelete = async (id: string) => {
+    await deleteAgente(id);
   };
 
   const filteredAgencias = agencias.filter((a) => {
@@ -847,7 +840,8 @@ export default function Agencias() {
               <AgentesSection
                 agencia={a}
                 agentes={agentes}
-                onAgentesChange={persistAgentes}
+                onAgenteSave={handleAgenteSave}
+                onAgenteDelete={handleAgenteDelete}
               />
             </div>
           ))}
