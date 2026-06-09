@@ -275,6 +275,12 @@ export default function ServiciosSeleccionados({
                 )
               : g.items;
 
+            const OPTION_COLORS = ["#1e3a8a", "#e6ae33", "#03a04e", "#044b9e"];
+            const activeOpIdx = isPaqueteHotel
+              ? Math.max(0, opcionesPaquete?.findIndex((op) => op.id === activeOpcionPaquete) ?? 0)
+              : 0;
+            const activeOpColor = OPTION_COLORS[activeOpIdx] ?? "#1e3a8a";
+
             return (
             <div key={g.tipo}>
               <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-2 px-1">
@@ -283,9 +289,10 @@ export default function ServiciosSeleccionados({
 
               {isPaqueteHotel && (
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  {opcionesPaquete!.map((op) => {
+                  {opcionesPaquete!.map((op, opIdx) => {
                     const isActive = op.id === activeOpcionPaquete;
                     const isEditing = editingOpId === op.id;
+                    const opColor = OPTION_COLORS[opIdx] ?? "#1e3a8a";
                     return (
                       <div key={op.id} className="relative flex items-center">
                         {isEditing ? (
@@ -323,9 +330,15 @@ export default function ServiciosSeleccionados({
                             className={`h-7 px-3 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
                               isActive
                                 ? "text-white shadow-sm"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                : opIdx === 0
+                                  ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                  : ""
                             }`}
-                            style={isActive ? { backgroundColor: "#1e3a8a" } : undefined}
+                            style={isActive
+                              ? { backgroundColor: opColor }
+                              : opIdx > 0
+                                ? { backgroundColor: opColor + "1a", color: opColor, border: `1px solid ${opColor}66` }
+                                : undefined}
                           >
                             {op.nombre}
                           </button>
@@ -354,7 +367,10 @@ export default function ServiciosSeleccionados({
                 </div>
               )}
 
-              <div className="rounded-2xl bg-slate-50/70 border border-slate-100 overflow-hidden divide-y divide-slate-100">
+              <div
+                className="rounded-2xl bg-slate-50/70 border border-slate-100 overflow-hidden divide-y divide-slate-100"
+                style={isPaqueteHotel && activeOpIdx > 0 ? { borderLeftColor: activeOpColor + "cc", borderLeftWidth: "3px" } : undefined}
+              >
                 {displayItems.length === 0 && isPaqueteHotel ? (
                   <div className="px-4 py-5 text-center text-sm text-slate-400 italic">
                     Sin hotel para esta opción. Buscá y agregá uno arriba.
@@ -363,34 +379,39 @@ export default function ServiciosSeleccionados({
                   displayItems.map((s) => {
                     const rowKey = `${s.tipo}-${s.id}`;
                     const dragKey = `${s.tipo}|${s.id}`;
+                    const isDuplicate = s.id.includes("-dup-");
                     return (
-                      <ServicioRow
+                      <div
                         key={rowKey}
-                        servicio={s}
-                        acomodaciones={acomodaciones}
-                        pasajeros={pasajeros}
-                        ninos={ninos}
-                        highlight={highlightedId === s.id}
-                        isDragging={dragId === dragKey}
-                        isDragOver={dragOverKey === rowKey}
-                        onDragStart={() => setDragId(dragKey)}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = "move";
-                          setDragOverKey(rowKey);
-                        }}
-                        onDrop={() => handleDrop(s.tipo, s.id)}
-                        onDragEnd={() => {
-                          setDragId(null);
-                          setDragOverKey(null);
-                        }}
-                        onEdit={() => onEdit(s)}
-                        onRemove={() => remove(s)}
-                        onDuplicate={() => duplicate(s)}
-                        onUpdate={update}
-                        hoteles={hotelesServs}
-                        personalizarTraslados={personalizarTraslados}
-                      />
+                        style={isDuplicate ? { background: "rgba(4, 25, 65, 0.035)" } : undefined}
+                      >
+                        <ServicioRow
+                          servicio={s}
+                          acomodaciones={acomodaciones}
+                          pasajeros={pasajeros}
+                          ninos={ninos}
+                          highlight={highlightedId === s.id}
+                          isDragging={dragId === dragKey}
+                          isDragOver={dragOverKey === rowKey}
+                          onDragStart={() => setDragId(dragKey)}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                            setDragOverKey(rowKey);
+                          }}
+                          onDrop={() => handleDrop(s.tipo, s.id)}
+                          onDragEnd={() => {
+                            setDragId(null);
+                            setDragOverKey(null);
+                          }}
+                          onEdit={() => onEdit(s)}
+                          onRemove={() => remove(s)}
+                          onDuplicate={() => duplicate(s)}
+                          onUpdate={update}
+                          hoteles={hotelesServs}
+                          personalizarTraslados={personalizarTraslados}
+                        />
+                      </div>
                     );
                   })
                 )}
