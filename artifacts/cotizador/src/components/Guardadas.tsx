@@ -120,8 +120,18 @@ export interface CotizacionGuardada {
   motivoAnulacion?: string;
   /** Name of user who created this quotation */
   createdByName?: string;
+  /** ID of user who created this quotation */
+  createdByUserId?: number;
+  /** Email of user who created this quotation */
+  createdByEmail?: string;
   /** Name of user who last updated this quotation */
   updatedByName?: string;
+  /** ID of user who last updated this quotation */
+  updatedByUserId?: number;
+  /** Email of user who last updated this quotation */
+  updatedByEmail?: string;
+  /** ISO timestamp of last update */
+  updatedAt?: string;
   /** Link to parent opportunity */
   opportunityId?: string;
   /** Presentation mode: detailed shows all prices, package hides individual prices */
@@ -396,6 +406,18 @@ export interface Opportunity {
   historial?: OppHistorialEntry[];
   /** Name of user who created this opportunity */
   createdByName?: string;
+  /** ID of user who created this opportunity */
+  createdByUserId?: number;
+  /** Email of user who created this opportunity */
+  createdByEmail?: string;
+  /** Name of user who last updated this opportunity */
+  updatedByName?: string;
+  /** ID of user who last updated this opportunity */
+  updatedByUserId?: number;
+  /** Email of user who last updated this opportunity */
+  updatedByEmail?: string;
+  /** ISO timestamp of last update by a user */
+  updatedAt?: string;
 }
 
 // ─── Urgency ──────────────────────────────────────────────────────────────────
@@ -447,6 +469,8 @@ export interface UpsertOpportunityInput {
   destination: string;
   total?: number;
   createdByName?: string;
+  createdByUserId?: number;
+  createdByEmail?: string;
 }
 
 function oppKey(agencyName: string, agentName: string, quoteName: string): string {
@@ -511,8 +535,10 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
       quotes: [quoteRef],
       totalLatest: input.total,
       latestQuoteCode: input.numeroCotizacion,
-      historial: [{ fecha: now, tipo: "oportunidad_creada" }],
+      historial: [{ fecha: now, tipo: "oportunidad_creada", byUser: input.createdByName }],
       createdByName: input.createdByName,
+      createdByUserId: input.createdByUserId,
+      createdByEmail: input.createdByEmail,
     };
     next = [opp, ...opps];
   }

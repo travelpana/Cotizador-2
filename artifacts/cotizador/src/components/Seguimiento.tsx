@@ -33,6 +33,7 @@ import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
 import { exportarCotizacionesExcel } from "@/lib/exportExcel";
 import { loadAgencias, type Agencia } from "@/lib/agencias";
 import OportunidadDetailPanel from "./OportunidadDetailPanel";
+import { useAuth } from "@/lib/auth";
 
 interface Props {
   items: CotizacionGuardada[];
@@ -189,6 +190,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   onUpdateOpportunity: (patch: Partial<Opportunity>) => void;
   onAnular: () => void;
 }) {
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
@@ -223,7 +225,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const isClosedStatus = opp.status === "confirmada" || opp.status === "perdida";
 
   const addHistorial = (tipo: OppHistorialEntry["tipo"], detalle?: string): OppHistorialEntry[] =>
-    [{ fecha: new Date().toISOString(), tipo, detalle }, ...(opp.historial ?? [])].slice(0, 100);
+    [{ fecha: new Date().toISOString(), tipo, detalle, byUser: user?.nombre }, ...(opp.historial ?? [])].slice(0, 100);
 
   const borderColor = getCardBorderColor(opp);
 
@@ -313,7 +315,15 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             {opp.createdByName && (
               <>
                 <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] text-slate-400">Por: {opp.createdByName}</span>
+                <span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span>
+              </>
+            )}
+            {opp.updatedByName && (
+              <>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] text-slate-400">
+                  Mod: {opp.updatedByName}{opp.updatedAt ? ` · ${new Date(opp.updatedAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}` : ""}
+                </span>
               </>
             )}
           </div>

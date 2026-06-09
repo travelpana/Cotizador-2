@@ -10,6 +10,7 @@ import type {
 } from "./Guardadas";
 import { getOppUrgency } from "./Guardadas";
 import SingleDatePicker from "./SingleDatePicker";
+import { useAuth } from "@/lib/auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,6 +141,13 @@ function ResumenTab({ opp, latestQuote }: { opp: Opportunity; latestQuote?: Coti
         ))}
         {row("Última actualización", formatDate(opp.lastUpdateAt))}
         {row("Creada", formatDate(opp.createdAt))}
+        {opp.createdByName && row("Creada por", <span className="font-medium text-slate-700">{opp.createdByName}</span>)}
+        {opp.updatedByName && row(
+          "Última modificación",
+          <span className="font-medium text-slate-700">
+            {opp.updatedByName}{opp.updatedAt ? <span className="font-normal text-slate-400"> · {formatDateTime(opp.updatedAt)}</span> : null}
+          </span>
+        )}
         {opp.recordatorio && row("Recordatorio", formatDate(opp.recordatorio))}
         {opp.proximaAccion && row("Próxima acción", opp.proximaAccion)}
         {opp.notaInterna && row("Nota interna", <span className="text-slate-600 italic">{opp.notaInterna}</span>)}
@@ -223,6 +231,7 @@ function SeguimientoTab({ opp, onQuickAction, onSaveForm }: {
   onQuickAction: (patch: Partial<Opportunity>, historialEntry: OppHistorialEntry) => void;
   onSaveForm: (patch: Partial<Opportunity>, entries: OppHistorialEntry[]) => void;
 }) {
+  const { user } = useAuth();
   const [proximaAccion, setProximaAccion] = useState(opp.proximaAccion ?? "");
   const [recordatorio, setRecordatorio] = useState(opp.recordatorio?.slice(0, 10) ?? "");
   const [priorityManual, setPriorityManual] = useState(opp.priorityManual);
@@ -233,13 +242,13 @@ function SeguimientoTab({ opp, onQuickAction, onSaveForm }: {
   const handleSave = () => {
     const entries: OppHistorialEntry[] = [];
     if (notaInterna.trim() !== (opp.notaInterna ?? "").trim()) {
-      entries.push({ fecha: now(), tipo: "nota_agregada" });
+      entries.push({ fecha: now(), tipo: "nota_agregada", byUser: user?.nombre });
     }
     if (recordatorio !== (opp.recordatorio?.slice(0, 10) ?? "")) {
-      entries.push({ fecha: now(), tipo: recordatorio ? "recordatorio_creado" : "estado_cambiado", detalle: recordatorio || "Recordatorio eliminado" });
+      entries.push({ fecha: now(), tipo: recordatorio ? "recordatorio_creado" : "estado_cambiado", detalle: recordatorio || "Recordatorio eliminado", byUser: user?.nombre });
     }
     if (priorityManual !== opp.priorityManual) {
-      entries.push({ fecha: now(), tipo: priorityManual ? "prioridad_activada" : "prioridad_quitada" });
+      entries.push({ fecha: now(), tipo: priorityManual ? "prioridad_activada" : "prioridad_quitada", byUser: user?.nombre });
     }
     onSaveForm({
       proximaAccion: proximaAccion.trim() || undefined,
@@ -334,29 +343,29 @@ function SeguimientoTab({ opp, onQuickAction, onSaveForm }: {
           <div className="flex flex-wrap gap-2">
             {quickBtn("Marcar atendida", <Check className="w-4 h-4" />,
               "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100",
-              () => onQuickAction({ }, { fecha: now(), tipo: "marcada_atendida" })
+              () => onQuickAction({ }, { fecha: now(), tipo: "marcada_atendida", byUser: user?.nombre })
             )}
             {quickBtn("Posponer 1 día", <AlarmClock className="w-4 h-4" />,
               "bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100",
-              () => onQuickAction({ recordatorio: addDays(1) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+1 día" })
+              () => onQuickAction({ recordatorio: addDays(1) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+1 día", byUser: user?.nombre })
             )}
             {quickBtn("Posponer 3 días", <AlarmClock className="w-4 h-4" />,
               "bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100",
-              () => onQuickAction({ recordatorio: addDays(3) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+3 días" })
+              () => onQuickAction({ recordatorio: addDays(3) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+3 días", byUser: user?.nombre })
             )}
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             {quickBtn("Confirmar venta", <CheckCircle2 className="w-4 h-4" />,
               "bg-emerald-600 text-white hover:bg-emerald-700",
-              () => onQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada" })
+              () => onQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre })
             )}
             {quickBtn("Marcar perdida", <XCircle className="w-4 h-4" />,
               "bg-slate-100 text-slate-600 hover:bg-slate-200",
-              () => onQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida" })
+              () => onQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre })
             )}
             {quickBtn("Anular", <Ban className="w-4 h-4" />,
               "bg-red-50 text-red-600 ring-1 ring-red-200 hover:bg-red-100",
-              () => onQuickAction({ status: "anulada" }, { fecha: now(), tipo: "anulada" })
+              () => onQuickAction({ status: "anulada" }, { fecha: now(), tipo: "anulada", byUser: user?.nombre })
             )}
           </div>
         </div>
@@ -367,13 +376,13 @@ function SeguimientoTab({ opp, onQuickAction, onSaveForm }: {
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Acciones</div>
           {opp.status === "anulada" && quickBtn("Restaurar", <RotateCcw className="w-4 h-4" />,
             "bg-blue-50 text-blue-700 ring-1 ring-blue-200 hover:bg-blue-100",
-            () => onQuickAction({ status: "nueva" }, { fecha: now(), tipo: "restaurada" })
+            () => onQuickAction({ status: "nueva" }, { fecha: now(), tipo: "restaurada", byUser: user?.nombre })
           )}
           {opp.status !== "anulada" && (
             <div className="flex flex-wrap gap-2">
               {quickBtn("Anular", <Trash2 className="w-4 h-4" />,
                 "bg-red-50 text-red-600 ring-1 ring-red-200 hover:bg-red-100",
-                () => onQuickAction({ status: "anulada" }, { fecha: now(), tipo: "anulada" })
+                () => onQuickAction({ status: "anulada" }, { fecha: now(), tipo: "anulada", byUser: user?.nombre })
               )}
             </div>
           )}
@@ -440,6 +449,9 @@ function HistorialTab({ opp }: { opp: Opportunity }) {
                     <div className="text-[11px] text-slate-400 mt-0.5">{entry.detalle}</div>
                   )}
                   <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(entry.fecha)}</div>
+                  {entry.byUser && (
+                    <div className="text-[10px] text-blue-400 mt-0.5">por {entry.byUser}</div>
+                  )}
 
                   {hasCambios && (
                     <>

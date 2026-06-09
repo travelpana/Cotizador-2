@@ -270,6 +270,13 @@ export default function CotizadorPage() {
     idioma === "pt" ? (trasladosPt.length > 0 ? trasladosPt : mergedTraslados) :
     mercado === "brasil" ? trasladosBrasil : mergedTraslados;
 
+  // Auto-fill Counter with active user name on mount and when user changes
+  useEffect(() => {
+    if (user?.nombre) {
+      setCliente((prev) => (!prev.counter ? { ...prev, counter: user.nombre } : prev));
+    }
+  }, [user?.nombre]);
+
   const [seguimientoFlash, setSeguimientoFlash] = useState(false);
 
   const flashSeguimiento = () => {
@@ -329,7 +336,7 @@ export default function CotizadorPage() {
     showToast(toastMsg, "success");
     flashSeguimiento();
 
-    setCliente(makeDefaultCliente());
+    setCliente({ ...makeDefaultCliente(), counter: user?.nombre ?? "" });
     setValidationErrors({});
     setAcomodaciones(["DBL"]);
     setHabitacionesPorAcomodacion({});
@@ -676,6 +683,8 @@ export default function CotizadorPage() {
     destination: cliente.cotizacionNombre || "",
     total: total > 0 ? total : undefined,
     createdByName: user?.nombre,
+    createdByUserId: user?.id,
+    createdByEmail: user?.correo,
   });
 
   const handleSave = (opts: { silent?: boolean } = {}): { ok: boolean; isNew: boolean } => {
@@ -703,6 +712,9 @@ export default function CotizadorPage() {
               observacionManual: observacionManual.trim() || undefined,
               prioridad: autoPriority,
               updatedByName: user?.nombre,
+              updatedByUserId: user?.id,
+              updatedByEmail: user?.correo,
+              updatedAt: now,
               ultimoSeguimiento: now,
               historial: [...(g.historial ?? []), { fecha: now, tipo: "editada" as const, byUser: user?.nombre }],
               presentationMode,
@@ -723,6 +735,10 @@ export default function CotizadorPage() {
               totalLatest: total > 0 ? total : undefined,
               latestQuoteCode: updatedQuote.numeroCotizacion,
               destination: cliente.cotizacionNombre || undefined,
+              updatedByName: user?.nombre,
+              updatedByUserId: user?.id,
+              updatedByEmail: user?.correo,
+              updatedAt: now,
             })
           : upsertOpportunity(buildOppInput(savedId!, updatedQuote.numeroCotizacion, total));
 
@@ -773,6 +789,8 @@ export default function CotizadorPage() {
         sentAt: now,
         prioridad: autoPriority,
         createdByName: user?.nombre,
+        createdByUserId: user?.id,
+        createdByEmail: user?.correo,
         valorCotizacion: total,
         ultimoSeguimiento: now,
         historial: [{ fecha: now, tipo: "creada", byUser: user?.nombre }],
@@ -803,7 +821,7 @@ export default function CotizadorPage() {
   const handleRegisterActivity = (tipo: ActividadTipo) => {
     const numero = currentNumero ?? getOrCreateNumero();
     const now = new Date().toISOString();
-    const newEntry = { fecha: now, tipo };
+    const newEntry = { fecha: now, tipo, byUser: user?.nombre };
     const total = result.totalesPorAcomodacion[acomodaciones[0]] ?? 0;
     const autoPriority: Prioridad =
       total > 1500 ? "alta" : total > 500 ? "media" : "baja";
@@ -833,7 +851,10 @@ export default function CotizadorPage() {
           prioridad: autoPriority,
           valorCotizacion: total,
           ultimoSeguimiento: now,
-          historial: [{ fecha: now, tipo: "creada" }, newEntry],
+          createdByName: user?.nombre,
+          createdByUserId: user?.id,
+          createdByEmail: user?.correo,
+          historial: [{ fecha: now, tipo: "creada", byUser: user?.nombre }, newEntry],
           observacionesSeleccionadas:
             observacionesSeleccionadas.length > 0
               ? [...observacionesSeleccionadas]
@@ -881,7 +902,7 @@ export default function CotizadorPage() {
       if (oppId) {
         const oppTipo: OppHistorialEntry["tipo"] = tipo === "pdf_enviado" ? "pdf_generado" : "correo_generado";
         const opp = upserted.find((o) => o.id === oppId)!;
-        const entry: OppHistorialEntry = { fecha: now, tipo: oppTipo };
+        const entry: OppHistorialEntry = { fecha: now, tipo: oppTipo, byUser: user?.nombre };
         const finalOpps = updateOpportunity(oppId, {
           historial: [entry, ...(opp.historial ?? [])].slice(0, 100),
         });
@@ -895,7 +916,7 @@ export default function CotizadorPage() {
   const handleClear = () => {
     if (servicios.length > 0 && !confirm("¿Limpiar la cotización actual?"))
       return;
-    setCliente(makeDefaultCliente());
+    setCliente({ ...makeDefaultCliente(), counter: user?.nombre ?? "" });
     setValidationErrors({});
     setAcomodaciones(["DBL"]);
     setServicios([]);
