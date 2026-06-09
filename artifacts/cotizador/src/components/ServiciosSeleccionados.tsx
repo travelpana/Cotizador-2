@@ -275,11 +275,12 @@ export default function ServiciosSeleccionados({
                 )
               : g.items;
 
-            const OPTION_COLORS = ["#1e3a8a", "#e6ae33", "#03a04e", "#044b9e"];
+            const OPTION_COLORS      = ["#002682", "#e6ae33", "#1780c0", "#044b9e"];
+            const OPTION_TEXT_COLORS = ["#002682", "#b88400", "#1780c0", "#044b9e"];
             const activeOpIdx = isPaqueteHotel
               ? Math.max(0, opcionesPaquete?.findIndex((op) => op.id === activeOpcionPaquete) ?? 0)
               : 0;
-            const activeOpColor = OPTION_COLORS[activeOpIdx] ?? "#1e3a8a";
+            const activeOpColor = OPTION_COLORS[activeOpIdx] ?? "#002682";
 
             return (
             <div key={g.tipo}>
@@ -292,7 +293,8 @@ export default function ServiciosSeleccionados({
                   {opcionesPaquete!.map((op, opIdx) => {
                     const isActive = op.id === activeOpcionPaquete;
                     const isEditing = editingOpId === op.id;
-                    const opColor = OPTION_COLORS[opIdx] ?? "#1e3a8a";
+                    const opColor     = OPTION_COLORS[opIdx]      ?? "#002682";
+                    const opTextColor = OPTION_TEXT_COLORS[opIdx] ?? opColor;
                     return (
                       <div key={op.id} className="relative flex items-center">
                         {isEditing ? (
@@ -337,7 +339,7 @@ export default function ServiciosSeleccionados({
                             style={isActive
                               ? { backgroundColor: opColor }
                               : opIdx > 0
-                                ? { backgroundColor: opColor + "1a", color: opColor, border: `1px solid ${opColor}66` }
+                                ? { backgroundColor: opColor + "26", color: opTextColor, border: `1px solid ${opColor}66` }
                                 : undefined}
                           >
                             {op.nombre}
