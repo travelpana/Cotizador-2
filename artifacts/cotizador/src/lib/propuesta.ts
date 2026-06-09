@@ -1317,6 +1317,7 @@ function buildGrupoPackageView(d: PropuestaData): string {
   html += grupoDetalleBlock(d);
   html += observacionesBlock(d, C_TOT_OBSERVACIONES);
   html += itinerarioTable(d, C_TOT_ITINERARIO, "#ffffff");
+  html += descriptivosBlock(d, C_TOT_DESCRIPTIVOS);
   return html;
 }
 
@@ -1411,10 +1412,11 @@ export function buildPropuestaBody(d: PropuestaData): string {
       <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
       <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
       <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${grupoDetalleBlock(d)}</td></tr>
+      <tr><td>${observacionesBlock(d)}</td></tr>
       <tr><td>${itinerarioTable(d)}</td></tr>
-      <tr><td>${descriptivosBlock(d)}</td></tr>
-      <tr><td>${observacionesBlock(d)}</td></tr>`}
-      <tr><td>${grupoDetalleBlock(d)}</td></tr>`;
+      <tr><td>${descriptivosBlock(d)}</td></tr>`}
+      `;
   } else if (d.isPackage) {
     bodyContent = `<tr><td>${buildPackageView(d)}</td></tr>`;
   } else if (d.isCalc) {
@@ -1425,9 +1427,9 @@ export function buildPropuestaBody(d: PropuestaData): string {
       <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
       <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
       <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${observacionesBlock(d)}</td></tr>
       <tr><td>${itinerarioTable(d)}</td></tr>
-      <tr><td>${descriptivosBlock(d)}</td></tr>
-      <tr><td>${observacionesBlock(d)}</td></tr>`;
+      <tr><td>${descriptivosBlock(d)}</td></tr>`;
   }
 
   return `
