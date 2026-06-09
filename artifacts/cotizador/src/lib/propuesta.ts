@@ -910,8 +910,10 @@ function buildTotalesView(d: PropuestaData): string {
     (s) => s.nombre,
   );
 
-  // ── 3. TOTALES SEGÚN ACOMODACIÓN (individual/tarifario only) ────
-  if (!d.isGrupo) {
+  // ── 3. TOTALES ──────────────────────────────────────────────────
+  if (d.isGrupo) {
+    html += grupoDetalleBlock(d);
+  } else {
     const totalLabelStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};font-weight:700;color:${COLOR_AZUL};font-size:14px;text-transform:uppercase;letter-spacing:0.5px;background:#f0f4ff;`;
     const totalValStyle = `padding:14px 20px;border-top:2px solid ${COLOR_AZUL};text-align:right;font-weight:800;color:${COLOR_AZUL};font-size:16px;background:#f0f4ff;`;
     const totalRows = d.acoms
@@ -1208,7 +1210,47 @@ function grupoDetalleBlock(d: PropuestaData): string {
     (a) => d.acoms.includes(a) && (d.grupoHabitacionesPorAcom[a] ?? 0) > 0,
   );
 
-  if (roomAcoms.length === 0 && d.grupoNinos === 0) return "";
+  // ── Fallback: no room distribution configured — show per-acom totals from result ──
+  if (roomAcoms.length === 0 && d.grupoNinos === 0) {
+    const acoms = d.acoms.filter(
+      (a) => (["SGL", "DBL", "TPL", "QDL"] as Acomodacion[]).includes(a as Acomodacion),
+    );
+    if (acoms.length === 0) return "";
+
+    const thStyle = `padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#64748b;background:${C_HDR_BG};border-bottom:1px solid ${C_BORDER};text-align:left;`;
+    const tdStyle = `padding:10px 14px;font-size:13px;color:${C_DARK};border-bottom:1px solid ${C_BORDER};vertical-align:middle;`;
+    const tdRightStyle = `padding:10px 14px;font-size:13px;font-weight:700;color:${C_BLUE};border-bottom:1px solid ${C_BORDER};vertical-align:middle;text-align:right;`;
+
+    const fallbackRows = acoms.map((a) => {
+      const total = d.result.totalesPorAcomodacion[a] ?? 0;
+      return `<tr>
+        <td style="${tdStyle}">
+          <span style="display:inline-block;background:#e8eeff;color:${C_BLUE};padding:3px 10px;border-radius:5px;font-size:12px;font-weight:800;letter-spacing:0.5px;">${escape(String(a))}</span>
+        </td>
+        <td style="${tdRightStyle}">USD ${escape(fmt(total))}</td>
+      </tr>`;
+    }).join("");
+
+    return `
+    <div style="margin-bottom:20px;">
+      ${sectionBar("Totalizado", C_BLUE)}
+      <div style="border:1px solid ${C_BORDER};border-top:none;background:#ffffff;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="${thStyle}width:40%;">Acomodación</th>
+              <th style="${thStyle}width:60%;text-align:right;">Total estimado por persona</th>
+            </tr>
+          </thead>
+          <tbody>${fallbackRows}</tbody>
+        </table>
+        <div style="padding:22px 24px;text-align:center;background:#ffffff;border-top:1px solid ${C_BORDER};">
+          <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Total del Grupo</div>
+          <div style="font-size:34px;font-weight:800;color:${C_DARK};letter-spacing:-0.5px;">USD ${escape(fmt(d.grupoTotal))}</div>
+        </div>
+      </div>
+    </div>`;
+  }
 
   // ── Per-accommodation totals (each acom uses its own pax count) ──
   const acTotals: Partial<Record<Acomodacion, number>> = {};
