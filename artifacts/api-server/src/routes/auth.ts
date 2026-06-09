@@ -10,29 +10,48 @@ const JWT_EXPIRES = "30d";
 const router = Router();
 
 router.post("/auth/login", async (req, res) => {
+  const { username, contrasena } = req.body ?? {};
+
   try {
-    const { username, contrasena } = req.body ?? {};
     if (!username || !contrasena) {
+      console.log("[AUTH] Fallo: campos vacíos", { username: !!username, contrasena: !!contrasena });
       return res.status(400).json({ error: "Usuario y contraseña requeridos" });
     }
+
+    const normalized = String(username).trim().toLowerCase();
+    console.log("[AUTH] Buscando usuario:", normalized);
+
     const [user] = await db
       .select()
       .from(usuariosTable)
-      .where(eq(usuariosTable.username, String(username).trim().toLowerCase()))
+      .where(eq(usuariosTable.username, normalized))
       .limit(1);
 
-    if (!user || !user.activo) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
+    if (!user) {
+      console.log("[AUTH] Fallo: usuario no encontrado:", normalized);
+      return res.status(401).json({ error: "Credenciales inválidas", motivo: "usuario no encontrado" });
     }
+
+    if (!user.activo) {
+      console.log("[AUTH] Fallo: usuario inactivo:", normalized);
+      return res.status(401).json({ error: "Credenciales inválidas", motivo: "usuario inactivo" });
+    }
+
     const valid = await bcrypt.compare(String(contrasena), user.contrasenaHash);
+    console.log("[AUTH] bcrypt.compare resultado:", valid, "para usuario:", normalized);
+
     if (!valid) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
+      console.log("[AUTH] Fallo: contraseña incorrecta para:", normalized);
+      return res.status(401).json({ error: "Credenciales inválidas", motivo: "contraseña incorrecta" });
     }
+
     const payload = { id: user.id, nombre: user.nombre, correo: user.correo ?? "" };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    console.log("[AUTH] Login exitoso:", normalized);
     return res.json({ token, user: payload });
-  } catch {
-    return res.status(500).json({ error: "Error al iniciar sesión" });
+  } catch (err) {
+    console.error("[AUTH] Error interno:", err);
+    return res.status(500).json({ error: "Error al iniciar sesión", motivo: "error interno" });
   }
 });
 
