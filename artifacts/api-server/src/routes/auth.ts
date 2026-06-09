@@ -11,14 +11,14 @@ const router = Router();
 
 router.post("/auth/login", async (req, res) => {
   try {
-    const { correo, contrasena } = req.body ?? {};
-    if (!correo || !contrasena) {
-      return res.status(400).json({ error: "Correo y contraseña requeridos" });
+    const { username, contrasena } = req.body ?? {};
+    if (!username || !contrasena) {
+      return res.status(400).json({ error: "Usuario y contraseña requeridos" });
     }
     const [user] = await db
       .select()
       .from(usuariosTable)
-      .where(eq(usuariosTable.correo, String(correo).trim().toLowerCase()))
+      .where(eq(usuariosTable.username, String(username).trim().toLowerCase()))
       .limit(1);
 
     if (!user || !user.activo) {
@@ -28,7 +28,7 @@ router.post("/auth/login", async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
-    const payload = { id: user.id, nombre: user.nombre, correo: user.correo };
+    const payload = { id: user.id, nombre: user.nombre, correo: user.correo ?? "" };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     return res.json({ token, user: payload });
   } catch {

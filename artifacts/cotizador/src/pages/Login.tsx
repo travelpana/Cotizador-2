@@ -6,7 +6,7 @@ import logoRge from "@assets/style-travel-blue-2_1780272470978.png";
 export default function Login() {
   const { user, login } = useAuth();
   const [, navigate] = useLocation();
-  const [correo, setCorreo] = useState("");
+  const [username, setUsername] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,8 +19,8 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!correo.trim() || !contrasena) {
-      setError("Ingresa tu correo y contraseña");
+    if (!username.trim() || !contrasena) {
+      setError("Ingresa tu usuario y contraseña");
       return;
     }
     setLoading(true);
@@ -28,7 +28,7 @@ export default function Login() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo: correo.trim(), contrasena }),
+        body: JSON.stringify({ username: username.trim(), contrasena }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -42,6 +42,28 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "10px 14px",
+    border: "1.5px solid #e2e8f0",
+    borderRadius: 12,
+    fontSize: 14,
+    color: "#07152f",
+    background: "#f8fafc",
+    outline: "none",
+    boxSizing: "border-box" as const,
+  };
+
+  const labelStyle = {
+    display: "block",
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#475569",
+    marginBottom: 6,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
   };
 
   return (
@@ -91,38 +113,20 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginBottom: 16 }}>
-              <label
-                htmlFor="correo"
-                style={{
-                  display: "block",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#475569",
-                  marginBottom: 6,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Correo electrónico
+              <label htmlFor="username" style={labelStyle}>
+                Usuario
               </label>
               <input
-                id="correo"
-                type="email"
-                autoComplete="email"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
-                placeholder="correo@ejemplo.com"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  border: "1.5px solid #e2e8f0",
-                  borderRadius: 12,
-                  fontSize: 14,
-                  color: "#07152f",
-                  background: "#f8fafc",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
+                id="username"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Ej: maria"
+                style={inputStyle}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#004FBB";
                   e.target.style.background = "#fff";
@@ -135,18 +139,7 @@ export default function Login() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label
-                htmlFor="contrasena"
-                style={{
-                  display: "block",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#475569",
-                  marginBottom: 6,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}
-              >
+              <label htmlFor="contrasena" style={labelStyle}>
                 Contraseña
               </label>
               <input
@@ -156,17 +149,7 @@ export default function Login() {
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
                 placeholder="••••••••"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  border: "1.5px solid #e2e8f0",
-                  borderRadius: 12,
-                  fontSize: 14,
-                  color: "#07152f",
-                  background: "#f8fafc",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
+                style={inputStyle}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#004FBB";
                   e.target.style.background = "#fff";
