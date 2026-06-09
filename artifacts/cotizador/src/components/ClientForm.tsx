@@ -108,6 +108,7 @@ function StatCounter({
   min = 0,
   accent = false,
   prominent = false,
+  readOnly = false,
 }: {
   label: string;
   value: number;
@@ -115,6 +116,7 @@ function StatCounter({
   min?: number;
   accent?: boolean;
   prominent?: boolean;
+  readOnly?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const display = draft ?? String(value);
@@ -129,22 +131,24 @@ function StatCounter({
       </div>
       <input
         type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
+        inputMode={readOnly ? undefined : "numeric"}
+        pattern={readOnly ? undefined : "[0-9]*"}
         value={display}
-        onFocus={() => setDraft("")}
-        onChange={(e) => {
+        readOnly={readOnly}
+        tabIndex={readOnly ? -1 : undefined}
+        onFocus={readOnly ? undefined : () => setDraft("")}
+        onChange={readOnly ? undefined : (e) => {
           const raw = e.target.value.replace(/[^0-9]/g, "");
           setDraft(raw);
           if (!raw) return;
           const n = parseInt(raw, 10);
           if (Number.isFinite(n)) onChange(Math.max(min, n));
         }}
-        onBlur={() => {
+        onBlur={readOnly ? undefined : () => {
           if (draft === "" || draft === null) onChange(min);
           setDraft(null);
         }}
-        onKeyDown={(e) => {
+        onKeyDown={readOnly ? undefined : (e) => {
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         }}
         aria-label={label}
@@ -157,6 +161,8 @@ function StatCounter({
           border: 0,
           padding: 0,
           fontVariantNumeric: "tabular-nums",
+          cursor: readOnly ? "default" : undefined,
+          userSelect: readOnly ? "none" : undefined,
         }}
       />
     </div>
@@ -313,6 +319,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
                 min={0}
                 accent
                 prominent={cliente.noches > 1}
+                readOnly
               />
             </div>
             <div className="flex-1 py-2.5 px-3">

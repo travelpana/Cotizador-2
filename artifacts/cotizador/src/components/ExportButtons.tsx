@@ -134,8 +134,6 @@ export default function ExportButtons({
   const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");
   const isCalc = modo === "calculo";
 
-  const SEP = "━━━━━━━━━━━━━━━━━━";
-
   const isPackage = presentationMode === "package";
 
   const buildPackageText = (): string => {
@@ -152,7 +150,6 @@ export default function ExportButtons({
     const pasajerosStr = `${pax} ${pax === 1 ? T.adulto : T.adultos}${ninos ? ` + ${ninos} ${ninos === 1 ? T.nino : T.ninoPlural}` : ""}`;
     lines.push(`👥 *${T.pasajeros}:* ${pasajerosStr}`);
     lines.push("");
-    lines.push(SEP);
 
     const inclusions: string[] = [];
     if (hoteles.length > 0) {
@@ -204,7 +201,6 @@ export default function ExportButtons({
 
     const totalVal = result.totalesPorAcomodacion[primary];
     lines.push("");
-    lines.push(SEP);
     lines.push(`💰 *VALOR DEL PAQUETE*`);
     lines.push("");
     if (acoms.length > 1) {
@@ -220,7 +216,6 @@ export default function ExportButtons({
 
     if (observaciones && observaciones.length > 0) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`📋 *${T.observaciones}*`);
       for (const o of observaciones) lines.push(`• ${o}`);
     }
@@ -253,9 +248,7 @@ export default function ExportButtons({
     // ── Alojamiento ──────────────────────────────────────────────
     if (hoteles.length) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`🏨 *${T.alojamiento}*`);
-      lines.push(SEP);
       lines.push("");
 
       const hotelGroups: { ubicacion: string; items: typeof hoteles }[] = [];
@@ -307,9 +300,7 @@ export default function ExportButtons({
     // ── Traslados ────────────────────────────────────────────────
     if (traslados.length) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`🚐 *${T.traslados}*`);
-      lines.push(SEP);
       lines.push("");
 
       for (const s of traslados) {
@@ -331,9 +322,7 @@ export default function ExportButtons({
     // ── Tours ────────────────────────────────────────────────────
     if (tours.length) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`🌴 *${T.toursYExperiencias}*`);
-      lines.push(SEP);
       lines.push("");
 
       for (const s of tours) {
@@ -362,9 +351,7 @@ export default function ExportButtons({
     // ── Catamarán ────────────────────────────────────────────────
     if (catamarans.length) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`⛵ *${T.catamaranYNavegacion}*`);
-      lines.push(SEP);
       lines.push("");
 
       for (const s of catamarans) {
@@ -380,9 +367,7 @@ export default function ExportButtons({
     // ── Vuelos ───────────────────────────────────────────────────
     if (vuelos.length) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`✈️ *${T.vuelos}*`);
-      lines.push(SEP);
       lines.push("");
 
       for (const s of vuelos) {
@@ -398,9 +383,7 @@ export default function ExportButtons({
     // ── Resumen de costos ─────────────────────────────────────────
     if (isCalc) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`💰 *${T.resumenDeCostos}*`);
-      lines.push(SEP);
       lines.push("");
       for (const a of acoms) {
         lines.push(`• ${a}: *${fmt(result.totalesPorAcomodacion[a])}* ${T.waPorPersona}`);
@@ -421,9 +404,7 @@ export default function ExportButtons({
       const grupoTotal = grupoSubs.total;
 
       lines.push("");
-      lines.push(SEP);
       lines.push("👥 *DETALLE DEL GRUPO*");
-      lines.push(SEP);
       lines.push("");
       for (const a of activeRoomAcoms) {
         const habCount = hab[a] ?? 0;
@@ -457,9 +438,7 @@ export default function ExportButtons({
       : [];
     if (it.length > 0) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`🗓 *${T.itinerarioSugerido}*`);
-      lines.push(SEP);
       lines.push("");
       for (const d of it) {
         const fechaLabel = d.fecha ? ` · ${d.fecha}` : "";
@@ -484,9 +463,7 @@ export default function ExportButtons({
       }
       if (tourDescs.length) {
         lines.push("");
-        lines.push(SEP);
         lines.push(`📋 *${T.descriptivos}*`);
-        lines.push(SEP);
         for (const desc of tourDescs) {
           const titulo =
             (idioma === "en" ? desc.titulo_en : idioma === "pt" ? desc.titulo_pt : null) || desc.titulo;
@@ -538,9 +515,7 @@ export default function ExportButtons({
     // ── Observaciones ─────────────────────────────────────────────
     if (observaciones && observaciones.length > 0) {
       lines.push("");
-      lines.push(SEP);
       lines.push(`📋 *${T.observaciones}*`);
-      lines.push(SEP);
       lines.push("");
       for (const o of observaciones) {
         lines.push(`• ${o}`);
