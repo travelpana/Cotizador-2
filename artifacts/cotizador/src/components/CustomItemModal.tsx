@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { compressImage } from "@/lib/image-utils";
 import { PriceInput } from "@/components/ui/price-input";
 import InlineRangePicker, { nightsBetween } from "./InlineRangePicker";
 import {
@@ -970,12 +971,9 @@ export default function CustomItemModal({
               onChange={(e) => {
                 const files = Array.from(e.target.files ?? []);
                 files.forEach((file) => {
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    const result = ev.target?.result as string;
-                    if (result) setImages((prev) => [...prev, result]);
-                  };
-                  reader.readAsDataURL(file);
+                  compressImage(file).then((dataUrl) => {
+                    setImages((prev) => [...prev, dataUrl]);
+                  });
                 });
                 e.target.value = "";
               }}
