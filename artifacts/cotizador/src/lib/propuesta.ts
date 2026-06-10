@@ -137,6 +137,18 @@ function formatNotasLineas(text: string, style: string): string {
   return lines.map((l) => `<div style="${style}">${escape(l)}</div>`).join("");
 }
 
+/** Renders a hotel's check-in/check-out line in the same style as catamaran dates. */
+function hotelFechasLine(
+  h: { fechaInicio?: string; fechaFin?: string; noches?: number },
+  style = STYLES.cellNote,
+): string {
+  if (!h.fechaInicio && !h.fechaFin) return "";
+  const desde = h.fechaInicio ? fmtFecha(h.fechaInicio) : "?";
+  const hasta  = h.fechaFin   ? fmtFecha(h.fechaFin)   : "?";
+  const nStr   = h.noches ? ` · ${h.noches} noche${h.noches !== 1 ? "s" : ""}` : "";
+  return `<div style="${style}">Fechas: ${escape(desde)} al ${escape(hasta)}${nStr}</div>`;
+}
+
 /** Renders up to 3 service images as an inline table row (email-safe). */
 function renderImagesHTML(images?: string[]): string {
   if (!images || images.length === 0) return "";
@@ -507,6 +519,7 @@ function alojamientoTable(d: PropuestaData): string {
           const regimenLine = regimenFmt
             ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
             : "";
+          const fechasHotelLine = hotelFechasLine(h);
           const notasHotelLine = renderNotasHTML(h.notas, h.notesImportant, h.notasList, STYLES.cellNote);
           const imagesHotelLine = renderImagesHTML(h.images);
 
@@ -514,6 +527,7 @@ function alojamientoTable(d: PropuestaData): string {
             <td style="${STYLES.td};padding:8px 12px;width:50%;">
               <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
               ${regimenLine}
+              ${fechasHotelLine}
               ${notasHotelLine}
               ${imagesHotelLine}
             </td>
@@ -820,13 +834,11 @@ function buildTotalesView(d: PropuestaData): string {
           const regimenLine = regimenFmt
             ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:4px;">${escape(regimenFmt)}</div>`
             : "";
-          const fechaHotelLine = h.fechaInicio || h.fechaFin
-            ? `<div style="font-size:11px;color:#64748B;font-weight:500;margin-top:4px;">${h.fechaInicio ? fmtFechaCompacta(h.fechaInicio) : "?"} → ${h.fechaFin ? fmtFechaCompacta(h.fechaFin) : "?"}</div>`
-            : "";
+          const fechaHotelLine = hotelFechasLine(h, STYLES.cellNote);
           const notasHotelLines = renderNotasHTML(h.notas, h.notesImportant, h.notasList, STYLES.cellNote);
           const imagesHotelLines = renderImagesHTML(h.images);
           rows += `<tr style="page-break-inside:avoid;">
-            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${fechaHotelLine}${regimenLine}${notasHotelLines}${imagesHotelLines}</td>
+            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${regimenLine}${fechaHotelLine}${notasHotelLines}${imagesHotelLines}</td>
             <td style="${tdCtr};width:9%;">${escape(h.estrellas || "—")}</td>
             <td style="${tdBase};width:11%;">${escape(h.tipoHabitacion || "—")}</td>
             <td style="${tdCtr};width:8%;font-weight:700;color:#475569;">${escape(String(a))}</td>
@@ -1125,8 +1137,8 @@ function buildPackageView(d: PropuestaData): string {
             <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>
             ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.estrellas)}</div>` : ""}
             ${h.ubicacion ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.ubicacion)}</div>` : ""}
-            ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
             ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
+            ${hotelFechasLine(h, `font-size:11px;color:#64748B;font-style:italic;margin-top:3px;`)}
             ${notasHtml}
             ${imagesHtml}
           </td>
@@ -1191,8 +1203,8 @@ function buildPackageView(d: PropuestaData): string {
             <td style="padding:12px 14px;${rowBorderBottom}border-right:1px solid ${C_BORDER};vertical-align:top;background:${blockBg};">
               <div style="font-weight:600;font-size:13px;color:${C_DARK};">${escape(h.nombre)}</div>
               ${h.estrellas ? `<div style="font-size:11px;color:${C_LBL};">${escape(h.estrellas)}</div>` : ""}
-              ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
               ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
+              ${hotelFechasLine(h, `font-size:11px;color:#64748B;font-style:italic;margin-top:3px;`)}
               ${notasHtml}
               ${imagesHtml}
             </td>
