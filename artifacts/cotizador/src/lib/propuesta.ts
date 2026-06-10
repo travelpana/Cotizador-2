@@ -1461,10 +1461,10 @@ function infoBar(d: PropuestaData): string {
       ? fmtFechaBar(c.fechaInicio, idioma)
       : "—";
 
-  const LBL = `font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 2px;display:block;`;
-  const VAL = `font-size:13px;font-weight:700;color:#041941;display:block;word-break:break-word;`;
+  const LBL = `font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.9px;display:block;margin:0 0 7px;line-height:1;`;
+  const VAL = `font-size:15px;font-weight:800;color:#041941;display:block;word-break:break-word;line-height:1.2;`;
   const SEP = `width:1px;background:#e2e8f0;`;
-  const CEL = `padding:13px 10px;text-align:center;vertical-align:middle;`;
+  const CEL = `padding:16px 14px;text-align:center;vertical-align:middle;`;
 
   function col(lbl: string, val: string): string {
     return `<td style="${CEL}"><span style="${LBL}">${escape(lbl)}</span><span style="${VAL}">${escape(val)}</span></td>`;
