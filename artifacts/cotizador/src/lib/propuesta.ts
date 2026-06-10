@@ -1461,25 +1461,28 @@ function infoBar(d: PropuestaData): string {
       ? fmtFechaBar(c.fechaInicio, idioma)
       : "—";
 
-  const LBL = `font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.9px;display:block;margin:0 0 7px;line-height:1;`;
-  const VAL = `font-size:15px;font-weight:800;color:#041941;display:block;word-break:break-word;line-height:1.2;`;
+  const LBL = `font-size:10px;font-weight:700;color:#63718a;text-transform:uppercase;letter-spacing:1px;line-height:1;margin:0;padding:0;`;
+  const VAL = `font-size:15px;font-weight:700;color:#041941;line-height:1.25;margin-top:6px;word-break:break-word;`;
   const SEP = `width:1px;background:#e2e8f0;`;
   const CEL = `padding:16px 14px;text-align:center;vertical-align:middle;`;
 
-  function col(lbl: string, val: string): string {
-    return `<td style="${CEL}"><span style="${LBL}">${escape(lbl)}</span><span style="${VAL}">${escape(val)}</span></td>`;
+  function col(lbl: string, val: string, width: string): string {
+    return `<td width="${width}" style="${CEL}width:${width};">` +
+      `<div style="${LBL}">${escape(lbl)}</div>` +
+      `<div style="${VAL}">${escape(val)}</div>` +
+      `</td>`;
   }
 
   return `
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f8faff;">
   <tr>
-    ${col(T.destino,         d.destino)}
-    <td style="${SEP}"></td>
-    ${col(T.fechasDeEstadia, fechasText)}
-    <td style="${SEP}"></td>
-    ${col(T.noches,          d.noches)}
-    <td style="${SEP}"></td>
-    ${col(T.pasajeros,       d.pasajerosLabel)}
+    ${col(T.destino,         d.destino,         "30%")}
+    <td width="1" style="${SEP}width:1px;">&nbsp;</td>
+    ${col(T.fechasDeEstadia, fechasText,         "40%")}
+    <td width="1" style="${SEP}width:1px;">&nbsp;</td>
+    ${col(T.noches,          d.noches,           "12%")}
+    <td width="1" style="${SEP}width:1px;">&nbsp;</td>
+    ${col(T.pasajeros,       d.pasajerosLabel,   "18%")}
   </tr>
 </table>`;
 }
