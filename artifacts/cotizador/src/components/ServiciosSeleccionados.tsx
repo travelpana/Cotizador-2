@@ -1068,6 +1068,14 @@ function ServicioRow({
           </div>
         ) : null}
 
+        {/* Image count indicator */}
+        {(servicio.images?.length ?? 0) > 0 && (
+          <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
+            <span>📷</span>
+            <span>{servicio.images!.length} imagen{servicio.images!.length !== 1 ? "es" : ""}</span>
+          </div>
+        )}
+
         {/* Tour tickets add-on */}
         {servicio.tipo === "tour" &&
           servicio.tickets?.enabled &&

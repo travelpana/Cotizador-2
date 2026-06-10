@@ -92,6 +92,8 @@ export interface ServicioSeleccionado {
   /** Duplicated service marker — only used in the UI panel, never exported */
   isDuplicate?: boolean;
   duplicatedFromId?: string;
+  /** Base64 data URLs of images attached to this service */
+  images?: string[];
 }
 
 export interface Descriptivo {
@@ -187,6 +189,8 @@ export interface ServicioCalculado {
     createdAt?: string;
     updatedAt?: string;
   }>;
+  /** Base64 data URLs of images attached to this service */
+  images?: string[];
 }
 
 export interface CotizacionResult {

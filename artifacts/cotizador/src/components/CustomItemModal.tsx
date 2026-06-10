@@ -12,6 +12,7 @@ import {
   Ship,
   Tag,
   Sparkles,
+  ImageIcon,
 } from "lucide-react";
 import type { Acomodacion, ServicioSeleccionado } from "@/lib/types";
 
@@ -245,6 +246,8 @@ export default function CustomItemModal({
   const [precioNino, setPrecioNino] = useState<string>("");
   const [notas, setNotas] = useState("");
   const [notesImportant, setNotesImportant] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
@@ -301,6 +304,7 @@ export default function CustomItemModal({
         );
         setNotas(initial.notas ?? "");
         setNotesImportant(initial.notesImportant ?? false);
+        setImages(initial.images ?? []);
         setOrigen(initial.origen ?? CIUDADES_VUELO[0]);
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
         const arrowCount = (initial.nombre.match(/→/g) ?? []).length;
@@ -323,6 +327,7 @@ export default function CustomItemModal({
         setPrecioNino("");
         setNotas("");
         setNotesImportant(false);
+        setImages([]);
         setOrigen(CIUDADES_VUELO[0]);
         setDestino(CIUDADES_VUELO[1]);
         setIdaVuelta(true);
@@ -422,6 +427,7 @@ export default function CustomItemModal({
       customTipo: tipo,
       notas: notas.trim() || undefined,
       notesImportant: notesImportant && !!notas.trim() ? true : undefined,
+      images: images.length > 0 ? images : undefined,
       ...(isHotel
         ? {
             fechaInicio: globalFechaInicio || undefined,
@@ -948,6 +954,58 @@ export default function CustomItemModal({
                 </span>
               </label>
             )}
+          </div>
+
+          {/* Imágenes — always visible */}
+          <div>
+            <label className={lbl} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <ImageIcon size={12} /> Imágenes del servicio
+            </label>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                files.forEach((file) => {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    const result = ev.target?.result as string;
+                    if (result) setImages((prev) => [...prev, result]);
+                  };
+                  reader.readAsDataURL(file);
+                });
+                e.target.value = "";
+              }}
+            />
+            {images.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {images.map((src, idx) => (
+                  <div key={idx} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      title="Eliminar imagen"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-slate-300 text-sm text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors w-full justify-center"
+            >
+              <ImageIcon className="w-4 h-4" />
+              {images.length > 0 ? "Agregar más imágenes" : "Subir imágenes"}
+            </button>
+            <p className="text-[11px] text-slate-400 mt-1">Máx. 3 visibles en PDF y correo</p>
           </div>
         </div>
       </form>

@@ -184,6 +184,7 @@ export function calcularLocal(
         desayuno: s.desayuno,
         noches: hotelNoches,
         paxAplicados: paxLocal,
+        images: s.images,
       });
     } else {
       const tier = s.tarifaOverride ?? pickTier(paxLocal);
@@ -247,6 +248,7 @@ export function calcularLocal(
         fechaInicio: s.tipo === "catamaran" ? s.fechaInicio : undefined,
         fechaFin: s.tipo === "catamaran" ? s.fechaFin : undefined,
         noches: s.tipo === "catamaran" && catNoches > 1 ? catNoches : undefined,
+        images: s.images,
       });
     }
   }

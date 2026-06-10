@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PriceInput } from "@/components/ui/price-input";
 import PremiumSingleDatePicker from "./PremiumSingleDatePicker";
 import {
@@ -13,6 +13,7 @@ import {
   Clock,
   X,
   Check,
+  ImageIcon,
 } from "lucide-react";
 import Modal from "./Modal";
 import type {
@@ -86,6 +87,8 @@ export default function ServicioFormModal(props: Props) {
   const [nombre, setNombre] = useState("");
   const [notas, setNotas] = useState("");
   const [notesImportant, setNotesImportant] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [ubicacion, setUbicacion] = useState("");
   const [estrellas, setEstrellas] = useState("");
   const [vigencia, setVigencia] = useState("");
@@ -131,6 +134,7 @@ export default function ServicioFormModal(props: Props) {
       setNombre(initial.nombre);
       setNotas(initial.notas ?? "");
       setNotesImportant(initial.notesImportant ?? false);
+      setImages(initial.images ?? []);
       setUbicacion(initial.ubicacion ?? "");
       setEstrellas(initial.estrellas ?? "");
       setVigencia(initial.vigencia ?? "");
@@ -166,6 +170,7 @@ export default function ServicioFormModal(props: Props) {
       setNombre("");
       setNotas("");
       setNotesImportant(false);
+      setImages([]);
       setUbicacion("");
       setEstrellas("");
       setVigencia("");
@@ -308,6 +313,7 @@ export default function ServicioFormModal(props: Props) {
       nombre,
       notas: notas || undefined,
       notesImportant: notesImportant && !!notas.trim() ? true : undefined,
+      images: images.length > 0 ? images : undefined,
       paxOverride: paxMode === "manual" ? paxValue : undefined,
       manual: !isCatalog,
       precios:
@@ -623,6 +629,59 @@ export default function ServicioFormModal(props: Props) {
               </span>
             </label>
           )}
+        </div>
+
+        <div>
+          <SectionTitle>
+            <ImageIcon className="w-3.5 h-3.5" /> Imágenes del servicio
+          </SectionTitle>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const result = ev.target?.result as string;
+                  if (result) setImages((prev) => [...prev, result]);
+                };
+                reader.readAsDataURL(file);
+              });
+              e.target.value = "";
+            }}
+          />
+          {images.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {images.map((src, idx) => (
+                <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    title="Eliminar imagen"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-slate-300 text-sm text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
+          >
+            <ImageIcon className="w-4 h-4" />
+            {images.length > 0 ? "Agregar más imágenes" : "Subir imágenes"}
+          </button>
+          <div className="text-[11px] text-slate-400 mt-1.5">
+            Aparecerán en la propuesta (máx. 3 visibles en PDF y correo)
+          </div>
         </div>
       </div>
     </Modal>

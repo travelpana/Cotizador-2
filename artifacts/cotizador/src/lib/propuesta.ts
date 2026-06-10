@@ -137,6 +137,21 @@ function formatNotasLineas(text: string, style: string): string {
   return lines.map((l) => `<div style="${style}">${escape(l)}</div>`).join("");
 }
 
+/** Renders up to 3 service images as an inline table row (email-safe). */
+function renderImagesHTML(images?: string[]): string {
+  if (!images || images.length === 0) return "";
+  const visible = images.slice(0, 3);
+  const cells = visible
+    .map(
+      (src) =>
+        `<td style="padding:0 4px 0 0;vertical-align:top;">` +
+        `<img src="${src}" alt="" width="160" style="width:160px;height:auto;max-height:120px;object-fit:cover;border-radius:6px;display:block;" />` +
+        `</td>`,
+    )
+    .join("");
+  return `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:6px;"><tr>${cells}</tr></table>`;
+}
+
 function renderNotasHTML(
   notas?: string,
   notesImportant?: boolean,
@@ -493,12 +508,14 @@ function alojamientoTable(d: PropuestaData): string {
             ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:8px;">${escape(regimenFmt)}</div>`
             : "";
           const notasHotelLine = renderNotasHTML(h.notas, h.notesImportant, h.notasList, STYLES.cellNote);
+          const imagesHotelLine = renderImagesHTML(h.images);
 
           return `<tr style="page-break-inside:avoid;">
             <td style="${STYLES.td};padding:8px 12px;width:50%;">
               <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
               ${regimenLine}
               ${notasHotelLine}
+              ${imagesHotelLine}
             </td>
             <td style="${STYLES.tdCenter};padding:8px 12px;width:15%;">${escape(h.estrellas || "—")}</td>
             <td style="${STYLES.td};padding:8px 12px;width:15%;">${escape(h.tipoHabitacion || "—")}</td>
@@ -596,6 +613,7 @@ function adicionalesTable(
           : "";
 
       const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
+      const imagesLine = renderImagesHTML(s.images);
 
       if (d.isCalc) {
         return `<tr style="page-break-inside:avoid;">
@@ -605,6 +623,7 @@ function adicionalesTable(
             ${fechasCatamaranLine}
             ${horarioLine}
             ${notasLine}
+            ${imagesLine}
           </td>
           <td style="${STYLES.td};width:15%;">${escape(tipo)}</td>
           <td style="${STYLES.tdNum};width:20%;">${escape(fmt(s.unitAplicado ?? 0))}</td>
@@ -618,6 +637,7 @@ function adicionalesTable(
           ${fechasCatamaranLine}
           ${horarioLine}
           ${notasLine}
+          ${imagesLine}
         </td>
         <td style="${STYLES.td};width:15%;">${escape(tipo)}</td>
         <td style="${STYLES.tdNum};width:10%;">${escape(fmt(mainUnit))}${chdSubLine}</td>
@@ -804,8 +824,9 @@ function buildTotalesView(d: PropuestaData): string {
             ? `<div style="font-size:11px;color:#64748B;font-weight:500;margin-top:4px;">${h.fechaInicio ? fmtFechaCompacta(h.fechaInicio) : "?"} → ${h.fechaFin ? fmtFechaCompacta(h.fechaFin) : "?"}</div>`
             : "";
           const notasHotelLines = renderNotasHTML(h.notas, h.notesImportant, h.notasList, STYLES.cellNote);
+          const imagesHotelLines = renderImagesHTML(h.images);
           rows += `<tr style="page-break-inside:avoid;">
-            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${fechaHotelLine}${regimenLine}${notasHotelLines}</td>
+            <td style="${tdBase};font-weight:600;width:30%;">${escape(h.nombre)}${fechaHotelLine}${regimenLine}${notasHotelLines}${imagesHotelLines}</td>
             <td style="${tdCtr};width:9%;">${escape(h.estrellas || "—")}</td>
             <td style="${tdBase};width:11%;">${escape(h.tipoHabitacion || "—")}</td>
             <td style="${tdCtr};width:8%;font-weight:700;color:#475569;">${escape(String(a))}</td>
@@ -874,8 +895,9 @@ function buildTotalesView(d: PropuestaData): string {
         return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">${escape(T.costoAdicionalEntradas)}: ${labelPart}${adultPart}${childPart}</div>`;
       })();
       const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
+      const imagesLineTot = renderImagesHTML(s.images);
       rows += `<tr style="page-break-inside:avoid;">
-        <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}</td>
+        <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}${imagesLineTot}</td>
         <td style="${tdBase};width:17%;">${escape(getTipo(s))}</td>
         <td style="${tdNum};width:13%;">${escape(fmt(mainUnit))}${chdSubLine}</td>
         <td style="${tdCtr};width:8%;">${escape(String(pax))}</td>
@@ -1087,6 +1109,7 @@ function buildPackageView(d: PropuestaData): string {
       const dataRows = opHoteles.map((h, idx) => {
         const regimenFmt = formatRegimen(h.desayuno);
         const notasHtml = renderNotasHTML(h.notas, h.notesImportant, h.notasList);
+        const imagesHtml = renderImagesHTML(h.images);
         const rowBg = idx % 2 === 0 ? "#ffffff" : C_HDR_BG;
         const isFirst = idx === 0;
         const rowspanAttr = nHoteles > 1 ? ` rowspan="${nHoteles}"` : "";
@@ -1105,6 +1128,7 @@ function buildPackageView(d: PropuestaData): string {
             ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
             ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
             ${notasHtml}
+            ${imagesHtml}
           </td>
           <td style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};border-right:1px solid ${C_BORDER};vertical-align:top;">${nocheLinesHtml}</td>
           ${isFirst ? `<td${rowspanAttr} style="padding:12px 14px;border-bottom:1px solid ${C_BORDER};vertical-align:middle;background:${C_PRICE_BG};">${priceLinesHtml}</td>` : ""}
@@ -1149,6 +1173,7 @@ function buildPackageView(d: PropuestaData): string {
           const isLast = hIdx === nHoteles - 1;
           const regimenFmt = formatRegimen(h.desayuno);
           const notasHtml = renderNotasHTML(h.notas, h.notesImportant, h.notasList);
+          const imagesHtml = renderImagesHTML(h.images);
           const rowBorderBottom = isLast
             ? `border-bottom:2px solid ${C_BORDER};`
             : `border-bottom:1px dashed ${C_BORDER};`;
@@ -1169,6 +1194,7 @@ function buildPackageView(d: PropuestaData): string {
               ${h.noches ? `<div style="font-size:11px;color:${C_LBL};">${escape(String(h.noches))} ${h.noches === 1 ? "noche" : "noches"}</div>` : ""}
               ${regimenFmt ? `<div style="font-size:11px;color:${C_BLUE};font-weight:600;margin-top:2px;">${escape(regimenFmt)}</div>` : ""}
               ${notasHtml}
+              ${imagesHtml}
             </td>
             <td style="padding:12px 14px;${rowBorderBottom}border-right:1px solid ${C_BORDER};vertical-align:top;background:${blockBg};">${nocheLinesHtml}</td>
             ${isFirst ? `<td${rowspanAttr} style="padding:12px 14px;border-bottom:2px solid ${C_BORDER};vertical-align:middle;background:${C_PRICE_BG};">${priceLinesHtml}</td>` : ""}
@@ -1485,7 +1511,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;">
     <tr>
       <td align="center" style="padding:20px 24px;">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#ffffff;font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:13px;line-height:1.45;">
+        <table cellpadding="0" cellspacing="0" border="0" width="720" style="width:100%;max-width:720px;background:#ffffff;font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${COLOR_TEXTO};font-size:13px;line-height:1.45;margin:0 auto;">
           <tbody>
 
             ${introBlock(d)}
