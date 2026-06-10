@@ -586,8 +586,13 @@ function adicionalesTable(
       })();
 
       const horarioLine =
-        s.tipo === "tour" && d.incluirDescriptivos && s.horario
+        (s.tipo === "tour" || s.tipo === "catamaran") && s.horario
           ? `<div style="${STYLES.cellNote}">${escape(T.horario)}: ${escape(s.horario)}</div>`
+          : "";
+
+      const fechasCatamaranLine =
+        s.tipo === "catamaran" && s.fechaInicio && s.fechaFin
+          ? `<div style="${STYLES.cellNote}">Fechas: ${escape(fmtFecha(s.fechaInicio))} al ${escape(fmtFecha(s.fechaFin))}${s.noches ? ` · ${s.noches} noche${s.noches !== 1 ? "s" : ""}` : ""}</div>`
           : "";
 
       const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
@@ -597,6 +602,7 @@ function adicionalesTable(
           <td style="${STYLES.td};width:65%;">
             <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
             ${ticketsLine}
+            ${fechasCatamaranLine}
             ${horarioLine}
             ${notasLine}
           </td>
@@ -609,6 +615,7 @@ function adicionalesTable(
         <td style="${STYLES.td};width:65%;">
           <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
           ${ticketsLine}
+          ${fechasCatamaranLine}
           ${horarioLine}
           ${notasLine}
         </td>

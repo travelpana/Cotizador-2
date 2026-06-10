@@ -11,6 +11,7 @@ import { fmt, pickTier, priceForTier } from "@/lib/calc";
 import { formatTrasladoNombre, personalizarNombreTraslado } from "@/lib/utils";
 import { formatRegimen } from "@/lib/regimen";
 import InlineRangePicker, { nightsBetween } from "./InlineRangePicker";
+
 import {
   Popover,
   PopoverContent,
@@ -671,6 +672,7 @@ function ServicioRow({
   personalizarTraslados?: boolean;
 }) {
   const isHotel = servicio.tipo === "hotel";
+  const isCatamaranItem = servicio.tipo === "catamaran";
   const paxLocal = servicio.paxOverride ?? pasajeros;
   const autoTier = pickTier(paxLocal);
   const appliedTier = servicio.tarifaOverride ?? autoTier;
@@ -970,6 +972,55 @@ function ServicioRow({
               </>
             )}
           </div>
+        ) : isCatamaranItem ? (
+          <div className="flex items-center gap-0.5 flex-wrap mt-0.5">
+            {/* Fechas estadía catamarán */}
+            <Popover
+              open={openEditor === "dates"}
+              onOpenChange={(o) => setOpenEditor(o ? "dates" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
+                  title="Editar fechas de estadía"
+                >
+                  {servicio.fechaInicio && servicio.fechaFin ? (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
+                      <Calendar className="w-3 h-3" />
+                      {fmtDMA(servicio.fechaInicio)} → {fmtDMA(servicio.fechaFin)}
+                      <span className="ml-0.5 text-[10px] font-bold bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded">
+                        {nightsBetween(servicio.fechaInicio, servicio.fechaFin)}n
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="italic text-slate-400">
+                      <Calendar className="w-3 h-3 inline mr-0.5" />
+                      Fechas estadía
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-[290px] p-3 z-[60]"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                <DatesEditor
+                  servicio={servicio}
+                  onSave={(patch) => onUpdate({ ...servicio, ...patch })}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+            {/* Horario */}
+            {servicio.horario && (
+              <>
+                <span className="text-slate-300 text-[11px] select-none">·</span>
+                <span className="text-[11px] text-slate-500 px-1">{servicio.horario}</span>
+              </>
+            )}
+          </div>
         ) : descripcion ? (
           <div className="text-[11px] text-slate-500 truncate mt-0.5">
             {descripcion}
@@ -1102,7 +1153,7 @@ function ServicioRow({
                 {fmt(unit)}
               </div>
               <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                p/p
+                {isCatamaranItem && (servicio.fechaInicio || servicio.fechaFin) ? "p/noche" : "p/p"}
               </div>
               {ninos > 0 && (servicio.precios.chd ?? 0) > 0 && (
                 <>

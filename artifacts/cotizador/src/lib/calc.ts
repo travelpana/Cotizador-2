@@ -102,6 +102,7 @@ export function calcGrupoTotalFromResult(
       subs.hoteleria += svcCost;
     } else {
       const unit = svc.unitAplicado ?? (svc.preciosPorAcomodacion.DBL ?? 0);
+      const catNoches = svc.tipo === "catamaran" && svc.noches ? svc.noches : 1;
       const ticketsAdult =
         svc.tipo === "tour" && svc.tickets?.enabled ? (svc.tickets.adultPrice ?? 0) : 0;
       const ticketsChild =
@@ -109,7 +110,7 @@ export function calcGrupoTotalFromResult(
           ? (svc.tickets.childPrice ?? ticketsAdult)
           : 0;
       const chdUnit = svc.preciosPorAcomodacion.CHD ?? 0;
-      const svcCost = (unit + ticketsAdult) * groupAdultPax + (chdUnit + ticketsChild) * ninos;
+      const svcCost = (unit + ticketsAdult) * catNoches * groupAdultPax + (chdUnit + ticketsChild) * catNoches * ninos;
       if (svc.tipo === "traslado") subs.traslados += svcCost;
       else if (svc.tipo === "tour") subs.tours += svcCost;
       else if (svc.tipo === "vuelo") subs.vuelos += svcCost;
@@ -202,13 +203,17 @@ export function calcularLocal(
         s.tickets.childPrice > 0
           ? s.tickets.childPrice
           : ticketsAdult;
+      const catNoches =
+        s.tipo === "catamaran" && s.fechaInicio && s.fechaFin
+          ? diffNoches(s.fechaInicio, s.fechaFin)
+          : 1;
       preciosPorAcom.SGL = unit;
       preciosPorAcom.DBL = unit;
       preciosPorAcom.TPL = unit;
       preciosPorAcom.QDL = unit;
       preciosPorAcom.CHD = chdUnit;
       const totalUnit =
-        (unit + ticketsAdult) * paxLocal + (chdUnit + ticketsChild) * ninos;
+        (unit + ticketsAdult) * catNoches * paxLocal + (chdUnit + ticketsChild) * catNoches * ninos;
       for (const a of acoms) {
         totalesPorAcom[a] = totalUnit;
         subtotales[s.tipo][a] += totalUnit;
@@ -216,7 +221,9 @@ export function calcularLocal(
       const detalle =
         s.tipo === "vuelo"
           ? `${paxLocal} pax${ninos ? ` + ${ninos} niños` : ""}`
-          : `${paxLocal} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`;
+          : s.tipo === "catamaran" && catNoches > 1
+            ? `${catNoches} noches × ${paxLocal} pax${ninos ? ` + ${ninos} niños` : ""}`
+            : `${paxLocal} pax (${tierLabel(tier)})${ninos ? ` + ${ninos} niños` : ""}`;
       out.push({
         id: s.id,
         codigo: s.codigo ?? s.id,
@@ -235,8 +242,11 @@ export function calcularLocal(
         unitAplicado: unit,
         paxAplicados: paxLocal,
         tickets: s.tipo === "tour" ? s.tickets : undefined,
-        horario: s.tipo === "tour" ? s.horario : undefined,
+        horario: s.tipo === "tour" || s.tipo === "catamaran" ? s.horario : undefined,
         tipoServicio: s.tipoServicio,
+        fechaInicio: s.tipo === "catamaran" ? s.fechaInicio : undefined,
+        fechaFin: s.tipo === "catamaran" ? s.fechaFin : undefined,
+        noches: s.tipo === "catamaran" && catNoches > 1 ? catNoches : undefined,
       });
     }
   }

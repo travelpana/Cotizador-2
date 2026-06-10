@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PriceInput } from "@/components/ui/price-input";
+import InlineRangePicker, { nightsBetween } from "./InlineRangePicker";
 import {
   X,
   Check,
@@ -259,6 +260,8 @@ export default function CustomItemModal({
   const [horarioCustom, setHorarioCustom] = useState("");
   const [duracion, setDuracion] = useState("");
   const [entradasDesc, setEntradasDesc] = useState("");
+  const [fechaInicioCat, setFechaInicioCat] = useState("");
+  const [fechaFinCat, setFechaFinCat] = useState("");
 
   const nombreRef = useRef<HTMLInputElement>(null);
   const ninosEnabled = globalNinos > 0;
@@ -311,6 +314,8 @@ export default function CustomItemModal({
         setHorarioCustom(initial.horario ?? "");
         setDuracion(initial.duracion ?? "");
         setEntradasDesc(initial.entradasDesc ?? "");
+        setFechaInicioCat(initial.fechaInicio ?? "");
+        setFechaFinCat(initial.fechaFin ?? "");
       } else {
         setTipo("tour");
         setNombre("");
@@ -330,6 +335,8 @@ export default function CustomItemModal({
         setHorarioCustom("");
         setDuracion("");
         setEntradasDesc("");
+        setFechaInicioCat("");
+        setFechaFinCat("");
       }
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
@@ -450,6 +457,8 @@ export default function CustomItemModal({
         ? {
             tipoServicio: modalidad,
             horario: horarioCustom.trim() || undefined,
+            fechaInicio: fechaInicioCat || undefined,
+            fechaFin: fechaFinCat || undefined,
           }
         : {}),
     };
@@ -824,6 +833,26 @@ export default function CustomItemModal({
                 />
               </div>
 
+              {/* Estadía — check-in / check-out */}
+              <div>
+                <label className={lbl}>Estadía</label>
+                <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
+                  <InlineRangePicker
+                    fechaInicio={fechaInicioCat}
+                    fechaFin={fechaFinCat}
+                    onSelect={(inicio, fin) => {
+                      setFechaInicioCat(inicio);
+                      setFechaFinCat(fin);
+                    }}
+                  />
+                  {fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat && (
+                    <p className="text-[11px] text-primary font-semibold mt-2 text-center">
+                      {nightsBetween(fechaInicioCat, fechaFinCat)} noche{nightsBetween(fechaInicioCat, fechaFinCat) !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Modalidad</label>
@@ -846,7 +875,7 @@ export default function CustomItemModal({
               </div>
 
               <PriceRow
-                label="Tarifa p/p (USD)"
+                label="Tarifa por noche / p/p (USD)"
                 precio={precio}
                 setPrecio={setPrecio}
                 precioNino={precioNino}
@@ -856,7 +885,9 @@ export default function CustomItemModal({
                 hintText={
                   ninosEnabled
                     ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                    : "Precio por persona"
+                    : fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat
+                      ? `Total = tarifa × ${nightsBetween(fechaInicioCat, fechaFinCat)} noches × pasajeros`
+                      : "Tarifa por noche por persona"
                 }
               />
             </>
