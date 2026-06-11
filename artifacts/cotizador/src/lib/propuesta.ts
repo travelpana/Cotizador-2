@@ -486,11 +486,11 @@ function alojamientoTable(d: PropuestaData): string {
 
   const showTotalCol = !d.isCalc;
 
-  const nochesSuffix = `<div style="font-weight:500;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;">${escape(T.porNoche)}</div>`;
+  const nochesSuffix = `<div style="font-weight:400;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;line-height:1.2;white-space:normal;">por persona / noche</div>`;
   const acomCols = d.acoms
     .map(
       (a) =>
-        `<th style="${STYLES.thNum};width:10%;">${escape(String(a))}${nochesSuffix}</th>`,
+        `<th style="${STYLES.thNum};width:10%;min-width:150px;white-space:normal;text-align:center;">${escape(String(a))}${nochesSuffix}</th>`,
     )
     .join("");
 

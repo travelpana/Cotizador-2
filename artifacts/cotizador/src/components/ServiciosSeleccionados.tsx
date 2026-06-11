@@ -1109,22 +1109,28 @@ function ServicioRow({
               title="Editar precios"
             >
               {acomodaciones.map((a) => (
-                <div key={a} className="text-right">
+                <div key={a} className="text-center" style={{ minWidth: 64 }}>
                   <div className="text-sm font-bold text-slate-900 tabular-nums">
                     {fmt(servicio.precios[a] ?? 0)}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                    {a}/noche
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400" style={{ lineHeight: 1.2 }}>
+                    {a}
+                  </div>
+                  <div className="text-slate-400" style={{ fontSize: 10, lineHeight: 1.2, whiteSpace: "normal" }}>
+                    por persona / noche
                   </div>
                 </div>
               ))}
               {ninos > 0 && (servicio.precios.CHD ?? 0) > 0 && (
-                <div className="text-right">
+                <div className="text-center" style={{ minWidth: 64 }}>
                   <div className="text-sm font-bold tabular-nums" style={{ color: "#92400e" }}>
                     {fmt(servicio.precios.CHD ?? 0)}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wide" style={{ color: "#b45309" }}>
-                    CHD/noche
+                  <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#b45309", lineHeight: 1.2 }}>
+                    CHD
+                  </div>
+                  <div style={{ fontSize: 10, lineHeight: 1.2, color: "#b45309", whiteSpace: "normal" }}>
+                    por persona / noche
                   </div>
                 </div>
               )}

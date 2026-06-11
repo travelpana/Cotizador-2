@@ -199,7 +199,7 @@ function HotelesTab({
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
                 <Th>Nombre</Th><Th>Categoría</Th><Th>Ubicación</Th><Th>Régimen</Th>
-                <Th align="right">DBL</Th><Th align="right">SGL</Th><Th align="right">TPL</Th>
+                <Th align="right" subtitle="por persona / noche">DBL</Th><Th align="right" subtitle="por persona / noche">SGL</Th><Th align="right" subtitle="por persona / noche">TPL</Th>
                 <Th>Estado</Th><Th></Th>
               </tr>
             </thead>
@@ -652,10 +652,15 @@ function TrasladoForm({ traslado: t, onChange }: { traslado: TrasladoLocal; onCh
 
 /* ─── Shared helpers ─── */
 
-function Th({ children, align }: { children?: React.ReactNode; align?: "right" | "left" }) {
+function Th({ children, align, subtitle }: { children?: React.ReactNode; align?: "right" | "left"; subtitle?: string }) {
   return (
-    <th className={`px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 whitespace-nowrap ${align === "right" ? "text-right" : "text-left"}`}>
+    <th className={`px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 ${subtitle ? "whitespace-normal" : "whitespace-nowrap"} ${align === "right" ? "text-right" : "text-left"}`} style={subtitle ? { minWidth: 150 } : undefined}>
       {children}
+      {subtitle && (
+        <div className="text-slate-400 normal-case tracking-normal font-normal" style={{ fontSize: 10, lineHeight: 1.2, marginTop: 2 }}>
+          {subtitle}
+        </div>
+      )}
     </th>
   );
 }
