@@ -11,6 +11,10 @@ export interface Hotel {
   desayuno: string;
   vigencia: string;
   precios: { SGL: number; DBL: number; TPL: number; CHD: number };
+  /** Observaciones del hotel — se copian automáticamente al seleccionar el hotel en el cotizador */
+  observaciones?: string;
+  /** URLs o data-URLs de imágenes del hotel */
+  imagenes?: string[];
 }
 
 export interface Tour {

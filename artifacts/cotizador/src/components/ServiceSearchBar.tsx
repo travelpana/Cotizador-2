@@ -236,8 +236,11 @@ export default function ServiceSearchBar({
         precios: { SGL: h.precios.SGL, DBL: h.precios.DBL, TPL: h.precios.TPL, CHD: h.precios.CHD },
         ubicacion: h.ubicacion, estrellas: h.estrellas, vigencia: h.vigencia,
         tipoHabitacion: h.tipoHabitacion,
+        desayuno: h.desayuno,
         fechaInicio: globalFechaInicio || undefined,
         fechaFin: globalFechaFin || undefined,
+        notas: h.observaciones || undefined,
+        images: h.imagenes?.length ? [...h.imagenes] : undefined,
       };
     }
     if (r.tipo === "tour") {

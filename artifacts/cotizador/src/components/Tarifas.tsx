@@ -18,7 +18,9 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Search,
+  ImagePlus,
 } from "lucide-react";
+import { compressImage } from "@/lib/image-utils";
 import type { Hotel, Tour, Traslado } from "@/lib/types";
 import type { CatalogInfo } from "@/lib/api";
 import type { HotelLocal, TourLocal, TrasladoLocal } from "@/lib/tarifas";
@@ -256,6 +258,33 @@ function HotelForm({ hotel: h, onChange }: { hotel: HotelLocal; onChange: (h: Ho
   const set = (patch: Partial<HotelLocal>) => onChange({ ...h, ...patch });
   const setP = (k: keyof typeof h.precios, v: number) => onChange({ ...h, precios: { ...h.precios, [k]: v } });
   const num = (val: string) => { const n = parseFloat(val); return isNaN(n) ? 0 : n; };
+  const [urlInput, setUrlInput] = useState("");
+  const [imgLoading, setImgLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addImageUrl = () => {
+    const url = urlInput.trim();
+    if (!url) return;
+    onChange({ ...h, imagenes: [...(h.imagenes ?? []), url] });
+    setUrlInput("");
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImgLoading(true);
+    try {
+      const dataUrls = await Promise.all(files.map(f => compressImage(f)));
+      onChange({ ...h, imagenes: [...(h.imagenes ?? []), ...dataUrls] });
+    } finally {
+      setImgLoading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeImage = (i: number) => {
+    onChange({ ...h, imagenes: (h.imagenes ?? []).filter((_, j) => j !== i) });
+  };
 
   return (
     <div className="space-y-4">
@@ -312,6 +341,77 @@ function HotelForm({ hotel: h, onChange }: { hotel: HotelLocal; onChange: (h: Ho
         <label className="text-sm text-slate-600">Activo</label>
         <div onClick={() => set({ activo: !h.activo })} className={`w-9 h-5 rounded-full transition-colors cursor-pointer ${h.activo ? "bg-emerald-500" : "bg-slate-300"}`}>
           <div className={`w-4 h-4 rounded-full bg-white mt-0.5 shadow transition-transform ${h.activo ? "translate-x-4" : "translate-x-0.5"}`} />
+        </div>
+      </div>
+
+      {/* Observaciones */}
+      <div>
+        <label className={labelCls}>Observaciones del hotel</label>
+        <textarea
+          value={h.observaciones ?? ""}
+          onChange={e => set({ observaciones: e.target.value || undefined })}
+          placeholder="Se copiarán automáticamente al agregar este hotel al cotizador…"
+          rows={3}
+          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none"
+        />
+      </div>
+
+      {/* Imágenes */}
+      <div>
+        <label className={labelCls}>Imágenes del hotel</label>
+        <div className="space-y-2">
+          {(h.imagenes ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {(h.imagenes ?? []).map((img, i) => (
+                <div key={i} className="relative group flex-shrink-0">
+                  <img src={img} alt="" className="h-16 w-24 object-cover rounded-lg border border-slate-200" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              value={urlInput}
+              onChange={e => setUrlInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addImageUrl(); } }}
+              placeholder="Pegar URL de imagen…"
+              className={inputCls + " flex-1"}
+            />
+            <button
+              type="button"
+              onClick={addImageUrl}
+              disabled={!urlInput.trim()}
+              className="shrink-0 px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 disabled:opacity-40 transition-colors"
+            >
+              Agregar
+            </button>
+          </div>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={imgLoading}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-xs text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              <ImagePlus className="w-3.5 h-3.5" />
+              {imgLoading ? "Procesando…" : "Subir desde archivo"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

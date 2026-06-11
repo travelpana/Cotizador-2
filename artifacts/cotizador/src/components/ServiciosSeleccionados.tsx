@@ -1068,11 +1068,26 @@ function ServicioRow({
           </div>
         ) : null}
 
-        {/* Image count indicator */}
+        {/* Images thumbnails */}
         {(servicio.images?.length ?? 0) > 0 && (
-          <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
-            <span>📷</span>
-            <span>{servicio.images!.length} imagen{servicio.images!.length !== 1 ? "es" : ""}</span>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {(servicio.images ?? []).slice(0, 3).map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt=""
+                className="h-10 rounded border border-slate-200 object-cover flex-shrink-0"
+                style={{ width: 56 }}
+              />
+            ))}
+            {(servicio.images ?? []).length > 3 && (
+              <div
+                className="h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-500 flex-shrink-0"
+                style={{ width: 40 }}
+              >
+                +{servicio.images!.length - 3}
+              </div>
+            )}
           </div>
         )}
 

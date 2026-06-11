@@ -297,6 +297,11 @@ export default function ExportButtons({
           }
 
           if (s.notas) lines.push(`📝 ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
+          const waImgLinks = (s.images ?? []).filter((img) => !img.startsWith("data:"));
+          if (waImgLinks.length > 0) {
+            lines.push(`🖼 Imágenes:`);
+            for (const link of waImgLinks) lines.push(link);
+          }
           lines.push("");
         }
       }
