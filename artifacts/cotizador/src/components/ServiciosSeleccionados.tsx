@@ -1117,7 +1117,7 @@ function ServicioRow({
                     {a}
                   </div>
                   <div className="text-slate-400" style={{ fontSize: 10, lineHeight: 1.2, whiteSpace: "normal" }}>
-                    por persona / noche
+                    Pax/Noche
                   </div>
                 </div>
               ))}
@@ -1130,7 +1130,7 @@ function ServicioRow({
                     CHD
                   </div>
                   <div style={{ fontSize: 10, lineHeight: 1.2, color: "#b45309", whiteSpace: "normal" }}>
-                    por persona / noche
+                    Pax/Noche
                   </div>
                 </div>
               )}

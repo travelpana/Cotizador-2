@@ -199,7 +199,7 @@ function HotelesTab({
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
                 <Th>Nombre</Th><Th>Categoría</Th><Th>Ubicación</Th><Th>Régimen</Th>
-                <Th align="right" subtitle="por persona / noche">DBL</Th><Th align="right" subtitle="por persona / noche">SGL</Th><Th align="right" subtitle="por persona / noche">TPL</Th>
+                <Th align="right" subtitle="Pax/Noche">DBL</Th><Th align="right" subtitle="Pax/Noche">SGL</Th><Th align="right" subtitle="Pax/Noche">TPL</Th>
                 <Th>Estado</Th><Th></Th>
               </tr>
             </thead>

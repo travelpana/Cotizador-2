@@ -486,7 +486,7 @@ function alojamientoTable(d: PropuestaData): string {
 
   const showTotalCol = !d.isCalc;
 
-  const nochesSuffix = `<div style="font-weight:400;color:#94a3b8;text-transform:lowercase;font-size:9px;margin-top:2px;line-height:1.2;white-space:normal;">por persona / noche</div>`;
+  const nochesSuffix = `<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:normal;">Pax/Noche</div>`;
   const acomCols = d.acoms
     .map(
       (a) =>
