@@ -347,9 +347,9 @@ export default function ExportButtons({
           const label = s.tickets.label || T.incluye;
           const childPart =
             s.tickets.childPrice && s.tickets.childPrice > 0
-              ? ` · ${T.ninosCap} ${fmt(s.tickets.childPrice)} p/p`
+              ? ` · ${T.ninosCap} ${fmt(s.tickets.childPrice)} PAX`
               : "";
-          lines.push(`🎟 ${T.waAdicional}: ${label} ${fmt(s.tickets.adultPrice)} p/p${childPart}`);
+          lines.push(`🎟 ${T.waAdicional}: ${label} ${fmt(s.tickets.adultPrice)} PAX${childPart}`);
         } else {
           lines.push(`🎟 ${T.noIncluyeEntradas}`);
         }

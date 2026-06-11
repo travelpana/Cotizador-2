@@ -615,10 +615,10 @@ function adicionalesTable(
         if (s.tipo !== "tour" || !s.tickets?.enabled || s.tickets.adultPrice <= 0) return "";
         const tk = s.tickets;
         const labelPart = tk.label ? `${escape(tk.label)} · ` : "";
-        const adultPart = `${T.adultosCap} ${escape(fmt(tk.adultPrice))} p/p`;
+        const adultPart = `${T.adultosCap} ${escape(fmt(tk.adultPrice))} PAX`;
         const childPart =
           tk.childPrice !== undefined && tk.childPrice > 0
-            ? ` · ${T.ninosCap} ${escape(fmt(tk.childPrice))} p/p`
+            ? ` · ${T.ninosCap} ${escape(fmt(tk.childPrice))} PAX`
             : "";
         return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">${escape(T.costoAdicionalEntradas)}: ${labelPart}${adultPart}${childPart}</div>`;
       })();
@@ -667,17 +667,20 @@ function adicionalesTable(
     })
     .join("");
 
-  const tarifaHeader = onlyCHD ? "TARIFA CHD" : T.tarifaPP;
+  const itemTipo = items[0]?.tipo ?? "";
+  const tarifaSub = itemTipo === "catamaran" ? "PAX/NOCHE" : "PAX";
+  const tarifaSubDiv = `<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:nowrap;">${tarifaSub}</div>`;
+  const tarifaHeaderHtml = onlyCHD ? escape("TARIFA CHD") : `TARIFA${tarifaSubDiv}`;
   const thead = d.isCalc
     ? `<tr>
         <th style="${STYLES.th};width:65%;">${escape(T.descripcion)}</th>
         <th style="${STYLES.th};width:15%;">${escape(T.modalidad)}</th>
-        <th style="${STYLES.thNum};width:20%;">${escape(tarifaHeader)}</th>
+        <th style="${STYLES.thNum};width:20%;">${tarifaHeaderHtml}</th>
       </tr>`
     : `<tr>
         <th style="${STYLES.th};width:65%;">${escape(T.descripcion)}</th>
         <th style="${STYLES.th};width:15%;">${escape(T.tipo)}</th>
-        <th style="${STYLES.thNum};width:10%;">${escape(tarifaHeader)}</th>
+        <th style="${STYLES.thNum};width:10%;">${tarifaHeaderHtml}</th>
         <th style="${STYLES.thEmpty};width:10%;"></th>
       </tr>`;
 
@@ -873,7 +876,7 @@ function buildTotalesView(d: PropuestaData): string {
             <th style="${STYLES.thCenter};width:9%;">${escape(T.categoria)}</th>
             <th style="${STYLES.th};width:11%;">${escape(T.tipoHab)}</th>
             <th style="${STYLES.thCenter};width:8%;">${escape(T.acom)}</th>
-            <th style="${STYLES.thNum};width:11%;">${escape(T.tarifaNoc)}</th>
+            <th style="${STYLES.thNum};width:11%;">TARIFA<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:nowrap;">PAX/NOCHE</div></th>
             <th style="${STYLES.thCenter};width:6%;">${escape(T.pax)}</th>
             <th style="${STYLES.thCenter};width:6%;">${escape(T.noc)}</th>
             <th style="${STYLES.thNum};width:15%;color:${C_TOT_ALOJAMIENTO};">${escape(T.total)}</th>
@@ -912,10 +915,10 @@ function buildTotalesView(d: PropuestaData): string {
         if (s.tipo !== "tour" || !s.tickets?.enabled || s.tickets.adultPrice <= 0) return "";
         const tk = s.tickets;
         const labelPart = tk.label ? `${escape(tk.label)} · ` : "";
-        const adultPart = `${T.adultosCap} ${escape(fmt(tk.adultPrice))} p/p`;
+        const adultPart = `${T.adultosCap} ${escape(fmt(tk.adultPrice))} PAX`;
         const childPart =
           tk.childPrice !== undefined && tk.childPrice > 0
-            ? ` · ${T.ninosCap} ${escape(fmt(tk.childPrice))} p/p`
+            ? ` · ${T.ninosCap} ${escape(fmt(tk.childPrice))} PAX`
             : "";
         return `<div style="font-size:12px;color:#d97706;font-weight:500;margin-top:4px;">${escape(T.costoAdicionalEntradas)}: ${labelPart}${adultPart}${childPart}</div>`;
       })();
@@ -929,7 +932,8 @@ function buildTotalesView(d: PropuestaData): string {
         <td style="${tdNum};width:14%;color:${color};">${escape(fmt(total))}</td>
       </tr>`;
     }
-    const tarifaHeaderTot = onlyCHDTot ? "TARIFA CHD" : T.tarifaPP;
+    const totSubDiv = `<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:nowrap;">PAX</div>`;
+    const tarifaHeaderTotHtml = onlyCHDTot ? escape("TARIFA CHD") : `TARIFA${totSubDiv}`;
     return `
     <div style="${STYLES.block}">
       ${sectionBar(label, color)}
@@ -938,7 +942,7 @@ function buildTotalesView(d: PropuestaData): string {
           <tr>
             <th style="${STYLES.th};width:48%;">${escape(T.descripcion)}</th>
             <th style="${STYLES.th};width:17%;">${escape(T.modalidad)}</th>
-            <th style="${STYLES.thNum};width:13%;">${escape(tarifaHeaderTot)}</th>
+            <th style="${STYLES.thNum};width:13%;">${tarifaHeaderTotHtml}</th>
             <th style="${STYLES.thCenter};width:8%;">${escape(T.pax)}</th>
             <th style="${STYLES.thNum};width:14%;color:${color};">${escape(T.total)}</th>
           </tr>
