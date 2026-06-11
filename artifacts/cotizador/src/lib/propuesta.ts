@@ -146,7 +146,7 @@ function hotelFechasLine(
   const desde = h.fechaInicio ? fmtFecha(h.fechaInicio) : "?";
   const hasta  = h.fechaFin   ? fmtFecha(h.fechaFin)   : "?";
   const nStr   = h.noches ? ` · ${h.noches} noche${h.noches !== 1 ? "s" : ""}` : "";
-  return `<div style="${style}">Fechas: ${escape(desde)} al ${escape(hasta)}${nStr}</div>`;
+  return `<div style="${style};white-space:nowrap;">Fechas: ${escape(desde)} al ${escape(hasta)}${nStr}</div>`;
 }
 
 /** Renders up to 3 service images as an inline table row (email-safe). */
@@ -484,17 +484,20 @@ function alojamientoTable(d: PropuestaData): string {
   if (d.hoteles.length === 0) return "";
   const { T } = d;
 
-  const showTotalCol = !d.isCalc;
+  // Fixed widths for narrow columns; hotel column is auto (takes remaining space).
+  const COL_CAT  = "90px";
+  const COL_HAB  = "110px";
+  const COL_ACOM = "92px";
 
-  const nochesSuffix = `<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:normal;">Pax/Noche</div>`;
+  const nochesSuffix = `<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:nowrap;">Pax/Noche</div>`;
   const acomCols = d.acoms
     .map(
       (a) =>
-        `<th style="${STYLES.thNum};width:10%;min-width:150px;white-space:normal;text-align:center;">${escape(String(a))}${nochesSuffix}</th>`,
+        `<th style="${STYLES.thNum};width:${COL_ACOM};text-align:center;white-space:nowrap;">${escape(String(a))}${nochesSuffix}</th>`,
     )
     .join("");
 
-  const totalCols = 3 + d.acoms.length + (showTotalCol ? 1 : 0);
+  const totalCols = 3 + d.acoms.length;
   const groups = groupByLocation(d.hoteles);
 
   const rows = groups
@@ -507,13 +510,13 @@ function alojamientoTable(d: PropuestaData): string {
 
       const hotelRows = items
         .map((h) => {
+          // Only render a cell per acomodacion that is in d.acoms; use exact key mapping.
           const acomVals = d.acoms
             .map(
               (a) =>
-                `<td style="${STYLES.tdNum};padding:8px 12px;">${escape(fmt(h.preciosPorAcomodacion[a]))}</td>`,
+                `<td style="${STYLES.tdNum};padding:8px 12px;width:${COL_ACOM};text-align:center;">${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</td>`,
             )
             .join("");
-          const lastCell = showTotalCol ? `<td style="${STYLES.tdEmpty};padding:8px 12px;width:10%;"></td>` : "";
 
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
@@ -524,17 +527,16 @@ function alojamientoTable(d: PropuestaData): string {
           const imagesHotelLine = renderImagesHTML(h.images);
 
           return `<tr style="page-break-inside:avoid;">
-            <td style="${STYLES.td};padding:8px 12px;width:50%;">
+            <td style="${STYLES.td};padding:8px 12px;min-width:200px;">
               <div style="${STYLES.cellTitle}">${escape(h.nombre)}</div>
               ${regimenLine}
               ${fechasHotelLine}
               ${notasHotelLine}
               ${imagesHotelLine}
             </td>
-            <td style="${STYLES.tdCenter};padding:8px 12px;width:15%;">${escape(h.estrellas || "—")}</td>
-            <td style="${STYLES.td};padding:8px 12px;width:15%;">${escape(h.tipoHabitacion || "—")}</td>
+            <td style="${STYLES.tdCenter};padding:8px 12px;width:${COL_CAT};white-space:nowrap;">${escape(h.estrellas || "—")}</td>
+            <td style="${STYLES.td};padding:8px 12px;width:${COL_HAB};white-space:nowrap;">${escape(h.tipoHabitacion || "—")}</td>
             ${acomVals}
-            ${lastCell}
           </tr>`;
         })
         .join("");
@@ -543,19 +545,16 @@ function alojamientoTable(d: PropuestaData): string {
     })
     .join("");
 
-  const lastHeader = showTotalCol ? `<th style="${STYLES.thEmpty};width:10%;"></th>` : "";
-
   return `
   <div style="${STYLES.block}">
     ${sectionBar(T.alojamiento, C_TOT_ALOJAMIENTO)}
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;table-layout:auto;">
       <thead>
         <tr>
-          <th style="${STYLES.th};width:50%;">${escape(T.hotel)}</th>
-          <th style="${STYLES.thCenter};width:15%;">${escape(T.categoria)}</th>
-          <th style="${STYLES.th};width:15%;">${escape(T.tipoHab)}</th>
+          <th style="${STYLES.th};min-width:200px;">${escape(T.hotel)}</th>
+          <th style="${STYLES.thCenter};width:${COL_CAT};white-space:nowrap;">${escape(T.categoria)}</th>
+          <th style="${STYLES.th};width:${COL_HAB};white-space:nowrap;">${escape(T.tipoHab)}</th>
           ${acomCols}
-          ${lastHeader}
         </tr>
       </thead>
       <tbody>${rows}</tbody>
