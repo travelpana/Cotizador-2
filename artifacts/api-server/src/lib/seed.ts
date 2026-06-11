@@ -34,7 +34,7 @@ const SEED_USERS: SeedUser[] = [
     activo: true,
   },
   {
-    nombre: "Johana",
+    nombre: "Johanna",
     username: "johanna",
     password: "9153",
     activo: true,
