@@ -489,15 +489,23 @@ function alojamientoTable(d: PropuestaData): string {
   const COL_HAB  = "110px";
   const COL_ACOM = "92px";
 
+  // Include CHD column when there are children and CHD is not already in acoms.
+  const ninosCount = d.cliente.ninos ?? 0;
+  const hasChdAcom = d.acoms.some((a) => String(a).toUpperCase() === "CHD");
+  const displayAcoms: Acomodacion[] =
+    ninosCount > 0 && !hasChdAcom
+      ? [...d.acoms, "CHD" as Acomodacion]
+      : d.acoms;
+
   const nochesSuffix = `<div style="font-weight:400;color:#94a3b8;font-size:9px;margin-top:2px;line-height:1.2;white-space:nowrap;">Pax/Noche</div>`;
-  const acomCols = d.acoms
+  const acomCols = displayAcoms
     .map(
       (a) =>
         `<th style="${STYLES.thNum};width:${COL_ACOM};text-align:center;white-space:nowrap;">${escape(String(a))}${nochesSuffix}</th>`,
     )
     .join("");
 
-  const totalCols = 3 + d.acoms.length;
+  const totalCols = 3 + displayAcoms.length;
   const groups = groupByLocation(d.hoteles);
 
   const rows = groups
@@ -511,7 +519,7 @@ function alojamientoTable(d: PropuestaData): string {
       const hotelRows = items
         .map((h) => {
           // Only render a cell per acomodacion that is in d.acoms; use exact key mapping.
-          const acomVals = d.acoms
+          const acomVals = displayAcoms
             .map(
               (a) =>
                 `<td style="${STYLES.tdNum};padding:8px 12px;width:${COL_ACOM};text-align:center;">${escape(fmt(h.preciosPorAcomodacion[a] ?? 0))}</td>`,
@@ -822,6 +830,12 @@ function buildTotalesView(d: PropuestaData): string {
       for (const h of items) {
         const hotelNoches = h.noches ?? d.cliente.noches ?? 1;
         const validAcoms = d.acoms.filter((a) => (h.preciosPorAcomodacion[a] ?? 0) > 0);
+        // Add CHD row when there are children and CHD is not already included.
+        const hotelNinos = d.cliente.ninos ?? 0;
+        const chdKey = "CHD" as Acomodacion;
+        if (hotelNinos > 0 && !validAcoms.some((a) => String(a).toUpperCase() === "CHD") && (h.preciosPorAcomodacion[chdKey] ?? 0) > 0) {
+          validAcoms.push(chdKey);
+        }
         for (const a of validAcoms) {
           const tarifa = h.preciosPorAcomodacion[a];
           const pax =

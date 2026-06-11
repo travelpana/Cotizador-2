@@ -282,6 +282,19 @@ export default function ExportButtons({
               lines.push(`💲 ${a}: ${fmt(s.preciosPorAcomodacion[a])}`);
             }
           }
+          // Show CHD tarifa when there are children and CHD is not already in acoms.
+          const waNinos = cliente.ninos ?? 0;
+          const hasChdInAcoms = acoms.some((a) => String(a).toUpperCase() === "CHD");
+          if (waNinos > 0 && !hasChdInAcoms) {
+            const chdRate = (s.preciosPorAcomodacion as Record<string, number>)["CHD"] ?? 0;
+            if (chdRate > 0) {
+              if (isCalc) {
+                lines.push(`💲 CHD: ${fmt((s.totalesPorAcomodacion as Record<string, number>)["CHD"] ?? 0)}`);
+              } else {
+                lines.push(`💲 CHD: ${fmt(chdRate)}`);
+              }
+            }
+          }
 
           if (s.notas) lines.push(`📝 ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
           lines.push("");
