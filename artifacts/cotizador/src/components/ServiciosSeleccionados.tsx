@@ -29,11 +29,14 @@ import {
   Search,
   Plus,
   Calendar,
+  CalendarDays,
   StickyNote,
   Ticket,
   GripVertical,
   LayoutTemplate,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Building2,
   List,
   X,
@@ -59,6 +62,8 @@ interface Props {
   observaciones?: string;
   onObservacionesChange?: (v: string) => void;
   personalizarTraslados?: boolean;
+  fechaInicio?: string;
+  noches?: number;
   /** Enables hotel-option tabs in Paquete mode */
   presentationMode?: "detailed" | "package";
   opcionesPaquete?: Array<{ id: string; nombre: string }>;
@@ -115,6 +120,8 @@ export default function ServiciosSeleccionados({
   observaciones = "",
   onObservacionesChange,
   personalizarTraslados = true,
+  fechaInicio,
+  noches,
   presentationMode,
   opcionesPaquete,
   activeOpcionPaquete,
@@ -414,6 +421,8 @@ export default function ServiciosSeleccionados({
                           onUpdate={update}
                           hoteles={hotelesServs}
                           personalizarTraslados={personalizarTraslados}
+                          fechaInicio={fechaInicio}
+                          noches={noches}
                         />
                       </div>
                     );
@@ -652,6 +661,8 @@ function ServicioRow({
   onUpdate,
   hoteles = [],
   personalizarTraslados = true,
+  fechaInicio,
+  noches,
 }: {
   servicio: ServicioSeleccionado;
   acomodaciones: Acomodacion[];
@@ -670,6 +681,8 @@ function ServicioRow({
   onUpdate: (s: ServicioSeleccionado) => void;
   hoteles?: ServicioSeleccionado[];
   personalizarTraslados?: boolean;
+  fechaInicio?: string;
+  noches?: number;
 }) {
   const isHotel = servicio.tipo === "hotel";
   const isCatamaranItem = servicio.tipo === "catamaran";
@@ -683,7 +696,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "important-note" | "tickets" | "ubicacion" | "estrellas" | null
+    "dates" | "price" | "notes" | "important-note" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | null
   >(null);
 
   const [editingName, setEditingName] = useState(false);
@@ -751,7 +764,28 @@ function ServicioRow({
     const parts: string[] = [];
     if (servicio.usarFecha && servicio.fecha) parts.push(servicio.fecha);
     if (servicio.paxOverride) parts.push(`${servicio.paxOverride} pax`);
-    if (parts.length) descripcion = parts.join(" · ");
+    const fi = servicio.fechaItinerario;
+    const fiLabel = fi
+      ? fi.startsWith("dia-")
+        ? `Día ${fi.slice(4)}`
+        : fmtDMA(fi)
+      : null;
+    if (parts.length || fiLabel) {
+      descripcion = (
+        <span className="inline-flex items-center gap-1.5 flex-wrap">
+          {parts.length > 0 && <span>{parts.join(" · ")}</span>}
+          {fiLabel && (
+            <span
+              className="inline-flex items-center gap-1 font-semibold px-1.5 py-0.5 rounded-full"
+              style={{ fontSize: 10, background: "rgba(0,79,187,0.10)", color: "#004FBB" }}
+            >
+              <CalendarDays className="w-2.5 h-2.5" />
+              {fiLabel}
+            </span>
+          )}
+        </span>
+      );
+    }
   }
 
   const titleLabel =
@@ -1226,6 +1260,58 @@ function ServicioRow({
           <Copy className="w-3.5 h-3.5" />
         </button>
 
+        {/* 📅 Fecha del itinerario — tours y traslados */}
+        {(servicio.tipo === "tour" || servicio.tipo === "traslado") && (
+          <Popover
+            open={openEditor === "fecha-itinerario"}
+            onOpenChange={(o) => setOpenEditor(o ? "fecha-itinerario" : null)}
+          >
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  servicio.fechaItinerario
+                    ? "opacity-100"
+                    : "text-slate-500 hover:bg-slate-100"
+                }`}
+                style={
+                  servicio.fechaItinerario
+                    ? { color: "#004FBB", backgroundColor: "rgba(0,79,187,0.08)" }
+                    : {}
+                }
+                aria-label="Asignar día en itinerario"
+                title={
+                  servicio.fechaItinerario
+                    ? "Cambiar día en el itinerario"
+                    : "Asignar día en el itinerario"
+                }
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-[260px] p-3 z-[60]"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <FechaItinerarioEditor
+                value={servicio.fechaItinerario}
+                fechaInicio={fechaInicio}
+                noches={noches}
+                onSave={(v) => {
+                  onUpdate({ ...servicio, fechaItinerario: v });
+                  setOpenEditor(null);
+                }}
+                onClear={() => {
+                  onUpdate({ ...servicio, fechaItinerario: undefined });
+                  setOpenEditor(null);
+                }}
+                onClose={() => setOpenEditor(null)}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+
         {servicio.tipo === "tour" && (
           <Popover
             open={openEditor === "tickets"}
@@ -1397,6 +1483,191 @@ const btnClose: React.CSSProperties = {
 };
 
 /* ───────────────────────── Inline editors (popovers) ───────────────────────── */
+
+/* ─── FechaItinerarioEditor ──────────────────────────────────────────────── */
+
+const FI_CLR_PRIMARY = "#004FBB";
+const FI_CLR_TEXT    = "#041941";
+const FI_CLR_ACCENT  = "#E6AE33";
+const FI_MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const FI_DAYS   = ["LU","MA","MI","JU","VI","SÁ","DO"];
+
+function FechaItinerarioEditor({
+  value,
+  fechaInicio,
+  noches,
+  onSave,
+  onClear,
+  onClose,
+}: {
+  value?: string;
+  fechaInicio?: string;
+  noches?: number;
+  onSave: (v: string) => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  const totalDias = Math.max(1, (noches ?? 0) + 1);
+  const [mode, setMode] = useState<"dia" | "fecha">(
+    !value || value.startsWith("dia-") ? "dia" : "fecha",
+  );
+
+  function nowISO() {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+  }
+  const todayStr = nowISO();
+  const initRef = (!value || value.startsWith("dia-")) ? (fechaInicio ?? todayStr) : value;
+  const [viewYear, setViewYear] = useState(() => {
+    const y = parseInt(initRef.split("-")[0], 10);
+    return isNaN(y) ? new Date().getFullYear() : y;
+  });
+  const [viewMonth, setViewMonth] = useState(() => {
+    const m = parseInt(initRef.split("-")[1], 10);
+    return isNaN(m) ? new Date().getMonth() : m - 1;
+  });
+
+  const selectedDate = (mode === "fecha" && value && !value.startsWith("dia-")) ? value : "";
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y-1); setViewMonth(11); }
+    else setViewMonth(m => m-1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y+1); setViewMonth(0); }
+    else setViewMonth(m => m+1);
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDow = (() => { const d = new Date(viewYear, viewMonth, 1).getDay(); return d === 0 ? 6 : d - 1; })();
+
+  function toISO(y: number, m: number, d: number) {
+    return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  }
+
+  function dayDate(idx: number): string {
+    if (!fechaInicio) return "";
+    const base = new Date(`${fechaInicio}T00:00:00`);
+    base.setDate(base.getDate() + idx);
+    const d = base.getDate();
+    const m = base.getMonth();
+    const MES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    return `${d} ${MES[m]}`;
+  }
+
+  return (
+    <div style={{ userSelect:"none" }}>
+      {/* Header */}
+      <div style={{ marginBottom:10, fontSize:11, fontWeight:700, color: FI_CLR_TEXT, letterSpacing:"0.02em" }}>
+        Asignar al itinerario
+      </div>
+
+      {/* Mode toggle */}
+      <div style={{ display:"flex", gap:3, marginBottom:10, background:"#f1f5f9", borderRadius:8, padding:3 }}>
+        {(["dia","fecha"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            style={{
+              flex:1, padding:"4px 0", borderRadius:6, fontSize:11, fontWeight:600,
+              border:"none", cursor:"pointer", transition:"all 0.15s",
+              background: mode===m ? "#fff" : "transparent",
+              color: mode===m ? FI_CLR_PRIMARY : "#64748b",
+              boxShadow: mode===m ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+            }}
+          >
+            {m==="dia" ? "Día del viaje" : "Fecha exacta"}
+          </button>
+        ))}
+      </div>
+
+      {mode === "dia" ? (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
+          {Array.from({ length: totalDias }, (_, i) => {
+            const diaKey = `dia-${i+1}`;
+            const isSelected = value === diaKey;
+            const dateStr = dayDate(i);
+            return (
+              <button
+                key={diaKey}
+                type="button"
+                onClick={() => onSave(diaKey)}
+                style={{
+                  padding:"6px 4px", borderRadius:8, fontSize:11, fontWeight:600,
+                  border: isSelected ? `1.5px solid ${FI_CLR_PRIMARY}` : "1.5px solid #e2e8f0",
+                  background: isSelected ? `rgba(0,79,187,0.10)` : "#fff",
+                  color: isSelected ? FI_CLR_PRIMARY : FI_CLR_TEXT,
+                  cursor:"pointer", textAlign:"center", lineHeight:1.3, transition:"all 0.1s",
+                }}
+              >
+                <div>Día {i+1}</div>
+                {dateStr && <div style={{ fontSize:9, fontWeight:400, opacity:0.7, marginTop:2 }}>{dateStr}</div>}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+            <button type="button" onClick={prevMonth} style={{ width:22, height:22, borderRadius:6, border:"1px solid #e2e8f0", background:"#f8fafc", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color: FI_CLR_TEXT }}>
+              <ChevronLeft size={12} />
+            </button>
+            <span style={{ fontSize:11, fontWeight:700, color: FI_CLR_TEXT }}>{FI_MONTHS[viewMonth]} {viewYear}</span>
+            <button type="button" onClick={nextMonth} style={{ width:22, height:22, borderRadius:6, border:"1px solid #e2e8f0", background:"#f8fafc", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color: FI_CLR_TEXT }}>
+              <ChevronRight size={12} />
+            </button>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", marginBottom:2 }}>
+            {FI_DAYS.map(d => (
+              <div key={d} style={{ textAlign:"center", fontSize:8, fontWeight:700, color:"#94a3b8", paddingBottom:3, letterSpacing:"0.07em" }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)" }}>
+            {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} style={{ height:28 }} />)}
+            {Array.from({ length: daysInMonth }, (_, idx) => {
+              const day = idx+1;
+              const iso = toISO(viewYear, viewMonth, day);
+              const isSelected = iso === selectedDate;
+              const isToday = iso === todayStr;
+              return (
+                <div key={iso} style={{ position:"relative", height:28, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <button
+                    type="button"
+                    onClick={() => onSave(iso)}
+                    style={{
+                      position:"relative", zIndex:1,
+                      width:26, height:26, borderRadius:"50%",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:10, fontWeight: isSelected ? 700 : 400,
+                      color: isSelected ? "#fff" : isToday ? FI_CLR_ACCENT : FI_CLR_TEXT,
+                      background: isSelected ? FI_CLR_PRIMARY : "transparent",
+                      border: isToday && !isSelected ? `1.5px solid ${FI_CLR_ACCENT}` : "1.5px solid transparent",
+                      cursor:"pointer", outline:"none",
+                    }}
+                  >
+                    {day}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop:10, paddingTop:8, borderTop:"1px solid #f1f5f9", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        {value ? (
+          <button type="button" onClick={onClear} style={{ fontSize:10, color:"#ef4444", background:"none", border:"none", cursor:"pointer", fontWeight:600 }}>
+            Quitar fecha
+          </button>
+        ) : <div />}
+        <button type="button" onClick={onClose} style={{ fontSize:10, color:"#64748b", background:"none", border:"none", cursor:"pointer" }}>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const UBICACIONES_LIST = [
   "BOCAS DEL TORO",

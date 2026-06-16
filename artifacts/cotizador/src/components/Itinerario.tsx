@@ -65,8 +65,26 @@ export function buildItinerario(
   const hoteles = servicios.filter((s) => s.tipo === "hotel");
   const hotelDefault = hoteles[0]?.nombre || "—";
 
+  // Split tours into assigned (have fechaItinerario) and unassigned
+  const assignedTours = tours.filter((t) => !!t.fechaItinerario);
+  const unassignedTours = tours.filter((t) => !t.fechaItinerario);
+  const usedTourIds = new Set<string>();
+
+  // Match a service's fechaItinerario to a specific day
+  const matchesDia = (
+    fi: string | undefined,
+    dayIndex: number,
+    dayFecha: string,
+  ): boolean => {
+    if (!fi) return false;
+    if (fi.startsWith("dia-")) {
+      return parseInt(fi.slice(4), 10) === dayIndex + 1;
+    }
+    return !!dayFecha && fi === dayFecha;
+  };
+
   const out: ItinerarioDia[] = [];
-  let tourIdx = 0;
+  let unassignedTourIdx = 0;
 
   for (let i = 0; i < dias; i++) {
     const fecha = cliente.fechaInicio ? addDays(cliente.fechaInicio, i) : "";
@@ -92,12 +110,27 @@ export function buildItinerario(
       descripcion = tramo;
       hotel = "—";
     } else {
-      const tour = tours[tourIdx++];
-      actividad = tour ? tour.nombre : "Día libre";
-      descripcion = tour ? tour.nombre : "Día libre para actividades a su elección";
-      if (tour) {
+      // Check for a tour assigned specifically to this day
+      const matchedTour = assignedTours.find(
+        (t) => !usedTourIds.has(t.id) && matchesDia(t.fechaItinerario, i, fecha),
+      );
+      if (matchedTour) {
+        usedTourIds.add(matchedTour.id);
+        actividad = matchedTour.nombre;
+        descripcion = matchedTour.nombre;
         esTour = true;
-        horario = tour.horario?.trim() || undefined;
+        horario = matchedTour.horario?.trim() || undefined;
+      } else {
+        // Fall back to unassigned tours filled sequentially
+        const tour = unassignedTours[unassignedTourIdx++];
+        actividad = tour ? tour.nombre : "Día libre";
+        descripcion = tour
+          ? tour.nombre
+          : "Día libre para actividades a su elección";
+        if (tour) {
+          esTour = true;
+          horario = tour.horario?.trim() || undefined;
+        }
       }
     }
 

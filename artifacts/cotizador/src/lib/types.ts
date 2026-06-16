@@ -68,6 +68,7 @@ export interface ServicioSeleccionado {
   paxOverride?: number;
   usarFecha?: boolean;
   fecha?: string;
+  fechaItinerario?: string;
   fechaInicio?: string;
   fechaFin?: string;
   notas?: string;
