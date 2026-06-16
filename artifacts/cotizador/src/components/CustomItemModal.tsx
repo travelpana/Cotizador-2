@@ -65,8 +65,8 @@ const CATEGORIAS = [
   { value: "★★★★★", label: "★★★★★" },
 ];
 
-const C = "#802d62";          // brand primary
-const C2 = "#b78ca4";         // brand secondary
+const C = "#1351c1";          // brand primary (RGE blue)
+const C2 = "#3b82f6";         // brand secondary (blue)
 
 const lbl =
   "block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider";
@@ -490,13 +490,13 @@ export default function CustomItemModal({
       <form
         onSubmit={submit}
         className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: "90vh", boxShadow: "0 24px 64px rgba(128,45,98,0.18), 0 4px 16px rgba(0,0,0,0.12)" }}
+        style={{ maxHeight: "90vh", boxShadow: "0 24px 64px rgba(19,81,193,0.18), 0 4px 16px rgba(0,0,0,0.12)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── HEADER ── */}
         <header
           className="flex items-center gap-3 px-5 py-3.5 flex-shrink-0"
-          style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg, #fdf8fb 0%, #fff 60%)" }}
+          style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg, #f0f5ff 0%, #fff 60%)" }}
         >
           {/* Icon + title */}
           <div
@@ -574,47 +574,51 @@ export default function CustomItemModal({
                 e.target.value = "";
               }}
             />
-            <div className="flex items-start gap-2 flex-wrap">
-              {/* Thumbnails */}
-              {images.map((src, idx) => (
-                <div
-                  key={idx}
-                  className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0"
-                  style={{ width: 56, height: 56 }}
-                >
-                  <img src={src} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
-                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "rgba(0,0,0,0.5)" }}
-                    title="Eliminar"
+            {/* Full-width dropzone */}
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="w-full rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-1.5 py-4 px-3"
+              style={{
+                borderColor: `${C}50`,
+                background: `${C}06`,
+                color: C,
+              }}
+            >
+              <ImageIcon size={20} strokeWidth={1.5} />
+              <span className="text-[13px] font-semibold" style={{ color: "#1e293b" }}>
+                Subir imágenes del servicio
+              </span>
+              <span className="text-[11px]" style={{ color: "#94a3b8" }}>
+                Arrastra imágenes aquí o haz clic para seleccionar
+              </span>
+            </button>
+            {/* Thumbnails below dropzone */}
+            {images.length > 0 && (
+              <div className="mt-2 flex items-start gap-2 flex-wrap">
+                {images.map((src, idx) => (
+                  <div
+                    key={idx}
+                    className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0"
+                    style={{ width: 64, height: 64 }}
                   >
-                    <X className="w-3.5 h-3.5 text-white" />
-                  </button>
-                </div>
-              ))}
-              {/* Upload button */}
-              <button
-                type="button"
-                onClick={() => imageInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed transition-colors flex-shrink-0"
-                style={{
-                  width: 56, height: 56,
-                  borderColor: images.length === 0 ? C2 : "#cbd5e1",
-                  color: images.length === 0 ? C : "#94a3b8",
-                  background: images.length === 0 ? `${C}08` : "transparent",
-                }}
-              >
-                <ImageIcon size={14} />
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em" }}>
-                  {images.length === 0 ? "SUBIR" : "+"}
-                </span>
-              </button>
-              {images.length > 0 && (
-                <p className="w-full text-[10px] text-slate-400 -mt-1">Máx. 3 visibles en PDF · {images.length} cargada{images.length !== 1 ? "s" : ""}</p>
-              )}
-            </div>
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.5)" }}
+                      title="Eliminar"
+                    >
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
+                ))}
+                <p className="w-full text-[10px] text-slate-400 mt-0.5">
+                  Máx. 3 visibles en PDF · {images.length} cargada{images.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* ── INFORMACIÓN PRINCIPAL ── */}
