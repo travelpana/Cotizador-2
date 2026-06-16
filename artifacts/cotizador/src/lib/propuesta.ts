@@ -624,7 +624,7 @@ function adicionalesTable(
       })();
 
       const horarioLine =
-        (s.tipo === "tour" || s.tipo === "catamaran") && s.horario
+        d.incluirDescriptivos && (s.tipo === "tour" || s.tipo === "catamaran") && s.horario
           ? `<div style="${STYLES.cellNote}">${escape(T.horario)}: ${escape(s.horario)}</div>`
           : "";
 
