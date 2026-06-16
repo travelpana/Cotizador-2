@@ -696,7 +696,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "important-note" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | null
+    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | null
   >(null);
 
   const [editingName, setEditingName] = useState(false);
@@ -1352,7 +1352,7 @@ function ServicioRow({
           </Popover>
         )}
 
-        {/* 📝 Nota normal */}
+        {/* 📝 Nota (normal o importante) */}
         <Popover
           open={openEditor === "notes"}
           onOpenChange={(o) => setOpenEditor(o ? "notes" : null)}
@@ -1360,11 +1360,14 @@ function ServicioRow({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className={`p-1.5 rounded-lg transition-colors ${
-                (servicio.notasList ?? []).some(n => n.type !== "important" && !n.important) || (servicio.notas && !servicio.notesImportant)
-                  ? "text-amber-600 bg-amber-50 hover:bg-amber-100 opacity-100"
-                  : "text-slate-500 hover:bg-slate-100"
-              }`}
+              className={`p-1.5 rounded-lg transition-colors opacity-100`}
+              style={(() => {
+                const hasImp = (servicio.notasList ?? []).some(n => n.type === "important" || n.important === true) || (servicio.notas && servicio.notesImportant);
+                const hasNormal = (servicio.notasList ?? []).some(n => n.type !== "important" && !n.important) || (servicio.notas && !servicio.notesImportant);
+                if (hasImp) return { color: "#ef7b15", backgroundColor: "#fff3eb" };
+                if (hasNormal) return { color: "#d97706", backgroundColor: "#fffbeb" };
+                return { color: "#64748b" };
+              })()}
               aria-label="Agregar nota"
               title="Agregar nota"
             >
@@ -1373,68 +1376,18 @@ function ServicioRow({
           </PopoverTrigger>
           <PopoverContent
             align="end"
-            className="w-[280px] p-3 z-[60]"
+            className="w-[290px] p-3 z-[60]"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <NoteEditor
-              tipo="normal"
-              onSave={(lines) => {
+              onSave={(lines, tipoFinal) => {
                 const now = new Date().toISOString();
                 const prev = servicio.notasList ?? [];
                 const newNotes = lines.map((text, idx) => ({
                   id: `note-${Date.now()}-${idx}`,
-                  type: "normal" as const,
+                  type: tipoFinal,
                   text,
-                  important: false,
-                  createdAt: now,
-                }));
-                onUpdate({ ...servicio, notasList: [...prev, ...newNotes] });
-                setOpenEditor(null);
-              }}
-              onClose={() => setOpenEditor(null)}
-            />
-          </PopoverContent>
-        </Popover>
-
-        {/* ⚠ Nota importante */}
-        <Popover
-          open={openEditor === "important-note"}
-          onOpenChange={(o) => setOpenEditor(o ? "important-note" : null)}
-        >
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={`p-1.5 rounded-lg transition-colors ${
-                (servicio.notasList ?? []).some(n => n.type === "important" || n.important === true) || (servicio.notas && servicio.notesImportant)
-                  ? "opacity-100 hover:bg-orange-100"
-                  : "text-slate-500 hover:bg-slate-100"
-              }`}
-              style={
-                (servicio.notasList ?? []).some(n => n.type === "important" || n.important === true) || (servicio.notas && servicio.notesImportant)
-                  ? { color: "#ef7b15", backgroundColor: "#fff3eb" }
-                  : {}
-              }
-              aria-label="Agregar nota importante"
-              title="Agregar nota importante"
-            >
-              <Flag className="w-3.5 h-3.5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            className="w-[280px] p-3 z-[60]"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <NoteEditor
-              tipo="important"
-              onSave={(lines) => {
-                const now = new Date().toISOString();
-                const prev = servicio.notasList ?? [];
-                const newNotes = lines.map((text, idx) => ({
-                  id: `note-${Date.now()}-${idx}`,
-                  type: "important" as const,
-                  text,
-                  important: true,
+                  important: tipoFinal === "important",
                   createdAt: now,
                 }));
                 onUpdate({ ...servicio, notasList: [...prev, ...newNotes] });
@@ -1983,7 +1936,7 @@ function NoteItem({
             <NoteEditor
               tipo={imp ? "important" : "normal"}
               initialText={note.text}
-              onSave={(lines) => {
+              onSave={(lines, _t) => {
                 onEdit(lines[0] ?? "");
                 setEditOpen(false);
               }}
@@ -2007,18 +1960,20 @@ function NoteItem({
 /* ─────────────────── NoteEditor — add or edit a single note ─────────────── */
 
 function NoteEditor({
-  tipo,
+  tipo: tipoProp,
   initialText = "",
   onSave,
   onClose,
 }: {
-  tipo: "normal" | "important";
+  tipo?: "normal" | "important";
   initialText?: string;
-  onSave: (lines: string[]) => void;
+  onSave: (lines: string[], tipo: "normal" | "important") => void;
   onClose: () => void;
 }) {
-  const [text, setText] = useState(initialText);
   const isEdit = initialText.length > 0;
+  const fixedTipo = tipoProp !== undefined;
+  const [tipo, setTipo] = useState<"normal" | "important">(tipoProp ?? "normal");
+  const [text, setText] = useState(initialText);
 
   const handleApply = () => {
     const lines = text
@@ -2026,7 +1981,7 @@ function NoteEditor({
       .map((l) => (tipo === "important" ? l.trim().toUpperCase() : l.trim()))
       .filter(Boolean);
     if (lines.length === 0) { onClose(); return; }
-    onSave(lines);
+    onSave(lines, tipo);
     onClose();
   };
 
@@ -2034,10 +1989,7 @@ function NoteEditor({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div style={{ fontSize: 11, fontWeight: 700, color: tipo === "important" ? "#ef7b15" : "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
-          {tipo === "important"
-            ? <Flag size={11} />
-            : <StickyNote size={11} />
-          }
+          {tipo === "important" ? <Flag size={11} /> : <StickyNote size={11} />}
           {isEdit
             ? (tipo === "important" ? "Editar importante" : "Editar nota")
             : (tipo === "important" ? "Nota importante" : "Agregar nota")
@@ -2045,6 +1997,31 @@ function NoteEditor({
         </div>
         <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
       </div>
+
+      {/* Tipo toggle — only shown when adding new notes (not in edit mode) */}
+      {!fixedTipo && !isEdit && (
+        <div style={{ display: "flex", gap: 3, background: "#f1f5f9", borderRadius: 8, padding: 3, marginBottom: 2 }}>
+          {(["normal", "important"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTipo(t)}
+              style={{
+                flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 10, fontWeight: 600,
+                border: "none", cursor: "pointer", transition: "all 0.15s",
+                background: tipo === t ? "#fff" : "transparent",
+                color: tipo === t ? (t === "important" ? "#ef7b15" : "#004FBB") : "#64748b",
+                boxShadow: tipo === t ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+              }}
+            >
+              {t === "important" ? <Flag size={9} /> : <StickyNote size={9} />}
+              {t === "important" ? "Importante" : "Normal"}
+            </button>
+          ))}
+        </div>
+      )}
+
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -2064,19 +2041,8 @@ function NoteEditor({
         }`}
         style={
           tipo === "important"
-            ? {
-                borderRadius: 14,
-                border: "1px solid #EF7B15",
-                color: "#ef7b15",
-                fontWeight: 600,
-                backgroundColor: "rgba(239,123,21,0.04)",
-              }
-            : {
-                borderRadius: 14,
-                border: "1px solid #D8E0EE",
-                color: "#1e293b",
-                backgroundColor: "#FFFFFF",
-              }
+            ? { borderRadius: 14, border: "1px solid #EF7B15", color: "#ef7b15", fontWeight: 600, backgroundColor: "rgba(239,123,21,0.04)" }
+            : { borderRadius: 14, border: "1px solid #D8E0EE", color: "#1e293b", backgroundColor: "#FFFFFF" }
         }
       />
       <p className="text-[10px] text-slate-400 -mt-0.5">
