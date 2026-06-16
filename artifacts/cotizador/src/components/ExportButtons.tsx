@@ -11,9 +11,6 @@ import {
   RefreshCw,
   Send,
 } from "lucide-react";
-import html2pdfImport from "html2pdf.js";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const html2pdf = html2pdfImport as unknown as (...args: any[]) => any;
 import type {
   Acomodacion,
   Cliente,
@@ -645,78 +642,86 @@ export default function ExportButtons({
     if (pdfLoading) return;
     if (!validateBeforeAction()) return;
 
+    // Open popup SYNCHRONOUSLY (inside click handler, before any await) to avoid popup blockers
+    const popup = window.open("", "_blank", "width=960,height=760,scrollbars=yes,resizable=yes");
+    if (!popup) {
+      setPdfError(true);
+      setTimeout(() => setPdfError(false), 4000);
+      return;
+    }
+
+    // Show a brief loading placeholder
+    popup.document.write(
+      `<!doctype html><html><head><meta charset="utf-8"/><title>Generando PDF…</title>` +
+      `<style>body{margin:0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;` +
+      `height:100vh;background:#f8fafc;color:#334155;font-size:15px;gap:10px;}` +
+      `@keyframes spin{to{transform:rotate(360deg)}}` +
+      `.s{width:20px;height:20px;border:3px solid #e2e8f0;border-top-color:#1351c1;border-radius:50%;` +
+      `animation:spin .8s linear infinite;flex-shrink:0;}</style></head>` +
+      `<body><div class="s"></div>Generando PDF…</body></html>`,
+    );
+    popup.document.close();
+
     // Save to Seguimiento FIRST — before generating PDF
     const { ok: saved, isNew } = await onSaveToSeguimiento();
-    if (!saved) return;
+    if (!saved) {
+      popup.close();
+      return;
+    }
 
     setPdfError(false);
     setPdfLoading(true);
 
-    const numero = getNumeroCotizacion();
-    const clienteSafe = sanitizeForFilename(cliente.cotizacionNombre || cliente.nombre || "");
-    const filename = `Cotizacion-${numero}-${clienteSafe}.pdf`;
-
-    let iframe: HTMLIFrameElement | null = null;
-
     try {
-      const html = buildHtml(numero);
+      const numero = getNumeroCotizacion();
+      const clienteSafe = sanitizeForFilename(cliente.cotizacionNombre || cliente.nombre || "");
+      const docTitle = `Cotizacion-${numero}-${clienteSafe}`;
 
-      iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.left = "-10000px";
-      iframe.style.top = "0";
-      iframe.style.width = "816px";
-      iframe.style.height = "1056px";
-      iframe.style.border = "0";
-      iframe.setAttribute("aria-hidden", "true");
-      document.body.appendChild(iframe);
+      // Build the full HTML, then replace the <title> with a filename-friendly string
+      // (browsers use <title> as the default PDF filename in the Save dialog)
+      const rawHtml = buildHtml(numero);
+      const printHtml = rawHtml.replace(/<title>[^<]*<\/title>/, `<title>${docTitle}</title>`);
 
-      const doc = iframe.contentDocument;
-      if (!doc) throw new Error("No iframe document");
-      doc.open();
-      doc.write(html);
-      doc.close();
+      // Write the real document into the popup
+      popup.document.open();
+      popup.document.write(printHtml);
+      popup.document.close();
 
+      // Wait for the popup document to finish loading
       await new Promise<void>((resolve) => {
-        if (doc.readyState === "complete") resolve();
-        else {
-          iframe!.onload = () => resolve();
-          setTimeout(() => resolve(), 1500);
-        }
+        if (popup.document.readyState === "complete") { resolve(); return; }
+        const onLoad = () => resolve();
+        popup.addEventListener("load", onLoad, { once: true });
+        setTimeout(resolve, 3000);
       });
 
-      const images = Array.from(doc.images);
+      // Wait for all images (data URIs + remote) to be decoded
+      const imgs = Array.from(popup.document.images);
       await Promise.all(
-        images.map(
+        imgs.map(
           (img) =>
             new Promise<void>((resolve) => {
-              if (img.complete) return resolve();
+              if (img.complete) { resolve(); return; }
               img.onload = () => resolve();
               img.onerror = () => resolve();
+              setTimeout(resolve, 3000);
             }),
         ),
       );
 
-      const target = doc.body;
-      await html2pdf()
-        .set({
-          margin: [10, 10, 10, 10],
-          filename,
-          image: { type: "jpeg", quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 816 },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          pagebreak: { mode: ["css", "legacy"] },
-        })
-        .from(target)
-        .save();
+      // Brief layout settle
+      await new Promise((r) => setTimeout(r, 200));
+
+      popup.focus();
+      popup.print();
 
       onActionComplete?.("pdf_enviado", isNew);
     } catch (err) {
       console.error("PDF generation failed:", err);
       setPdfError(true);
       setTimeout(() => setPdfError(false), 3000);
+      popup.close();
     } finally {
-      if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
       setPdfLoading(false);
     }
   };

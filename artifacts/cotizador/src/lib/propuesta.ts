@@ -1451,6 +1451,32 @@ export const PROPUESTA_CSS = `
     line-height: 1.45;
     font-size: 13px;
   }
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 14mm 12mm;
+  }
+  @media print {
+    html, body { margin: 0; padding: 0; background: #ffffff; }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    table { page-break-inside: auto; border-collapse: collapse; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    td, th { page-break-inside: avoid; }
+    img {
+      page-break-inside: avoid;
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    div[style*="margin-bottom:28px"],
+    div[style*="margin-bottom: 28px"] {
+      page-break-inside: avoid;
+    }
+    .no-print { display: none !important; }
+  }
 `;
 
 function introBlock(d: PropuestaData): string {
