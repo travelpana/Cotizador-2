@@ -243,7 +243,7 @@ export default function CustomItemModal({
 }: Props) {
   const isEdit = !!initial;
 
-  const [tipo, setTipo] = useState<CustomTipo>("tour");
+  const [tipo, setTipo] = useState<CustomTipo>("hotel");
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState<string>("");
   const [precioNino, setPrecioNino] = useState<string>("");
@@ -324,7 +324,7 @@ export default function CustomItemModal({
         setFechaInicioCat(initial.fechaInicio ?? "");
         setFechaFinCat(initial.fechaFin ?? "");
       } else {
-        setTipo("tour");
+        setTipo("hotel");
         setNombre("");
         setPrecio("");
         setPrecioNino("");
@@ -768,19 +768,34 @@ export default function CustomItemModal({
           {isCatamaran && (
             <div>
               <SectionLabel icon={<MapPin size={10} />} text="Estadía" />
-              <div className="rounded-lg border border-slate-200 p-3 bg-slate-50/50">
-                <InlineRangePicker
-                  fechaInicio={fechaInicioCat}
-                  fechaFin={fechaFinCat}
-                  onSelect={(inicio, fin) => {
-                    setFechaInicioCat(inicio);
-                    setFechaFinCat(fin);
-                  }}
-                />
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className={lbl}>Fecha inicio</label>
+                  <input
+                    type="date"
+                    value={fechaInicioCat}
+                    onChange={(e) => {
+                      setFechaInicioCat(e.target.value);
+                      if (fechaFinCat && e.target.value >= fechaFinCat) setFechaFinCat("");
+                    }}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className={lbl}>Fecha fin</label>
+                  <input
+                    type="date"
+                    value={fechaFinCat}
+                    min={fechaInicioCat || undefined}
+                    onChange={(e) => setFechaFinCat(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
                 {fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat && (
-                  <p className="text-[11px] font-semibold mt-1.5 text-center" style={{ color: C }}>
-                    {nightsBetween(fechaInicioCat, fechaFinCat)} noche{nightsBetween(fechaInicioCat, fechaFinCat) !== 1 ? "s" : ""}
-                  </p>
+                  <div className="flex-shrink-0 flex flex-col items-center justify-center h-8 px-3 rounded-lg border border-blue-100 bg-blue-50 mb-0.5">
+                    <span className="text-[13px] font-bold leading-none" style={{ color: C }}>{nightsBetween(fechaInicioCat, fechaFinCat)}</span>
+                    <span className="text-[9px] text-slate-400 leading-none mt-0.5">noches</span>
+                  </div>
                 )}
               </div>
             </div>
