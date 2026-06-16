@@ -520,7 +520,6 @@ export default function CustomItemModal({
                 {BADGE_COLOR[tipo]}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-tight truncate">{TIPO_SUBTITLE[tipo]}</p>
           </div>
           {/* Tipo switcher — compact chips */}
           <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -553,73 +552,7 @@ export default function CustomItemModal({
         </header>
 
         {/* ── SCROLLABLE BODY ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ minHeight: 0 }}>
-
-          {/* ── IMÁGENES (first) ── */}
-          <div>
-            <SectionLabel icon={<ImageIcon size={10} />} text="Imágenes del servicio" />
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? []);
-                files.forEach((file) => {
-                  compressImage(file).then((dataUrl) => {
-                    setImages((prev) => [...prev, dataUrl]);
-                  });
-                });
-                e.target.value = "";
-              }}
-            />
-            {/* Full-width dropzone */}
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              className="w-full rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-1.5 py-4 px-3"
-              style={{
-                borderColor: `${C}50`,
-                background: `${C}06`,
-                color: C,
-              }}
-            >
-              <ImageIcon size={20} strokeWidth={1.5} />
-              <span className="text-[13px] font-semibold" style={{ color: "#1e293b" }}>
-                Subir imágenes del servicio
-              </span>
-              <span className="text-[11px]" style={{ color: "#94a3b8" }}>
-                Arrastra imágenes aquí o haz clic para seleccionar
-              </span>
-            </button>
-            {/* Thumbnails below dropzone */}
-            {images.length > 0 && (
-              <div className="mt-2 flex items-start gap-2 flex-wrap">
-                {images.map((src, idx) => (
-                  <div
-                    key={idx}
-                    className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0"
-                    style={{ width: 64, height: 64 }}
-                  >
-                    <img src={src} alt="" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: "rgba(0,0,0,0.5)" }}
-                      title="Eliminar"
-                    >
-                      <X className="w-3.5 h-3.5 text-white" />
-                    </button>
-                  </div>
-                ))}
-                <p className="w-full text-[10px] text-slate-400 mt-0.5">
-                  Máx. 3 visibles en PDF · {images.length} cargada{images.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-            )}
-          </div>
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3" style={{ minHeight: 0 }}>
 
           {/* ── INFORMACIÓN PRINCIPAL ── */}
           <div>
@@ -860,7 +793,7 @@ export default function CustomItemModal({
               <textarea
                 value={notas}
                 onChange={(e) => setNotas(e.target.value.slice(0, MAX_NOTAS))}
-                rows={3}
+                rows={2}
                 placeholder="Detalles adicionales que aparecerán en la cotización…"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-900 bg-white focus:outline-none focus:ring-2 placeholder:text-slate-300 resize-none"
                 style={{ paddingBottom: "1.6rem" }}
@@ -885,6 +818,74 @@ export default function CustomItemModal({
                   Marcar como importante
                 </span>
               </label>
+            )}
+          </div>
+
+          {/* ── IMÁGENES (last) ── */}
+          <div>
+            <SectionLabel icon={<ImageIcon size={10} />} text="Imágenes del servicio" />
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                files.forEach((file) => {
+                  compressImage(file).then((dataUrl) => {
+                    setImages((prev) => [...prev, dataUrl]);
+                  });
+                });
+                e.target.value = "";
+              }}
+            />
+            {/* Full-width dropzone — reduced height */}
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="w-full rounded-xl border-2 border-dashed transition-all flex items-center justify-center gap-3 py-2.5 px-4"
+              style={{
+                borderColor: `${C}50`,
+                background: `${C}06`,
+                color: C,
+              }}
+            >
+              <ImageIcon size={16} strokeWidth={1.5} />
+              <div className="text-left">
+                <span className="block text-[12px] font-semibold" style={{ color: "#1e293b" }}>
+                  Subir imágenes del servicio
+                </span>
+                <span className="block text-[10px]" style={{ color: "#94a3b8" }}>
+                  Haz clic para seleccionar · múltiples permitidas
+                </span>
+              </div>
+            </button>
+            {/* Thumbnails below dropzone */}
+            {images.length > 0 && (
+              <div className="mt-2 flex items-start gap-2 flex-wrap">
+                {images.map((src, idx) => (
+                  <div
+                    key={idx}
+                    className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0"
+                    style={{ width: 56, height: 56 }}
+                  >
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.5)" }}
+                      title="Eliminar"
+                    >
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
+                ))}
+                <p className="w-full text-[10px] text-slate-400 mt-0.5">
+                  Máx. 3 visibles en PDF · {images.length} cargada{images.length !== 1 ? "s" : ""}
+                </p>
+              </div>
             )}
           </div>
 
