@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import type { CotizacionGuardada, Opportunity, OppHistorialEntry } from "./Guardadas";
 import { getOppUrgency } from "./Guardadas";
-import type { Agencia } from "@/lib/agencias";
-import { loadAgencias } from "@/lib/agencias";
+import { loadAgencias, normAgencia, buildAgenciasMap, type Agencia } from "@/lib/agencias";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -337,7 +336,7 @@ function AlertItem({ alert, isRead, agenciasMap, onGoToSeguimiento, onAtenderOpp
   const valor = alert.opp?.totalLatest ?? alert.quote?.valorCotizacion;
   const code = alert.opp?.latestQuoteCode ?? alert.quote?.numeroCotizacion;
   const agencyName = alert.opp?.agencyName ?? alert.quote?.cliente.correo ?? "";
-  const agencia = agenciasMap.get(agencyName.trim().toLowerCase());
+  const agencia = agenciasMap.get(normAgencia(agencyName));
   const agentName = alert.opp?.agentName;
 
   const isOppAlert = !!alert.opp;
@@ -449,11 +448,7 @@ export default function NotificationBell({
   const [readKeys, setReadKeys] = useState<Set<string>>(new Set());
   const bellRef = useRef<HTMLButtonElement>(null);
 
-  const agenciasMap = (() => {
-    const m = new Map<string, Agencia>();
-    for (const a of loadAgencias()) m.set(a.nombre.trim().toLowerCase(), a);
-    return m;
-  })();
+  const agenciasMap = buildAgenciasMap(loadAgencias());
 
   const allAlerts = buildAlerts(opportunities, items);
   const totalBadge = allAlerts.length;

@@ -31,7 +31,7 @@ import type {
 } from "./Guardadas";
 import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
 import { exportarCotizacionesExcel } from "@/lib/exportExcel";
-import { loadAgenciasAsync, type Agencia } from "@/lib/agencias";
+import { loadAgenciasAsync, buildAgenciasMap, normAgencia, mergeAgenciasDuplicadas, type Agencia } from "@/lib/agencias";
 import OportunidadDetailPanel from "./OportunidadDetailPanel";
 import { useAuth } from "@/lib/auth";
 
@@ -466,7 +466,7 @@ function AnuladasView({ opps, agenciasMap, onRestaurar }: {
       </div>
       <div className="divide-y divide-slate-50">
         {opps.map((o) => {
-          const agencia = agenciasMap.get((o.agencyName || "").toLowerCase());
+          const agencia = agenciasMap.get(normAgencia(o.agencyName || ""));
           const initials = getInitials(o.agencyName || o.quoteName);
           return (
             <div key={o.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
@@ -513,7 +513,7 @@ function FinalizadasView({ opps, agenciasMap, onOpenDetail }: {
           </div>
           <div className="divide-y divide-slate-50">
             {confirmadas.map((o) => {
-              const agencia = agenciasMap.get((o.agencyName || "").toLowerCase());
+              const agencia = agenciasMap.get(normAgencia(o.agencyName || ""));
               const initials = getInitials(o.agencyName || o.quoteName);
               return (
                 <div key={o.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
@@ -543,7 +543,7 @@ function FinalizadasView({ opps, agenciasMap, onOpenDetail }: {
           </div>
           <div className="divide-y divide-slate-50">
             {perdidas.map((o) => {
-              const agencia = agenciasMap.get((o.agencyName || "").toLowerCase());
+              const agencia = agenciasMap.get(normAgencia(o.agencyName || ""));
               const initials = getInitials(o.agencyName || o.quoteName);
               return (
                 <div key={o.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
@@ -578,13 +578,14 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   const [agencias, setAgencias] = useState<Agencia[]>([]);
   const [openOppId, setOpenOppId] = useState<string | null>(null);
 
-  useEffect(() => { loadAgenciasAsync().then(setAgencias); }, []);
+  useEffect(() => {
+    loadAgenciasAsync().then((list) => {
+      setAgencias(list);
+      mergeAgenciasDuplicadas().then(() => loadAgenciasAsync().then(setAgencias));
+    });
+  }, []);
 
-  const agenciasMap = useMemo(() => {
-    const map = new Map<string, Agencia>();
-    for (const a of agencias) map.set(a.nombre.toLowerCase(), a);
-    return map;
-  }, [agencias]);
+  const agenciasMap = useMemo(() => buildAgenciasMap(agencias), [agencias]);
 
   const openOpp = useMemo(
     () => openOppId ? opportunities.find((o) => o.id === openOppId) ?? null : null,
@@ -766,7 +767,7 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
           ) : (
             <div className="space-y-3">
               {listOpps.map((o) => {
-                const agencia = agenciasMap.get((o.agencyName || "").toLowerCase());
+                const agencia = agenciasMap.get(normAgencia(o.agencyName || ""));
                 const latestQuote = getLatestQuote(o);
                 return (
                   <OpportunityCard

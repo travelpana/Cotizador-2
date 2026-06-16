@@ -1,7 +1,17 @@
 import { apiAuth } from "@/lib/api-auth";
 import { queryClient } from "@/lib/queryClient";
 
-const _norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+/**
+ * Normaliza un nombre de agencia para comparaciones tolerantes:
+ * - lowercase
+ * - sin espacios (ni al inicio, fin, ni internos)
+ * Así "CYR TOURS", "CYRTOURS", "cyr tours", " CYR  TOURS " → "cyrtours"
+ */
+export const normAgencia = (s: string): string =>
+  (s ?? "").toLowerCase().replace(/\s+/g, "");
+
+/** Alias interno — úsalo dentro de este archivo */
+const _norm = normAgencia;
 
 export interface Agencia {
   id: string;
@@ -215,8 +225,70 @@ export async function syncAgenciaAgenteFromCliente(
 
 export function getAgenciaByNombre(nombre: string): Agencia | undefined {
   if (!nombre?.trim()) return undefined;
-  const q = nombre.trim().toLowerCase();
-  return loadAgencias().find((a) => a.nombre.toLowerCase() === q);
+  const q = normAgencia(nombre);
+  return loadAgencias().find((a) => normAgencia(a.nombre) === q);
+}
+
+/**
+ * Construye un Map<normalizadoNombre, Agencia> para lookups O(1).
+ * Úsalo siempre que necesites resolver logo/datos a partir del agencyName de
+ * una cotización u oportunidad — tolerante a espacios y mayúsculas.
+ */
+export function buildAgenciasMap(agencias: Agencia[]): Map<string, Agencia> {
+  const m = new Map<string, Agencia>();
+  for (const a of agencias) m.set(normAgencia(a.nombre), a);
+  return m;
+}
+
+/**
+ * Migración: detecta agencias duplicadas (mismo nombre normalizado) y las
+ * fusiona conservando la que tenga más datos (logoUrl, contacto…).
+ * Elimina las duplicadas de la base de datos.
+ * Llámala una sola vez al arrancar después de cargar las agencias.
+ */
+export async function mergeAgenciasDuplicadas(): Promise<void> {
+  try {
+    const agencias = await loadAgenciasAsync();
+    // Agrupar por nombre normalizado
+    const groups = new Map<string, Agencia[]>();
+    for (const a of agencias) {
+      const key = normAgencia(a.nombre);
+      const arr = groups.get(key) ?? [];
+      arr.push(a);
+      groups.set(key, arr);
+    }
+
+    for (const [, group] of groups) {
+      if (group.length < 2) continue;
+
+      // La "ganadora" es la que tiene más datos (logo > contacto > la primera creada)
+      const winner = group.reduce((best, cur) => {
+        const score = (a: Agencia) =>
+          (a.logoUrl ? 4 : 0) + (a.contacto ? 2 : 0) + (a.telefono ? 1 : 0);
+        return score(cur) > score(best) ? cur : best;
+      });
+
+      const losers = group.filter((a) => a.id !== winner.id);
+
+      // Re-asignar los agentes de los perdedores al ganador
+      const agentes = await loadAgentesAsync();
+      for (const loser of losers) {
+        const agentesLoser = agentes.filter((ag) => ag.agenciaId === loser.id);
+        for (const ag of agentesLoser) {
+          const yaExiste = agentes.some(
+            (x) => x.agenciaId === winner.id && normAgencia(x.nombre) === normAgencia(ag.nombre),
+          );
+          if (!yaExiste) {
+            await saveAgente({ ...ag, agenciaId: winner.id });
+          }
+        }
+        // Eliminar agencia duplicada
+        await deleteAgencia(loser.id);
+      }
+    }
+  } catch (err) {
+    console.warn("[mergeAgenciasDuplicadas] Error durante la migración:", err);
+  }
 }
 
 export function getAgenciaPredeterminada(): Agencia | undefined {

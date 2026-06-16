@@ -46,7 +46,7 @@ import {
   type OppHistorialEntry,
   type Opportunity,
 } from "@/components/Guardadas";
-import { syncAgenciaAgenteFromCliente } from "@/lib/agencias";
+import { syncAgenciaAgenteFromCliente, mergeAgenciasDuplicadas } from "@/lib/agencias";
 import {
   loadPlantillas,
   loadPlantillasAsync,
@@ -230,6 +230,7 @@ export default function CotizadorPage() {
   useEffect(() => {
     loadGuardadasAsync().then(setGuardadas);
     loadOpportunitiesAsync().then(setOpportunities);
+    mergeAgenciasDuplicadas();
   }, []);
 
   const [plantillasCount, setPlantillasCount] = useState(0);
