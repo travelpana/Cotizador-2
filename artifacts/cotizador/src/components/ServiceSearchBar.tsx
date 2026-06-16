@@ -415,20 +415,19 @@ export default function ServiceSearchBar({
               <div className="text-xs mt-1 text-slate-500">Intenta con otra palabra, código o cambia el filtro.</div>
             </div>
           ) : (
-            <div ref={listRef} className="max-h-[440px] overflow-y-auto py-2">
+            <div ref={listRef} className="max-h-[440px] overflow-y-auto pb-2">
               {grouped.map((group) => {
                 const groupStart = resultados.indexOf(group.items[0]);
                 return (
                   <div key={group.tipo}>
                     {/* Group header */}
-                    <div className="flex items-center gap-2 px-4 py-1.5 sticky top-0 bg-white z-10">
+                    <div className="flex items-center gap-2 px-4 py-1.5" style={{ background: "#f4f7fd" }}>
                       <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: "#004fbb" }}>
                         {group.label}
                       </span>
-                      <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#eef5ff", color: "#004fbb" }}>
+                      <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#dce8fb", color: "#004fbb" }}>
                         {group.items.length}
                       </span>
-                      <div className="flex-1 h-px bg-slate-100" />
                     </div>
                     {group.items.map((r, localIdx) => {
                       const flatIdx = groupStart + localIdx;
