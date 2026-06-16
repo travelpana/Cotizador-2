@@ -55,7 +55,9 @@ function relativeTime(iso?: string): string {
 type AlertKind =
   | "recordatorio_hoy"
   | "recordatorio_vencido"
-  | "opp_roja"
+  | "seguimiento_amarillo"
+  | "seguimiento_rojo"
+  | "seguimiento_critico"
   | "vence_manana"
   | "vence_pronto";
 
@@ -81,10 +83,13 @@ function buildAlerts(
   today.setHours(0, 0, 0, 0);
 
   // ── Opportunity-based alerts ────────────────────────────────────────────────
+  const ACTIVE_STATUSES = ["nueva", "enviada", "seguimiento"];
+
   for (const o of opportunities) {
     if (o.status === "confirmada" || o.status === "perdida" || o.status === "anulada") continue;
+    if (!ACTIVE_STATUSES.includes(o.status ?? "nueva")) continue;
 
-    // Recordatorios
+    // Recordatorios vencidos/hoy → highest priority; skip activity check
     if (o.recordatorio) {
       const recDate = new Date(o.recordatorio + "T00:00:00");
       if (recDate <= today) {
@@ -97,24 +102,40 @@ function buildAlerts(
           sublabel: o.proximaAccion || relativeTime(o.lastUpdateAt),
           priority: isToday ? 2000 : 1700,
         });
-        continue; // don't also add as roja
+        continue; // recordatorio already covers this opportunity
       }
     }
 
-    // Red urgency only (not yellow/green)
-    const urgency = getOppUrgency(o);
-    if (urgency === "red") {
-      const days = daysSince(o.lastUpdateAt);
+    // Inactivity-based seguimiento alerts (3 / 6 / 10 day thresholds)
+    const days = daysSince(o.lastUpdateAt ?? o.createdAt);
+    if (days >= 10) {
       alerts.push({
-        kind: "opp_roja",
-        key: `opp-red-${o.id}`,
+        kind: "seguimiento_critico",
+        key: `opp-seg-${o.id}`,
         opp: o,
-        label: `Sin actividad hace ${days} días`,
-        sublabel: o.proximaAccion,
-        priority: 1000 + Math.min(days, 30) * 10,
+        label: `Sin actividad hace ${days} días · Seguimiento pendiente`,
+        sublabel: o.proximaAccion || relativeTime(o.lastUpdateAt),
+        priority: 1400 + Math.min(days, 60) * 5,
+      });
+    } else if (days >= 6) {
+      alerts.push({
+        kind: "seguimiento_rojo",
+        key: `opp-seg-${o.id}`,
+        opp: o,
+        label: `Sin actividad hace ${days} días · Seguimiento pendiente`,
+        sublabel: o.proximaAccion || relativeTime(o.lastUpdateAt),
+        priority: 900 + days * 10,
+      });
+    } else if (days >= 3) {
+      alerts.push({
+        kind: "seguimiento_amarillo",
+        key: `opp-seg-${o.id}`,
+        opp: o,
+        label: `Sin actividad hace ${days} días · Seguimiento pendiente`,
+        sublabel: o.proximaAccion || relativeTime(o.lastUpdateAt),
+        priority: 500 + days * 10,
       });
     }
-    // Green → NOT shown
   }
 
   // ── Quote-based vigencia alerts ─────────────────────────────────────────────
@@ -243,11 +264,13 @@ function NotificationPanel({
 // ─── Alert Item ───────────────────────────────────────────────────────────────
 
 const KIND_CONFIG: Record<AlertKind, { icon: React.ReactNode; color: string; dot: string; bg: string }> = {
-  recordatorio_hoy:     { icon: <CalendarClock className="w-4 h-4 text-blue-500" />,   color: "#1e40af", dot: "#3b82f6", bg: "#eff6ff" },
-  recordatorio_vencido: { icon: <AlarmClock className="w-4 h-4 text-amber-500" />,     color: "#92400e", dot: "#f59e0b", bg: "#fffbeb" },
-  opp_roja:             { icon: <AlertTriangle className="w-4 h-4 text-red-500" />,     color: "#991b1b", dot: "#ef4444", bg: "#fef2f2" },
-  vence_manana:         { icon: <CalendarClock className="w-4 h-4 text-red-500" />,    color: "#991b1b", dot: "#ef4444", bg: "#fef2f2" },
-  vence_pronto:         { icon: <CalendarClock className="w-4 h-4 text-amber-500" />,  color: "#92400e", dot: "#f59e0b", bg: "#fffbeb" },
+  recordatorio_hoy:      { icon: <CalendarClock className="w-4 h-4 text-blue-500" />,                          color: "#1e40af", dot: "#3b82f6", bg: "#eff6ff" },
+  recordatorio_vencido:  { icon: <AlarmClock className="w-4 h-4 text-amber-500" />,                            color: "#92400e", dot: "#f59e0b", bg: "#fffbeb" },
+  seguimiento_amarillo:  { icon: <Clock className="w-4 h-4" style={{ color: "#d97706" }} />,                   color: "#92400e", dot: "#f59e0b", bg: "#fffbeb" },
+  seguimiento_rojo:      { icon: <AlertTriangle className="w-4 h-4 text-red-500" />,                           color: "#991b1b", dot: "#ef4444", bg: "#fef2f2" },
+  seguimiento_critico:   { icon: <AlertTriangle className="w-4 h-4" style={{ color: "#7f1d1d" }} />,           color: "#7f1d1d", dot: "#b91c1c", bg: "#fff1f2" },
+  vence_manana:          { icon: <CalendarClock className="w-4 h-4 text-red-500" />,                           color: "#991b1b", dot: "#ef4444", bg: "#fef2f2" },
+  vence_pronto:          { icon: <CalendarClock className="w-4 h-4 text-amber-500" />,                         color: "#92400e", dot: "#f59e0b", bg: "#fffbeb" },
 };
 
 function AlertItem({ alert, isRead, onGoToSeguimiento, onAtenderOpp, onPosponerOpp, onViewQuote, onUpdateCRMQuote }: {
@@ -303,7 +326,7 @@ function AlertItem({ alert, isRead, onGoToSeguimiento, onAtenderOpp, onPosponerO
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold ring-1 ring-emerald-200">
                   <Check className="w-3 h-3" />Atendida
                 </button>
-                {alert.kind !== "opp_roja" && (
+                {(alert.kind === "recordatorio_hoy" || alert.kind === "recordatorio_vencido") && (
                   <button type="button" onClick={() => onPosponerOpp(alert.opp!)}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
                     style={{ background: "rgba(230,174,51,0.08)", color: "#92400e", border: "1px solid rgba(230,174,51,0.35)" }}>
@@ -418,7 +441,7 @@ export default function NotificationBell({
         <div className="flex items-start justify-between px-4 py-3 border-b border-slate-100 shrink-0">
           <div>
             <div className="text-sm font-bold text-slate-900">Notificaciones</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Recordatorios, urgentes y vigencias próximas</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Seguimientos pendientes, recordatorios y vigencias próximas</div>
           </div>
           <button type="button" onClick={close}
             className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 ml-2 shrink-0">
