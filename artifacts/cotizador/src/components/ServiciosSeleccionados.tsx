@@ -43,6 +43,7 @@ import {
   Check,
   Flag,
   Copy,
+  Clock,
 } from "lucide-react";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
 import { loadObservaciones } from "@/lib/observaciones";
@@ -696,8 +697,9 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | null
+    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | "horario" | null
   >(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(servicio.nombre);
@@ -1047,11 +1049,31 @@ function ServicioRow({
                 />
               </PopoverContent>
             </Popover>
-            {/* Horario */}
+            {/* Horario (editable) */}
             {servicio.horario && (
               <>
                 <span className="text-slate-300 text-[11px] select-none">·</span>
-                <span className="text-[11px] text-slate-500 px-1">{servicio.horario}</span>
+                <Popover
+                  open={openEditor === "horario"}
+                  onOpenChange={(o) => setOpenEditor(o ? "horario" : null)}
+                >
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="text-[11px] text-slate-500 px-1 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="Editar horario"
+                    >
+                      {servicio.horario}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-[280px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <HorarioEditor
+                      value={servicio.horario}
+                      onSave={(v) => { onUpdate({ ...servicio, horario: v || undefined }); setOpenEditor(null); }}
+                      onClose={() => setOpenEditor(null)}
+                    />
+                  </PopoverContent>
+                </Popover>
               </>
             )}
           </div>
@@ -1137,11 +1159,29 @@ function ServicioRow({
             </div>
           )}
 
-        {/* Tour horario */}
+        {/* Tour horario (editable) */}
         {servicio.tipo === "tour" && servicio.horario && (
-          <div className="text-[11px] text-slate-500 mt-1 truncate">
-            Horario: {servicio.horario}
-          </div>
+          <Popover
+            open={openEditor === "horario"}
+            onOpenChange={(o) => setOpenEditor(o ? "horario" : null)}
+          >
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="text-[11px] text-slate-500 mt-1 truncate text-left w-full rounded px-1 -mx-1 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Editar horario"
+              >
+                Horario: {servicio.horario}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-[280px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <HorarioEditor
+                value={servicio.horario}
+                onSave={(v) => { onUpdate({ ...servicio, horario: v || undefined }); setOpenEditor(null); }}
+                onClose={() => setOpenEditor(null)}
+              />
+            </PopoverContent>
+          </Popover>
         )}
       </div>
 
@@ -1398,14 +1438,37 @@ function ServicioRow({
           </PopoverContent>
         </Popover>
 
-        <button
-          onClick={onRemove}
-          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-          aria-label="Quitar"
-          title="Quitar servicio"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        <Popover open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+              aria-label="Quitar"
+              title="Quitar servicio"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[210px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <p className="text-[12px] font-semibold text-slate-800 mb-3">¿Eliminar este servicio?</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowDeleteConfirm(false); onRemove(); }}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
@@ -1952,6 +2015,54 @@ function NoteItem({
         >
           <Trash2 className="w-2.5 h-2.5 text-red-400" />
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────── HorarioEditor ──────────────────────────────────── */
+
+function HorarioEditor({
+  value = "",
+  onSave,
+  onClose,
+}: {
+  value?: string;
+  onSave: (v: string) => void;
+  onClose: () => void;
+}) {
+  const [text, setText] = useState(value);
+
+  const apply = () => {
+    onSave(text.trim());
+    onClose();
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
+          <Clock size={11} />
+          Horario
+        </div>
+        <button type="button" onClick={onClose} style={btnClose} title="Cerrar">✕</button>
+      </div>
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); apply(); }
+          if (e.key === "Escape") { e.preventDefault(); onClose(); }
+        }}
+        autoFocus
+        placeholder="Ej: Mar, Jue, Sáb / 07:15 / 5 HRS"
+        className="w-full px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300"
+        style={{ borderRadius: 14, border: "1px solid #D8E0EE", color: "#1e293b", backgroundColor: "#FFFFFF" }}
+      />
+      <p className="text-[10px] text-slate-400 -mt-0.5">Enter para guardar · Esc para cancelar</p>
+      <div className="flex justify-end">
+        <button type="button" onClick={apply} style={btnApply} title="Guardar">✓</button>
       </div>
     </div>
   );
