@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import type { CotizacionGuardada, Opportunity, OppHistorialEntry } from "./Guardadas";
 import { getOppUrgency } from "./Guardadas";
+import type { Agencia } from "@/lib/agencias";
+import { loadAgencias } from "@/lib/agencias";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -48,6 +50,51 @@ function relativeTime(iso?: string): string {
   if (days === 0) return "hoy";
   if (days === 1) return "hace 1 día";
   return `hace ${days} días`;
+}
+
+// ─── Agency avatar helpers ─────────────────────────────────────────────────────
+
+function getInitials(name: string): string {
+  if (!name?.trim()) return "?";
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return name.trim().slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  "#004FBB", "#0369a1", "#0891b2", "#0d9488",
+  "#16a34a", "#ca8a04", "#dc2626", "#9333ea",
+];
+
+function avatarColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+function AgencyAvatar({ agencyName, agencia }: { agencyName: string; agencia?: Agencia }) {
+  const size = 28;
+  const radius = 8;
+  if (agencia?.logoUrl) {
+    return (
+      <div
+        className="bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0"
+        style={{ width: size, height: size, borderRadius: radius }}
+      >
+        <img src={agencia.logoUrl} alt="" className="w-full h-full object-contain" />
+      </div>
+    );
+  }
+  const initials = getInitials(agencyName);
+  const bg = avatarColor(agencyName || "?");
+  return (
+    <div
+      className="flex items-center justify-center font-bold text-white shrink-0"
+      style={{ width: size, height: size, borderRadius: radius, background: bg, fontSize: 10 }}
+    >
+      {initials}
+    </div>
+  );
 }
 
 // ─── Alert types ──────────────────────────────────────────────────────────────
@@ -273,9 +320,10 @@ const KIND_CONFIG: Record<AlertKind, { icon: React.ReactNode; color: string; dot
   vence_pronto:          { icon: <CalendarClock className="w-4 h-4 text-amber-500" />,                         color: "#92400e", dot: "#f59e0b", bg: "#fffbeb" },
 };
 
-function AlertItem({ alert, isRead, onGoToSeguimiento, onAtenderOpp, onPosponerOpp, onViewQuote, onUpdateCRMQuote }: {
+function AlertItem({ alert, isRead, agenciasMap, onGoToSeguimiento, onAtenderOpp, onPosponerOpp, onViewQuote, onUpdateCRMQuote }: {
   alert: BellAlert;
   isRead: boolean;
+  agenciasMap: Map<string, Agencia>;
   onGoToSeguimiento: () => void;
   onAtenderOpp: (o: Opportunity) => void;
   onPosponerOpp: (o: Opportunity) => void;
@@ -288,31 +336,52 @@ function AlertItem({ alert, isRead, onGoToSeguimiento, onAtenderOpp, onPosponerO
     : alert.quote?.cliente.nombre || "(sin nombre)";
   const valor = alert.opp?.totalLatest ?? alert.quote?.valorCotizacion;
   const code = alert.opp?.latestQuoteCode ?? alert.quote?.numeroCotizacion;
+  const agencyName = alert.opp?.agencyName ?? alert.quote?.cliente.correo ?? "";
+  const agencia = agenciasMap.get(agencyName.trim().toLowerCase());
+  const agentName = alert.opp?.agentName;
 
   const isOppAlert = !!alert.opp;
   const isQuoteAlert = !!alert.quote;
 
   return (
-    <div className="px-4 py-3 hover:bg-slate-50/70 transition-colors relative">
+    <div className="px-3 py-2.5 hover:bg-slate-50/70 transition-colors relative">
       {!isRead && (
         <span className="absolute left-1.5 top-4 w-1.5 h-1.5 rounded-full" style={{ background: cfg.dot }} />
       )}
       <div className="flex items-start gap-2.5">
-        <div className="mt-0.5 shrink-0">{cfg.icon}</div>
+        {/* Agency avatar */}
+        <div className="mt-0.5 shrink-0">
+          <AgencyAvatar agencyName={agencyName} agencia={agencia} />
+        </div>
+
+        {/* Content */}
         <div className="flex-1 min-w-0">
+          {/* Title + valor */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-slate-900 truncate">{title}</span>
+            <span className="text-[12.5px] font-semibold text-slate-900 truncate leading-tight">{title}</span>
             {valor != null && valor > 0 && (
               <span className="text-[11px] font-bold shrink-0" style={{ color: "#041941" }}>{fmtMoney(valor)}</span>
             )}
           </div>
-          {code && (
-            <div className="text-[11px] text-slate-400 font-mono mt-0.5">{code}</div>
+
+          {/* Agency · Agent */}
+          {(agencyName || agentName || code) && (
+            <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+              {[agencyName, agentName].filter(Boolean).join(" · ")}
+              {code && <span className="font-mono ml-1">{code}</span>}
+            </div>
           )}
+
+          {/* Relative time */}
           {alert.sublabel && (
             <div className="text-[11px] text-slate-400 mt-0.5">{alert.sublabel}</div>
           )}
-          <div className="text-[11px] font-semibold mt-0.5" style={{ color: cfg.color }}>{alert.label}</div>
+
+          {/* Alert label with kind icon inline */}
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="shrink-0 [&_svg]:w-3 [&_svg]:h-3">{cfg.icon}</span>
+            <span className="text-[11px] font-semibold" style={{ color: cfg.color }}>{alert.label}</span>
+          </div>
 
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             {isOppAlert && (
@@ -379,6 +448,12 @@ export default function NotificationBell({
   const [open, setOpen] = useState(false);
   const [readKeys, setReadKeys] = useState<Set<string>>(new Set());
   const bellRef = useRef<HTMLButtonElement>(null);
+
+  const agenciasMap = (() => {
+    const m = new Map<string, Agencia>();
+    for (const a of loadAgencias()) m.set(a.nombre.trim().toLowerCase(), a);
+    return m;
+  })();
 
   const allAlerts = buildAlerts(opportunities, items);
   const totalBadge = allAlerts.length;
@@ -466,6 +541,7 @@ export default function NotificationBell({
                   key={alert.key}
                   alert={alert}
                   isRead={readKeys.has(alert.key)}
+                  agenciasMap={agenciasMap}
                   onGoToSeguimiento={handleGoToSeguimiento}
                   onAtenderOpp={atenderOpp}
                   onPosponerOpp={posponerOpp}
