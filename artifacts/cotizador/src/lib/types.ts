@@ -61,6 +61,7 @@ export interface ServicioSeleccionado {
     SGL?: number;
     DBL?: number;
     TPL?: number;
+    QDL?: number;
     CHD?: number;
   };
   tarifaOverride?: Tier;

@@ -1848,6 +1848,7 @@ function PricesEditor({
     SGL: String(servicio.precios.SGL ?? 0),
     DBL: String(servicio.precios.DBL ?? 0),
     TPL: String(servicio.precios.TPL ?? 0),
+    QDL: String(servicio.precios.QDL ?? servicio.precios.TPL ?? 0),
     CHD: String(servicio.precios.CHD ?? servicio.precios.chd ?? 0),
   };
   const [vals, setVals] = useState<Record<string, string>>(initial);
@@ -1862,6 +1863,7 @@ function PricesEditor({
     SGL: num(src.SGL),
     DBL: num(src.DBL),
     TPL: num(src.TPL),
+    QDL: num(src.QDL),
     CHD: num(src.CHD),
     chd: num(src.CHD),
   });
