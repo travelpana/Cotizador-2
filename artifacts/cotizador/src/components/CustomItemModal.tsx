@@ -65,10 +65,23 @@ const CATEGORIAS = [
   { value: "★★★★★", label: "★★★★★" },
 ];
 
+const C = "#802d62";          // brand primary
+const C2 = "#b78ca4";         // brand secondary
+
 const lbl =
-  "block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide";
+  "block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider";
 const inputCls =
-  "w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
+  "w-full h-8 px-3 rounded-lg border border-slate-200 text-[13px] text-slate-900 bg-white focus:outline-none focus:ring-2 placeholder:text-slate-300"
+  + ` focus:ring-[${C}]/20 focus:border-[${C}]`;
+
+const BADGE_COLOR: Record<CustomTipo, string> = {
+  hotel: "Hotelería",
+  traslado: "Traslados",
+  tour: "Tours",
+  vuelo: "Aéreos",
+  catamaran: "Catamarán",
+  otros: "Otros",
+};
 
 const TIPO_ICON: Record<CustomTipo, React.ReactNode> = {
   hotel: <Hotel className="w-4 h-4" />,
@@ -131,29 +144,26 @@ function CustomSelect<T extends string>({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary flex items-center justify-between gap-2 transition-colors hover:border-slate-300"
+        className="w-full h-8 px-3 rounded-lg border border-slate-200 text-[13px] bg-white focus:outline-none flex items-center justify-between gap-2 transition-colors hover:border-slate-300"
         style={{ color: value ? "#0f172a" : "#94a3b8" }}
       >
         <span className="truncate">{selectedLabel ?? placeholder}</span>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-3 h-3 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
           {options.map((o) => (
             <button
               key={o.value}
               type="button"
-              onClick={() => {
-                onChange(o.value);
-                setOpen(false);
-              }}
-              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm text-slate-800 hover:bg-primary/5 hover:text-primary transition-colors text-left"
+              onClick={() => { onChange(o.value); setOpen(false); }}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 text-[13px] text-slate-800 hover:bg-slate-50 transition-colors text-left"
             >
               <span>{o.label}</span>
               {value === o.value && (
-                <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                <Check className="w-3 h-3 flex-shrink-0" style={{ color: C }} />
               )}
             </button>
           ))}
@@ -196,16 +206,12 @@ function PriceRow({
             onChange={setPrecio}
             placeholder="0"
             wrapperClassName="w-full"
-            inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
+            inputClassName="w-full h-8 pr-3 rounded-lg border border-slate-200 text-[13px] text-slate-900 bg-white focus:outline-none focus:ring-2 placeholder:text-slate-300 tabular-nums"
           />
         </div>
         {showNino && (
           <div>
-            <label
-              className={`block text-[11px] font-semibold mb-1.5 uppercase tracking-wide transition-colors ${
-                ninosEnabled ? "text-slate-500" : "text-slate-300"
-              }`}
-            >
+            <label className={`block text-[10px] font-bold mb-1 uppercase tracking-wider transition-colors ${ninosEnabled ? "text-slate-400" : "text-slate-300"}`}>
               {labelNino}
             </label>
             <PriceInput
@@ -214,18 +220,14 @@ function PriceRow({
               placeholder="0"
               disabled={!ninosEnabled}
               wrapperClassName="w-full"
-              inputClassName={`w-full h-10 pr-3.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
-                ninosEnabled
-                  ? "border-slate-200 text-slate-900"
-                  : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
+              inputClassName={`w-full h-8 pr-3 rounded-lg border text-[13px] bg-white focus:outline-none focus:ring-2 placeholder:text-slate-300 tabular-nums transition-all duration-200 ${
+                ninosEnabled ? "border-slate-200 text-slate-900" : "border-slate-100 text-slate-300 bg-slate-50 cursor-not-allowed"
               }`}
             />
           </div>
         )}
       </div>
-      {hintText && (
-        <p className="text-[11px] text-slate-500 -mt-2">{hintText}</p>
-      )}
+      {hintText && <p className="text-[10px] text-slate-400 mt-0.5">{hintText}</p>}
     </>
   );
 }
@@ -440,17 +442,10 @@ export default function CustomItemModal({
           }
         : {}),
       ...(isVuelo
-        ? {
-            origen,
-            destino,
-            unitOverride: value,
-          }
+        ? { origen, destino, unitOverride: value }
         : {}),
       ...(isTraslado
-        ? {
-            ruta: ruta.trim() || undefined,
-            tipoServicio: modalidad,
-          }
+        ? { ruta: ruta.trim() || undefined, tipoServicio: modalidad }
         : {}),
       ...(isTour
         ? {
@@ -477,491 +472,92 @@ export default function CustomItemModal({
   const ciudadOptions = CIUDADES_VUELO.map((c) => ({ value: c, label: c }));
   const ubicacionOptions = UBICACIONES.map((u) => ({ value: u, label: u }));
 
-  const editTitle = isEdit
-    ? `Editar ${TIPO_OPTIONS.find((o) => o.value === tipo)?.label.toLowerCase() ?? "ítem"}`
-    : TIPO_TITLE[tipo];
+  const SectionLabel = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
+    <div className="flex items-center gap-1.5 mb-2">
+      <span style={{ color: C2 }}>{icon}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>{text}</span>
+      <div className="flex-1 h-px bg-slate-100 ml-1" />
+    </div>
+  );
+
+  const MAX_NOTAS = 280;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(15,23,42,0.45)", backdropFilter: "blur(4px)" }}
+    >
       <form
         onSubmit={submit}
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl ring-1 ring-slate-200 overflow-hidden"
+        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        style={{ maxHeight: "90vh", boxShadow: "0 24px 64px rgba(128,45,98,0.18), 0 4px 16px rgba(0,0,0,0.12)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#004FBB]/10 text-[#004FBB] flex items-center justify-center">
-              {TIPO_ICON[tipo]}
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-slate-900 leading-tight">
+        {/* ── HEADER ── */}
+        <header
+          className="flex items-center gap-3 px-5 py-3.5 flex-shrink-0"
+          style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg, #fdf8fb 0%, #fff 60%)" }}
+        >
+          {/* Icon + title */}
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${C}18`, color: C }}
+          >
+            {TIPO_ICON[tipo]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-[15px] font-bold text-slate-900 leading-tight truncate">
                 {isEdit
-                  ? editTitle
+                  ? `Editar ${TIPO_OPTIONS.find((o) => o.value === tipo)?.label.toLowerCase() ?? "ítem"}`
                   : TIPO_TITLE[tipo]}
               </h2>
-              <p className="text-[11px] text-slate-500">
-                {TIPO_SUBTITLE[tipo]}
-              </p>
+              {/* Category badge */}
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                style={{ background: `${C}15`, color: C, letterSpacing: "0.05em", textTransform: "uppercase" }}
+              >
+                {BADGE_COLOR[tipo]}
+              </span>
             </div>
+            <p className="text-[11px] text-slate-400 leading-tight truncate">{TIPO_SUBTITLE[tipo]}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              title={isEdit ? "Guardar" : "Agregar"}
-              className="w-9 h-9 rounded-xl bg-[#004FBB] hover:bg-[#003E96] text-white flex items-center justify-center shadow-sm transition-colors"
-            >
-              <Check className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-9 h-9 rounded-xl border border-[#D8E0EE] bg-white text-[#64748B] hover:bg-[#F5F7FA] flex items-center justify-center transition-colors"
-              aria-label="Cerrar"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          {/* Tipo switcher — compact chips */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            {TIPO_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                title={o.label}
+                onClick={() => setTipo(o.value as CustomTipo)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                style={
+                  tipo === o.value
+                    ? { background: C, color: "#fff" }
+                    : { background: "transparent", color: "#94a3b8" }
+                }
+              >
+                {TIPO_ICON[o.value as CustomTipo]}
+              </button>
+            ))}
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-slate-100 flex-shrink-0 ml-1"
+            style={{ color: "#94a3b8" }}
+            aria-label="Cerrar"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </header>
 
-        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-          {/* Tipo de servicio */}
+        {/* ── SCROLLABLE BODY ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ minHeight: 0 }}>
+
+          {/* ── IMÁGENES (first) ── */}
           <div>
-            <label className={lbl}>Tipo de servicio</label>
-            <CustomSelect
-              value={tipo}
-              onChange={(v) => setTipo(v as CustomTipo)}
-              options={TIPO_OPTIONS}
-              placeholder="Seleccionar tipo"
-            />
-          </div>
-
-          {/* ── VUELO ── */}
-          {isVuelo && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Origen</label>
-                  <CustomSelect
-                    value={origen}
-                    onChange={setOrigen}
-                    options={ciudadOptions}
-                    placeholder="Seleccionar"
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>Destino</label>
-                  <CustomSelect
-                    value={destino}
-                    onChange={setDestino}
-                    options={ciudadOptions}
-                    placeholder="Seleccionar"
-                  />
-                </div>
-              </div>
-
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5 cursor-pointer hover:bg-slate-50">
-                <span className="text-sm font-medium text-slate-700">
-                  Ida y vuelta
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={idaVuelta}
-                  onClick={() => setIdaVuelta((v) => !v)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    idaVuelta ? "bg-primary" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                      idaVuelta ? "translate-x-4" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </label>
-
-              <div className="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 flex items-center gap-2">
-                <Plane className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                <div className="text-xs text-slate-600">
-                  Nombre generado:{" "}
-                  <span className="font-semibold text-slate-900">
-                    {vueloNombre}
-                  </span>
-                </div>
-              </div>
-
-              <PriceRow
-                label="Precio por persona (USD)"
-                precio={precio}
-                setPrecio={setPrecio}
-                precioNino={precioNino}
-                setPrecioNino={setPrecioNino}
-                ninosEnabled={ninosEnabled}
-                showNino={true}
-                hintText={
-                  ninosEnabled
-                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                    : "Precio por persona del vuelo (puedes editarlo más tarde)"
-                }
-              />
-            </>
-          )}
-
-          {/* ── HOTEL ── */}
-          {isHotel && (
-            <>
-              <div>
-                <label className={lbl}>Nombre del hotel</label>
-                <input
-                  ref={nombreRef}
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Ej: Hotel Hilton Garden Inn"
-                  className={inputCls}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Ubicación</label>
-                  <CustomSelect
-                    value={ubicacion}
-                    onChange={setUbicacion}
-                    options={ubicacionOptions}
-                    placeholder="— Seleccionar —"
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>Categoría</label>
-                  <CustomSelect
-                    value={estrellas}
-                    onChange={setEstrellas}
-                    options={CATEGORIAS}
-                    placeholder="— Seleccionar —"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Tipo de habitación</label>
-                  <input
-                    list="cim-tipos-hab"
-                    value={tipoHabitacion}
-                    onChange={(e) => setTipoHabitacion(e.target.value)}
-                    placeholder="Standard, Deluxe, Suite..."
-                    className={inputCls}
-                  />
-                  <datalist id="cim-tipos-hab">
-                    <option value="Standard" />
-                    <option value="Deluxe" />
-                    <option value="Suite" />
-                    <option value="Junior Suite" />
-                    <option value="Vista Jardín" />
-                    <option value="Vista Mar" />
-                  </datalist>
-                </div>
-                <div>
-                  <label className={lbl}>Precio por noche (USD)</label>
-                  <PriceInput
-                    value={precio}
-                    onChange={setPrecio}
-                    placeholder="0"
-                    wrapperClassName="w-full"
-                    inputClassName="w-full h-10 pr-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 tabular-nums"
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500 -mt-2">
-                Se aplicará el mismo valor a todas las acomodaciones
-              </p>
-
-              <div>
-                <label className={lbl}>Régimen / Desayuno</label>
-                <input
-                  list="cim-regimenes"
-                  value={desayuno}
-                  onChange={(e) => setDesayuno(e.target.value)}
-                  placeholder="Ej: Desayuno buffet incluido"
-                  className={inputCls}
-                />
-                <datalist id="cim-regimenes">
-                  <option value="Solo alojamiento" />
-                  <option value="Desayuno continental incluido" />
-                  <option value="Desayuno buffet incluido" />
-                  <option value="Alimentación completa incluida" />
-                  <option value="Todo incluido" />
-                </datalist>
-              </div>
-            </>
-          )}
-
-          {/* ── TRASLADO ── */}
-          {isTraslado && (
-            <>
-              <div>
-                <label className={lbl}>Nombre / descripción</label>
-                <input
-                  ref={nombreRef}
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Ej: Traslado aeropuerto - hotel"
-                  className={inputCls}
-                />
-              </div>
-
-              <div>
-                <label className={lbl}>Ruta / trayecto</label>
-                <input
-                  type="text"
-                  value={ruta}
-                  onChange={(e) => setRuta(e.target.value)}
-                  placeholder="Ej: Tocumen → Ciudad de Panamá"
-                  className={inputCls}
-                />
-              </div>
-
-              <div>
-                <label className={lbl}>Modalidad</label>
-                <CustomSelect
-                  value={modalidad}
-                  onChange={setModalidad}
-                  options={MODALIDAD_OPTIONS}
-                />
-              </div>
-
-              <PriceRow
-                label="Tarifa p/p (USD)"
-                precio={precio}
-                setPrecio={setPrecio}
-                precioNino={precioNino}
-                setPrecioNino={setPrecioNino}
-                ninosEnabled={ninosEnabled}
-                showNino={true}
-                hintText={
-                  ninosEnabled
-                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                    : "Precio por persona"
-                }
-              />
-            </>
-          )}
-
-          {/* ── TOUR ── */}
-          {isTour && (
-            <>
-              <div>
-                <label className={lbl}>Nombre del tour</label>
-                <input
-                  ref={nombreRef}
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Ej: Tour en lancha por San Blas"
-                  className={inputCls}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Modalidad</label>
-                  <CustomSelect
-                    value={modalidad}
-                    onChange={setModalidad}
-                    options={MODALIDAD_OPTIONS}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>Horario</label>
-                  <input
-                    type="text"
-                    value={horarioCustom}
-                    onChange={(e) => setHorarioCustom(e.target.value)}
-                    placeholder="Ej: 8:00 AM"
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className={lbl}>Duración</label>
-                <input
-                  type="text"
-                  value={duracion}
-                  onChange={(e) => setDuracion(e.target.value)}
-                  placeholder="Ej: 8 horas"
-                  className={inputCls}
-                />
-              </div>
-
-              <PriceRow
-                label="Tarifa p/p (USD)"
-                precio={precio}
-                setPrecio={setPrecio}
-                precioNino={precioNino}
-                setPrecioNino={setPrecioNino}
-                ninosEnabled={ninosEnabled}
-                showNino={true}
-                hintText={
-                  ninosEnabled
-                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                    : "Precio por persona"
-                }
-              />
-
-              <div>
-                <label className={lbl}>Entradas adicionales (si aplica)</label>
-                <input
-                  type="text"
-                  value={entradasDesc}
-                  onChange={(e) => setEntradasDesc(e.target.value)}
-                  placeholder="Ej: Entrada al parque nacional incluida"
-                  className={inputCls}
-                />
-              </div>
-            </>
-          )}
-
-          {/* ── CATAMARÁN ── */}
-          {isCatamaran && (
-            <>
-              <div>
-                <label className={lbl}>Nombre del servicio</label>
-                <input
-                  ref={nombreRef}
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Ej: Catamarán a Taboga"
-                  className={inputCls}
-                />
-              </div>
-
-              {/* Estadía — check-in / check-out */}
-              <div>
-                <label className={lbl}>Estadía</label>
-                <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
-                  <InlineRangePicker
-                    fechaInicio={fechaInicioCat}
-                    fechaFin={fechaFinCat}
-                    onSelect={(inicio, fin) => {
-                      setFechaInicioCat(inicio);
-                      setFechaFinCat(fin);
-                    }}
-                  />
-                  {fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat && (
-                    <p className="text-[11px] text-primary font-semibold mt-2 text-center">
-                      {nightsBetween(fechaInicioCat, fechaFinCat)} noche{nightsBetween(fechaInicioCat, fechaFinCat) !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Modalidad</label>
-                  <CustomSelect
-                    value={modalidad}
-                    onChange={setModalidad}
-                    options={MODALIDAD_OPTIONS}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>Horario</label>
-                  <input
-                    type="text"
-                    value={horarioCustom}
-                    onChange={(e) => setHorarioCustom(e.target.value)}
-                    placeholder="Ej: 7:30 AM"
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-
-              <PriceRow
-                label="Tarifa por noche / p/p (USD)"
-                precio={precio}
-                setPrecio={setPrecio}
-                precioNino={precioNino}
-                setPrecioNino={setPrecioNino}
-                ninosEnabled={ninosEnabled}
-                showNino={true}
-                hintText={
-                  ninosEnabled
-                    ? "Si dejas el precio de niño vacío, se usará el precio de adulto"
-                    : fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat
-                      ? `Total = tarifa × ${nightsBetween(fechaInicioCat, fechaFinCat)} noches × pasajeros`
-                      : "Tarifa por noche por persona"
-                }
-              />
-            </>
-          )}
-
-          {/* ── OTROS ── */}
-          {isOtros && (
-            <>
-              <div>
-                <label className={lbl}>Nombre del servicio</label>
-                <input
-                  ref={nombreRef}
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Ej: Cena especial en restaurante"
-                  className={inputCls}
-                />
-              </div>
-
-              <PriceRow
-                label="Tarifa (USD)"
-                precio={precio}
-                setPrecio={setPrecio}
-                precioNino={precioNino}
-                setPrecioNino={setPrecioNino}
-                ninosEnabled={ninosEnabled}
-                showNino={false}
-                hintText="Tarifa fija para este servicio"
-              />
-            </>
-          )}
-
-          {/* Observaciones — always visible */}
-          <div>
-            <label className={lbl}>Observaciones</label>
-            <textarea
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              rows={2}
-              placeholder="Detalles adicionales que aparecerán en la cotización"
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400 resize-none"
-            />
-            {notas.trim() && (
-              <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
-                <div
-                  className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${notesImportant ? "bg-[#ef7b15]" : "bg-slate-200"}`}
-                  onClick={() => setNotesImportant((v) => !v)}
-                >
-                  <div
-                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${notesImportant ? "translate-x-4" : "translate-x-0.5"}`}
-                  />
-                </div>
-                <span
-                  className={`text-[11px] font-medium transition-colors ${notesImportant ? "text-[#ef7b15]" : "text-slate-500"}`}
-                >
-                  Marcar como importante
-                </span>
-              </label>
-            )}
-          </div>
-
-          {/* Imágenes — always visible */}
-          <div>
-            <label className={lbl} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <ImageIcon size={12} /> Imágenes del servicio
-            </label>
+            <SectionLabel icon={<ImageIcon size={10} />} text="Imágenes del servicio" />
             <input
               ref={imageInputRef}
               type="file"
@@ -978,34 +574,339 @@ export default function CustomItemModal({
                 e.target.value = "";
               }}
             />
-            {images.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {images.map((src, idx) => (
-                  <div key={idx} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
-                    <img src={src} alt="" className="w-full h-full object-cover" />
+            <div className="flex items-start gap-2 flex-wrap">
+              {/* Thumbnails */}
+              {images.map((src, idx) => (
+                <div
+                  key={idx}
+                  className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0"
+                  style={{ width: 56, height: 56 }}
+                >
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: "rgba(0,0,0,0.5)" }}
+                    title="Eliminar"
+                  >
+                    <X className="w-3.5 h-3.5 text-white" />
+                  </button>
+                </div>
+              ))}
+              {/* Upload button */}
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed transition-colors flex-shrink-0"
+                style={{
+                  width: 56, height: 56,
+                  borderColor: images.length === 0 ? C2 : "#cbd5e1",
+                  color: images.length === 0 ? C : "#94a3b8",
+                  background: images.length === 0 ? `${C}08` : "transparent",
+                }}
+              >
+                <ImageIcon size={14} />
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em" }}>
+                  {images.length === 0 ? "SUBIR" : "+"}
+                </span>
+              </button>
+              {images.length > 0 && (
+                <p className="w-full text-[10px] text-slate-400 -mt-1">Máx. 3 visibles en PDF · {images.length} cargada{images.length !== 1 ? "s" : ""}</p>
+              )}
+            </div>
+          </div>
+
+          {/* ── INFORMACIÓN PRINCIPAL ── */}
+          <div>
+            <SectionLabel icon={<Sparkles size={10} />} text="Información principal" />
+            <div className="space-y-3">
+
+              {/* ── VUELO ── */}
+              {isVuelo && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={lbl}>Origen</label>
+                      <CustomSelect value={origen} onChange={setOrigen} options={ciudadOptions} placeholder="Seleccionar" />
+                    </div>
+                    <div>
+                      <label className={lbl}>Destino</label>
+                      <CustomSelect value={destino} onChange={setDestino} options={ciudadOptions} placeholder="Seleccionar" />
+                    </div>
+                  </div>
+                  <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                    <span className="text-[13px] font-medium text-slate-700">Ida y vuelta</span>
                     <button
                       type="button"
-                      onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
-                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      title="Eliminar imagen"
+                      role="switch"
+                      aria-checked={idaVuelta}
+                      onClick={() => setIdaVuelta((v) => !v)}
+                      className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0"
+                      style={{ background: idaVuelta ? C : "#cbd5e1" }}
                     >
-                      <X className="w-4 h-4 text-white" />
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${idaVuelta ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
+                  </label>
+                  <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${C}08`, border: `1px solid ${C}25` }}>
+                    <Plane className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C }} />
+                    <span className="text-[12px] font-semibold text-slate-800">{vueloNombre}</span>
                   </div>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-slate-300 text-sm text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors w-full justify-center"
-            >
-              <ImageIcon className="w-4 h-4" />
-              {images.length > 0 ? "Agregar más imágenes" : "Subir imágenes"}
-            </button>
-            <p className="text-[11px] text-slate-400 mt-1">Máx. 3 visibles en PDF y correo</p>
+                </>
+              )}
+
+              {/* ── HOTEL ── */}
+              {isHotel && (
+                <>
+                  <div>
+                    <label className={lbl}>Nombre del hotel</label>
+                    <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej: Hotel Hilton Garden Inn" className={inputCls} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2">
+                      <label className={lbl}>Ubicación</label>
+                      <CustomSelect value={ubicacion} onChange={setUbicacion} options={ubicacionOptions} placeholder="— Seleccionar —" />
+                    </div>
+                    <div>
+                      <label className={lbl}>Estrellas</label>
+                      <CustomSelect value={estrellas} onChange={setEstrellas} options={CATEGORIAS} placeholder="—" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={lbl}>Tipo habitación</label>
+                      <input list="cim-tipos-hab" value={tipoHabitacion} onChange={(e) => setTipoHabitacion(e.target.value)}
+                        placeholder="Standard, Suite..." className={inputCls} />
+                      <datalist id="cim-tipos-hab">
+                        <option value="Standard" /><option value="Deluxe" /><option value="Suite" />
+                        <option value="Junior Suite" /><option value="Vista Jardín" /><option value="Vista Mar" />
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className={lbl}>Régimen</label>
+                      <input list="cim-regimenes" value={desayuno} onChange={(e) => setDesayuno(e.target.value)}
+                        placeholder="Desayuno incluido" className={inputCls} />
+                      <datalist id="cim-regimenes">
+                        <option value="Solo alojamiento" /><option value="Desayuno continental incluido" />
+                        <option value="Desayuno buffet incluido" /><option value="Alimentación completa incluida" />
+                        <option value="Todo incluido" />
+                      </datalist>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── TRASLADO ── */}
+              {isTraslado && (
+                <>
+                  <div>
+                    <label className={lbl}>Nombre / descripción</label>
+                    <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej: Traslado aeropuerto - hotel" className={inputCls} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={lbl}>Ruta / trayecto</label>
+                      <input type="text" value={ruta} onChange={(e) => setRuta(e.target.value)}
+                        placeholder="Ej: Tocumen → Ciudad" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Modalidad</label>
+                      <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── TOUR ── */}
+              {isTour && (
+                <>
+                  <div>
+                    <label className={lbl}>Nombre del tour</label>
+                    <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej: Tour en lancha por San Blas" className={inputCls} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className={lbl}>Modalidad</label>
+                      <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Horario</label>
+                      <input type="text" value={horarioCustom} onChange={(e) => setHorarioCustom(e.target.value)}
+                        placeholder="8:00 AM" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Duración</label>
+                      <input type="text" value={duracion} onChange={(e) => setDuracion(e.target.value)}
+                        placeholder="8 horas" className={inputCls} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lbl}>Entradas / incluye (si aplica)</label>
+                    <input type="text" value={entradasDesc} onChange={(e) => setEntradasDesc(e.target.value)}
+                      placeholder="Ej: Entrada al parque nacional incluida" className={inputCls} />
+                  </div>
+                </>
+              )}
+
+              {/* ── CATAMARÁN ── */}
+              {isCatamaran && (
+                <>
+                  <div>
+                    <label className={lbl}>Nombre del servicio</label>
+                    <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej: Catamarán a Taboga" className={inputCls} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={lbl}>Modalidad</label>
+                      <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Horario</label>
+                      <input type="text" value={horarioCustom} onChange={(e) => setHorarioCustom(e.target.value)}
+                        placeholder="7:30 AM" className={inputCls} />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── OTROS ── */}
+              {isOtros && (
+                <div>
+                  <label className={lbl}>Nombre del servicio</label>
+                  <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                    placeholder="Ej: Cena especial en restaurante" className={inputCls} />
+                </div>
+              )}
+
+            </div>
           </div>
+
+          {/* ── TARIFAS ── */}
+          <div>
+            <SectionLabel icon={<Tag size={10} />} text="Tarifas" />
+            <div className="space-y-2">
+              {isHotel ? (
+                <div>
+                  <label className={lbl}>Precio por noche (USD)</label>
+                  <PriceInput
+                    value={precio}
+                    onChange={setPrecio}
+                    placeholder="0"
+                    wrapperClassName="w-full max-w-[180px]"
+                    inputClassName="w-full h-8 pr-3 rounded-lg border border-slate-200 text-[13px] text-slate-900 bg-white focus:outline-none focus:ring-2 placeholder:text-slate-300 tabular-nums"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">Se aplica igual a SGL · DBL · TPL</p>
+                </div>
+              ) : isOtros ? (
+                <PriceRow
+                  label="Tarifa (USD)"
+                  precio={precio} setPrecio={setPrecio}
+                  precioNino={precioNino} setPrecioNino={setPrecioNino}
+                  ninosEnabled={ninosEnabled} showNino={false}
+                  hintText="Tarifa fija para este servicio"
+                />
+              ) : (
+                <PriceRow
+                  label={isCatamaran ? "Tarifa por noche / p/p (USD)" : "Tarifa p/p (USD)"}
+                  precio={precio} setPrecio={setPrecio}
+                  precioNino={precioNino} setPrecioNino={setPrecioNino}
+                  ninosEnabled={ninosEnabled} showNino={true}
+                  hintText={
+                    ninosEnabled
+                      ? "Precio niño vacío → usa precio adulto"
+                      : isCatamaran && fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat
+                        ? `Total = tarifa × ${nightsBetween(fechaInicioCat, fechaFinCat)} noches × pasajeros`
+                        : undefined
+                  }
+                />
+              )}
+            </div>
+          </div>
+
+          {/* ── FECHAS (catamaran only) ── */}
+          {isCatamaran && (
+            <div>
+              <SectionLabel icon={<MapPin size={10} />} text="Estadía" />
+              <div className="rounded-lg border border-slate-200 p-3 bg-slate-50/50">
+                <InlineRangePicker
+                  fechaInicio={fechaInicioCat}
+                  fechaFin={fechaFinCat}
+                  onSelect={(inicio, fin) => {
+                    setFechaInicioCat(inicio);
+                    setFechaFinCat(fin);
+                  }}
+                />
+                {fechaInicioCat && fechaFinCat && fechaFinCat > fechaInicioCat && (
+                  <p className="text-[11px] font-semibold mt-1.5 text-center" style={{ color: C }}>
+                    {nightsBetween(fechaInicioCat, fechaFinCat)} noche{nightsBetween(fechaInicioCat, fechaFinCat) !== 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── OBSERVACIONES ── */}
+          <div>
+            <SectionLabel icon={<Sparkles size={10} />} text="Observaciones" />
+            <div className="relative">
+              <textarea
+                value={notas}
+                onChange={(e) => setNotas(e.target.value.slice(0, MAX_NOTAS))}
+                rows={3}
+                placeholder="Detalles adicionales que aparecerán en la cotización…"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-900 bg-white focus:outline-none focus:ring-2 placeholder:text-slate-300 resize-none"
+                style={{ paddingBottom: "1.6rem" }}
+              />
+              <span
+                className="absolute bottom-2 right-3 text-[10px] pointer-events-none"
+                style={{ color: notas.length >= MAX_NOTAS ? "#ef4444" : "#94a3b8" }}
+              >
+                {notas.length}/{MAX_NOTAS}
+              </span>
+            </div>
+            {notas.trim() && (
+              <label className="flex items-center gap-2 mt-1.5 cursor-pointer select-none">
+                <div
+                  className="relative w-8 h-4 rounded-full transition-colors flex-shrink-0"
+                  style={{ background: notesImportant ? "#ef7b15" : "#e2e8f0" }}
+                  onClick={() => setNotesImportant((v) => !v)}
+                >
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${notesImportant ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <span className="text-[11px] font-medium transition-colors" style={{ color: notesImportant ? "#ef7b15" : "#94a3b8" }}>
+                  Marcar como importante
+                </span>
+              </label>
+            )}
+          </div>
+
         </div>
+
+        {/* ── FIXED FOOTER ── */}
+        <footer
+          className="flex items-center justify-end gap-2 px-5 py-3 flex-shrink-0"
+          style={{ borderTop: "1px solid #f1f5f9", background: "#fafafa" }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 px-4 rounded-lg text-[13px] font-medium text-slate-600 border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="h-8 px-5 rounded-lg text-[13px] font-semibold text-white flex items-center gap-1.5 shadow-sm transition-all"
+            style={{ background: C }}
+          >
+            <Check className="w-3.5 h-3.5" />
+            {isEdit ? "Guardar cambios" : "Agregar servicio"}
+          </button>
+        </footer>
       </form>
     </div>
   );
