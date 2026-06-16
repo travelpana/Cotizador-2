@@ -45,7 +45,7 @@ const MODALIDAD_OPTIONS: { value: "Regular" | "Privado"; label: string }[] = [
 
 const ALL_ACOM: Acomodacion[] = ["SGL", "DBL", "TPL", "CHD"];
 
-const CIUDADES_VUELO = ["Panamá", "Bocas del Toro"] as const;
+const CIUDADES_VUELO = ["Panamá", "Bocas del Toro", "San Blas"] as const;
 
 const UBICACIONES = [
   "BOCAS DEL TORO",
@@ -443,6 +443,9 @@ export default function CustomItemModal({
         : {}),
       ...(isVuelo
         ? { origen, destino, unitOverride: value }
+        : {}),
+      ...(isOtros
+        ? { unitOverride: value }
         : {}),
       ...(isTraslado
         ? { ruta: ruta.trim() || undefined, tipoServicio: modalidad }
