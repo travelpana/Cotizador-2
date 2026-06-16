@@ -46,6 +46,7 @@ import {
   type OppHistorialEntry,
   type Opportunity,
 } from "@/components/Guardadas";
+import { syncAgenciaAgenteFromCliente } from "@/lib/agencias";
 import {
   loadPlantillas,
   loadPlantillasAsync,
@@ -336,11 +337,11 @@ export default function CotizadorPage() {
     return fresh;
   };
 
-  const handleActionComplete = (tipo: ActividadTipo, isNew?: boolean) => {
+  const handleActionComplete = async (tipo: ActividadTipo, isNew?: boolean) => {
     if (tipo === "whatsapp_enviado") return;
 
     if (tipo === "guardado_manual") {
-      handleSave();
+      await handleSave();
       return;
     }
 
@@ -702,7 +703,14 @@ export default function CotizadorPage() {
     createdByEmail: user?.correo,
   });
 
-  const handleSave = (opts: { silent?: boolean } = {}): { ok: boolean; isNew: boolean } => {
+  const handleSave = async (opts: { silent?: boolean } = {}): Promise<{ ok: boolean; isNew: boolean }> => {
+    // Auto-sync agencia/agente from the quote's fields (fire-and-forget; errors are non-blocking)
+    void syncAgenciaAgenteFromCliente(
+      cliente.correo ?? "",   // agencia name is stored in cliente.correo
+      cliente.agente ?? "",
+      cliente.emailCliente ?? "",
+    ).catch((err) => console.warn("[agencia-sync]", err));
+
     const isNew = !savedId;
     const numero = getOrCreateNumero();
     const now = new Date().toISOString();
@@ -1453,7 +1461,7 @@ export default function CotizadorPage() {
                   }}
                   onActionComplete={handleActionComplete}
                   validateBeforeAction={validateBeforeAction}
-                  onSaveToSeguimiento={() => handleSave({ silent: true })}
+                  onSaveToSeguimiento={() => handleSave({ silent: true })  }
                   getNumeroCotizacion={getOrCreateNumero}
                   idioma={idioma}
                   opcionesPaquete={opcionesPaquete}

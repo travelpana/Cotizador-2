@@ -44,7 +44,7 @@ interface Props {
   onClear: () => void;
   onPreview: () => void;
   onActionComplete?: (tipo: ActividadTipo, isNew?: boolean) => void;
-  onSaveToSeguimiento: () => { ok: boolean; isNew: boolean };
+  onSaveToSeguimiento: () => Promise<{ ok: boolean; isNew: boolean }>;
   validateBeforeAction: () => boolean;
   getNumeroCotizacion: () => string;
   observaciones?: string[];
@@ -587,7 +587,7 @@ export default function ExportButtons({
     if (!validateBeforeAction()) return;
 
     // Save to Seguimiento FIRST — before copying
-    const { ok: saved, isNew } = onSaveToSeguimiento();
+    const { ok: saved, isNew } = await onSaveToSeguimiento();
     if (!saved) return;
 
     try {
@@ -646,7 +646,7 @@ export default function ExportButtons({
     if (!validateBeforeAction()) return;
 
     // Save to Seguimiento FIRST — before generating PDF
-    const { ok: saved, isNew } = onSaveToSeguimiento();
+    const { ok: saved, isNew } = await onSaveToSeguimiento();
     if (!saved) return;
 
     setPdfError(false);
