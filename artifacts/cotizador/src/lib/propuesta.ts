@@ -841,11 +841,15 @@ function buildTotalesView(d: PropuestaData): string {
         }
         for (const a of validAcoms) {
           const tarifa = h.preciosPorAcomodacion[a];
+          const ROOM_PAX_MAP: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+          const rooms = d.grupoHabitacionesPorAcom[a] ?? 0;
           const pax =
             String(a).toUpperCase() === "CHD"
               ? (d.cliente.ninos ?? 0)
-              : d.result.pasajeros;
-          const total = h.totalesPorAcomodacion[a];
+              : rooms > 0
+                ? rooms * (ROOM_PAX_MAP[a] ?? 1)
+                : d.result.pasajeros;
+          const total = (h.preciosPorAcomodacion[a] ?? 0) * pax * hotelNoches;
           const regimenFmt = formatRegimen(h.desayuno);
           const regimenLine = regimenFmt
             ? `<div style="font-size:11px;color:#4B4C7A;font-weight:600;margin-top:4px;">${escape(regimenFmt)}</div>`
