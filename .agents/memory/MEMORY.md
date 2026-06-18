@@ -1,4 +1,5 @@
 - [Opportunity grouping](opportunity-grouping.md) — Opportunity layer (cotizador.oportunidades) sits above CotizacionGuardada (cotizador.guardadas); upsert key is agencyName|agentName|quoteName.
 - [FASE 3 CRM architecture](fase3-crm.md) — Detail panel state lives in Seguimiento.tsx (openOppId), bell is defensive with default props, urgency exported from Guardadas.
 - [Basic Auth (Usuarios Nivel 1)](auth-basic.md) — JWT login/logout, no user CRUD (Phase 2); seed user auto-created; quote+history entries track byUser/createdByName/updatedByName.
+- [Hotel date sync](hotel-date-sync.md) — hotel dates auto-resync to global stay unless `fechasManual:true`; every path producing hotel dates must set the flag right.
 - [DB migration pattern](db-migration-pattern.md) — All localStorage → PostgreSQL; async load pattern with React Query cache + fallback; see topic for route/lib structure.

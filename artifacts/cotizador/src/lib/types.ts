@@ -72,6 +72,7 @@ export interface ServicioSeleccionado {
   fechaItinerario?: string;
   fechaInicio?: string;
   fechaFin?: string;
+  fechasManual?: boolean;
   notas?: string;
   notesImportant?: boolean;
   ubicacion?: string;

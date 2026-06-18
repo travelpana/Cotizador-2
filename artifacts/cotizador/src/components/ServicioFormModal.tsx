@@ -337,6 +337,10 @@ export default function ServicioFormModal(props: Props) {
     if (tipo === "hotel") {
       base.fechaInicio = fechaInicio || undefined;
       base.fechaFin = fechaFin || undefined;
+      const fechasDifierenDeGlobal =
+        (!!fechaInicio && fechaInicio !== globalFechaInicio) ||
+        (!!fechaFin && fechaFin !== globalFechaFin);
+      if (initial?.fechasManual || fechasDifierenDeGlobal) base.fechasManual = true;
       base.ubicacion = ubicacion || undefined;
       base.estrellas = estrellas || undefined;
       base.vigencia = aplicarVigencia ? vigencia || undefined : undefined;

@@ -121,6 +121,22 @@ function makeDefaultCliente(): Cliente {
 
 const DEFAULT_CLIENTE = makeDefaultCliente();
 
+// Migración defensiva para cotizaciones guardadas/legacy: marca como
+// `fechasManual` los hoteles cuyas fechas difieren de la estadía global,
+// para que el re-sync automático no pise estadías multi-tramo guardadas.
+function migrarFechasManual(
+  servicios: ServicioSeleccionado[],
+  cliente: Partial<Cliente>,
+): ServicioSeleccionado[] {
+  return servicios.map((s) => {
+    if (s.tipo !== "hotel" || s.fechasManual) return s;
+    const difiere =
+      (s.fechaInicio && s.fechaInicio !== cliente.fechaInicio) ||
+      (s.fechaFin && s.fechaFin !== cliente.fechaFin);
+    return difiere ? { ...s, fechasManual: true } : s;
+  });
+}
+
 interface FormState {
   open: boolean;
   tipo: ServicioTipo;
@@ -582,6 +598,22 @@ export default function CotizadorPage() {
   useEffect(() => {
     fetchAll();
   }, []);
+
+  // Re-sincroniza las fechas de los hoteles con la estadía global cuando ésta
+  // cambia, excepto los hoteles cuyas fechas el usuario editó manualmente.
+  useEffect(() => {
+    if (!cliente.fechaInicio || !cliente.fechaFin) return;
+    setServicios((prev) => {
+      let changed = false;
+      const next = prev.map((s) => {
+        if (s.tipo !== "hotel" || s.fechasManual) return s;
+        if (s.fechaInicio === cliente.fechaInicio && s.fechaFin === cliente.fechaFin) return s;
+        changed = true;
+        return { ...s, fechaInicio: cliente.fechaInicio, fechaFin: cliente.fechaFin };
+      });
+      return changed ? next : prev;
+    });
+  }, [cliente.fechaInicio, cliente.fechaFin]);
 
   const result = useMemo(() => {
     const r = calcularLocal(servicios, acomodaciones, cliente);
@@ -1068,7 +1100,7 @@ export default function CotizadorPage() {
     setCliente({ ...makeDefaultCliente(), ...g.cliente });
     setValidationErrors({});
     setAcomodaciones(g.acomodaciones);
-    setServicios(g.servicios);
+    setServicios(migrarFechasManual(g.servicios, g.cliente));
     setModo(g.modoCotizacion);
     setCurrentNumero(g.numeroCotizacion);
     setSavedId(g.id);

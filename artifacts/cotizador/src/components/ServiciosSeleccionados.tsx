@@ -1783,9 +1783,11 @@ function DatesEditor({
   };
 
   const handleApply = () => {
+    const changed = fechaInicio !== origInicio || fechaFin !== origFin;
     onSave({
       fechaInicio: fechaInicio || undefined,
       fechaFin: fechaFin || undefined,
+      ...(changed ? { fechasManual: true } : {}),
     });
     onClose();
   };
@@ -1794,6 +1796,7 @@ function DatesEditor({
     onSave({
       fechaInicio: origInicio || undefined,
       fechaFin: origFin || undefined,
+      fechasManual: false,
     });
     onClose();
   };
