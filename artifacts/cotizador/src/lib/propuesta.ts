@@ -317,8 +317,8 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const isGrupo = input.quotingMode === "grupo";
   const grupoHabitacionesPorAcom: Partial<Record<Acomodacion, number>> =
     input.habitacionesPorAcomodacion ?? {};
-  const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3 };
-  const ROOM_ACOMS: Acomodacion[] = (["SGL", "DBL", "TPL"] as Acomodacion[]).filter((a) => acoms.includes(a));
+  const ROOM_PAX: Partial<Record<Acomodacion, number>> = { SGL: 1, DBL: 2, TPL: 3, QDL: 4 };
+  const ROOM_ACOMS: Acomodacion[] = (["SGL", "DBL", "TPL", "QDL"] as Acomodacion[]).filter((a) => acoms.includes(a));
   const rp = (a: Acomodacion) => ROOM_PAX[a] ?? 1;
   const grupoNinos = cliente.ninos ?? 0;
   const grupoAdultoPax = ROOM_ACOMS.reduce(
@@ -1287,8 +1287,9 @@ function grupoDetalleBlock(d: PropuestaData): string {
     const tdStyle = `padding:10px 14px;font-size:13px;color:${C_DARK};border-bottom:1px solid ${C_BORDER};vertical-align:middle;`;
     const tdRightStyle = `padding:10px 14px;font-size:13px;font-weight:700;color:${C_BLUE};border-bottom:1px solid ${C_BORDER};vertical-align:middle;text-align:right;`;
 
+    const fallbackPax = Math.max(1, d.result.pasajeros);
     const fallbackRows = acoms.map((a) => {
-      const total = d.result.totalesPorAcomodacion[a] ?? 0;
+      const total = (d.result.totalesPorAcomodacion[a] ?? 0) / fallbackPax;
       return `<tr>
         <td style="${tdStyle}">
           <span style="display:inline-block;background:#e8eeff;color:${C_BLUE};padding:3px 10px;border-radius:5px;font-size:12px;font-weight:800;letter-spacing:0.5px;">${escape(String(a))}</span>
