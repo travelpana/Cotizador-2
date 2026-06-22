@@ -1241,6 +1241,7 @@ function ServicioRow({
             <PricesEditor
               servicio={servicio}
               acomodaciones={acomodaciones}
+              ninos={ninos}
               onSave={(precios) => {
                 onUpdate({ ...servicio, precios });
                 setOpenEditor(null);
@@ -1285,8 +1286,14 @@ function ServicioRow({
           >
             <UnitPriceEditor
               currentUnit={unit}
-              onSave={(val) => {
-                onUpdate({ ...servicio, unitOverride: val ?? undefined });
+              currentChd={servicio.precios.chd ?? 0}
+              showChd={ninos > 0}
+              onSave={(val, chd) => {
+                onUpdate({
+                  ...servicio,
+                  unitOverride: val ?? undefined,
+                  precios: { ...servicio.precios, chd },
+                });
                 setOpenEditor(null);
               }}
               onClose={() => setOpenEditor(null)}
@@ -1839,11 +1846,13 @@ function DatesEditor({
 function PricesEditor({
   servicio,
   acomodaciones,
+  ninos,
   onSave,
   onClose,
 }: {
   servicio: ServicioSeleccionado;
   acomodaciones: Acomodacion[];
+  ninos: number;
   onSave: (precios: ServicioSeleccionado["precios"]) => void;
   onClose: () => void;
 }) {
@@ -1905,6 +1914,19 @@ function PricesEditor({
             />
           </div>
         ))}
+        {ninos > 0 && !acomodaciones.includes("CHD" as Acomodacion) && (
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", width: 28, flexShrink: 0 }}>CHD</span>
+            <PriceInput
+              value={vals.CHD ?? "0"}
+              onChange={(v) => setVals((prev) => ({ ...prev, CHD: v }))}
+              onApply={handleApply}
+              onCancel={onClose}
+              wrapperClassName="flex-1"
+              inputClassName="w-full h-8 pr-2.5 rounded-md text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
+        )}
       </div>
       {/* Actions */}
       <div className="flex justify-end gap-2 pt-0.5">
@@ -1917,23 +1939,33 @@ function PricesEditor({
 
 function UnitPriceEditor({
   currentUnit,
+  currentChd,
+  showChd,
   onSave,
   onClose,
 }: {
   currentUnit: number;
-  onSave: (val: number | null) => void;
+  currentChd: number;
+  showChd: boolean;
+  onSave: (val: number | null, chd: number) => void;
   onClose: () => void;
 }) {
   const [val, setVal] = useState<string>(String(currentUnit));
+  const [chdVal, setChdVal] = useState<string>(String(currentChd));
+
+  const numChd = () => {
+    const c = parseFloat(chdVal);
+    return isNaN(c) ? 0 : c;
+  };
 
   const handleApply = () => {
     const n = parseFloat(val);
-    onSave(isNaN(n) ? null : n);
+    onSave(isNaN(n) ? null : n, numChd());
     onClose();
   };
 
   const handleReset = () => {
-    onSave(null);
+    onSave(null, numChd());
     onClose();
   };
 
@@ -1955,6 +1987,21 @@ function UnitPriceEditor({
         wrapperClassName="w-full"
         inputClassName="w-full h-8 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
       />
+      {showChd && (
+        <div className="space-y-1.5">
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Niño p/p (CHD)
+          </span>
+          <PriceInput
+            value={chdVal}
+            onChange={setChdVal}
+            onApply={handleApply}
+            onCancel={onClose}
+            wrapperClassName="w-full"
+            inputClassName="w-full h-8 pr-2.5 rounded-md border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          />
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={handleReset} style={btnReset} title="Restablecer precio automático">↺</button>
         <button type="button" onClick={handleApply} style={btnApply} title="Aplicar">✓</button>
