@@ -1,0 +1,260 @@
+MEJORA UX - ÍTEM PERSONALIZADO INLINE CON EFECTO LIQUID GLASS
+
+Objetivo:
+Agilizar la creación de servicios personalizados sin abrir el modal inicial.
+
+Actualmente:
+Al hacer clic en “+ Ítem personalizado”, se abre un modal completo.
+
+Nuevo comportamiento:
+Al hacer clic en “+ Ítem personalizado”, el botón debe expandirse en la misma línea mostrando opciones rápidas de servicio.
+
+==================================================
+1. BOTÓN ÍTEM PERSONALIZADO EXPANDIBLE
+==================================================
+
+Al hacer clic en:
+
++ Ítem personalizado
+
+NO abrir modal inmediatamente.
+
+Debe expandirse en esa misma línea con efecto tipo “liquid glass”.
+
+Mostrar botones:
+
+Hotelería
+Traslado
+Tour
+Vuelo
+Catamarán
+Otro
+
+El efecto debe sentirse suave, moderno y premium.
+
+Animación sugerida:
+- width expand
+- opacity fade
+- blur suave
+- transición 250ms ease-out
+
+==================================================
+2. DISEÑO VISUAL
+==================================================
+
+El contenedor expandido debe verse como una cápsula glass:
+
+- fondo blanco translúcido
+- borde suave
+- blur
+- sombra ligera
+- bordes redondeados
+- botones compactos
+
+Debe integrarse con la línea donde están:
+
+Plantillas
+Ítem personalizado
+
+No debe romper el layout.
+
+==================================================
+3. AL SELECCIONAR UN TIPO
+==================================================
+
+Al hacer clic en una opción, por ejemplo:
+
+Hotelería
+
+Debe agregarse inmediatamente una tarjeta editable en Servicios seleccionados.
+
+NO abrir modal.
+
+La tarjeta debe aparecer directamente en la categoría correspondiente.
+
+Ejemplo:
+Hotelería → sección ALOJAMIENTO
+Traslado → sección TRASLADOS
+Tour → sección TOURS
+Vuelo → sección VUELOS
+Catamarán → sección CATAMARÁN Y NAVEGACIÓN
+Otro → sección OTROS
+
+==================================================
+4. TARJETA EDITABLE INLINE
+==================================================
+
+La tarjeta agregada debe ser editable directamente dentro de Servicios seleccionados.
+
+Debe incluir todos los campos necesarios según el tipo de servicio.
+
+==================================================
+HOTELERÍA
+==================================================
+
+Campos editables inline:
+
+- Nombre del hotel
+- Ubicación
+- Categoría / estrellas
+- Tipo de habitación
+- Régimen / desayuno
+- Check-in
+- Check-out
+- Noches calculadas
+- Tarifa por noche
+- Tarifa niño si aplica
+- Observaciones
+- Imágenes del servicio
+
+Valores por defecto:
+
+Ubicación:
+Ciudad de Panamá
+
+Categoría:
+★★★
+
+Tipo habitación:
+Standard
+
+Régimen:
+Desayuno incluido
+
+==================================================
+TRASLADO
+==================================================
+
+Campos editables inline:
+
+- Nombre del traslado
+- Modalidad
+- Tarifa por persona
+- Tarifa niño si aplica
+- Observaciones
+- Imágenes del servicio
+
+Valor por defecto:
+
+Modalidad:
+Regular
+
+==================================================
+TOUR
+==================================================
+
+Campos editables inline:
+
+- Nombre del tour
+- Categoría / tipo
+- Horario
+- Tarifa adulto
+- Tarifa niño
+- Observaciones
+- Imágenes del servicio
+
+Valores por defecto:
+
+Modalidad:
+Regular
+
+Horario:
+Consultar
+
+==================================================
+VUELO
+==================================================
+
+Campos editables inline:
+
+- Origen
+- Destino
+- Ida y vuelta
+- Fecha si aplica
+- Tarifa adulto
+- Tarifa niño
+- Observaciones
+- Imágenes del servicio
+
+==================================================
+CATAMARÁN
+==================================================
+
+Campos editables inline:
+
+- Nombre del catamarán
+- Modalidad
+- Check-in
+- Check-out
+- Noches calculadas
+- Horario
+- Tarifa pax/noche
+- Tarifa niño
+- Observaciones
+- Imágenes del servicio
+
+Debe usar el mismo calendario tipo estadía que alojamiento.
+
+==================================================
+OTRO
+==================================================
+
+Campos editables inline:
+
+- Nombre del servicio
+- Tarifa
+- Observaciones
+- Imágenes del servicio
+
+==================================================
+5. GUARDADO AUTOMÁTICO
+==================================================
+
+Cada cambio dentro de la tarjeta debe actualizar el servicio automáticamente.
+
+No debe requerir botón guardar.
+
+La tarjeta debe quedar lista para:
+
+- Vista previa
+- PDF
+- Correo HTML
+- Seguimiento
+
+==================================================
+6. MANTENER FUNCIONES EXISTENTES
+==================================================
+
+Cada tarjeta debe conservar:
+
+- icono de categoría
+- drag handle solo desde puntitos
+- duplicar
+- eliminar
+- carga de imágenes desde icono
+- observaciones
+- edición de fechas
+- edición de tarifas
+
+==================================================
+7. MODAL ACTUAL
+==================================================
+
+No eliminar el modal actual si se usa en otra parte.
+
+Pero el flujo principal desde “Ítem personalizado” debe ser:
+
+clic en Ítem personalizado
+→ se expande barra liquid glass
+→ elegir tipo
+→ se agrega tarjeta editable inline
+
+==================================================
+8. OBJETIVO FINAL
+==================================================
+
+Reducir pasos.
+
+Evitar abrir un modal para crear servicios manuales.
+
+Permitir que el agente construya servicios personalizados rápidamente desde Servicios seleccionados, llenando o ajustando la información directamente en la tarjeta.

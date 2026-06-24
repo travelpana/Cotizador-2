@@ -45,6 +45,7 @@ import {
   Copy,
   Clock,
   Camera,
+  Tag,
 } from "lucide-react";
 import { compressImage } from "@/lib/image-utils";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
@@ -66,6 +67,7 @@ interface Props {
   onObservacionesChange?: (v: string) => void;
   personalizarTraslados?: boolean;
   fechaInicio?: string;
+  fechaFin?: string;
   noches?: number;
   /** Enables hotel-option tabs in Paquete mode */
   presentationMode?: "detailed" | "package";
@@ -109,6 +111,43 @@ const GROUP_TITLE: Record<ServicioSeleccionado["tipo"], string> = {
   catamaran: "Catamarán y Navegación",
 };
 
+/* ───────────────── Quick-add helpers ───────────────── */
+
+type QuickTipo = "hotel" | "traslado" | "tour" | "vuelo" | "catamaran" | "otros";
+
+const QUICK_OPTIONS: { value: QuickTipo; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "hotel",     label: "Hotelería", Icon: Hotel   },
+  { value: "traslado",  label: "Traslado",  Icon: Bus     },
+  { value: "tour",      label: "Tour",      Icon: MapPin  },
+  { value: "vuelo",     label: "Vuelo",     Icon: Plane   },
+  { value: "catamaran", label: "Catamarán", Icon: Ship    },
+  { value: "otros",     label: "Otro",      Icon: Tag     },
+];
+
+function makeQuickService(
+  tipo: QuickTipo,
+  fechaInicio?: string,
+  fechaFin?: string,
+): ServicioSeleccionado {
+  const id = `MAN-${Date.now()}`;
+  const internalTipo: ServicioSeleccionado["tipo"] =
+    tipo === "otros" ? "tour" : (tipo as ServicioSeleccionado["tipo"]);
+  const precios: ServicioSeleccionado["precios"] =
+    tipo === "hotel"
+      ? { SGL: 0, DBL: 0, TPL: 0, CHD: 0, chd: 0 }
+      : { p1: 0, p2_5: 0, p6_10: 0, chd: 0 };
+  const base: ServicioSeleccionado = {
+    id, codigo: id, tipo: internalTipo, nombre: "", precios, manual: true, customTipo: tipo,
+  };
+  if (tipo === "hotel")
+    return { ...base, ubicacion: "CIUDAD DE PANAMÁ", estrellas: "★★★", tipoHabitacion: "Standard", desayuno: "Desayuno incluido", fechaInicio: fechaInicio || undefined, fechaFin: fechaFin || undefined };
+  if (tipo === "traslado") return { ...base, tipoServicio: "Regular" };
+  if (tipo === "tour")     return { ...base, horario: "Consultar", tipoServicio: "Regular" };
+  if (tipo === "vuelo")    return { ...base, origen: "Panamá", destino: "", unitOverride: 0 };
+  if (tipo === "catamaran") return { ...base, tipoServicio: "Regular", fechaInicio: fechaInicio || undefined, fechaFin: fechaFin || undefined };
+  return { ...base, unitOverride: 0 };
+}
+
 export default function ServiciosSeleccionados({
   servicios,
   acomodaciones,
@@ -124,6 +163,7 @@ export default function ServiciosSeleccionados({
   onObservacionesChange,
   personalizarTraslados = true,
   fechaInicio,
+  fechaFin,
   noches,
   presentationMode,
   opcionesPaquete,
@@ -140,6 +180,23 @@ export default function ServiciosSeleccionados({
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [editingOpId, setEditingOpId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [quickExpanded, setQuickExpanded] = useState(false);
+  const [newServiceId, setNewServiceId] = useState<string | null>(null);
+  const quickRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!quickExpanded) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setQuickExpanded(false); };
+    const onDown = (e: MouseEvent) => {
+      if (quickRef.current && !quickRef.current.contains(e.target as Node)) setQuickExpanded(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [quickExpanded]);
 
   const handleOpenPlantillaModal = () => {
     setPlantillas(loadPlantillas());
@@ -245,15 +302,55 @@ export default function ServiciosSeleccionados({
               </button>
             )}
             {onAddCustom && (
-              <button
-                type="button"
-                onClick={onAddCustom}
-                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 whitespace-nowrap"
-                style={{ backgroundColor: "#004fbb" }}
-              >
-                <Plus className="w-4 h-4" />
-                Ítem personalizado
-              </button>
+              <div ref={quickRef} className="relative">
+                {quickExpanded ? (
+                  <div
+                    className="flex items-center gap-0.5 rounded-2xl border border-white/60 px-1.5 py-1 shadow-xl"
+                    style={{
+                      background: "rgba(255,255,255,0.86)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
+                      boxShadow: "0 4px 24px 0 rgba(0,31,102,0.13), 0 1.5px 4px 0 rgba(0,0,0,0.07)",
+                      animation: "quickExpandIn 220ms ease-out forwards",
+                    }}
+                  >
+                    {QUICK_OPTIONS.map(({ value, label, Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          const s = makeQuickService(value, fechaInicio, fechaFin);
+                          onChange([...servicios, s]);
+                          setNewServiceId(s.id);
+                          setQuickExpanded(false);
+                          setTimeout(() => setNewServiceId(null), 1800);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[12px] font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors whitespace-nowrap"
+                      >
+                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                        {label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setQuickExpanded(false)}
+                      className="ml-1 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setQuickExpanded(true)}
+                    className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 whitespace-nowrap"
+                    style={{ backgroundColor: "#004fbb" }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Ítem personalizado
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )
@@ -405,6 +502,7 @@ export default function ServiciosSeleccionados({
                           pasajeros={pasajeros}
                           ninos={ninos}
                           highlight={highlightedId === s.id}
+                          autoFocus={newServiceId === s.id}
                           isDragging={dragId === dragKey}
                           isDragOver={dragOverKey === rowKey}
                           onDragStart={() => setDragId(dragKey)}
@@ -652,6 +750,7 @@ function ServicioRow({
   pasajeros,
   ninos = 0,
   highlight,
+  autoFocus = false,
   isDragging,
   isDragOver,
   onDragStart,
@@ -672,6 +771,7 @@ function ServicioRow({
   pasajeros: number;
   ninos?: number;
   highlight?: boolean;
+  autoFocus?: boolean;
   isDragging?: boolean;
   isDragOver?: boolean;
   onDragStart: () => void;
@@ -731,6 +831,11 @@ function ServicioRow({
       nameInputRef.current?.select();
     }, 0);
   }
+
+  useEffect(() => {
+    if (autoFocus) startNameEdit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function commitName() {
     if (savingRef.current) return;

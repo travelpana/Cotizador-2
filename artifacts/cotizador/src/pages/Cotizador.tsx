@@ -1426,6 +1426,7 @@ export default function CotizadorPage() {
                   onObservacionesChange={setObservacionManual}
                   personalizarTraslados={personalizarTraslados}
                   fechaInicio={cliente.fechaInicio}
+                  fechaFin={cliente.fechaFin}
                   noches={cliente.noches}
                   presentationMode={presentationMode}
                   opcionesPaquete={opcionesPaquete}
