@@ -1,0 +1,188 @@
+PULIR ÍTEMS PERSONALIZADOS INLINE EN SERVICIOS SELECCIONADOS
+
+Objetivo:
+Mejorar las tarjetas de ítems personalizados creados desde “Ítem personalizado” para que sean más útiles, rápidas y limpias.
+
+No modificar cálculos generales.
+No modificar exportables salvo agregar la información nueva.
+
+==================================================
+1. ELIMINAR ETIQUETA MANUAL
+==================================================
+
+Eliminar completamente la etiqueta:
+
+MANUAL
+
+No debe aparecer en:
+- Hotelería
+- Traslados
+- Tours
+- Vuelos
+- Catamarán
+- Otros
+
+==================================================
+2. CAMPO DE TEXTO SOMBREADO
+==================================================
+
+El área donde se escribe el nombre del servicio debe verse editable.
+
+Aplicar un fondo suave/sombreado.
+
+Ejemplo visual:
+- fondo #f5f7fb
+- borde suave
+- border-radius
+- placeholder visible
+- cursor text
+
+Debe sentirse como campo editable sin abrir modal.
+
+==================================================
+3. HOTELERÍA PERSONALIZADA
+==================================================
+
+En la tarjeta de Hotelería deben aparecer controles rápidos para:
+
+- Ubicación
+- Categoría
+- Tipo de habitación
+- Régimen
+- Fechas
+- Tarifa
+- Observaciones
+- Imágenes
+
+Cada dato debe ser editable desde la tarjeta.
+
+Ubicación:
+clic → desplegable de ubicaciones
+
+Categoría:
+clic → desplegable de estrellas
+
+Tipo habitación:
+clic → campo/select rápido
+
+Régimen:
+clic → select rápido
+
+Fechas:
+clic → calendario de estadía
+
+==================================================
+4. TOURS PERSONALIZADOS
+==================================================
+
+En la tarjeta de Tours deben aparecer controles rápidos para:
+
+- Nombre del tour
+- Horario
+- Duración
+- Modalidad / tipo
+- Tarifa adulto
+- Tarifa niño
+- Observaciones
+- Imágenes
+
+Horario:
+clic → editable/select rápido
+
+Duración:
+clic → editable/select rápido
+
+==================================================
+5. VUELOS PERSONALIZADOS
+==================================================
+
+En la tarjeta de Vuelos deben aparecer controles rápidos para:
+
+- Origen
+- Destino
+- Tipo de vuelo:
+  - Ida
+  - Retorno
+  - Ida y vuelta
+- Fecha si aplica
+- Tarifa adulto
+- Tarifa niño
+- Observaciones
+- Imágenes
+
+Mostrar en la tarjeta algo como:
+
+Panamá → Bocas del Toro
+Ida y vuelta · Fecha
+
+Todo editable desde la tarjeta.
+
+==================================================
+6. CATAMARÁN PERSONALIZADO
+==================================================
+
+En la tarjeta de Catamarán deben aparecer controles rápidos para:
+
+- Nombre
+- Modalidad
+- Fechas tipo estadía
+- Noches calculadas
+- Horario
+- Tarifa pax/noche
+- Tarifa niño
+- Observaciones
+- Imágenes
+
+Debe usar el mismo calendario de estadía que alojamiento.
+
+==================================================
+7. ICONO PARA ASIGNAR DÍA EN ITINERARIO
+==================================================
+
+Todos los servicios personalizados deben tener un icono rápido para asignar fecha o día dentro del itinerario.
+
+Aplicar a:
+- Hotelería
+- Traslados
+- Tours
+- Vuelos
+- Catamarán
+- Otros
+
+Icono sugerido:
+calendario o ruta
+
+Comportamiento:
+clic → seleccionar día/fecha del itinerario
+
+Debe guardar:
+itineraryDate
+o
+itineraryDay
+
+Ese dato debe poder usarse luego en el itinerario sugerido.
+
+==================================================
+8. MANTENER FUNCIONES EXISTENTES
+==================================================
+
+Mantener:
+- duplicar
+- eliminar
+- subir imágenes desde icono
+- editar tarifa
+- drag solo desde puntitos
+- observaciones
+- exportación a vista previa, PDF y correo
+
+==================================================
+9. OBJETIVO FINAL
+==================================================
+
+Los ítems personalizados deben poder completarse directamente desde la tarjeta sin abrir modal.
+
+Cada tipo de servicio debe mostrar los campos importantes para cotizar rápido y mantener toda la información lista para:
+- vista previa
+- PDF
+- correo
+- itinerario

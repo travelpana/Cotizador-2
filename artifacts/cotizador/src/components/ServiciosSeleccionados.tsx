@@ -799,7 +799,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | "images" | null
+    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | "images" | "tipohab" | "regimen" | "duracion" | "modalidad" | "origen" | "destino" | "tipovuelo" | "fechavuelo" | null
   >(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingHorario, setEditingHorario] = useState(false);
@@ -919,6 +919,16 @@ function ServicioRow({
           personalizarTraslados,
         )
       : servicio.nombre;
+
+  const namePlaceholder = (() => {
+    const t = servicio.customTipo ?? servicio.tipo;
+    if (t === "hotel") return "Nombre del hotel";
+    if (t === "tour") return "Nombre del tour";
+    if (t === "vuelo") return "Nombre del vuelo (opcional)";
+    if (t === "catamaran") return "Nombre del catamarán";
+    if (t === "traslado") return "Nombre del traslado";
+    return "Nombre del servicio";
+  })();
 
   const rowClasses = [
     "group flex items-center gap-2 px-3 py-3 transition-colors",
@@ -1068,15 +1078,32 @@ function ServicioRow({
               if (e.key === "Enter") { e.preventDefault(); commitName(); }
               if (e.key === "Escape") { e.preventDefault(); cancelName(); }
             }}
-            className="text-sm font-semibold text-slate-900 w-full bg-transparent border-b border-primary/50 focus:outline-none focus:border-primary pb-px leading-tight"
+            placeholder={servicio.manual ? namePlaceholder : undefined}
+            className={`text-sm font-semibold text-slate-900 w-full leading-tight focus:outline-none ${
+              servicio.manual
+                ? "px-2 py-1 rounded-lg border border-slate-200 focus:border-primary placeholder:font-normal placeholder:text-slate-400"
+                : "bg-transparent border-b border-primary/50 focus:border-primary pb-px"
+            }`}
+            style={servicio.manual ? { background: "#f5f7fb" } : undefined}
           />
         ) : (
           <div
-            className="cursor-pointer flex items-center gap-1.5 group/name"
+            className="cursor-text flex items-center gap-1.5 group/name"
             onClick={startNameEdit}
             title="Clic para editar el nombre"
           >
-            <span className="text-sm font-semibold text-slate-900 truncate">{titleLabel}</span>
+            {servicio.manual ? (
+              <span
+                className={`text-sm font-semibold truncate px-2 py-1 rounded-lg border border-slate-200 ${
+                  titleLabel ? "text-slate-900" : "text-slate-400 italic font-normal"
+                }`}
+                style={{ background: "#f5f7fb" }}
+              >
+                {titleLabel || namePlaceholder}
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-slate-900 truncate">{titleLabel}</span>
+            )}
             {servicio.isDuplicate && (
               <span style={{
                 fontSize: 11,
@@ -1113,14 +1140,6 @@ function ServicioRow({
             <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
           </div>
         )}
-        {servicio.manual && (
-          <div className="mt-0.5">
-            <span className="inline-block text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
-              manual
-            </span>
-          </div>
-        )}
-
         {/* Description / meta */}
         {isHotel ? (
           <div className="flex items-center gap-0.5 flex-wrap mt-0.5">
@@ -1208,13 +1227,59 @@ function ServicioRow({
               </PopoverContent>
             </Popover>
 
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+
+            {/* Tipo de habitación */}
+            <Popover
+              open={openEditor === "tipohab"}
+              onOpenChange={(o) => setOpenEditor(o ? "tipohab" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-slate-500 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Cambiar tipo de habitación"
+                >
+                  {servicio.tipoHabitacion ?? <span className="italic text-slate-400">Tipo hab.</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.tipoHabitacion ?? ""}
+                  options={TIPOS_HAB_LIST}
+                  placeholder="Tipo de habitación"
+                  onSave={(v) => { onUpdate({ ...servicio, tipoHabitacion: v || undefined }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+
             {/* Régimen */}
-            {formatRegimen(servicio.desayuno) && (
-              <>
-                <span className="text-slate-300 text-[11px] select-none">·</span>
-                <span className="text-[11px] text-amber-700 font-medium px-1">{formatRegimen(servicio.desayuno)}</span>
-              </>
-            )}
+            <Popover
+              open={openEditor === "regimen"}
+              onOpenChange={(o) => setOpenEditor(o ? "regimen" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-amber-700 font-medium hover:bg-amber-50 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Cambiar régimen"
+                >
+                  {formatRegimen(servicio.desayuno) || <span className="italic text-slate-400 font-normal">Régimen</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[240px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.desayuno ?? ""}
+                  options={REGIMENES_LIST}
+                  placeholder="Régimen / alimentación"
+                  onSave={(v) => { onUpdate({ ...servicio, desayuno: v || undefined }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         ) : isCatamaranItem ? (
           <div className="flex items-center gap-0.5 flex-wrap mt-0.5">
@@ -1257,35 +1322,191 @@ function ServicioRow({
                 />
               </PopoverContent>
             </Popover>
+            {/* Modalidad (editable) */}
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+            <Popover
+              open={openEditor === "modalidad"}
+              onOpenChange={(o) => setOpenEditor(o ? "modalidad" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-indigo-600 font-medium hover:bg-indigo-50 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Modalidad"
+                >
+                  {servicio.tipoServicio || <span className="italic text-slate-400 font-normal">Modalidad</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[160px] p-1 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.tipoServicio ?? ""}
+                  options={MODALIDAD_LIST}
+                  allowFree={false}
+                  onSave={(v) => { onUpdate({ ...servicio, tipoServicio: (v || undefined) as ServicioSeleccionado["tipoServicio"] }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
             {/* Horario (editable) */}
-            {servicio.horario && (
-              <>
-                <span className="text-slate-300 text-[11px] select-none">·</span>
-                {editingHorario ? (
-                  <input
-                    type="text"
-                    value={horarioEditValue}
-                    onChange={(e) => setHorarioEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }
-                      if (e.key === "Escape") { e.preventDefault(); setEditingHorario(false); }
-                    }}
-                    onBlur={() => { onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }}
-                    autoFocus
-                    className="text-[11px] text-slate-600 bg-slate-50 border-b border-slate-400 outline-none px-0.5"
-                    style={{ minWidth: 80, maxWidth: 220 }}
-                  />
-                ) : (
-                  <span
-                    className="text-[11px] text-slate-500 px-0.5 rounded hover:bg-slate-100 transition-colors cursor-text"
-                    title="Editar horario"
-                    onClick={() => { setHorarioEditValue(servicio.horario ?? ""); setEditingHorario(true); }}
-                  >
-                    {servicio.horario}
-                  </span>
-                )}
-              </>
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+            {editingHorario ? (
+              <input
+                type="text"
+                value={horarioEditValue}
+                onChange={(e) => setHorarioEditValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }
+                  if (e.key === "Escape") { e.preventDefault(); setEditingHorario(false); }
+                }}
+                onBlur={() => { onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }}
+                autoFocus
+                placeholder="Horario"
+                className="text-[11px] text-slate-600 bg-slate-50 border-b border-slate-400 outline-none px-0.5"
+                style={{ minWidth: 80, maxWidth: 220 }}
+              />
+            ) : (
+              <span
+                className="text-[11px] text-slate-500 px-0.5 rounded hover:bg-slate-100 transition-colors cursor-text"
+                title="Editar horario"
+                onClick={() => { setHorarioEditValue(servicio.horario ?? ""); setEditingHorario(true); }}
+              >
+                {servicio.horario || <span className="italic text-slate-400">Horario</span>}
+              </span>
             )}
+          </div>
+        ) : servicio.tipo === "vuelo" ? (
+          <div className="flex items-center gap-0.5 flex-wrap mt-0.5">
+            {/* Origen */}
+            <Popover
+              open={openEditor === "origen"}
+              onOpenChange={(o) => setOpenEditor(o ? "origen" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[12px] font-semibold text-slate-700 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Cambiar origen"
+                >
+                  {servicio.origen || <span className="italic text-slate-400 font-normal">Origen</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.origen ?? ""}
+                  options={CIUDADES_VUELO_LIST}
+                  placeholder="Ciudad de origen"
+                  onSave={(v) => { onUpdate({ ...servicio, origen: v || undefined }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-400 text-[12px] select-none">→</span>
+
+            {/* Destino */}
+            <Popover
+              open={openEditor === "destino"}
+              onOpenChange={(o) => setOpenEditor(o ? "destino" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[12px] font-semibold text-slate-700 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Cambiar destino"
+                >
+                  {servicio.destino || <span className="italic text-slate-400 font-normal">Destino</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.destino ?? ""}
+                  options={CIUDADES_VUELO_LIST}
+                  placeholder="Ciudad de destino"
+                  onSave={(v) => { onUpdate({ ...servicio, destino: v || undefined }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+
+            {/* Tipo de vuelo */}
+            <Popover
+              open={openEditor === "tipovuelo"}
+              onOpenChange={(o) => setOpenEditor(o ? "tipovuelo" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] text-indigo-600 font-medium hover:bg-indigo-50 px-1 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Tipo de vuelo"
+                >
+                  {servicio.tipoVuelo || <span className="italic text-slate-400 font-normal">Tipo de vuelo</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[180px] p-1 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.tipoVuelo ?? ""}
+                  options={TIPO_VUELO_LIST}
+                  allowFree={false}
+                  onSave={(v) => { onUpdate({ ...servicio, tipoVuelo: (v || undefined) as ServicioSeleccionado["tipoVuelo"] }); setOpenEditor(null); }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+
+            {/* Fecha */}
+            <Popover
+              open={openEditor === "fechavuelo"}
+              onOpenChange={(o) => setOpenEditor(o ? "fechavuelo" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[11px] hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
+                  title="Editar fecha del vuelo"
+                >
+                  {servicio.usarFecha && servicio.fecha ? (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
+                      <Calendar className="w-3 h-3" />
+                      {fmtDMA(servicio.fecha)}
+                    </span>
+                  ) : (
+                    <span className="italic text-slate-400">Fecha</span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[220px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <div className="space-y-2">
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Fecha del vuelo
+                  </span>
+                  <input
+                    type="date"
+                    value={servicio.fecha ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      onUpdate({ ...servicio, fecha: v || undefined, usarFecha: !!v });
+                    }}
+                    className="w-full text-[12px] px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:border-primary"
+                  />
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => { onUpdate({ ...servicio, fecha: undefined, usarFecha: false }); setOpenEditor(null); }}
+                      className="text-[11px] text-slate-500 hover:text-slate-700"
+                    >
+                      Quitar fecha
+                    </button>
+                    <button type="button" onClick={() => setOpenEditor(null)} className="text-[11px] font-semibold text-primary">
+                      Listo
+                    </button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         ) : descripcion ? (
           <div className="text-[11px] text-slate-500 truncate mt-0.5">
@@ -1357,31 +1578,88 @@ function ServicioRow({
           )}
 
         {/* Tour horario (editable inline) */}
-        {servicio.tipo === "tour" && servicio.horario && (
-          <div className="mt-1 flex items-center min-w-0">
-            <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Horario:&nbsp;</span>
-            {editingHorario ? (
-              <input
-                type="text"
-                value={horarioEditValue}
-                onChange={(e) => setHorarioEditValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.preventDefault(); onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }
-                  if (e.key === "Escape") { e.preventDefault(); setEditingHorario(false); }
-                }}
-                onBlur={() => { onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }}
-                autoFocus
-                className="text-[11px] text-slate-600 bg-slate-50 border-b border-slate-400 outline-none px-0.5 flex-1 min-w-0"
-              />
-            ) : (
-              <span
-                className="text-[11px] text-slate-500 truncate hover:bg-slate-100 rounded px-0.5 -mx-0.5 cursor-text transition-colors"
-                title="Editar horario"
-                onClick={() => { setHorarioEditValue(servicio.horario ?? ""); setEditingHorario(true); }}
+        {servicio.tipo === "tour" && (
+          <div className="mt-1 flex items-center gap-2 min-w-0 flex-wrap">
+            <span className="inline-flex items-center min-w-0">
+              <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Horario:&nbsp;</span>
+              {editingHorario ? (
+                <input
+                  type="text"
+                  value={horarioEditValue}
+                  onChange={(e) => setHorarioEditValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }
+                    if (e.key === "Escape") { e.preventDefault(); setEditingHorario(false); }
+                  }}
+                  onBlur={() => { onUpdate({ ...servicio, horario: horarioEditValue.trim() || undefined }); setEditingHorario(false); }}
+                  autoFocus
+                  placeholder="Horario"
+                  className="text-[11px] text-slate-600 bg-slate-50 border-b border-slate-400 outline-none px-0.5 min-w-0"
+                />
+              ) : (
+                <span
+                  className="text-[11px] text-slate-500 truncate hover:bg-slate-100 rounded px-0.5 -mx-0.5 cursor-text transition-colors"
+                  title="Editar horario"
+                  onClick={() => { setHorarioEditValue(servicio.horario ?? ""); setEditingHorario(true); }}
+                >
+                  {servicio.horario || <span className="italic text-slate-400">Agregar horario</span>}
+                </span>
+              )}
+            </span>
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+            <span className="inline-flex items-center min-w-0">
+              <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Duración:&nbsp;</span>
+              <Popover
+                open={openEditor === "duracion"}
+                onOpenChange={(o) => setOpenEditor(o ? "duracion" : null)}
               >
-                {servicio.horario}
-              </span>
-            )}
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-[11px] text-slate-500 truncate hover:bg-slate-100 rounded px-0.5 -mx-0.5 cursor-pointer transition-colors"
+                    title="Editar duración"
+                  >
+                    {servicio.duracion || <span className="italic text-slate-400">Agregar duración</span>}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                  <InlineComboEditor
+                    current={servicio.duracion ?? ""}
+                    options={DURACION_LIST}
+                    placeholder="Duración"
+                    onSave={(v) => { onUpdate({ ...servicio, duracion: v || undefined }); setOpenEditor(null); }}
+                    onClose={() => setOpenEditor(null)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </span>
+            <span className="text-slate-300 text-[11px] select-none">·</span>
+            <span className="inline-flex items-center min-w-0">
+              <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Modalidad:&nbsp;</span>
+              <Popover
+                open={openEditor === "modalidad"}
+                onOpenChange={(o) => setOpenEditor(o ? "modalidad" : null)}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-[11px] text-slate-500 truncate hover:bg-slate-100 rounded px-0.5 -mx-0.5 cursor-pointer transition-colors"
+                    title="Editar modalidad"
+                  >
+                    {servicio.tipoServicio || <span className="italic text-slate-400">Agregar modalidad</span>}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[160px] p-1 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                  <InlineComboEditor
+                    current={servicio.tipoServicio ?? ""}
+                    options={MODALIDAD_LIST}
+                    allowFree={false}
+                    onSave={(v) => { onUpdate({ ...servicio, tipoServicio: (v || undefined) as ServicioSeleccionado["tipoServicio"] }); setOpenEditor(null); }}
+                    onClose={() => setOpenEditor(null)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </span>
           </div>
         )}
       </div>
@@ -1508,8 +1786,8 @@ function ServicioRow({
           <Copy className="w-3.5 h-3.5" />
         </button>
 
-        {/* 📅 Fecha del itinerario — tours y traslados */}
-        {(servicio.tipo === "tour" || servicio.tipo === "traslado") && (
+        {/* 📅 Fecha del itinerario — todos los tipos */}
+        {(
           <Popover
             open={openEditor === "fecha-itinerario"}
             onOpenChange={(o) => setOpenEditor(o ? "fecha-itinerario" : null)}
@@ -1906,6 +2184,68 @@ const UBICACIONES_LIST = [
 ];
 
 const ESTRELLAS_LIST = ["★★★", "★★★★", "★★★★★"];
+
+const TIPOS_HAB_LIST = ["Standard", "Superior", "Deluxe", "Suite", "Junior Suite", "Vista Jardín", "Vista Mar", "Bungalow"];
+const REGIMENES_LIST = ["Solo alojamiento", "Desayuno continental incluido", "Desayuno buffet incluido", "Media pensión", "Alimentación completa incluida", "Todo incluido"];
+const DURACION_LIST = ["Medio día", "Día completo", "2 horas", "3 horas", "4 horas", "5 horas"];
+const CIUDADES_VUELO_LIST = ["Panamá", "Bocas del Toro", "San Blas", "David", "Pedasí", "Chitré", "Colón", "Contadora"];
+const TIPO_VUELO_LIST: Array<NonNullable<ServicioSeleccionado["tipoVuelo"]>> = ["Ida", "Retorno", "Ida y vuelta"];
+const MODALIDAD_LIST: Array<NonNullable<ServicioSeleccionado["tipoServicio"]>> = ["Regular", "Privado"];
+
+/* Reusable inline combo editor: free-text input + clickable suggestions */
+function InlineComboEditor({
+  current,
+  options,
+  placeholder,
+  allowFree = true,
+  onSave,
+  onClose,
+}: {
+  current: string;
+  options: readonly string[];
+  placeholder?: string;
+  allowFree?: boolean;
+  onSave: (v: string) => void;
+  onClose: () => void;
+}) {
+  const [val, setVal] = useState(current ?? "");
+  return (
+    <div className="space-y-2">
+      {allowFree && (
+        <div className="flex items-center gap-1.5">
+          <input
+            autoFocus
+            type="text"
+            value={val}
+            placeholder={placeholder}
+            onChange={(e) => setVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); onSave(val.trim()); }
+              if (e.key === "Escape") { e.preventDefault(); onClose(); }
+            }}
+            className="flex-1 min-w-0 text-[12px] px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:border-primary"
+          />
+          <button type="button" onClick={() => onSave(val.trim())} style={btnApply} title="Aplicar">✓</button>
+        </div>
+      )}
+      <div className="py-0.5 max-h-56 overflow-y-auto">
+        {options.map((o) => (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onSave(o)}
+            className={`w-full text-left flex items-center gap-2 px-3 py-2 text-[11px] rounded-lg hover:bg-primary/5 hover:text-primary transition-colors ${
+              current === o ? "text-primary font-semibold" : "text-slate-700"
+            }`}
+          >
+            {current === o && <Check className="w-3 h-3 flex-shrink-0" />}
+            <span className={current === o ? "" : "ml-[15px]"}>{o}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function UbicacionEditor({
   current,

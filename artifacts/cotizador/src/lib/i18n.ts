@@ -49,6 +49,7 @@ export interface Traducciones {
   recomendaciones: string;
   notaImportante: string;
   horario: string;
+  duracion: string;
   costoAdicionalEntradas: string;
   noIncluyeEntradas: string;
 
@@ -130,6 +131,7 @@ const ES: Traducciones = {
   recomendaciones: "Recomendaciones",
   notaImportante: "Nota importante",
   horario: "Horario",
+  duracion: "Duración",
   costoAdicionalEntradas: "Costo adicional por entradas",
   noIncluyeEntradas: "No incluye entradas",
 
@@ -208,6 +210,7 @@ const EN: Traducciones = {
   recomendaciones: "Recommendations",
   notaImportante: "Important note",
   horario: "Schedule",
+  duracion: "Duration",
   costoAdicionalEntradas: "Additional ticket cost",
   noIncluyeEntradas: "Tickets not included",
 
@@ -286,6 +289,7 @@ const PT: Traducciones = {
   recomendaciones: "Recomendações",
   notaImportante: "Nota importante",
   horario: "Horário",
+  duracion: "Duração",
   costoAdicionalEntradas: "Custo adicional de ingressos",
   noIncluyeEntradas: "Ingressos não incluídos",
 

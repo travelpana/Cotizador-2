@@ -232,6 +232,8 @@ export function calcularLocal(
         nombre: s.nombre,
         origen: s.tipo === "vuelo" ? s.origen : undefined,
         destino: s.tipo === "vuelo" ? s.destino : undefined,
+        tipoVuelo: s.tipo === "vuelo" ? s.tipoVuelo : undefined,
+        duracion: s.tipo === "tour" ? s.duracion : undefined,
         preciosPorAcomodacion: preciosPorAcom,
         totalesPorAcomodacion: totalesPorAcom,
         detalle,

@@ -59,6 +59,7 @@ export interface ServicioSeleccionado {
   nombre: string;
   origen?: string;
   destino?: string;
+  tipoVuelo?: "Ida" | "Retorno" | "Ida y vuelta";
   tickets?: TourTickets;
   horario?: string;
   precios: {
@@ -175,6 +176,8 @@ export interface ServicioCalculado {
   nombre: string;
   origen?: string;
   destino?: string;
+  tipoVuelo?: "Ida" | "Retorno" | "Ida y vuelta";
+  duracion?: string;
   codigo?: string;
   preciosPorAcomodacion: Record<Acomodacion, number>;
   totalesPorAcomodacion: Record<Acomodacion, number>;

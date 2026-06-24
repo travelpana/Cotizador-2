@@ -628,6 +628,23 @@ function adicionalesTable(
           ? `<div style="${STYLES.cellNote}">${escape(T.horario)}: ${escape(s.horario)}</div>`
           : "";
 
+      const duracionLine =
+        s.tipo === "tour" && s.duracion
+          ? `<div style="${STYLES.cellNote}">${escape(T.duracion)}: ${escape(s.duracion)}</div>`
+          : "";
+
+      const vueloLine = (() => {
+        if (s.tipo !== "vuelo") return "";
+        const ruta =
+          s.origen || s.destino
+            ? `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}`
+            : "";
+        const parts = [ruta, s.tipoVuelo ? escape(s.tipoVuelo) : "", s.fecha ? escape(fmtFecha(s.fecha)) : ""].filter(Boolean);
+        return parts.length
+          ? `<div style="${STYLES.cellNote}">${parts.join(" · ")}</div>`
+          : "";
+      })();
+
       const fechasCatamaranLine =
         s.tipo === "catamaran" && s.fechaInicio && s.fechaFin
           ? `<div style="${STYLES.cellNote}">Fechas: ${escape(fmtFecha(s.fechaInicio))} al ${escape(fmtFecha(s.fechaFin))}${s.noches ? ` · ${s.noches} noche${s.noches !== 1 ? "s" : ""}` : ""}</div>`
@@ -640,6 +657,8 @@ function adicionalesTable(
         return `<tr style="page-break-inside:avoid;">
           <td style="${STYLES.td};width:65%;">
             <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
+            ${vueloLine}
+            ${duracionLine}
             ${ticketsLine}
             ${fechasCatamaranLine}
             ${horarioLine}
@@ -654,6 +673,8 @@ function adicionalesTable(
       return `<tr style="page-break-inside:avoid;">
         <td style="${STYLES.td};width:65%;">
           <div style="${STYLES.cellTitle}">${escape(displayName)}</div>
+          ${vueloLine}
+          ${duracionLine}
           ${ticketsLine}
           ${fechasCatamaranLine}
           ${horarioLine}
