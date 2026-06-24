@@ -1,0 +1,110 @@
+AGREGAR NOTAS E IMÁGENES EN TARIFAS: TOURS Y TRASLADOS
+
+Objetivo:
+En Configuración → Tarifas, tanto al editar como al crear un nuevo Tour o Traslado, debe existir la opción de agregar notas e imágenes. Al seleccionar ese servicio en el cotizador, esos datos deben viajar con el servicio y mostrarse en la cotización.
+
+Aplicar a:
+- Tours
+- Traslados
+
+No modificar cálculos.
+
+==================================================
+1. MODAL NUEVO / EDITAR TOUR
+==================================================
+
+Agregar al formulario:
+
+NOTAS
+Tipo: textarea
+Placeholder:
+Detalles, restricciones u observaciones que aparecerán en la cotización...
+
+IMÁGENES DEL SERVICIO
+Permitir:
+- subir una o varias imágenes
+- ver miniaturas
+- eliminar imágenes cargadas
+
+Guardar estos datos en el registro del tour.
+
+==================================================
+2. MODAL NUEVO / EDITAR TRASLADO
+==================================================
+
+Agregar exactamente lo mismo:
+
+NOTAS
+Tipo: textarea
+
+IMÁGENES DEL SERVICIO
+Subida múltiple con miniaturas y eliminar.
+
+Guardar estos datos en el registro del traslado.
+
+==================================================
+3. AL SELECCIONAR EL SERVICIO EN EL COTIZADOR
+==================================================
+
+Cuando se agregue un Tour o Traslado a Servicios seleccionados, copiar también:
+
+- notas
+- imágenes
+
+desde el servicio guardado en Tarifas.
+
+El servicio seleccionado debe conservar esos datos aunque luego se modifique el tarifario.
+
+==================================================
+4. MOSTRAR EN SERVICIOS SELECCIONADOS
+==================================================
+
+Si el servicio tiene notas, mostrar debajo del nombre/detalles:
+
+Nota: texto de la nota
+
+Si tiene imágenes, mostrar indicador discreto:
+
+📷 2 imágenes
+
+No mostrar nada si está vacío.
+
+==================================================
+5. MOSTRAR EN COTIZACIÓN GENERADA
+==================================================
+
+Las notas e imágenes deben aparecer en:
+
+- Vista previa
+- PDF
+- Copiar correo HTML
+
+Ubicación:
+debajo del servicio correspondiente.
+
+Reglas para imágenes:
+- máximo 3 imágenes por servicio
+- miniaturas proporcionales
+- tamaño pequeño/mediano
+- no deformar imágenes
+- compatible con correo HTML/Outlook
+
+==================================================
+6. DUPLICADO
+==================================================
+
+Si se duplica un servicio seleccionado, duplicar también:
+- notas
+- imágenes
+
+==================================================
+7. NO AFECTAR
+==================================================
+
+No modificar:
+- precios
+- cálculos
+- lógica de tarifas
+- importación del tarifario
+
+Solo agregar notas e imágenes a Tours y Traslados y hacer que se reflejen en el cotizador y exportables.

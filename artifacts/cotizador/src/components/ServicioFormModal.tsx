@@ -264,6 +264,11 @@ export default function ServicioFormModal(props: Props) {
         const h = (t as Tour).horario?.trim();
         setHorario(h || "");
       }
+      if (tipo === "tour" || tipo === "traslado") {
+        const src = t as Tour | Traslado;
+        if (src.notas && !notas) setNotas(src.notas);
+        if (src.images && src.images.length > 0 && images.length === 0) setImages(src.images.slice(0, 3));
+      }
     }
     setSearch("");
   };

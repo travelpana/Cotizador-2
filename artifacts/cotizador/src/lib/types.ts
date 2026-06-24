@@ -26,6 +26,10 @@ export interface Tour {
   precio_por_persona: number;
   precios: { p1: number; p2_5: number; p6_10: number; chd: number };
   descripcion: string;
+  /** Notas del servicio — se copian automáticamente al seleccionar en el cotizador */
+  notas?: string;
+  /** Imágenes del servicio — se copian automáticamente al seleccionar en el cotizador */
+  images?: string[];
 }
 
 export interface Traslado {
@@ -35,6 +39,10 @@ export interface Traslado {
   tipo: "Regular" | "Privado";
   precio_por_persona: number;
   precios: { p1: number; p2_5: number; p6_10: number; chd: number };
+  /** Notas del servicio — se copian automáticamente al seleccionar en el cotizador */
+  notas?: string;
+  /** Imágenes del servicio — se copian automáticamente al seleccionar en el cotizador */
+  images?: string[];
 }
 
 export interface TourTickets {

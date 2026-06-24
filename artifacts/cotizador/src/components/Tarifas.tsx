@@ -521,6 +521,18 @@ function TourForm({ tour: t, onChange }: { tour: TourLocal; onChange: (t: TourLo
     onChange({ ...t, precios, precio_por_persona: precios.p2_5 });
   };
   const num = (val: string) => { const n = parseFloat(val); return isNaN(n) ? 0 : n; };
+  const [imgLoading, setImgLoading] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImgFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImgLoading(true);
+    try {
+      const dataUrls = await Promise.all(files.map(f => compressImage(f)));
+      onChange({ ...t, images: [...(t.images ?? []), ...dataUrls].slice(0, 3) });
+    } finally { setImgLoading(false); e.target.value = ""; }
+  };
 
   return (
     <div className="space-y-4">
@@ -569,6 +581,57 @@ function TourForm({ tour: t, onChange }: { tour: TourLocal; onChange: (t: TourLo
         <label className="text-sm text-slate-600">Activo</label>
         <div onClick={() => set({ activo: !t.activo })} className={`w-9 h-5 rounded-full transition-colors cursor-pointer ${t.activo ? "bg-emerald-500" : "bg-slate-300"}`}>
           <div className={`w-4 h-4 rounded-full bg-white mt-0.5 shadow transition-transform ${t.activo ? "translate-x-4" : "translate-x-0.5"}`} />
+        </div>
+      </div>
+
+      {/* Notas */}
+      <div>
+        <label className={labelCls}>Notas del servicio</label>
+        <textarea
+          value={t.notas ?? ""}
+          onChange={e => set({ notas: e.target.value || undefined })}
+          placeholder="Detalles, restricciones u observaciones que aparecerán en la cotización…"
+          rows={3}
+          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none"
+        />
+      </div>
+
+      {/* Imágenes */}
+      <div>
+        <label className={labelCls}>Imágenes del servicio</label>
+        <div className="space-y-2">
+          {(t.images ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {(t.images ?? []).map((img, i) => (
+                <div key={i} className="relative group flex-shrink-0">
+                  <img src={img} alt="" className="h-16 w-24 object-cover rounded-lg border border-slate-200" />
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...t, images: (t.images ?? []).filter((_, j) => j !== i) })}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {(t.images?.length ?? 0) < 3 ? (
+            <div>
+              <input ref={imgInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImgFiles} />
+              <button
+                type="button"
+                onClick={() => imgInputRef.current?.click()}
+                disabled={imgLoading}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-xs text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                <ImagePlus className="w-3.5 h-3.5" />
+                {imgLoading ? "Procesando…" : (t.images?.length ?? 0) === 0 ? "Subir imágenes" : "Agregar más"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400">Máximo 3 imágenes por servicio.</p>
+          )}
         </div>
       </div>
     </div>
@@ -695,6 +758,18 @@ function TrasladoForm({ traslado: t, onChange }: { traslado: TrasladoLocal; onCh
     onChange({ ...t, precios, precio_por_persona: precios.p2_5 });
   };
   const num = (val: string) => { const n = parseFloat(val); return isNaN(n) ? 0 : n; };
+  const [imgLoading, setImgLoading] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImgFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImgLoading(true);
+    try {
+      const dataUrls = await Promise.all(files.map(f => compressImage(f)));
+      onChange({ ...t, images: [...(t.images ?? []), ...dataUrls].slice(0, 3) });
+    } finally { setImgLoading(false); e.target.value = ""; }
+  };
 
   return (
     <div className="space-y-4">
@@ -744,6 +819,57 @@ function TrasladoForm({ traslado: t, onChange }: { traslado: TrasladoLocal; onCh
         <label className="text-sm text-slate-600">Activo</label>
         <div onClick={() => set({ activo: !t.activo })} className={`w-9 h-5 rounded-full transition-colors cursor-pointer ${t.activo ? "bg-emerald-500" : "bg-slate-300"}`}>
           <div className={`w-4 h-4 rounded-full bg-white mt-0.5 shadow transition-transform ${t.activo ? "translate-x-4" : "translate-x-0.5"}`} />
+        </div>
+      </div>
+
+      {/* Notas */}
+      <div>
+        <label className={labelCls}>Notas del servicio</label>
+        <textarea
+          value={t.notas ?? ""}
+          onChange={e => set({ notas: e.target.value || undefined })}
+          placeholder="Detalles, restricciones u observaciones que aparecerán en la cotización…"
+          rows={3}
+          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 resize-none"
+        />
+      </div>
+
+      {/* Imágenes */}
+      <div>
+        <label className={labelCls}>Imágenes del servicio</label>
+        <div className="space-y-2">
+          {(t.images ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {(t.images ?? []).map((img, i) => (
+                <div key={i} className="relative group flex-shrink-0">
+                  <img src={img} alt="" className="h-16 w-24 object-cover rounded-lg border border-slate-200" />
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...t, images: (t.images ?? []).filter((_, j) => j !== i) })}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {(t.images?.length ?? 0) < 3 ? (
+            <div>
+              <input ref={imgInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImgFiles} />
+              <button
+                type="button"
+                onClick={() => imgInputRef.current?.click()}
+                disabled={imgLoading}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-xs text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                <ImagePlus className="w-3.5 h-3.5" />
+                {imgLoading ? "Procesando…" : (t.images?.length ?? 0) === 0 ? "Subir imágenes" : "Agregar más"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400">Máximo 3 imágenes por servicio.</p>
+          )}
         </div>
       </div>
     </div>
