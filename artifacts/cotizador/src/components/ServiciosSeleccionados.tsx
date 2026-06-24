@@ -44,7 +44,9 @@ import {
   Flag,
   Copy,
   Clock,
+  Camera,
 } from "lucide-react";
+import { compressImage } from "@/lib/image-utils";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
 import { loadObservaciones } from "@/lib/observaciones";
 import PlantillaSelectorModal from "./PlantillaSelectorModal";
@@ -697,7 +699,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | null
+    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | "images" | null
   >(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingHorario, setEditingHorario] = useState(false);
@@ -708,6 +710,18 @@ function ServicioRow({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const savingRef = useRef(false);
   const dragHandleActive = useRef(false);
+  const [iconHovered, setIconHovered] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const current = servicio.images ?? [];
+    const slots = 3 - current.length;
+    if (slots <= 0) return;
+    const toProcess = Array.from(files).slice(0, slots);
+    const compressed = await Promise.all(toProcess.map((f) => compressImage(f, 1024, 0.82)));
+    onUpdate({ ...servicio, images: [...current, ...compressed] });
+  }
 
   function startNameEdit() {
     setNameValue(servicio.nombre);
@@ -843,12 +857,99 @@ function ServicioRow({
         <GripVertical className="w-3.5 h-3.5" />
       </div>
 
-      {/* Type icon */}
-      <div
-        className={`w-8 h-8 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center flex-shrink-0`}
+      {/* Type icon — hover shows camera, click manages images */}
+      <Popover
+        open={openEditor === "images"}
+        onOpenChange={(o) => {
+          if (o && (servicio.images?.length ?? 0) === 0) {
+            imageInputRef.current?.click();
+            return;
+          }
+          setOpenEditor(o ? "images" : null);
+        }}
       >
-        {iconForTipo(servicio.tipo)}
-      </div>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            onMouseEnter={() => setIconHovered(true)}
+            onMouseLeave={() => setIconHovered(false)}
+            title="Agregar imágenes"
+            className={`w-8 h-8 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center flex-shrink-0 cursor-pointer transition-opacity hover:opacity-75`}
+          >
+            {iconHovered || openEditor === "images"
+              ? <Camera className="w-4 h-4" />
+              : iconForTipo(servicio.tipo)}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          side="bottom"
+          className="p-0 w-60 z-[60]"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <div className="p-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Imágenes del servicio
+              </span>
+              <span className="text-[10px] text-slate-400">
+                {(servicio.images?.length ?? 0)}/3
+              </span>
+            </div>
+            {(servicio.images?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {(servicio.images ?? []).map((img, i) => (
+                  <div key={i} className="relative group/img">
+                    <img
+                      src={img}
+                      alt=""
+                      className="w-[74px] h-[52px] object-cover rounded-lg border border-slate-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (servicio.images ?? []).filter((_, j) => j !== i);
+                        onUpdate({ ...servicio, images: updated.length > 0 ? updated : undefined });
+                      }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                      title="Eliminar imagen"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {(servicio.images?.length ?? 0) < 3 ? (
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-500 transition-colors text-[12px] font-medium"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                {(servicio.images?.length ?? 0) === 0 ? "Agregar imágenes" : "Agregar más"}
+              </button>
+            ) : (
+              <p className="text-[11px] text-slate-400 text-center py-1">
+                Máximo 3 imágenes por servicio
+              </p>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => {
+          handleImageFiles(e.target.files).then(() => {
+            if ((servicio.images?.length ?? 0) === 0) setOpenEditor("images");
+          });
+          e.target.value = "";
+        }}
+      />
 
       {/* Content */}
       <div className="min-w-0 flex-1">
@@ -1128,26 +1229,13 @@ function ServicioRow({
           </div>
         ) : null}
 
-        {/* Images thumbnails */}
+        {/* Image indicator */}
         {(servicio.images?.length ?? 0) > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {(servicio.images ?? []).slice(0, 3).map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                alt=""
-                className="h-10 rounded border border-slate-200 object-cover flex-shrink-0"
-                style={{ width: 56 }}
-              />
-            ))}
-            {(servicio.images ?? []).length > 3 && (
-              <div
-                className="h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-500 flex-shrink-0"
-                style={{ width: 40 }}
-              >
-                +{servicio.images!.length - 3}
-              </div>
-            )}
+          <div className="mt-1 flex items-center gap-1">
+            <Camera className="w-3 h-3 text-slate-400 flex-shrink-0" />
+            <span className="text-[11px] text-slate-400">
+              {servicio.images!.length} imagen{servicio.images!.length !== 1 ? "es" : ""}
+            </span>
           </div>
         )}
 

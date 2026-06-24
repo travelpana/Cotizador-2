@@ -1,0 +1,137 @@
+AGREGAR IMÁGENES ILUSTRATIVAS DESDE SERVICIOS SELECCIONADOS
+
+Objetivo:
+Permitir subir imágenes ilustrativas directamente desde la tarjeta de cada servicio seleccionado.
+
+Aplicar a:
+- Alojamiento
+- Traslados
+- Tours
+- Catamarán
+- Vuelos
+- Ítems personalizados
+
+==================================================
+1. INTERACCIÓN SOBRE EL ICONO DEL SERVICIO
+==================================================
+
+Actualmente cada tarjeta tiene un icono de categoría.
+
+Ejemplos:
+- Alojamiento: icono de hotel
+- Traslados: icono de bus
+- Tours: icono de ubicación
+
+Nuevo comportamiento:
+
+Al pasar el puntero sobre ese icono:
+- cambiar visualmente a icono de cámara
+- mostrar cursor pointer
+- aplicar hover suave
+- tooltip: “Agregar imágenes”
+
+Al quitar el puntero:
+- volver al icono original
+
+==================================================
+2. CLIC EN EL ICONO
+==================================================
+
+Al hacer clic sobre el icono/cámara:
+
+Abrir selector de archivos.
+
+Permitir subir:
+- 1 o varias imágenes
+- formatos: JPG, PNG, WEBP
+
+==================================================
+3. GUARDAR IMÁGENES EN EL SERVICIO
+==================================================
+
+Las imágenes deben quedar asociadas al servicio seleccionado específico.
+
+Cada servicio debe tener su propio arreglo:
+
+images: []
+
+o
+
+serviceImages: []
+
+Si duplico el servicio:
+- duplicar también sus imágenes
+
+Si elimino el servicio:
+- eliminar la referencia a sus imágenes
+
+==================================================
+4. MOSTRAR INDICADOR EN TARJETA
+==================================================
+
+Si el servicio tiene imágenes cargadas, mostrar un indicador discreto en la tarjeta:
+
+📷 2 imágenes
+
+o icono de cámara + número.
+
+Ubicación sugerida:
+debajo de los datos principales del servicio o cerca del icono.
+
+No mostrar galería grande en la tarjeta.
+
+==================================================
+5. PERMITIR GESTIONAR IMÁGENES
+==================================================
+
+Si el servicio ya tiene imágenes y vuelvo a hacer clic en el icono:
+
+Abrir panel simple con:
+- miniaturas
+- botón para agregar más imágenes
+- botón para eliminar imagen individual
+
+==================================================
+6. MOSTRAR EN COTIZACIÓN GENERADA
+==================================================
+
+Las imágenes deben aparecer en:
+
+- Vista previa
+- PDF
+- Correo HTML
+
+Ubicación:
+debajo del servicio correspondiente.
+
+Reglas:
+- máximo 3 imágenes por servicio
+- miniaturas alineadas horizontalmente
+- tamaño recomendado: 160px de ancho
+- mantener proporción
+- bordes suaves
+- no deformar imágenes
+
+==================================================
+7. COMPATIBILIDAD OUTLOOK
+==================================================
+
+Para el correo HTML:
+- usar tablas HTML
+- estilos inline
+- imágenes con width fijo
+- no usar flexbox/grid
+- no usar CSS externo
+
+==================================================
+8. NO MODIFICAR
+==================================================
+
+No cambiar:
+- cálculos
+- precios
+- estructura principal de servicios
+- lógica de cotización
+- exportables existentes, salvo agregar imágenes
+
+Solo agregar subida y visualización de imágenes por servicio.
