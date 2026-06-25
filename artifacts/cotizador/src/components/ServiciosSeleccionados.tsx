@@ -993,7 +993,9 @@ function ServicioRow({
           >
             {iconHovered || openEditor === "images"
               ? <Camera className="w-4 h-4" />
-              : iconForTipo(servicio.tipo)}
+              : servicio.customTipo === "otros"
+                ? <Tag className="w-4 h-4" />
+                : iconForTipo(servicio.tipo)}
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -1118,7 +1120,7 @@ function ServicioRow({
                 COPIA
               </span>
             )}
-            {!isHotel && (
+            {!isHotel && servicio.customTipo !== "otros" && (
               <button
                 type="button"
                 onClick={(e) => {

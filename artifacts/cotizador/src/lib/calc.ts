@@ -251,6 +251,7 @@ export function calcularLocal(
         fechaFin: s.tipo === "catamaran" ? s.fechaFin : undefined,
         noches: s.tipo === "catamaran" && catNoches > 1 ? catNoches : undefined,
         images: s.images,
+        customTipo: s.customTipo,
       });
     }
   }

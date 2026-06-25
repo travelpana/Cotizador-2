@@ -154,11 +154,13 @@ export default function ExportButtons({
       if (hoteles.some((h) => !!formatRegimen(h.desayuno))) inclusions.push("Desayuno");
     }
     const traslados2 = adicionales.filter((s) => s.tipo === "traslado");
-    const tours2 = adicionales.filter((s) => s.tipo === "tour");
+    const tours2 = adicionales.filter((s) => s.tipo === "tour" && s.customTipo !== "otros");
+    const otros2 = adicionales.filter((s) => s.customTipo === "otros");
     const catamarans2 = adicionales.filter((s) => s.tipo === "catamaran");
     const vuelos2 = adicionales.filter((s) => s.tipo === "vuelo");
     if (traslados2.length > 0) inclusions.push("Traslados");
     if (tours2.length > 0 || catamarans2.length > 0) inclusions.push("Tours seleccionados");
+    if (otros2.length > 0) inclusions.push("Servicios adicionales");
     if (vuelos2.length > 0) inclusions.push("Vuelos (si aplica)");
     if (tours2.some((s) => s.tickets?.enabled && s.tickets.adultPrice > 0)) inclusions.push("Entradas (si aplica)");
 
@@ -184,6 +186,11 @@ export default function ExportButtons({
       lines.push("");
       lines.push(`🌴 *${T.toursYExperiencias}*`);
       for (const s of tours2) lines.push(`• ${s.nombre}`);
+    }
+    if (otros2.length > 0) {
+      lines.push("");
+      lines.push(`🏷️ *Otros servicios*`);
+      for (const s of otros2) lines.push(`• ${s.nombre}`);
     }
     if (catamarans2.length > 0) {
       lines.push("");
@@ -308,7 +315,8 @@ export default function ExportButtons({
     }
 
     const traslados = adicionales.filter((s) => s.tipo === "traslado");
-    const tours = adicionales.filter((s) => s.tipo === "tour");
+    const tours = adicionales.filter((s) => s.tipo === "tour" && s.customTipo !== "otros");
+    const otros = adicionales.filter((s) => s.customTipo === "otros");
     const catamarans = adicionales.filter((s) => s.tipo === "catamaran");
     const vuelos = adicionales.filter((s) => s.tipo === "vuelo");
 
@@ -355,6 +363,23 @@ export default function ExportButtons({
         } else {
           lines.push(`🎟 ${T.noIncluyeEntradas}`);
         }
+        lines.push(
+          `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
+        );
+        if (s.notas) lines.push(`ℹ️ ${s.notesImportant ? "⚠️ IMPORTANTE: " : ""}${s.notas}`);
+        lines.push("");
+      }
+    }
+
+    // ── Otros ─────────────────────────────────────────────────────
+    if (otros.length) {
+      lines.push("");
+      lines.push(`🏷️ *Otros servicios*`);
+      lines.push("");
+
+      for (const s of otros) {
+        lines.push(`• *${s.nombre}*`);
+        if (s.fecha) lines.push(`📅 Fecha: ${s.fecha}`);
         lines.push(
           `💲 ${T.waTarifa}: ${isCalc ? fmt(s.totalesPorAcomodacion[primary]) : `${fmt(s.unitAplicado ?? 0)} ${T.waPorPersona}`}`,
         );

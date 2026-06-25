@@ -592,15 +592,17 @@ function adicionalesTable(
           ? `<div style="font-size:11px;color:#475569;margin-top:3px;">CHD: ${escape(fmt(chdUnit))}</div>`
           : "";
       const tipo =
-        s.tipo === "vuelo"
-          ? T.tipoVuelo
-          : s.tipoServicio
-            ? s.tipoServicio
-            : s.tipo === "traslado"
-              ? s.detalle?.includes("Privado")
-                ? T.privado
-                : T.regular
-              : T.regular;
+        s.customTipo === "otros"
+          ? "—"
+          : s.tipo === "vuelo"
+            ? T.tipoVuelo
+            : s.tipoServicio
+              ? s.tipoServicio
+              : s.tipo === "traslado"
+                ? s.detalle?.includes("Privado")
+                  ? T.privado
+                  : T.regular
+                : T.regular;
 
       const displayName =
         s.tipo === "traslado"
@@ -650,6 +652,11 @@ function adicionalesTable(
           ? `<div style="${STYLES.cellNote}">Fechas: ${escape(fmtFecha(s.fechaInicio))} al ${escape(fmtFecha(s.fechaFin))}${s.noches ? ` · ${s.noches} noche${s.noches !== 1 ? "s" : ""}` : ""}</div>`
           : "";
 
+      const fechaOtrosLine =
+        s.customTipo === "otros" && s.fecha
+          ? `<div style="${STYLES.cellNote}">Fecha: ${escape(fmtFecha(s.fecha))}</div>`
+          : "";
+
       const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
       const imagesLine = renderImagesHTML(s.images);
 
@@ -661,6 +668,7 @@ function adicionalesTable(
             ${duracionLine}
             ${ticketsLine}
             ${fechasCatamaranLine}
+            ${fechaOtrosLine}
             ${horarioLine}
             ${notasLine}
             ${imagesLine}
@@ -677,6 +685,7 @@ function adicionalesTable(
           ${duracionLine}
           ${ticketsLine}
           ${fechasCatamaranLine}
+          ${fechaOtrosLine}
           ${horarioLine}
           ${notasLine}
           ${imagesLine}

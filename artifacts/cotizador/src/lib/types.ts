@@ -173,6 +173,7 @@ export function validateCliente(c: Cliente): {
 export interface ServicioCalculado {
   id: string;
   tipo: "hotel" | "tour" | "traslado" | "vuelo" | "catamaran";
+  customTipo?: string;
   nombre: string;
   origen?: string;
   destino?: string;
