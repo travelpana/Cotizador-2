@@ -114,6 +114,10 @@ export interface ServicioSeleccionado {
   flightSchedules?: string[];
   /** Structured flight itinerary with IDA/VUELTA columns */
   flightItinerary?: FlightItinerary;
+  /** Return date for "Ida y vuelta" type flights */
+  fechaVuelta?: string;
+  /** Itinerary day assignment for the vuelta leg (Ida y vuelta only) */
+  fechaItinerarioVuelta?: string;
 }
 
 export interface FlightItinerary {

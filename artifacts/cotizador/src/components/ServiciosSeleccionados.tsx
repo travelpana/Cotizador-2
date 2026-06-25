@@ -807,7 +807,7 @@ function ServicioRow({
   const colors = tipoColors(servicio.tipo);
 
   const [openEditor, setOpenEditor] = useState<
-    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | "images" | "tipohab" | "regimen" | "duracion" | "modalidad" | "origen" | "destino" | "tipovuelo" | "fechavuelo" | null
+    "dates" | "price" | "notes" | "tickets" | "ubicacion" | "estrellas" | "fecha-itinerario" | "images" | "tipohab" | "regimen" | "duracion" | "modalidad" | "origen" | "destino" | "tipovuelo" | "fechavuelo" | "fechavuelo-vuelta" | null
   >(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingHorario, setEditingHorario] = useState(false);
@@ -927,7 +927,7 @@ function ServicioRow({
           personalizarTraslados,
         )
       : servicio.tipo === "vuelo"
-        ? servicio.nombre || (servicio.origen && servicio.destino ? `${servicio.origen} → ${servicio.destino}` : servicio.nombre)
+        ? buildVueloNombre(servicio.origen, servicio.destino, servicio.tipoVuelo) ?? servicio.nombre
         : servicio.nombre;
 
   const namePlaceholder = (() => {
@@ -1104,7 +1104,7 @@ function ServicioRow({
                   placeholder="Ciudad de origen"
                   onSave={(v) => {
                     const newOrigen = v.trim() || undefined;
-                    const newNombre = newOrigen && servicio.destino ? `${newOrigen} → ${servicio.destino}` : (newOrigen ?? servicio.nombre);
+                    const newNombre = buildVueloNombre(newOrigen, servicio.destino, servicio.tipoVuelo) ?? servicio.nombre;
                     onUpdate({ ...servicio, origen: newOrigen, nombre: newNombre });
                     setOpenEditor(null);
                   }}
@@ -1136,7 +1136,7 @@ function ServicioRow({
                   placeholder="Ciudad de destino"
                   onSave={(v) => {
                     const newDestino = v.trim() || undefined;
-                    const newNombre = servicio.origen && newDestino ? `${servicio.origen} → ${newDestino}` : (newDestino ?? servicio.nombre);
+                    const newNombre = buildVueloNombre(servicio.origen, newDestino, servicio.tipoVuelo) ?? servicio.nombre;
                     onUpdate({ ...servicio, destino: newDestino, nombre: newNombre });
                     setOpenEditor(null);
                   }}
@@ -1478,7 +1478,12 @@ function ServicioRow({
                   current={servicio.tipoVuelo ?? ""}
                   options={TIPO_VUELO_LIST}
                   allowFree={false}
-                  onSave={(v) => { onUpdate({ ...servicio, tipoVuelo: (v || undefined) as ServicioSeleccionado["tipoVuelo"] }); setOpenEditor(null); }}
+                  onSave={(v) => {
+                    const newTipo = (v || undefined) as ServicioSeleccionado["tipoVuelo"];
+                    const newNombre = buildVueloNombre(servicio.origen, servicio.destino, newTipo) ?? servicio.nombre;
+                    onUpdate({ ...servicio, tipoVuelo: newTipo, nombre: newNombre });
+                    setOpenEditor(null);
+                  }}
                   onClose={() => setOpenEditor(null)}
                 />
               </PopoverContent>
@@ -1486,7 +1491,7 @@ function ServicioRow({
 
             <span className="text-slate-300 text-[11px] select-none">·</span>
 
-            {/* Fecha */}
+            {/* Fecha ida */}
             <Popover
               open={openEditor === "fechavuelo"}
               onOpenChange={(o) => setOpenEditor(o ? "fechavuelo" : null)}
@@ -1495,22 +1500,23 @@ function ServicioRow({
                 <button
                   type="button"
                   className="text-[11px] hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
-                  title="Editar fecha del vuelo"
+                  title={servicio.tipoVuelo === "Ida y vuelta" ? "Fecha de ida" : "Fecha del vuelo"}
                 >
                   {servicio.usarFecha && servicio.fecha ? (
                     <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
                       <Calendar className="w-3 h-3" />
+                      {servicio.tipoVuelo === "Ida y vuelta" ? <span className="text-[10px] font-normal text-slate-500">Ida:</span> : null}
                       {fmtDMA(servicio.fecha)}
                     </span>
                   ) : (
-                    <span className="italic text-slate-400">Fecha</span>
+                    <span className="italic text-slate-400">{servicio.tipoVuelo === "Ida y vuelta" ? "Fecha ida" : "Fecha"}</span>
                   )}
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-[220px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <div className="space-y-2">
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Fecha del vuelo
+                    {servicio.tipoVuelo === "Ida y vuelta" ? "Fecha de ida" : "Fecha del vuelo"}
                   </span>
                   <input
                     type="date"
@@ -1536,6 +1542,60 @@ function ServicioRow({
                 </div>
               </PopoverContent>
             </Popover>
+
+            {/* Fecha vuelta — only for "Ida y vuelta" */}
+            {servicio.tipoVuelo === "Ida y vuelta" && (
+              <Popover
+                open={openEditor === "fechavuelo-vuelta"}
+                onOpenChange={(o) => setOpenEditor(o ? "fechavuelo-vuelta" : null)}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-[11px] hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer inline-flex items-center gap-1"
+                    title="Fecha de vuelta"
+                  >
+                    {servicio.fechaVuelta ? (
+                      <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
+                        <Calendar className="w-3 h-3" />
+                        <span className="text-[10px] font-normal text-slate-500">Vuelta:</span>
+                        {fmtDMA(servicio.fechaVuelta)}
+                      </span>
+                    ) : (
+                      <span className="italic text-slate-400">Fecha vuelta</span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[220px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                  <div className="space-y-2">
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      Fecha de vuelta
+                    </span>
+                    <input
+                      type="date"
+                      value={servicio.fechaVuelta ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        onUpdate({ ...servicio, fechaVuelta: v || undefined });
+                      }}
+                      className="w-full text-[12px] px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:border-primary"
+                    />
+                    <div className="flex justify-between">
+                      <button
+                        type="button"
+                        onClick={() => { onUpdate({ ...servicio, fechaVuelta: undefined }); setOpenEditor(null); }}
+                        className="text-[11px] text-slate-500 hover:text-slate-700"
+                      >
+                        Quitar fecha
+                      </button>
+                      <button type="button" onClick={() => setOpenEditor(null)} className="text-[11px] font-semibold text-primary">
+                        Listo
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         ) : descripcion ? (
           <div className="text-[11px] text-slate-500 truncate mt-0.5">
@@ -1668,32 +1728,35 @@ function ServicioRow({
         {/* Vuelo: structured flight itinerary display */}
         {servicio.tipo === "vuelo" && servicio.flightItinerary && (
           (servicio.flightItinerary.idaSchedules?.length > 0 || servicio.flightItinerary.vueltaSchedules?.length > 0)
-        ) && (
-          <div className="mt-1.5 grid grid-cols-2 gap-2">
-            {(servicio.flightItinerary?.idaSchedules?.length ?? 0) > 0 && (
-              <div>
-                <div className="text-[10px] font-bold mb-0.5" style={{ color: "#1351c1" }}>IDA</div>
-                {servicio.flightItinerary!.idaRuta && (
-                  <div className="text-[10px] text-slate-500 font-semibold">{servicio.flightItinerary!.idaRuta}</div>
-                )}
-                {servicio.flightItinerary!.idaSchedules.map((sc, i) => (
-                  <div key={i} className="text-[11px] text-slate-500">{sc}</div>
-                ))}
-              </div>
-            )}
-            {(servicio.flightItinerary?.vueltaSchedules?.length ?? 0) > 0 && (
-              <div>
-                <div className="text-[10px] font-bold text-slate-500 mb-0.5">VUELTA</div>
-                {servicio.flightItinerary!.vueltaRuta && (
-                  <div className="text-[10px] text-slate-500 font-semibold">{servicio.flightItinerary!.vueltaRuta}</div>
-                )}
-                {servicio.flightItinerary!.vueltaSchedules.map((sc, i) => (
-                  <div key={i} className="text-[11px] text-slate-500">{sc}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        ) && (() => {
+          const fi = servicio.flightItinerary!;
+          const tv = servicio.tipoVuelo;
+          const showIda = tv !== "Retorno" && (fi.idaSchedules?.length ?? 0) > 0;
+          const showVuelta = tv !== "Ida" && (fi.vueltaSchedules?.length ?? 0) > 0;
+          const cols = showIda && showVuelta ? 2 : 1;
+          return (
+            <div className={`mt-1.5 grid gap-2`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+              {showIda && (
+                <div>
+                  <div className="text-[10px] font-bold mb-0.5" style={{ color: "#1351c1" }}>IDA</div>
+                  {fi.idaRuta && <div className="text-[10px] text-slate-500 font-semibold">{fi.idaRuta}</div>}
+                  {fi.idaSchedules.map((sc, i) => (
+                    <div key={i} className="text-[11px] text-slate-500">{sc}</div>
+                  ))}
+                </div>
+              )}
+              {showVuelta && (
+                <div>
+                  <div className="text-[10px] font-bold text-slate-500 mb-0.5">VUELTA</div>
+                  {fi.vueltaRuta && <div className="text-[10px] text-slate-500 font-semibold">{fi.vueltaRuta}</div>}
+                  {fi.vueltaSchedules.map((sc, i) => (
+                    <div key={i} className="text-[11px] text-slate-500">{sc}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {/* Vuelo: legacy free-text schedules */}
         {servicio.tipo === "vuelo" && !servicio.flightItinerary && (servicio.flightSchedules ?? []).filter(Boolean).length > 0 && (
           <div className="mt-1 flex flex-col gap-0.5">
@@ -1865,9 +1928,11 @@ function ServicioRow({
             >
               <FechaItinerarioEditor
                 value={servicio.fechaItinerario}
+                valueVuelta={servicio.fechaItinerarioVuelta}
                 fechaInicio={fechaInicio}
                 noches={noches}
                 isVuelo={servicio.tipo === "vuelo"}
+                tipoVuelo={servicio.tipoVuelo}
                 flightItinerary={servicio.flightItinerary}
                 vueloOrigen={servicio.origen}
                 vueloDestino={servicio.destino}
@@ -1875,12 +1940,16 @@ function ServicioRow({
                   onUpdate({ ...servicio, fechaItinerario: v });
                   setOpenEditor(null);
                 }}
+                onSaveVuelta={(v) => {
+                  onUpdate({ ...servicio, fechaItinerarioVuelta: v });
+                  setOpenEditor(null);
+                }}
                 onSaveFlightItinerary={(fi) => {
                   onUpdate({ ...servicio, flightItinerary: fi });
                   setOpenEditor(null);
                 }}
                 onClear={() => {
-                  onUpdate({ ...servicio, fechaItinerario: undefined });
+                  onUpdate({ ...servicio, fechaItinerario: undefined, fechaItinerarioVuelta: undefined });
                   setOpenEditor(null);
                 }}
                 onClose={() => setOpenEditor(null)}
@@ -2057,24 +2126,30 @@ const parseSlot = (s: string): FlightSlot => {
 
 function FechaItinerarioEditor({
   value,
+  valueVuelta,
   fechaInicio,
   noches,
   onSave,
+  onSaveVuelta,
   onClear,
   onClose,
   isVuelo,
+  tipoVuelo,
   flightItinerary,
   vueloOrigen,
   vueloDestino,
   onSaveFlightItinerary,
 }: {
   value?: string;
+  valueVuelta?: string;
   fechaInicio?: string;
   noches?: number;
   onSave: (v: string) => void;
+  onSaveVuelta?: (v: string) => void;
   onClear: () => void;
   onClose: () => void;
   isVuelo?: boolean;
+  tipoVuelo?: ServicioSeleccionado["tipoVuelo"];
   flightItinerary?: FlightItinerary;
   vueloOrigen?: string;
   vueloDestino?: string;
@@ -2179,32 +2254,76 @@ function FechaItinerarioEditor({
 
       {mode === "dia" ? (
         <>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
-            {Array.from({ length: totalDias }, (_, i) => {
-              const diaKey = `dia-${i+1}`;
-              const isSelected = value === diaKey;
-              const dateStr = dayDate(i);
-              return (
-                <button
-                  key={diaKey}
-                  type="button"
-                  onClick={() => onSave(diaKey)}
-                  style={{
-                    padding:"6px 4px", borderRadius:8, fontSize:11, fontWeight:600,
-                    border: isSelected ? `1.5px solid ${FI_CLR_PRIMARY}` : "1.5px solid #e2e8f0",
-                    background: isSelected ? `rgba(0,79,187,0.10)` : "#fff",
-                    color: isSelected ? FI_CLR_PRIMARY : FI_CLR_TEXT,
-                    cursor:"pointer", textAlign:"center", lineHeight:1.3, transition:"all 0.1s",
-                  }}
-                >
-                  <div>Día {i+1}</div>
-                  {dateStr && <div style={{ fontSize:9, fontWeight:400, opacity:0.7, marginTop:2 }}>{dateStr}</div>}
-                </button>
-              );
-            })}
-          </div>
+          {/* For "Ida y vuelta": show two labeled sections — IDA and VUELTA */}
+          {tipoVuelo === "Ida y vuelta" ? (
+            <>
+              {(["ida", "vuelta"] as const).map((leg) => {
+                const isIda = leg === "ida";
+                const legValue = isIda ? value : valueVuelta;
+                const legSave = isIda ? onSave : onSaveVuelta;
+                const legLabel = isIda ? "IDA" : "VUELTA";
+                const legColor = isIda ? FI_CLR_PRIMARY : "#64748b";
+                return (
+                  <div key={leg} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize:10, fontWeight:800, color: legColor, letterSpacing:"0.06em", marginBottom:5 }}>
+                      {legLabel}
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
+                      {Array.from({ length: totalDias }, (_, i) => {
+                        const diaKey = `dia-${i+1}`;
+                        const isSelected = legValue === diaKey;
+                        const dateStr = dayDate(i);
+                        return (
+                          <button
+                            key={diaKey}
+                            type="button"
+                            onClick={() => legSave?.(diaKey)}
+                            style={{
+                              padding:"5px 4px", borderRadius:7, fontSize:10, fontWeight:600,
+                              border: isSelected ? `1.5px solid ${legColor}` : "1.5px solid #e2e8f0",
+                              background: isSelected ? `rgba(0,79,187,0.08)` : "#fff",
+                              color: isSelected ? legColor : FI_CLR_TEXT,
+                              cursor:"pointer", textAlign:"center", lineHeight:1.3, transition:"all 0.1s",
+                            }}
+                          >
+                            <div>Día {i+1}</div>
+                            {dateStr && <div style={{ fontSize:8, fontWeight:400, opacity:0.7, marginTop:1 }}>{dateStr}</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
+              {Array.from({ length: totalDias }, (_, i) => {
+                const diaKey = `dia-${i+1}`;
+                const isSelected = value === diaKey;
+                const dateStr = dayDate(i);
+                return (
+                  <button
+                    key={diaKey}
+                    type="button"
+                    onClick={() => onSave(diaKey)}
+                    style={{
+                      padding:"6px 4px", borderRadius:8, fontSize:11, fontWeight:600,
+                      border: isSelected ? `1.5px solid ${FI_CLR_PRIMARY}` : "1.5px solid #e2e8f0",
+                      background: isSelected ? `rgba(0,79,187,0.10)` : "#fff",
+                      color: isSelected ? FI_CLR_PRIMARY : FI_CLR_TEXT,
+                      cursor:"pointer", textAlign:"center", lineHeight:1.3, transition:"all 0.1s",
+                    }}
+                  >
+                    <div>Día {i+1}</div>
+                    {dateStr && <div style={{ fontSize:9, fontWeight:400, opacity:0.7, marginTop:2 }}>{dateStr}</div>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div style={{ marginTop:10, paddingTop:8, borderTop:"1px solid #f1f5f9", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            {value ? (
+            {(value || valueVuelta) ? (
               <button type="button" onClick={onClear} style={{ fontSize:10, color:"#ef4444", background:"none", border:"none", cursor:"pointer", fontWeight:600 }}>
                 Quitar fecha
               </button>
@@ -2316,6 +2435,18 @@ const REGIMENES_LIST = ["Solo alojamiento", "Desayuno continental incluido", "De
 const DURACION_LIST = ["Medio día", "Día completo", "2 horas", "3 horas", "4 horas", "5 horas"];
 const CIUDADES_VUELO_LIST = ["Panamá", "Bocas del Toro", "San Blas", "David", "Pedasí", "Chitré", "Colón", "Contadora"];
 const TIPO_VUELO_LIST: Array<NonNullable<ServicioSeleccionado["tipoVuelo"]>> = ["Ida", "Retorno", "Ida y vuelta"];
+
+/** Auto-build the vuelo title from origin/destination/type */
+function buildVueloNombre(
+  origen?: string,
+  destino?: string,
+  tipoVuelo?: ServicioSeleccionado["tipoVuelo"],
+): string | undefined {
+  if (!origen || !destino) return undefined;
+  if (tipoVuelo === "Retorno") return `${destino} → ${origen}`;
+  if (tipoVuelo === "Ida y vuelta") return `${origen} → ${destino} → ${origen}`;
+  return `${origen} → ${destino}`;
+}
 const MODALIDAD_LIST: Array<NonNullable<ServicioSeleccionado["tipoServicio"]>> = ["Regular", "Privado"];
 
 /* Reusable inline combo editor: free-text input + clickable suggestions */

@@ -70,11 +70,16 @@ export function buildItinerario(
   const assignableServices = servicios.filter(
     (s) => s.tipo !== "hotel" && s.tipo !== "traslado" && !!s.fechaItinerario,
   );
+  // "Ida y vuelta" vuelo services have a second (return) leg via fechaItinerarioVuelta
+  const vueltaLegServices = servicios.filter(
+    (s) => s.tipo === "vuelo" && s.tipoVuelo === "Ida y vuelta" && !!s.fechaItinerarioVuelta,
+  );
   // Tours without a date assigned fill days sequentially
   const unassignedTours = servicios.filter(
     (s) => s.tipo === "tour" && !s.fechaItinerario,
   );
   const usedIds = new Set<string>();
+  const usedVueltaLegIds = new Set<string>();
 
   // Match a service's fechaItinerario to a specific day index / fecha string
   const matchesDia = (
@@ -123,12 +128,23 @@ export function buildItinerario(
       );
       dayServices.forEach((s) => usedIds.add(s.id));
 
-      if (dayServices.length > 0) {
-        actividades = dayServices.map((s) => s.nombre);
-        actividad = actividades.join(" · ");
+      // Also collect "Ida y vuelta" return legs assigned to this day
+      const dayVueltaLegs = vueltaLegServices.filter(
+        (s) => !usedVueltaLegIds.has(s.id) && matchesDia(s.fechaItinerarioVuelta, i, fecha),
+      );
+      dayVueltaLegs.forEach((s) => usedVueltaLegIds.add(s.id));
+      const vueltaLegNames = dayVueltaLegs.map(
+        (s) => s.destino && s.origen ? `${s.destino} → ${s.origen}` : s.nombre,
+      );
+
+      const allDayActivities = [...dayServices.map((s) => s.nombre), ...vueltaLegNames];
+
+      if (allDayActivities.length > 0) {
+        actividades = allDayActivities;
+        actividad = allDayActivities.join(" · ");
         descripcion = actividad;
         esTour = true;
-        horario = dayServices[0].horario?.trim() || undefined;
+        horario = dayServices[0]?.horario?.trim() || undefined;
       } else {
         // Fall back to unassigned tours filled sequentially
         const tour = unassignedTours[unassignedTourIdx++];
