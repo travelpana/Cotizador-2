@@ -630,17 +630,41 @@ function adicionalesTable(
       })();
 
       const horarioLine =
-        d.incluirDescriptivos && (s.tipo === "tour" || s.tipo === "catamaran") && s.horario
+        ((d.incluirDescriptivos && (s.tipo === "tour" || s.tipo === "catamaran")) || s.customTipo === "otros") && s.horario
           ? `<div style="${STYLES.cellNote}">${escape(T.horario)}: ${escape(s.horario)}</div>`
           : "";
 
       const duracionLine =
-        s.tipo === "tour" && s.duracion
+        (s.tipo === "tour" || s.customTipo === "otros") && s.duracion
           ? `<div style="${STYLES.cellNote}">${escape(T.duracion)}: ${escape(s.duracion)}</div>`
           : "";
 
       const vueloLine = (() => {
         if (s.tipo !== "vuelo") return "";
+
+        // New structured itinerary (IDA / VUELTA)
+        if (s.flightItinerary) {
+          const fi = s.flightItinerary;
+          const hasIda = (fi.idaSchedules ?? []).length > 0;
+          const hasVuelta = (fi.vueltaSchedules ?? []).length > 0;
+          const idaBlock = hasIda
+            ? `<div style="${STYLES.cellNote};margin-top:4px;">` +
+              `<strong style="font-size:10px;letter-spacing:0.06em;color:#1351c1;">IDA</strong>` +
+              (fi.idaRuta ? `<div style="font-size:10px;color:#475569;font-weight:600;">${escape(fi.idaRuta)}</div>` : "") +
+              fi.idaSchedules.map((sc) => `<div>${escape(sc)}</div>`).join("") +
+              `</div>`
+            : "";
+          const vueltaBlock = hasVuelta
+            ? `<div style="${STYLES.cellNote};margin-top:4px;">` +
+              `<strong style="font-size:10px;letter-spacing:0.06em;color:#64748b;">VUELTA</strong>` +
+              (fi.vueltaRuta ? `<div style="font-size:10px;color:#475569;font-weight:600;">${escape(fi.vueltaRuta)}</div>` : "") +
+              fi.vueltaSchedules.map((sc) => `<div>${escape(sc)}</div>`).join("") +
+              `</div>`
+            : "";
+          return idaBlock + vueltaBlock;
+        }
+
+        // Legacy: route + free-text schedules
         const ruta =
           s.origen || s.destino
             ? `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}`

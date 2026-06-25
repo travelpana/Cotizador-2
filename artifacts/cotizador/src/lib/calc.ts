@@ -253,6 +253,7 @@ export function calcularLocal(
         images: s.images,
         customTipo: s.customTipo,
         flightSchedules: s.tipo === "vuelo" ? s.flightSchedules : undefined,
+        flightItinerary: s.tipo === "vuelo" ? s.flightItinerary : undefined,
       });
     }
   }

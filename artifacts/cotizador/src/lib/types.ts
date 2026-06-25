@@ -112,6 +112,15 @@ export interface ServicioSeleccionado {
   images?: string[];
   /** Flight schedule options (up to 4), e.g. "PAC 9:45 → BOC 10:45" */
   flightSchedules?: string[];
+  /** Structured flight itinerary with IDA/VUELTA columns */
+  flightItinerary?: FlightItinerary;
+}
+
+export interface FlightItinerary {
+  idaRuta?: string;
+  vueltaRuta?: string;
+  idaSchedules: string[];
+  vueltaSchedules: string[];
 }
 
 export interface Descriptivo {
@@ -214,6 +223,8 @@ export interface ServicioCalculado {
   images?: string[];
   /** Flight schedule options (up to 4), e.g. "PAC 9:45 → BOC 10:45" */
   flightSchedules?: string[];
+  /** Structured flight itinerary with IDA/VUELTA columns */
+  flightItinerary?: FlightItinerary;
 }
 
 export interface CotizacionResult {

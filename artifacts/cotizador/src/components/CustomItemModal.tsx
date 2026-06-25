@@ -11,6 +11,7 @@ import {
   Bus,
   MapPin,
   Ship,
+  Briefcase,
   Tag,
   Sparkles,
   ImageIcon,
@@ -83,13 +84,19 @@ const BADGE_COLOR: Record<CustomTipo, string> = {
   otros: "Otros",
 };
 
+const TIPO_VUELO_OPTS: { value: NonNullable<ServicioSeleccionado["tipoVuelo"]>; label: string }[] = [
+  { value: "Ida", label: "Ida" },
+  { value: "Retorno", label: "Retorno" },
+  { value: "Ida y vuelta", label: "Ida y vuelta" },
+];
+
 const TIPO_ICON: Record<CustomTipo, React.ReactNode> = {
   hotel: <Hotel className="w-4 h-4" />,
   traslado: <Bus className="w-4 h-4" />,
   tour: <MapPin className="w-4 h-4" />,
   vuelo: <Plane className="w-4 h-4" />,
   catamaran: <Ship className="w-4 h-4" />,
-  otros: <Tag className="w-4 h-4" />,
+  otros: <Briefcase className="w-4 h-4" />,
 };
 
 const TIPO_TITLE: Record<CustomTipo, string> = {
@@ -254,7 +261,8 @@ export default function CustomItemModal({
 
   const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
   const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
-  const [idaVuelta, setIdaVuelta] = useState<boolean>(true);
+  const [tipoVuelo, setTipoVuelo] = useState<ServicioSeleccionado["tipoVuelo"] | "">("");
+  const [fechaVuelo, setFechaVuelo] = useState("");
 
   const [ubicacion, setUbicacion] = useState("");
   const [estrellas, setEstrellas] = useState("");
@@ -268,7 +276,6 @@ export default function CustomItemModal({
   const [entradasDesc, setEntradasDesc] = useState("");
   const [fechaInicioCat, setFechaInicioCat] = useState("");
   const [fechaFinCat, setFechaFinCat] = useState("");
-  const [flightSchedules, setFlightSchedules] = useState<string[]>(["", "", "", ""]);
 
   const nombreRef = useRef<HTMLInputElement>(null);
   const ninosEnabled = globalNinos > 0;
@@ -311,8 +318,8 @@ export default function CustomItemModal({
         setImages(initial.images ?? []);
         setOrigen(initial.origen ?? CIUDADES_VUELO[0]);
         setDestino(initial.destino ?? CIUDADES_VUELO[1]);
-        const arrowCount = (initial.nombre.match(/→/g) ?? []).length;
-        setIdaVuelta(initial.tipo === "vuelo" ? arrowCount >= 2 : true);
+        setTipoVuelo(initial.tipoVuelo ?? "");
+        setFechaVuelo(initial.fecha ?? "");
         setUbicacion(initial.ubicacion ?? "");
         setEstrellas(initial.estrellas ?? "");
         setTipoHabitacion(initial.tipoHabitacion ?? "");
@@ -324,13 +331,6 @@ export default function CustomItemModal({
         setEntradasDesc(initial.entradasDesc ?? "");
         setFechaInicioCat(initial.fechaInicio ?? "");
         setFechaFinCat(initial.fechaFin ?? "");
-        const initSched = initial.flightSchedules ?? [];
-        setFlightSchedules([
-          initSched[0] ?? "",
-          initSched[1] ?? "",
-          initSched[2] ?? "",
-          initSched[3] ?? "",
-        ]);
       } else {
         setTipo("hotel");
         setNombre("");
@@ -341,7 +341,8 @@ export default function CustomItemModal({
         setImages([]);
         setOrigen(CIUDADES_VUELO[0]);
         setDestino(CIUDADES_VUELO[1]);
-        setIdaVuelta(true);
+        setTipoVuelo("");
+        setFechaVuelo("");
         setUbicacion("");
         setEstrellas("");
         setTipoHabitacion("");
@@ -353,7 +354,6 @@ export default function CustomItemModal({
         setEntradasDesc("");
         setFechaInicioCat("");
         setFechaFinCat("");
-        setFlightSchedules(["", "", "", ""]);
       }
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
@@ -381,11 +381,8 @@ export default function CustomItemModal({
   const isOtros = tipo === "otros";
 
   const vueloNombre = useMemo(
-    () =>
-      idaVuelta
-        ? `${origen} → ${destino} → ${origen}`
-        : `${origen} → ${destino}`,
-    [origen, destino, idaVuelta],
+    () => `${origen} → ${destino}`,
+    [origen, destino],
   );
 
   if (!open) return null;
@@ -453,13 +450,17 @@ export default function CustomItemModal({
       ...(isVuelo
         ? {
             origen, destino, unitOverride: value,
-            flightSchedules: flightSchedules.filter(Boolean).length > 0
-              ? flightSchedules.filter(Boolean)
-              : undefined,
+            tipoVuelo: tipoVuelo || undefined,
+            tipoServicio: modalidad,
+            fecha: fechaVuelo || undefined,
           }
         : {}),
       ...(isOtros
-        ? { unitOverride: value, tipoServicio: modalidad }
+        ? {
+            unitOverride: value, tipoServicio: modalidad,
+            horario: horarioCustom.trim() || undefined,
+            duracion: duracion.trim() || undefined,
+          }
         : {}),
       ...(isTraslado
         ? { ruta: ruta.trim() || undefined, tipoServicio: modalidad }
@@ -579,48 +580,51 @@ export default function CustomItemModal({
               {/* ── VUELO ── */}
               {isVuelo && (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
+                  {/* Inline origin → destination */}
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
                       <label className={lbl}>Origen</label>
-                      <CustomSelect value={origen} onChange={setOrigen} options={ciudadOptions} placeholder="Seleccionar" />
+                      <CustomSelect value={origen} onChange={setOrigen} options={ciudadOptions} placeholder="Origen" />
+                    </div>
+                    <div className="flex-shrink-0 pb-1.5">
+                      <Plane className="w-4 h-4" style={{ color: C }} />
+                    </div>
+                    <div className="flex-1">
+                      <label className={lbl}>Destino</label>
+                      <CustomSelect value={destino} onChange={setDestino} options={ciudadOptions} placeholder="Destino" />
+                    </div>
+                  </div>
+                  {/* Route preview chip */}
+                  {origen && destino && (
+                    <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${C}08`, border: `1px solid ${C}25` }}>
+                      <Plane className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C }} />
+                      <span className="text-[12px] font-semibold text-slate-800">{vueloNombre}</span>
+                    </div>
+                  )}
+                  {/* Secondary fields */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className={lbl}>Tipo de vuelo</label>
+                      <CustomSelect
+                        value={tipoVuelo ?? ""}
+                        onChange={(v) => setTipoVuelo((v || undefined) as ServicioSeleccionado["tipoVuelo"])}
+                        options={TIPO_VUELO_OPTS}
+                        placeholder="Tipo"
+                      />
                     </div>
                     <div>
-                      <label className={lbl}>Destino</label>
-                      <CustomSelect value={destino} onChange={setDestino} options={ciudadOptions} placeholder="Seleccionar" />
+                      <label className={lbl}>Modalidad</label>
+                      <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
                     </div>
-                  </div>
-                  <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 cursor-pointer hover:bg-slate-50">
-                    <span className="text-[13px] font-medium text-slate-700">Ida y vuelta</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={idaVuelta}
-                      onClick={() => setIdaVuelta((v) => !v)}
-                      className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0"
-                      style={{ background: idaVuelta ? C : "#cbd5e1" }}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${idaVuelta ? "translate-x-4" : "translate-x-0.5"}`} />
-                    </button>
-                  </label>
-                  <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${C}08`, border: `1px solid ${C}25` }}>
-                    <Plane className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C }} />
-                    <span className="text-[12px] font-semibold text-slate-800">{vueloNombre}</span>
-                  </div>
-                  <div>
-                    <label className={lbl}>Horarios de vuelo (opcional, máx. 4)</label>
-                    <div className="space-y-1.5">
-                      {flightSchedules.map((sc, i) => (
-                        <input
-                          key={i}
-                          type="text"
-                          value={sc}
-                          onChange={(e) => setFlightSchedules((prev) => prev.map((v, j) => j === i ? e.target.value : v))}
-                          placeholder={`Opción ${i + 1}: ej. PAC 9:45 → BOC 10:45`}
-                          className={inputCls}
-                        />
-                      ))}
+                    <div>
+                      <label className={lbl}>Fecha</label>
+                      <input
+                        type="date"
+                        value={fechaVuelo}
+                        onChange={(e) => setFechaVuelo(e.target.value)}
+                        className={inputCls}
+                      />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Formato sugerido: PAC 9:45 → BOC 10:45</p>
                   </div>
                 </>
               )}
@@ -751,9 +755,21 @@ export default function CustomItemModal({
                     <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
                       placeholder="Ej: Cena especial en restaurante" className={inputCls} />
                   </div>
-                  <div>
-                    <label className={lbl}>Modalidad</label>
-                    <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className={lbl}>Modalidad</label>
+                      <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Horario</label>
+                      <input type="text" value={horarioCustom} onChange={(e) => setHorarioCustom(e.target.value)}
+                        placeholder="8:00 AM" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Duración</label>
+                      <input type="text" value={duracion} onChange={(e) => setDuracion(e.target.value)}
+                        placeholder="2 horas" className={inputCls} />
+                    </div>
                   </div>
                 </>
               )}

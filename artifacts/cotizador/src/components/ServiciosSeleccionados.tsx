@@ -4,6 +4,7 @@ import { PriceInput } from "@/components/ui/price-input";
 import { Section } from "./ClientForm";
 import type {
   Acomodacion,
+  FlightItinerary,
   ServicioSeleccionado,
   TourTickets,
 } from "@/lib/types";
@@ -35,8 +36,6 @@ import {
   GripVertical,
   LayoutTemplate,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Building2,
   List,
   X,
@@ -45,7 +44,7 @@ import {
   Copy,
   Clock,
   Camera,
-  Tag,
+  Briefcase,
 } from "lucide-react";
 import { compressImage } from "@/lib/image-utils";
 import { loadPlantillas, pushReciente, type Plantilla } from "@/lib/plantillas";
@@ -122,7 +121,7 @@ const QUICK_OPTIONS: { value: QuickTipo; label: string; Icon: React.ComponentTyp
   { value: "tour",      label: "Tour",      Icon: MapPin  },
   { value: "vuelo",     label: "Vuelo",     Icon: Plane   },
   { value: "catamaran", label: "Catamarán", Icon: Ship    },
-  { value: "otros",     label: "Otro",      Icon: Tag     },
+  { value: "otros",     label: "Otro",      Icon: Briefcase },
 ];
 
 function makeQuickService(
@@ -1003,7 +1002,7 @@ function ServicioRow({
             {iconHovered || openEditor === "images"
               ? <Camera className="w-4 h-4" />
               : servicio.customTipo === "otros"
-                ? <Tag className="w-4 h-4" />
+                ? <Briefcase className="w-4 h-4" />
                 : iconForTipo(servicio.tipo)}
           </button>
         </PopoverTrigger>
@@ -1590,8 +1589,8 @@ function ServicioRow({
             </div>
           )}
 
-        {/* Tour horario (editable inline) — solo para tours, no otros */}
-        {servicio.tipo === "tour" && servicio.customTipo !== "otros" && (
+        {/* Tour/Otros horario (editable inline) */}
+        {servicio.tipo === "tour" && (
           <div className="mt-1 flex items-center gap-2 min-w-0 flex-wrap">
             <span className="inline-flex items-center min-w-0">
               <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Horario:&nbsp;</span>
@@ -1649,8 +1648,37 @@ function ServicioRow({
           </div>
         )}
 
-        {/* Vuelo: flight schedules display */}
-        {servicio.tipo === "vuelo" && (servicio.flightSchedules ?? []).filter(Boolean).length > 0 && (
+        {/* Vuelo: structured flight itinerary display */}
+        {servicio.tipo === "vuelo" && servicio.flightItinerary && (
+          (servicio.flightItinerary.idaSchedules?.length > 0 || servicio.flightItinerary.vueltaSchedules?.length > 0)
+        ) && (
+          <div className="mt-1.5 grid grid-cols-2 gap-2">
+            {(servicio.flightItinerary?.idaSchedules?.length ?? 0) > 0 && (
+              <div>
+                <div className="text-[10px] font-bold mb-0.5" style={{ color: "#1351c1" }}>IDA</div>
+                {servicio.flightItinerary!.idaRuta && (
+                  <div className="text-[10px] text-slate-500 font-semibold">{servicio.flightItinerary!.idaRuta}</div>
+                )}
+                {servicio.flightItinerary!.idaSchedules.map((sc, i) => (
+                  <div key={i} className="text-[11px] text-slate-500">{sc}</div>
+                ))}
+              </div>
+            )}
+            {(servicio.flightItinerary?.vueltaSchedules?.length ?? 0) > 0 && (
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 mb-0.5">VUELTA</div>
+                {servicio.flightItinerary!.vueltaRuta && (
+                  <div className="text-[10px] text-slate-500 font-semibold">{servicio.flightItinerary!.vueltaRuta}</div>
+                )}
+                {servicio.flightItinerary!.vueltaSchedules.map((sc, i) => (
+                  <div key={i} className="text-[11px] text-slate-500">{sc}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {/* Vuelo: legacy free-text schedules */}
+        {servicio.tipo === "vuelo" && !servicio.flightItinerary && (servicio.flightSchedules ?? []).filter(Boolean).length > 0 && (
           <div className="mt-1 flex flex-col gap-0.5">
             {(servicio.flightSchedules ?? []).filter(Boolean).map((sc, i) => (
               <div key={i} className="text-[11px] text-slate-500 flex items-center gap-1">
@@ -1815,15 +1843,23 @@ function ServicioRow({
             </PopoverTrigger>
             <PopoverContent
               align="end"
-              className="w-[260px] p-3 z-[60]"
+              className={`${servicio.tipo === "vuelo" ? "w-[340px]" : "w-[260px]"} p-3 z-[60]`}
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
               <FechaItinerarioEditor
                 value={servicio.fechaItinerario}
                 fechaInicio={fechaInicio}
                 noches={noches}
+                isVuelo={servicio.tipo === "vuelo"}
+                flightItinerary={servicio.flightItinerary}
+                vueloOrigen={servicio.origen}
+                vueloDestino={servicio.destino}
                 onSave={(v) => {
                   onUpdate({ ...servicio, fechaItinerario: v });
+                  setOpenEditor(null);
+                }}
+                onSaveFlightItinerary={(fi) => {
+                  onUpdate({ ...servicio, flightItinerary: fi });
                   setOpenEditor(null);
                 }}
                 onClear={() => {
@@ -1988,9 +2024,6 @@ const btnClose: React.CSSProperties = {
 
 const FI_CLR_PRIMARY = "#004FBB";
 const FI_CLR_TEXT    = "#041941";
-const FI_CLR_ACCENT  = "#E6AE33";
-const FI_MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-const FI_DAYS   = ["LU","MA","MI","JU","VI","SÁ","DO"];
 
 function FechaItinerarioEditor({
   value,
@@ -1999,6 +2032,11 @@ function FechaItinerarioEditor({
   onSave,
   onClear,
   onClose,
+  isVuelo,
+  flightItinerary,
+  vueloOrigen,
+  vueloDestino,
+  onSaveFlightItinerary,
 }: {
   value?: string;
   fechaInicio?: string;
@@ -2006,44 +2044,35 @@ function FechaItinerarioEditor({
   onSave: (v: string) => void;
   onClear: () => void;
   onClose: () => void;
+  isVuelo?: boolean;
+  flightItinerary?: FlightItinerary;
+  vueloOrigen?: string;
+  vueloDestino?: string;
+  onSaveFlightItinerary?: (fi: FlightItinerary | undefined) => void;
 }) {
   const totalDias = Math.max(1, (noches ?? 0) + 1);
-  const [mode, setMode] = useState<"dia" | "fecha">(
-    !value || value.startsWith("dia-") ? "dia" : "fecha",
+  const [mode, setMode] = useState<"dia" | "vuelo">(() => {
+    if (isVuelo && (flightItinerary?.idaSchedules?.length || flightItinerary?.vueltaSchedules?.length)) {
+      return "vuelo";
+    }
+    return "dia";
+  });
+
+  // Vuelo itinerary state
+  const [idaRuta, setIdaRuta] = useState(() =>
+    flightItinerary?.idaRuta ?? (vueloOrigen && vueloDestino ? `${vueloOrigen} → ${vueloDestino}` : "")
   );
-
-  function nowISO() {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
-  }
-  const todayStr = nowISO();
-  const initRef = (!value || value.startsWith("dia-")) ? (fechaInicio ?? todayStr) : value;
-  const [viewYear, setViewYear] = useState(() => {
-    const y = parseInt(initRef.split("-")[0], 10);
-    return isNaN(y) ? new Date().getFullYear() : y;
+  const [vueltaRuta, setVueltaRuta] = useState(() =>
+    flightItinerary?.vueltaRuta ?? (vueloOrigen && vueloDestino ? `${vueloDestino} → ${vueloOrigen}` : "")
+  );
+  const [idaSchedules, setIdaSchedules] = useState<string[]>(() => {
+    const base = flightItinerary?.idaSchedules ?? [];
+    return [...base, "", "", "", ""].slice(0, 4);
   });
-  const [viewMonth, setViewMonth] = useState(() => {
-    const m = parseInt(initRef.split("-")[1], 10);
-    return isNaN(m) ? new Date().getMonth() : m - 1;
+  const [vueltaSchedules, setVueltaSchedules] = useState<string[]>(() => {
+    const base = flightItinerary?.vueltaSchedules ?? [];
+    return [...base, "", "", "", ""].slice(0, 4);
   });
-
-  const selectedDate = (mode === "fecha" && value && !value.startsWith("dia-")) ? value : "";
-
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear(y => y-1); setViewMonth(11); }
-    else setViewMonth(m => m-1);
-  };
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear(y => y+1); setViewMonth(0); }
-    else setViewMonth(m => m+1);
-  };
-
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const firstDow = (() => { const d = new Date(viewYear, viewMonth, 1).getDay(); return d === 0 ? 6 : d - 1; })();
-
-  function toISO(y: number, m: number, d: number) {
-    return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-  }
 
   function dayDate(idx: number): string {
     if (!fechaInicio) return "";
@@ -2055,6 +2084,31 @@ function FechaItinerarioEditor({
     return `${d} ${MES[m]}`;
   }
 
+  const saveVuelo = () => {
+    const idaSched = idaSchedules.filter(Boolean);
+    const vueltaSched = vueltaSchedules.filter(Boolean);
+    if (idaSched.length === 0 && vueltaSched.length === 0) {
+      onSaveFlightItinerary?.(undefined);
+    } else {
+      onSaveFlightItinerary?.({
+        idaRuta: idaRuta.trim() || undefined,
+        vueltaRuta: vueltaRuta.trim() || undefined,
+        idaSchedules: idaSched,
+        vueltaSchedules: vueltaSched,
+      });
+    }
+  };
+
+  const inputSt: React.CSSProperties = {
+    width: "100%", fontSize: 11, color: "#334155",
+    border: "1px solid #e2e8f0", borderRadius: 6,
+    padding: "3px 6px", marginBottom: 3,
+    boxSizing: "border-box", outline: "none",
+  };
+  const routeSt: React.CSSProperties = {
+    ...inputSt, fontSize: 10, fontWeight: 600, color: "#475569", marginBottom: 5,
+  };
+
   return (
     <div style={{ userSelect:"none" }}>
       {/* Header */}
@@ -2062,109 +2116,122 @@ function FechaItinerarioEditor({
         Asignar al itinerario
       </div>
 
-      {/* Mode toggle */}
-      <div style={{ display:"flex", gap:3, marginBottom:10, background:"#f1f5f9", borderRadius:8, padding:3 }}>
-        {(["dia","fecha"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            style={{
-              flex:1, padding:"4px 0", borderRadius:6, fontSize:11, fontWeight:600,
-              border:"none", cursor:"pointer", transition:"all 0.15s",
-              background: mode===m ? "#fff" : "transparent",
-              color: mode===m ? FI_CLR_PRIMARY : "#64748b",
-              boxShadow: mode===m ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-            }}
-          >
-            {m==="dia" ? "Día del viaje" : "Fecha exacta"}
-          </button>
-        ))}
-      </div>
-
-      {mode === "dia" ? (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
-          {Array.from({ length: totalDias }, (_, i) => {
-            const diaKey = `dia-${i+1}`;
-            const isSelected = value === diaKey;
-            const dateStr = dayDate(i);
-            return (
-              <button
-                key={diaKey}
-                type="button"
-                onClick={() => onSave(diaKey)}
-                style={{
-                  padding:"6px 4px", borderRadius:8, fontSize:11, fontWeight:600,
-                  border: isSelected ? `1.5px solid ${FI_CLR_PRIMARY}` : "1.5px solid #e2e8f0",
-                  background: isSelected ? `rgba(0,79,187,0.10)` : "#fff",
-                  color: isSelected ? FI_CLR_PRIMARY : FI_CLR_TEXT,
-                  cursor:"pointer", textAlign:"center", lineHeight:1.3, transition:"all 0.1s",
-                }}
-              >
-                <div>Día {i+1}</div>
-                {dateStr && <div style={{ fontSize:9, fontWeight:400, opacity:0.7, marginTop:2 }}>{dateStr}</div>}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-            <button type="button" onClick={prevMonth} style={{ width:22, height:22, borderRadius:6, border:"1px solid #e2e8f0", background:"#f8fafc", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color: FI_CLR_TEXT }}>
-              <ChevronLeft size={12} />
+      {/* Mode toggle — only for vuelo */}
+      {isVuelo && (
+        <div style={{ display:"flex", gap:3, marginBottom:10, background:"#f1f5f9", borderRadius:8, padding:3 }}>
+          {([["dia","Día del viaje"],["vuelo","Itinerario de vuelos"]] as const).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              style={{
+                flex:1, padding:"4px 0", borderRadius:6, fontSize:10, fontWeight:600,
+                border:"none", cursor:"pointer", transition:"all 0.15s",
+                background: mode===m ? "#fff" : "transparent",
+                color: mode===m ? FI_CLR_PRIMARY : "#64748b",
+                boxShadow: mode===m ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
+            >
+              {label}
             </button>
-            <span style={{ fontSize:11, fontWeight:700, color: FI_CLR_TEXT }}>{FI_MONTHS[viewMonth]} {viewYear}</span>
-            <button type="button" onClick={nextMonth} style={{ width:22, height:22, borderRadius:6, border:"1px solid #e2e8f0", background:"#f8fafc", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color: FI_CLR_TEXT }}>
-              <ChevronRight size={12} />
-            </button>
-          </div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", marginBottom:2 }}>
-            {FI_DAYS.map(d => (
-              <div key={d} style={{ textAlign:"center", fontSize:8, fontWeight:700, color:"#94a3b8", paddingBottom:3, letterSpacing:"0.07em" }}>{d}</div>
-            ))}
-          </div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)" }}>
-            {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} style={{ height:28 }} />)}
-            {Array.from({ length: daysInMonth }, (_, idx) => {
-              const day = idx+1;
-              const iso = toISO(viewYear, viewMonth, day);
-              const isSelected = iso === selectedDate;
-              const isToday = iso === todayStr;
-              return (
-                <div key={iso} style={{ position:"relative", height:28, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <button
-                    type="button"
-                    onClick={() => onSave(iso)}
-                    style={{
-                      position:"relative", zIndex:1,
-                      width:26, height:26, borderRadius:"50%",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:10, fontWeight: isSelected ? 700 : 400,
-                      color: isSelected ? "#fff" : isToday ? FI_CLR_ACCENT : FI_CLR_TEXT,
-                      background: isSelected ? FI_CLR_PRIMARY : "transparent",
-                      border: isToday && !isSelected ? `1.5px solid ${FI_CLR_ACCENT}` : "1.5px solid transparent",
-                      cursor:"pointer", outline:"none",
-                    }}
-                  >
-                    {day}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          ))}
         </div>
       )}
 
-      <div style={{ marginTop:10, paddingTop:8, borderTop:"1px solid #f1f5f9", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        {value ? (
-          <button type="button" onClick={onClear} style={{ fontSize:10, color:"#ef4444", background:"none", border:"none", cursor:"pointer", fontWeight:600 }}>
-            Quitar fecha
-          </button>
-        ) : <div />}
-        <button type="button" onClick={onClose} style={{ fontSize:10, color:"#64748b", background:"none", border:"none", cursor:"pointer" }}>
-          Cerrar
-        </button>
-      </div>
+      {mode === "dia" ? (
+        <>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
+            {Array.from({ length: totalDias }, (_, i) => {
+              const diaKey = `dia-${i+1}`;
+              const isSelected = value === diaKey;
+              const dateStr = dayDate(i);
+              return (
+                <button
+                  key={diaKey}
+                  type="button"
+                  onClick={() => onSave(diaKey)}
+                  style={{
+                    padding:"6px 4px", borderRadius:8, fontSize:11, fontWeight:600,
+                    border: isSelected ? `1.5px solid ${FI_CLR_PRIMARY}` : "1.5px solid #e2e8f0",
+                    background: isSelected ? `rgba(0,79,187,0.10)` : "#fff",
+                    color: isSelected ? FI_CLR_PRIMARY : FI_CLR_TEXT,
+                    cursor:"pointer", textAlign:"center", lineHeight:1.3, transition:"all 0.1s",
+                  }}
+                >
+                  <div>Día {i+1}</div>
+                  {dateStr && <div style={{ fontSize:9, fontWeight:400, opacity:0.7, marginTop:2 }}>{dateStr}</div>}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ marginTop:10, paddingTop:8, borderTop:"1px solid #f1f5f9", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            {value ? (
+              <button type="button" onClick={onClear} style={{ fontSize:10, color:"#ef4444", background:"none", border:"none", cursor:"pointer", fontWeight:600 }}>
+                Quitar fecha
+              </button>
+            ) : <div />}
+            <button type="button" onClick={onClose} style={{ fontSize:10, color:"#64748b", background:"none", border:"none", cursor:"pointer" }}>
+              Cerrar
+            </button>
+          </div>
+        </>
+      ) : (
+        /* Itinerario de vuelos */
+        <div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            {/* IDA */}
+            <div>
+              <div style={{ fontSize:12, fontWeight:800, color: FI_CLR_PRIMARY, marginBottom:5, letterSpacing:"0.04em" }}>IDA</div>
+              <input
+                type="text"
+                value={idaRuta}
+                onChange={(e) => setIdaRuta(e.target.value)}
+                placeholder="PAN → BOC"
+                style={routeSt}
+              />
+              {idaSchedules.map((sc, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  value={sc}
+                  onChange={(e) => setIdaSchedules(prev => prev.map((v, j) => j === i ? e.target.value : v))}
+                  placeholder={i === 0 ? "09:45 - 10:45" : ""}
+                  style={inputSt}
+                />
+              ))}
+            </div>
+            {/* VUELTA */}
+            <div>
+              <div style={{ fontSize:12, fontWeight:800, color:"#64748b", marginBottom:5, letterSpacing:"0.04em" }}>VUELTA</div>
+              <input
+                type="text"
+                value={vueltaRuta}
+                onChange={(e) => setVueltaRuta(e.target.value)}
+                placeholder="BOC → PAN"
+                style={routeSt}
+              />
+              {vueltaSchedules.map((sc, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  value={sc}
+                  onChange={(e) => setVueltaSchedules(prev => prev.map((v, j) => j === i ? e.target.value : v))}
+                  placeholder={i === 0 ? "13:00 - 14:00" : ""}
+                  style={inputSt}
+                />
+              ))}
+            </div>
+          </div>
+          <div style={{ marginTop:10, paddingTop:8, borderTop:"1px solid #f1f5f9", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <button type="button" onClick={() => onSaveFlightItinerary?.(undefined)} style={{ fontSize:10, color:"#ef4444", background:"none", border:"none", cursor:"pointer", fontWeight:600 }}>
+              Quitar itinerario
+            </button>
+            <button type="button" onClick={saveVuelo} style={{ fontSize:11, fontWeight:700, color:"#fff", background: FI_CLR_PRIMARY, border:"none", borderRadius:6, padding:"5px 12px", cursor:"pointer" }}>
+              Guardar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

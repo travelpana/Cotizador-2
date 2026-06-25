@@ -1,0 +1,165 @@
+Realizar los siguientes ajustes en Ítem personalizado del Cotizador RGE, manteniendo el estilo visual actual, sin afectar Hotelería, Traslados, Tours, Catamarán, Grupo, Paquete ni las exportaciones.
+
+========================================
+1. VUELOS
+========================================
+
+Actualmente se bloqueó el título del servicio. Eso no es lo que necesito.
+
+Debe funcionar así:
+
+- Eliminar el campo "Nombre del vuelo (opcional)".
+- En esa misma línea del título colocar dos selectores:
+  • Origen
+  • Destino
+
+Ejemplo:
+
+[ Panamá ▼ ]  →  [ Bocas del Toro ▼ ]
+
+Cuando el usuario seleccione ambos destinos, automáticamente ese texto se convierte en el título del servicio.
+
+Ejemplo:
+
+Panamá → Bocas del Toro
+
+Ese será el único título del servicio y deberá verse igual en:
+
+- Tarjeta del servicio
+- Vista previa
+- WhatsApp
+- Email
+- PDF
+
+Debajo del título deben mantenerse únicamente los datos secundarios:
+
+• Tipo de vuelo
+• Modalidad
+• Fecha
+
+No duplicar información.
+
+========================================
+2. POPUP "ASIGNAR AL ITINERARIO"
+========================================
+
+Eliminar completamente la pestaña:
+
+❌ Fecha exacta
+
+Las pestañas deberán quedar así:
+
+• Día del viaje
+• Itinerario de vuelos
+
+----------------------------------------
+Pestaña: Itinerario de vuelos
+----------------------------------------
+
+Debe mantener exactamente el mismo estilo visual del popup actual.
+
+NO utilizar tablas.
+
+Debe tener dos columnas elegantes.
+
+Ejemplo:
+
+               IDA                          VUELTA
+
+            PAN → BOC                  BOC → PAN
+
+        09:45 - 10:45             13:00 - 14:00
+
+        12:35 - 13:35             15:00 - 16:00
+
+        16:00 - 17:00             18:00 - 19:00
+
+        ____________              ____________
+
+Características:
+
+- Encabezados grandes:
+  IDA
+  VUELTA
+
+- Debajo mostrar automáticamente la ruta.
+
+Ida:
+Origen → Destino
+
+Vuelta:
+Destino → Origen
+
+Debe permitir editar ambas rutas.
+
+Cada columna permitirá agregar hasta 4 horarios.
+
+Cada horario tendrá únicamente:
+
+Hora salida
+Hora llegada
+
+Ejemplo:
+
+09:45 - 10:45
+
+No utilizar tarjetas grandes.
+
+Debe verse limpio y compacto.
+
+Toda esta información debe guardarse con el servicio.
+
+========================================
+3. COTIZACIÓN FINAL
+========================================
+
+Cuando exista itinerario de vuelos deberá mostrarse debajo del vuelo con el mismo diseño elegante.
+
+Ejemplo:
+
+Panamá → Bocas del Toro
+
+IDA
+PAN → BOC
+09:45 - 10:45
+12:35 - 13:35
+
+VUELTA
+BOC → PAN
+13:00 - 14:00
+15:00 - 16:00
+
+Mantener tipografía, colores y espaciado consistentes con el resto de la cotización.
+
+========================================
+4. OTROS
+========================================
+
+Actualmente "Otros" utiliza un icono muy parecido al de Tours.
+
+Cambiar por un icono más representativo de servicios generales (por ejemplo, maletín, caja, estrella o grid), utilizando un color diferente para distinguirlo visualmente de Tours, pero respetando la paleta del sistema.
+
+Además agregar los mismos campos opcionales que tiene Tours:
+
+• Horario
+• Duración
+
+Quedando así:
+
+Horario: Agregar horario
+Duración: Agregar duración
+
+Estos campos deben mostrarse también en:
+
+- Vista previa
+- WhatsApp
+- Email
+- PDF
+
+========================================
+IMPORTANTE
+========================================
+
+No modificar el diseño general del cotizador.
+
+Mantener exactamente el mismo estilo premium, colores, sombras, espaciados, iconografía y comportamiento actual de toda la aplicación.
