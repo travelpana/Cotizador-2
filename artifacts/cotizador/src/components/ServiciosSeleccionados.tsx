@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import FlightDateCalendar from "./FlightDateCalendar";
 import {
   ListChecks,
   Pencil,
@@ -1515,22 +1516,12 @@ function ServicioRow({
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-auto p-0 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                <div className="p-3 pb-1 border-b border-slate-100">
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    {servicio.tipoVuelo === "Ida y vuelta" ? "Fecha de ida" : "Fecha del vuelo"}
-                  </span>
-                </div>
-                <CalendarPicker
-                  mode="single"
-                  selected={servicio.fecha ? (() => { const [y,m,d] = servicio.fecha!.split("-").map(Number); return new Date(y,m-1,d); })() : undefined}
-                  onSelect={(day) => {
-                    if (!day) { onUpdate({ ...servicio, fecha: undefined, usarFecha: false }); return; }
-                    const iso = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,"0")}-${String(day.getDate()).padStart(2,"0")}`;
+                <FlightDateCalendar
+                  value={servicio.fecha ?? ""}
+                  onChange={(iso) => {
                     onUpdate({ ...servicio, fecha: iso, usarFecha: true });
                     setOpenEditor(null);
                   }}
-                  captionLayout="dropdown"
-                  className="[--cell-size:1.85rem] text-[12px]"
                 />
                 <div className="flex justify-between px-3 pb-2 pt-1 border-t border-slate-100">
                   <button
@@ -1571,22 +1562,12 @@ function ServicioRow({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-auto p-0 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                  <div className="p-3 pb-1 border-b border-slate-100">
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      Fecha de vuelta
-                    </span>
-                  </div>
-                  <CalendarPicker
-                    mode="single"
-                    selected={servicio.fechaVuelta ? (() => { const [y,m,d] = servicio.fechaVuelta!.split("-").map(Number); return new Date(y,m-1,d); })() : undefined}
-                    onSelect={(day) => {
-                      if (!day) { onUpdate({ ...servicio, fechaVuelta: undefined }); return; }
-                      const iso = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,"0")}-${String(day.getDate()).padStart(2,"0")}`;
+                  <FlightDateCalendar
+                    value={servicio.fechaVuelta ?? ""}
+                    onChange={(iso) => {
                       onUpdate({ ...servicio, fechaVuelta: iso });
                       setOpenEditor(null);
                     }}
-                    captionLayout="dropdown"
-                    className="[--cell-size:1.85rem] text-[12px]"
                   />
                   <div className="flex justify-between px-3 pb-2 pt-1 border-t border-slate-100">
                     <button
