@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { compressImage } from "@/lib/image-utils";
 import { PriceInput } from "@/components/ui/price-input";
 import InlineRangePicker, { nightsBetween } from "./InlineRangePicker";
-import CompactDatePicker from "./CompactDatePicker";
+import PremiumSingleDatePicker from "./PremiumSingleDatePicker";
 import {
   X,
   Check,
@@ -632,19 +632,21 @@ export default function CustomItemModal({
                     <div className={tipoVuelo === "Ida y vuelta" ? "grid grid-cols-2 gap-2" : ""}>
                       <div>
                         <label className={lbl}>Fecha ida</label>
-                        <CompactDatePicker
+                        <PremiumSingleDatePicker
                           value={fechaVuelo}
                           onChange={setFechaVuelo}
-                          placeholder="dd/mm/aaaa"
+                          placeholder="Fecha de ida"
+                          allowPast
                         />
                       </div>
                       {tipoVuelo === "Ida y vuelta" && (
                         <div>
                           <label className={lbl}>Fecha vuelta</label>
-                          <CompactDatePicker
+                          <PremiumSingleDatePicker
                             value={fechaVueltaVuelo}
                             onChange={setFechaVueltaVuelo}
-                            placeholder="dd/mm/aaaa"
+                            placeholder="Fecha de vuelta"
+                            allowPast
                             minDate={fechaVuelo || undefined}
                           />
                         </div>
@@ -654,10 +656,11 @@ export default function CustomItemModal({
                   {tipoVuelo === "Retorno" && (
                     <div>
                       <label className={lbl}>Fecha vuelta</label>
-                      <CompactDatePicker
+                      <PremiumSingleDatePicker
                         value={fechaVueltaVuelo}
                         onChange={setFechaVueltaVuelo}
-                        placeholder="dd/mm/aaaa"
+                        placeholder="Fecha de vuelta"
+                        allowPast
                       />
                     </div>
                   )}

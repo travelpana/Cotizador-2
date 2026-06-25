@@ -676,11 +676,15 @@ function adicionalesTable(
         }
 
         // Legacy: route + free-text schedules
-        const ruta =
-          s.origen || s.destino
-            ? `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}`
-            : "";
-        const parts = [ruta, s.tipoVuelo ? escape(s.tipoVuelo) : "", s.fecha ? escape(fmtFecha(s.fecha)) : ""].filter(Boolean);
+        const ruta = (() => {
+          if (!s.origen && !s.destino) return "";
+          if (s.tipoVuelo === "Ida y vuelta") return `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")} → ${escape(s.origen ?? "")}`;
+          if (s.tipoVuelo === "Retorno") return `${escape(s.destino ?? "")} → ${escape(s.origen ?? "")}`;
+          return `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}`;
+        })();
+        const fechaIdaStr = s.tipoVuelo !== "Retorno" && s.fecha ? `Ida: ${escape(fmtFecha(s.fecha))}` : "";
+        const fechaVueltaStr = s.tipoVuelo !== "Ida" && s.fechaVuelta ? `Vuelta: ${escape(fmtFecha(s.fechaVuelta))}` : "";
+        const parts = [ruta, s.tipoVuelo ? escape(s.tipoVuelo) : "", fechaIdaStr, fechaVueltaStr].filter(Boolean);
         const routeLine = parts.length
           ? `<div style="${STYLES.cellNote}">${parts.join(" · ")}</div>`
           : "";
@@ -1034,8 +1038,14 @@ function buildTotalesView(d: PropuestaData): string {
             `</td>`;
           return `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:4px;"><tr>${idaCell}${vueltaCell}</tr></table>`;
         }
-        const ruta = s.origen || s.destino
-          ? `<div style="font-size:10px;color:#475569;margin-top:2px;">${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}</div>`
+        const rutaText = (() => {
+          if (!s.origen && !s.destino) return "";
+          if (s.tipoVuelo === "Ida y vuelta") return `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")} → ${escape(s.origen ?? "")}`;
+          if (s.tipoVuelo === "Retorno") return `${escape(s.destino ?? "")} → ${escape(s.origen ?? "")}`;
+          return `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}`;
+        })();
+        const ruta = rutaText
+          ? `<div style="font-size:10px;color:#475569;margin-top:2px;">${rutaText}</div>`
           : "";
         return ruta;
       })();
