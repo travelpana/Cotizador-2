@@ -252,6 +252,7 @@ export function calcularLocal(
         noches: s.tipo === "catamaran" && catNoches > 1 ? catNoches : undefined,
         images: s.images,
         customTipo: s.customTipo,
+        flightSchedules: s.tipo === "vuelo" ? s.flightSchedules : undefined,
       });
     }
   }

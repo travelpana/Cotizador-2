@@ -59,6 +59,7 @@ export interface PropuestaData {
   hoteles: ServicioCalculado[];
   traslados: ServicioCalculado[];
   tours: ServicioCalculado[];
+  otros: ServicioCalculado[];
   vuelos: ServicioCalculado[];
   catamarans: ServicioCalculado[];
   acoms: Acomodacion[];
@@ -258,7 +259,8 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
 
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
   const traslados = result.servicios.filter((s) => s.tipo === "traslado");
-  const tours = result.servicios.filter((s) => s.tipo === "tour");
+  const tours = result.servicios.filter((s) => s.tipo === "tour" && s.customTipo !== "otros");
+  const otros = result.servicios.filter((s) => s.customTipo === "otros");
   const vuelos = result.servicios.filter((s) => s.tipo === "vuelo");
   const catamarans = result.servicios.filter((s) => s.tipo === "catamaran");
   const acoms = result.acomodaciones;
@@ -374,6 +376,7 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
     hoteles,
     traslados,
     tours,
+    otros,
     vuelos,
     catamarans,
     acoms,
@@ -581,15 +584,16 @@ function adicionalesTable(
   const { T } = d;
   const hasCHD = d.acoms.some((a) => String(a) === "CHD");
   const onlyCHD = hasCHD && d.acoms.length === 1;
+  const ninosCount = d.cliente.ninos ?? 0;
   const rows = items
     .map((s) => {
       const chdUnit = (s.preciosPorAcomodacion as Record<string, number>)["CHD"] ?? 0;
       const mainUnit = onlyCHD
         ? (chdUnit > 0 ? chdUnit : (s.unitAplicado ?? 0))
         : (s.unitAplicado ?? 0);
-      const chdSubLine =
-        hasCHD && !onlyCHD && chdUnit > 0
-          ? `<div style="font-size:11px;color:#475569;margin-top:3px;">CHD: ${escape(fmt(chdUnit))}</div>`
+      const showChdLine = (hasCHD && !onlyCHD && chdUnit > 0) || (!hasCHD && ninosCount > 0 && chdUnit > 0);
+      const chdSubLine = showChdLine
+          ? `<div style="font-size:11px;color:#92400e;margin-top:3px;">Niño: ${escape(fmt(chdUnit))}</div>`
           : "";
       const tipo =
         s.customTipo === "otros"
@@ -642,9 +646,13 @@ function adicionalesTable(
             ? `${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}`
             : "";
         const parts = [ruta, s.tipoVuelo ? escape(s.tipoVuelo) : "", s.fecha ? escape(fmtFecha(s.fecha)) : ""].filter(Boolean);
-        return parts.length
+        const routeLine = parts.length
           ? `<div style="${STYLES.cellNote}">${parts.join(" · ")}</div>`
           : "";
+        const schedLines = (s.flightSchedules ?? []).filter(Boolean)
+          .map((sc) => `<div style="${STYLES.cellNote}">✈ ${escape(sc)}</div>`)
+          .join("");
+        return routeLine + schedLines;
       })();
 
       const fechasCatamaranLine =
@@ -997,6 +1005,11 @@ function buildTotalesView(d: PropuestaData): string {
     (s) => s.nombre,
   );
   html += serviceSectionHtml(
+    C_TOT_TOURS, "Otros", d.otros,
+    () => "—",
+    (s) => s.nombre,
+  );
+  html += serviceSectionHtml(
     C_TOT_VUELOS, T.vuelos, d.vuelos,
     () => T.tipoVuelo,
     (s) => s.nombre,
@@ -1082,12 +1095,14 @@ function buildPackageView(d: PropuestaData): string {
   );
   const tourInclItems = [...d.tours, ...d.catamarans].map((s) => s.nombre);
   const vueloInclItems = d.vuelos.map((v) => v.nombre);
+  const otrosInclItems = d.otros.map((s) => s.nombre);
 
   const inclRows = [
     inclCatGroup("Alojamiento", alojaInclItems),
     inclCatGroup("Traslados", trasladoInclItems),
     inclCatGroup("Tours y Experiencias", tourInclItems),
     inclCatGroup("Vuelos", vueloInclItems),
+    inclCatGroup("Otros", otrosInclItems),
   ].join("");
 
   const inclusionBlock = inclRows
@@ -1580,6 +1595,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
       <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
       <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
       <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${adicionalesTable("Otros", d.otros, d, C_TOT_TOURS)}</td></tr>
       <tr><td>${grupoDetalleBlock(d)}</td></tr>
       <tr><td>${observacionesBlock(d)}</td></tr>
       <tr><td>${itinerarioTable(d)}</td></tr>
@@ -1595,6 +1611,7 @@ export function buildPropuestaBody(d: PropuestaData): string {
       <tr><td>${adicionalesTable(T.toursYExperiencias, d.tours, d, C_TOT_TOURS)}</td></tr>
       <tr><td>${adicionalesTable(T.catamaranYNavegacion, d.catamarans, d, C_TOT_VUELOS)}</td></tr>
       <tr><td>${adicionalesTable(T.vuelos, d.vuelos, d, C_TOT_VUELOS)}</td></tr>
+      <tr><td>${adicionalesTable("Otros", d.otros, d, C_TOT_TOURS)}</td></tr>
       <tr><td>${observacionesBlock(d)}</td></tr>
       <tr><td>${itinerarioTable(d)}</td></tr>
       <tr><td>${descriptivosBlock(d)}</td></tr>`;

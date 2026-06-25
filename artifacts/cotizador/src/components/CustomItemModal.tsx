@@ -268,6 +268,7 @@ export default function CustomItemModal({
   const [entradasDesc, setEntradasDesc] = useState("");
   const [fechaInicioCat, setFechaInicioCat] = useState("");
   const [fechaFinCat, setFechaFinCat] = useState("");
+  const [flightSchedules, setFlightSchedules] = useState<string[]>(["", "", "", ""]);
 
   const nombreRef = useRef<HTMLInputElement>(null);
   const ninosEnabled = globalNinos > 0;
@@ -323,6 +324,13 @@ export default function CustomItemModal({
         setEntradasDesc(initial.entradasDesc ?? "");
         setFechaInicioCat(initial.fechaInicio ?? "");
         setFechaFinCat(initial.fechaFin ?? "");
+        const initSched = initial.flightSchedules ?? [];
+        setFlightSchedules([
+          initSched[0] ?? "",
+          initSched[1] ?? "",
+          initSched[2] ?? "",
+          initSched[3] ?? "",
+        ]);
       } else {
         setTipo("hotel");
         setNombre("");
@@ -345,6 +353,7 @@ export default function CustomItemModal({
         setEntradasDesc("");
         setFechaInicioCat("");
         setFechaFinCat("");
+        setFlightSchedules(["", "", "", ""]);
       }
       window.setTimeout(() => nombreRef.current?.focus(), 50);
     }
@@ -442,10 +451,15 @@ export default function CustomItemModal({
           }
         : {}),
       ...(isVuelo
-        ? { origen, destino, unitOverride: value }
+        ? {
+            origen, destino, unitOverride: value,
+            flightSchedules: flightSchedules.filter(Boolean).length > 0
+              ? flightSchedules.filter(Boolean)
+              : undefined,
+          }
         : {}),
       ...(isOtros
-        ? { unitOverride: value }
+        ? { unitOverride: value, tipoServicio: modalidad }
         : {}),
       ...(isTraslado
         ? { ruta: ruta.trim() || undefined, tipoServicio: modalidad }
@@ -592,6 +606,22 @@ export default function CustomItemModal({
                     <Plane className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C }} />
                     <span className="text-[12px] font-semibold text-slate-800">{vueloNombre}</span>
                   </div>
+                  <div>
+                    <label className={lbl}>Horarios de vuelo (opcional, máx. 4)</label>
+                    <div className="space-y-1.5">
+                      {flightSchedules.map((sc, i) => (
+                        <input
+                          key={i}
+                          type="text"
+                          value={sc}
+                          onChange={(e) => setFlightSchedules((prev) => prev.map((v, j) => j === i ? e.target.value : v))}
+                          placeholder={`Opción ${i + 1}: ej. PAC 9:45 → BOC 10:45`}
+                          className={inputCls}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Formato sugerido: PAC 9:45 → BOC 10:45</p>
+                  </div>
                 </>
               )}
 
@@ -715,11 +745,17 @@ export default function CustomItemModal({
 
               {/* ── OTROS ── */}
               {isOtros && (
-                <div>
-                  <label className={lbl}>Nombre del servicio</label>
-                  <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
-                    placeholder="Ej: Cena especial en restaurante" className={inputCls} />
-                </div>
+                <>
+                  <div>
+                    <label className={lbl}>Nombre del servicio</label>
+                    <input ref={nombreRef} type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej: Cena especial en restaurante" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Modalidad</label>
+                    <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
+                  </div>
+                </>
               )}
 
             </div>
@@ -746,8 +782,8 @@ export default function CustomItemModal({
                   label="Tarifa (USD)"
                   precio={precio} setPrecio={setPrecio}
                   precioNino={precioNino} setPrecioNino={setPrecioNino}
-                  ninosEnabled={ninosEnabled} showNino={false}
-                  hintText="Tarifa fija para este servicio"
+                  ninosEnabled={ninosEnabled} showNino={ninosEnabled}
+                  hintText={ninosEnabled ? "Precio niño vacío → usa precio adulto" : "Tarifa fija para este servicio"}
                 />
               ) : (
                 <PriceRow

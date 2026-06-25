@@ -110,6 +110,8 @@ export interface ServicioSeleccionado {
   duplicatedFromId?: string;
   /** Base64 data URLs of images attached to this service */
   images?: string[];
+  /** Flight schedule options (up to 4), e.g. "PAC 9:45 → BOC 10:45" */
+  flightSchedules?: string[];
 }
 
 export interface Descriptivo {
@@ -210,6 +212,8 @@ export interface ServicioCalculado {
   }>;
   /** Base64 data URLs of images attached to this service */
   images?: string[];
+  /** Flight schedule options (up to 4), e.g. "PAC 9:45 → BOC 10:45" */
+  flightSchedules?: string[];
 }
 
 export interface CotizacionResult {

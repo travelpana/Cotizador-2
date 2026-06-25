@@ -103,12 +103,13 @@ const GROUP_ORDER: ServicioSeleccionado["tipo"][] = [
   "catamaran",
 ];
 
-const GROUP_TITLE: Record<ServicioSeleccionado["tipo"], string> = {
+const GROUP_TITLE: Record<string, string> = {
   hotel: "Alojamiento",
   traslado: "Traslados",
   vuelo: "Vuelos",
   tour: "Tours",
   catamaran: "Catamarán y Navegación",
+  otros: "Otros",
 };
 
 /* ───────────────── Quick-add helpers ───────────────── */
@@ -272,10 +273,18 @@ export default function ServiciosSeleccionados({
     setDragOverKey(null);
   };
 
-  const groups = GROUP_ORDER.map((tipo) => ({
-    tipo,
-    items: servicios.filter((s) => s.tipo === tipo),
-  })).filter((g) => g.items.length > 0);
+  const groups: { tipo: string; items: ServicioSeleccionado[] }[] = [
+    ...GROUP_ORDER.map((tipo) => ({
+      tipo,
+      items: tipo === "tour"
+        ? servicios.filter((s) => s.tipo === tipo && s.customTipo !== "otros")
+        : servicios.filter((s) => s.tipo === tipo),
+    })),
+    {
+      tipo: "otros",
+      items: servicios.filter((s) => s.customTipo === "otros"),
+    },
+  ].filter((g) => g.items.length > 0);
 
   return (
   <>
@@ -1090,9 +1099,9 @@ function ServicioRow({
           />
         ) : (
           <div
-            className="cursor-text flex items-center gap-1.5 group/name"
-            onClick={startNameEdit}
-            title="Clic para editar el nombre"
+            className={`flex items-center gap-1.5 group/name ${servicio.tipo !== "vuelo" ? "cursor-text" : ""}`}
+            onClick={servicio.tipo !== "vuelo" ? startNameEdit : undefined}
+            title={servicio.tipo !== "vuelo" ? "Clic para editar el nombre" : undefined}
           >
             {servicio.manual ? (
               <span
@@ -1120,7 +1129,7 @@ function ServicioRow({
                 COPIA
               </span>
             )}
-            {!isHotel && servicio.customTipo !== "otros" && (
+            {!isHotel && servicio.tipo !== "vuelo" && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -1139,7 +1148,9 @@ function ServicioRow({
                 {servicio.tipoServicio ?? "Regular"}
               </button>
             )}
-            <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
+            {servicio.tipo !== "vuelo" && (
+              <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
+            )}
           </div>
         )}
         {/* Description / meta */}
@@ -1579,8 +1590,8 @@ function ServicioRow({
             </div>
           )}
 
-        {/* Tour horario (editable inline) */}
-        {servicio.tipo === "tour" && (
+        {/* Tour horario (editable inline) — solo para tours, no otros */}
+        {servicio.tipo === "tour" && servicio.customTipo !== "otros" && (
           <div className="mt-1 flex items-center gap-2 min-w-0 flex-wrap">
             <span className="inline-flex items-center min-w-0">
               <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Horario:&nbsp;</span>
@@ -1635,33 +1646,18 @@ function ServicioRow({
                 </PopoverContent>
               </Popover>
             </span>
-            <span className="text-slate-300 text-[11px] select-none">·</span>
-            <span className="inline-flex items-center min-w-0">
-              <span className="text-[11px] text-slate-500 flex-shrink-0 mr-0.5">Modalidad:&nbsp;</span>
-              <Popover
-                open={openEditor === "modalidad"}
-                onOpenChange={(o) => setOpenEditor(o ? "modalidad" : null)}
-              >
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="text-[11px] text-slate-500 truncate hover:bg-slate-100 rounded px-0.5 -mx-0.5 cursor-pointer transition-colors"
-                    title="Editar modalidad"
-                  >
-                    {servicio.tipoServicio || <span className="italic text-slate-400">Agregar modalidad</span>}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-[160px] p-1 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                  <InlineComboEditor
-                    current={servicio.tipoServicio ?? ""}
-                    options={MODALIDAD_LIST}
-                    allowFree={false}
-                    onSave={(v) => { onUpdate({ ...servicio, tipoServicio: (v || undefined) as ServicioSeleccionado["tipoServicio"] }); setOpenEditor(null); }}
-                    onClose={() => setOpenEditor(null)}
-                  />
-                </PopoverContent>
-              </Popover>
-            </span>
+          </div>
+        )}
+
+        {/* Vuelo: flight schedules display */}
+        {servicio.tipo === "vuelo" && (servicio.flightSchedules ?? []).filter(Boolean).length > 0 && (
+          <div className="mt-1 flex flex-col gap-0.5">
+            {(servicio.flightSchedules ?? []).filter(Boolean).map((sc, i) => (
+              <div key={i} className="text-[11px] text-slate-500 flex items-center gap-1">
+                <Plane className="w-3 h-3 flex-shrink-0 text-slate-400" />
+                <span>{sc}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
