@@ -926,7 +926,9 @@ function ServicioRow({
           hoteles,
           personalizarTraslados,
         )
-      : servicio.nombre;
+      : servicio.tipo === "vuelo"
+        ? servicio.nombre || (servicio.origen && servicio.destino ? `${servicio.origen} → ${servicio.destino}` : servicio.nombre)
+        : servicio.nombre;
 
   const namePlaceholder = (() => {
     const t = servicio.customTipo ?? servicio.tipo;
@@ -1843,7 +1845,7 @@ function ServicioRow({
             </PopoverTrigger>
             <PopoverContent
               align="end"
-              className={`${servicio.tipo === "vuelo" ? "w-[340px]" : "w-[260px]"} p-3 z-[60]`}
+              className={`${servicio.tipo === "vuelo" ? "w-[480px]" : "w-[260px]"} p-3 z-[60]`}
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
               <FechaItinerarioEditor
@@ -2200,9 +2202,9 @@ function FechaItinerarioEditor({
       ) : (
         /* Itinerario de vuelos */
         <div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, minWidth:0 }}>
             {/* IDA */}
-            <div>
+            <div style={{ minWidth:0, overflow:"hidden" }}>
               <div style={{ fontSize:11, fontWeight:800, color: FI_CLR_PRIMARY, marginBottom:4, letterSpacing:"0.04em" }}>IDA</div>
               <input
                 type="text"
@@ -2234,7 +2236,7 @@ function FechaItinerarioEditor({
               ))}
             </div>
             {/* VUELTA */}
-            <div>
+            <div style={{ minWidth:0, overflow:"hidden" }}>
               <div style={{ fontSize:11, fontWeight:800, color:"#64748b", marginBottom:4, letterSpacing:"0.04em" }}>VUELTA</div>
               <input
                 type="text"
