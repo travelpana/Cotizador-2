@@ -1080,7 +1080,78 @@ function ServicioRow({
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        {editingName ? (
+        {servicio.tipo === "vuelo" ? (
+          /* Vuelo: origen → destino selectors ARE the header — no text input */
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Popover
+              open={openEditor === "origen"}
+              onOpenChange={(o) => setOpenEditor(o ? "origen" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-slate-800 hover:text-primary hover:bg-primary/5 px-2 py-1 rounded-lg border border-slate-200 transition-colors"
+                  style={{ background: "#f5f7fb" }}
+                  title="Cambiar origen"
+                >
+                  {servicio.origen || <span className="italic text-slate-400 font-normal text-xs">Origen</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.origen ?? ""}
+                  options={CIUDADES_VUELO_LIST}
+                  placeholder="Ciudad de origen"
+                  onSave={(v) => {
+                    const newOrigen = v.trim() || undefined;
+                    const newNombre = newOrigen && servicio.destino ? `${newOrigen} → ${servicio.destino}` : (newOrigen ?? servicio.nombre);
+                    onUpdate({ ...servicio, origen: newOrigen, nombre: newNombre });
+                    setOpenEditor(null);
+                  }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-slate-400 font-semibold text-sm select-none">→</span>
+
+            <Popover
+              open={openEditor === "destino"}
+              onOpenChange={(o) => setOpenEditor(o ? "destino" : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-slate-800 hover:text-primary hover:bg-primary/5 px-2 py-1 rounded-lg border border-slate-200 transition-colors"
+                  style={{ background: "#f5f7fb" }}
+                  title="Cambiar destino"
+                >
+                  {servicio.destino || <span className="italic text-slate-400 font-normal text-xs">Destino</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <InlineComboEditor
+                  current={servicio.destino ?? ""}
+                  options={CIUDADES_VUELO_LIST}
+                  placeholder="Ciudad de destino"
+                  onSave={(v) => {
+                    const newDestino = v.trim() || undefined;
+                    const newNombre = servicio.origen && newDestino ? `${servicio.origen} → ${newDestino}` : (newDestino ?? servicio.nombre);
+                    onUpdate({ ...servicio, destino: newDestino, nombre: newNombre });
+                    setOpenEditor(null);
+                  }}
+                  onClose={() => setOpenEditor(null)}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {servicio.isDuplicate && (
+              <span style={{ fontSize: 11, fontWeight: 700, background: "#dbeafe", color: "#1e40af", borderRadius: 999, padding: "1px 8px", flexShrink: 0, letterSpacing: "0.03em" }}>
+                COPIA
+              </span>
+            )}
+          </div>
+        ) : editingName ? (
           <input
             ref={nameInputRef}
             value={nameValue}
@@ -1100,9 +1171,9 @@ function ServicioRow({
           />
         ) : (
           <div
-            className={`flex items-center gap-1.5 group/name ${servicio.tipo !== "vuelo" ? "cursor-text" : ""}`}
-            onClick={servicio.tipo !== "vuelo" ? startNameEdit : undefined}
-            title={servicio.tipo !== "vuelo" ? "Clic para editar el nombre" : undefined}
+            className="flex items-center gap-1.5 group/name cursor-text"
+            onClick={startNameEdit}
+            title="Clic para editar el nombre"
           >
             {servicio.manual ? (
               <span
@@ -1130,7 +1201,7 @@ function ServicioRow({
                 COPIA
               </span>
             )}
-            {!isHotel && servicio.tipo !== "vuelo" && (
+            {!isHotel && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -1149,9 +1220,7 @@ function ServicioRow({
                 {servicio.tipoServicio ?? "Regular"}
               </button>
             )}
-            {servicio.tipo !== "vuelo" && (
-              <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
-            )}
+            <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 flex-shrink-0 transition-opacity" />
           </div>
         )}
         {/* Description / meta */}
@@ -1390,60 +1459,6 @@ function ServicioRow({
           </div>
         ) : servicio.tipo === "vuelo" ? (
           <div className="flex items-center gap-0.5 flex-wrap mt-0.5">
-            {/* Origen */}
-            <Popover
-              open={openEditor === "origen"}
-              onOpenChange={(o) => setOpenEditor(o ? "origen" : null)}
-            >
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="text-[12px] font-semibold text-slate-700 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer"
-                  title="Cambiar origen"
-                >
-                  {servicio.origen || <span className="italic text-slate-400 font-normal">Origen</span>}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                <InlineComboEditor
-                  current={servicio.origen ?? ""}
-                  options={CIUDADES_VUELO_LIST}
-                  placeholder="Ciudad de origen"
-                  onSave={(v) => { onUpdate({ ...servicio, origen: v || undefined }); setOpenEditor(null); }}
-                  onClose={() => setOpenEditor(null)}
-                />
-              </PopoverContent>
-            </Popover>
-
-            <span className="text-slate-400 text-[12px] select-none">→</span>
-
-            {/* Destino */}
-            <Popover
-              open={openEditor === "destino"}
-              onOpenChange={(o) => setOpenEditor(o ? "destino" : null)}
-            >
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="text-[12px] font-semibold text-slate-700 hover:text-primary hover:bg-primary/5 px-1 py-0.5 rounded transition-colors cursor-pointer"
-                  title="Cambiar destino"
-                >
-                  {servicio.destino || <span className="italic text-slate-400 font-normal">Destino</span>}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[220px] p-2 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                <InlineComboEditor
-                  current={servicio.destino ?? ""}
-                  options={CIUDADES_VUELO_LIST}
-                  placeholder="Ciudad de destino"
-                  onSave={(v) => { onUpdate({ ...servicio, destino: v || undefined }); setOpenEditor(null); }}
-                  onClose={() => setOpenEditor(null)}
-                />
-              </PopoverContent>
-            </Popover>
-
-            <span className="text-slate-300 text-[11px] select-none">·</span>
-
             {/* Tipo de vuelo */}
             <Popover
               open={openEditor === "tipovuelo"}
