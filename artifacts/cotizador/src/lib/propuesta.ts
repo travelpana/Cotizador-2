@@ -642,26 +642,28 @@ function adicionalesTable(
       const vueloLine = (() => {
         if (s.tipo !== "vuelo") return "";
 
-        // New structured itinerary (IDA / VUELTA)
+        // New structured itinerary (IDA / VUELTA) — 2-column layout
         if (s.flightItinerary) {
           const fi = s.flightItinerary;
           const hasIda = (fi.idaSchedules ?? []).length > 0;
           const hasVuelta = (fi.vueltaSchedules ?? []).length > 0;
-          const idaBlock = hasIda
-            ? `<div style="${STYLES.cellNote};margin-top:4px;">` +
-              `<strong style="font-size:10px;letter-spacing:0.06em;color:#1351c1;">IDA</strong>` +
-              (fi.idaRuta ? `<div style="font-size:10px;color:#475569;font-weight:600;">${escape(fi.idaRuta)}</div>` : "") +
-              fi.idaSchedules.map((sc) => `<div>${escape(sc)}</div>`).join("") +
-              `</div>`
-            : "";
-          const vueltaBlock = hasVuelta
-            ? `<div style="${STYLES.cellNote};margin-top:4px;">` +
-              `<strong style="font-size:10px;letter-spacing:0.06em;color:#64748b;">VUELTA</strong>` +
-              (fi.vueltaRuta ? `<div style="font-size:10px;color:#475569;font-weight:600;">${escape(fi.vueltaRuta)}</div>` : "") +
-              fi.vueltaSchedules.map((sc) => `<div>${escape(sc)}</div>`).join("") +
-              `</div>`
-            : "";
-          return idaBlock + vueltaBlock;
+          if (!hasIda && !hasVuelta) return "";
+          const cellSt = "vertical-align:top;padding-right:10px;width:50%;";
+          const cellStR = "vertical-align:top;padding-left:10px;width:50%;border-left:1px solid #e2e8f0;";
+          const lblSt = "font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;";
+          const routeSt = "font-size:10px;color:#334155;font-weight:700;margin-bottom:2px;";
+          const scSt = "font-size:10px;color:#475569;line-height:1.6;";
+          const idaCell = `<td style="${cellSt}">` +
+            `<div style="${lblSt}color:#1351c1;">IDA</div>` +
+            (fi.idaRuta ? `<div style="${routeSt}">${escape(fi.idaRuta)}</div>` : "") +
+            (hasIda ? fi.idaSchedules.map((sc) => `<div style="${scSt}">${escape(sc)}</div>`).join("") : `<div style="${scSt}">—</div>`) +
+            `</td>`;
+          const vueltaCell = `<td style="${cellStR}">` +
+            `<div style="${lblSt}color:#64748b;">VUELTA</div>` +
+            (fi.vueltaRuta ? `<div style="${routeSt}">${escape(fi.vueltaRuta)}</div>` : "") +
+            (hasVuelta ? fi.vueltaSchedules.map((sc) => `<div style="${scSt}">${escape(sc)}</div>`).join("") : `<div style="${scSt}">—</div>`) +
+            `</td>`;
+          return `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:5px;"><tr>${idaCell}${vueltaCell}</tr></table>`;
         }
 
         // Legacy: route + free-text schedules
@@ -999,8 +1001,37 @@ function buildTotalesView(d: PropuestaData): string {
       })();
       const notasLine = renderNotasHTML(s.notas, s.notesImportant, s.notasList, STYLES.cellNote);
       const imagesLineTot = renderImagesHTML(s.images);
+      const vueloInfoLine = (() => {
+        if (s.tipo !== "vuelo") return "";
+        if (s.flightItinerary) {
+          const fi = s.flightItinerary;
+          const hasIda = (fi.idaSchedules ?? []).length > 0;
+          const hasVuelta = (fi.vueltaSchedules ?? []).length > 0;
+          if (!hasIda && !hasVuelta) return "";
+          const cellSt = "vertical-align:top;padding-right:8px;width:50%;";
+          const cellStR = "vertical-align:top;padding-left:8px;width:50%;border-left:1px solid #e2e8f0;";
+          const lblSt = "font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;";
+          const routeSt2 = "font-size:10px;color:#334155;font-weight:700;margin-bottom:2px;";
+          const scSt2 = "font-size:10px;color:#475569;line-height:1.6;";
+          const idaCell = `<td style="${cellSt}">` +
+            `<div style="${lblSt}color:#1351c1;">IDA</div>` +
+            (fi.idaRuta ? `<div style="${routeSt2}">${escape(fi.idaRuta)}</div>` : "") +
+            (hasIda ? fi.idaSchedules.map((sc) => `<div style="${scSt2}">${escape(sc)}</div>`).join("") : "") +
+            `</td>`;
+          const vueltaCell = `<td style="${cellStR}">` +
+            `<div style="${lblSt}color:#64748b;">VUELTA</div>` +
+            (fi.vueltaRuta ? `<div style="${routeSt2}">${escape(fi.vueltaRuta)}</div>` : "") +
+            (hasVuelta ? fi.vueltaSchedules.map((sc) => `<div style="${scSt2}">${escape(sc)}</div>`).join("") : "") +
+            `</td>`;
+          return `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:4px;"><tr>${idaCell}${vueltaCell}</tr></table>`;
+        }
+        const ruta = s.origen || s.destino
+          ? `<div style="font-size:10px;color:#475569;margin-top:2px;">${escape(s.origen ?? "")} → ${escape(s.destino ?? "")}</div>`
+          : "";
+        return ruta;
+      })();
       rows += `<tr style="page-break-inside:avoid;">
-        <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${ticketsLine}${notasLine}${imagesLineTot}</td>
+        <td style="${tdBase};width:48%;font-weight:600;">${escape(getName(s))}${vueloInfoLine}${ticketsLine}${notasLine}${imagesLineTot}</td>
         <td style="${tdBase};width:17%;">${escape(getTipo(s))}</td>
         <td style="${tdNum};width:13%;">${escape(fmt(mainUnit))}${chdSubLine}</td>
         <td style="${tdCtr};width:8%;">${escape(String(pax))}</td>

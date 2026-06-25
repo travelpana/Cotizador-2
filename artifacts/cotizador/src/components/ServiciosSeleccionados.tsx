@@ -2032,12 +2032,6 @@ const AIRPORT_CODES: Record<string, string> = {
 };
 const cityCode = (city: string) => AIRPORT_CODES[city] ?? city;
 
-const TIME_OPTS: string[] = Array.from({ length: 288 }, (_, i) => {
-  const h = Math.floor(i / 12).toString().padStart(2, "0");
-  const m = ((i % 12) * 5).toString().padStart(2, "0");
-  return `${h}:${m}`;
-});
-
 type FlightSlot = { sal: string; lle: string };
 const parseSlot = (s: string): FlightSlot => {
   const parts = s.split(" - ");
@@ -2129,11 +2123,12 @@ function FechaItinerarioEditor({
     padding: "3px 6px", marginBottom: 5,
     boxSizing: "border-box", outline: "none",
   };
-  const selSt: React.CSSProperties = {
-    flex: 1, fontSize: 10, color: "#334155",
+  const timeSt: React.CSSProperties = {
+    flex: 1, fontSize: 11, color: "#334155",
     border: "1px solid #e2e8f0", borderRadius: 5,
-    padding: "2px 2px", background: "#fff",
-    outline: "none", cursor: "pointer", minWidth: 0,
+    padding: "3px 5px", background: "#fff",
+    outline: "none", minWidth: 0, textAlign: "center",
+    fontVariantNumeric: "tabular-nums",
   };
 
   return (
@@ -2218,23 +2213,23 @@ function FechaItinerarioEditor({
               />
               {idaSlots.map((slot, i) => (
                 <div key={i} style={{ display:"flex", alignItems:"center", gap:3, marginBottom:3 }}>
-                  <select
+                  <input
+                    type="text"
                     value={slot.sal}
                     onChange={e => setIdaSlots(prev => prev.map((s, j) => j === i ? { ...s, sal: e.target.value } : s))}
-                    style={selSt}
-                  >
-                    <option value="">--:--</option>
-                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    placeholder="09:45"
+                    maxLength={5}
+                    style={timeSt}
+                  />
                   <span style={{ fontSize:9, color:"#94a3b8", flexShrink:0 }}>-</span>
-                  <select
+                  <input
+                    type="text"
                     value={slot.lle}
                     onChange={e => setIdaSlots(prev => prev.map((s, j) => j === i ? { ...s, lle: e.target.value } : s))}
-                    style={selSt}
-                  >
-                    <option value="">--:--</option>
-                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    placeholder="10:45"
+                    maxLength={5}
+                    style={timeSt}
+                  />
                 </div>
               ))}
             </div>
@@ -2250,23 +2245,23 @@ function FechaItinerarioEditor({
               />
               {vueltaSlots.map((slot, i) => (
                 <div key={i} style={{ display:"flex", alignItems:"center", gap:3, marginBottom:3 }}>
-                  <select
+                  <input
+                    type="text"
                     value={slot.sal}
                     onChange={e => setVueltaSlots(prev => prev.map((s, j) => j === i ? { ...s, sal: e.target.value } : s))}
-                    style={selSt}
-                  >
-                    <option value="">--:--</option>
-                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    placeholder="12:35"
+                    maxLength={5}
+                    style={timeSt}
+                  />
                   <span style={{ fontSize:9, color:"#94a3b8", flexShrink:0 }}>-</span>
-                  <select
+                  <input
+                    type="text"
                     value={slot.lle}
                     onChange={e => setVueltaSlots(prev => prev.map((s, j) => j === i ? { ...s, lle: e.target.value } : s))}
-                    style={selSt}
-                  >
-                    <option value="">--:--</option>
-                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    placeholder="13:25"
+                    maxLength={5}
+                    style={timeSt}
+                  />
                 </div>
               ))}
             </div>
