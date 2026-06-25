@@ -1570,32 +1570,35 @@ function ServicioRow({
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-[220px] p-3 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                  <div className="space-y-2">
+                <PopoverContent align="start" className="w-auto p-0 z-[60]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                  <div className="p-3 pb-1 border-b border-slate-100">
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       Fecha de vuelta
                     </span>
-                    <input
-                      type="date"
-                      value={servicio.fechaVuelta ?? ""}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        onUpdate({ ...servicio, fechaVuelta: v || undefined });
-                      }}
-                      className="w-full text-[12px] px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:border-primary"
-                    />
-                    <div className="flex justify-between">
-                      <button
-                        type="button"
-                        onClick={() => { onUpdate({ ...servicio, fechaVuelta: undefined }); setOpenEditor(null); }}
-                        className="text-[11px] text-slate-500 hover:text-slate-700"
-                      >
-                        Quitar fecha
-                      </button>
-                      <button type="button" onClick={() => setOpenEditor(null)} className="text-[11px] font-semibold text-primary">
-                        Listo
-                      </button>
-                    </div>
+                  </div>
+                  <CalendarPicker
+                    mode="single"
+                    selected={servicio.fechaVuelta ? (() => { const [y,m,d] = servicio.fechaVuelta!.split("-").map(Number); return new Date(y,m-1,d); })() : undefined}
+                    onSelect={(day) => {
+                      if (!day) { onUpdate({ ...servicio, fechaVuelta: undefined }); return; }
+                      const iso = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,"0")}-${String(day.getDate()).padStart(2,"0")}`;
+                      onUpdate({ ...servicio, fechaVuelta: iso });
+                      setOpenEditor(null);
+                    }}
+                    captionLayout="dropdown"
+                    className="[--cell-size:1.85rem] text-[12px]"
+                  />
+                  <div className="flex justify-between px-3 pb-2 pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => { onUpdate({ ...servicio, fechaVuelta: undefined }); setOpenEditor(null); }}
+                      className="text-[11px] text-slate-500 hover:text-slate-700"
+                    >
+                      Quitar fecha
+                    </button>
+                    <button type="button" onClick={() => setOpenEditor(null)} className="text-[11px] font-semibold text-primary">
+                      Listo
+                    </button>
                   </div>
                 </PopoverContent>
               </Popover>
