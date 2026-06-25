@@ -847,6 +847,22 @@ function ServicioRow({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const normalizedRef = useRef(false);
+  useEffect(() => {
+    if (normalizedRef.current) return;
+    normalizedRef.current = true;
+    if (servicio.tipo !== "vuelo") return;
+    const needsDestino = !servicio.destino;
+    const needsTipo = !servicio.tipoVuelo;
+    if (!needsDestino && !needsTipo) return;
+    const newDestino = servicio.destino || "Bocas del Toro";
+    const newOrigen = servicio.origen || "Panamá";
+    const newTipoVuelo: ServicioSeleccionado["tipoVuelo"] = servicio.tipoVuelo || "Ida y vuelta";
+    const newNombre = buildVueloNombre(newOrigen, newDestino, newTipoVuelo) ?? servicio.nombre;
+    onUpdate({ ...servicio, origen: newOrigen, destino: newDestino, tipoVuelo: newTipoVuelo, nombre: newNombre });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function commitName() {
     if (savingRef.current) return;
     savingRef.current = true;
