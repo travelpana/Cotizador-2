@@ -765,20 +765,29 @@ function itinerarioTable(d: PropuestaData, barColor = C_TOT_ITINERARIO, barTextC
       : ` style="${STYLES.cellTitle}"`;
 
   const rows = d.itinerario
-    .map(
-      (it) => `<tr style="page-break-inside:avoid;">
+    .map((it) => {
+      const actividadCell = (it.actividades && it.actividades.length > 1)
+        ? it.actividades.map((a) =>
+            `<div style="display:flex;align-items:flex-start;gap:5px;margin-bottom:2px;">` +
+            `<span style="color:${COLOR_AZUL};font-weight:900;font-size:13px;line-height:1.3;">·</span>` +
+            `<span style="${STYLES.cellTitle}">${escape(a)}</span>` +
+            `</div>`
+          ).join("")
+        : `<div${editAttrs(it.dia)}>${escape(it.actividad)}</div>`;
+
+      return `<tr style="page-break-inside:avoid;">
         <td style="padding:12px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top;font-weight:700;color:${COLOR_AZUL};font-size:13px;width:50px;">${escape(it.dia)}</td>
         <td style="padding:12px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:${COLOR_LABEL};font-size:12px;white-space:nowrap;width:110px;">${escape(it.fecha ? fmtFecha(it.fecha) : "—")}</td>
         <td style="${STYLES.td}">
-          <div${editAttrs(it.dia)}>${escape(it.actividad)}</div>
+          ${actividadCell}
           ${
             d.incluirDescriptivos && it.esTour && it.horario
               ? `<div style="${STYLES.cellNote}">${escape(T.horario)}: ${escape(it.horario)}</div>`
               : ""
           }
         </td>
-      </tr>`,
-    )
+      </tr>`;
+    })
     .join("");
 
   return `

@@ -594,13 +594,6 @@ export default function CustomItemModal({
                       <CustomSelect value={destino} onChange={setDestino} options={ciudadOptions} placeholder="Destino" />
                     </div>
                   </div>
-                  {/* Route preview chip */}
-                  {origen && destino && (
-                    <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${C}08`, border: `1px solid ${C}25` }}>
-                      <Plane className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C }} />
-                      <span className="text-[12px] font-semibold text-slate-800">{vueloNombre}</span>
-                    </div>
-                  )}
                   {/* Secondary fields */}
                   <div className="grid grid-cols-3 gap-2">
                     <div>

@@ -2025,6 +2025,25 @@ const btnClose: React.CSSProperties = {
 const FI_CLR_PRIMARY = "#004FBB";
 const FI_CLR_TEXT    = "#041941";
 
+const AIRPORT_CODES: Record<string, string> = {
+  "Panamá": "PAN",
+  "Bocas del Toro": "BOC",
+  "San Blas": "SBS",
+};
+const cityCode = (city: string) => AIRPORT_CODES[city] ?? city;
+
+const TIME_OPTS: string[] = Array.from({ length: 288 }, (_, i) => {
+  const h = Math.floor(i / 12).toString().padStart(2, "0");
+  const m = ((i % 12) * 5).toString().padStart(2, "0");
+  return `${h}:${m}`;
+});
+
+type FlightSlot = { sal: string; lle: string };
+const parseSlot = (s: string): FlightSlot => {
+  const parts = s.split(" - ");
+  return { sal: (parts[0] ?? "").trim(), lle: (parts[1] ?? "").trim() };
+};
+
 function FechaItinerarioEditor({
   value,
   fechaInicio,
@@ -2060,18 +2079,23 @@ function FechaItinerarioEditor({
 
   // Vuelo itinerary state
   const [idaRuta, setIdaRuta] = useState(() =>
-    flightItinerary?.idaRuta ?? (vueloOrigen && vueloDestino ? `${vueloOrigen} → ${vueloDestino}` : "")
+    flightItinerary?.idaRuta ?? (vueloOrigen && vueloDestino
+      ? `${cityCode(vueloOrigen)} → ${cityCode(vueloDestino)}`
+      : "")
   );
   const [vueltaRuta, setVueltaRuta] = useState(() =>
-    flightItinerary?.vueltaRuta ?? (vueloOrigen && vueloDestino ? `${vueloDestino} → ${vueloOrigen}` : "")
+    flightItinerary?.vueltaRuta ?? (vueloOrigen && vueloDestino
+      ? `${cityCode(vueloDestino)} → ${cityCode(vueloOrigen)}`
+      : "")
   );
-  const [idaSchedules, setIdaSchedules] = useState<string[]>(() => {
-    const base = flightItinerary?.idaSchedules ?? [];
-    return [...base, "", "", "", ""].slice(0, 4);
+  const emptySlot = (): FlightSlot => ({ sal: "", lle: "" });
+  const [idaSlots, setIdaSlots] = useState<FlightSlot[]>(() => {
+    const base = (flightItinerary?.idaSchedules ?? []).map(parseSlot);
+    return [...base, emptySlot(), emptySlot(), emptySlot(), emptySlot()].slice(0, 4);
   });
-  const [vueltaSchedules, setVueltaSchedules] = useState<string[]>(() => {
-    const base = flightItinerary?.vueltaSchedules ?? [];
-    return [...base, "", "", "", ""].slice(0, 4);
+  const [vueltaSlots, setVueltaSlots] = useState<FlightSlot[]>(() => {
+    const base = (flightItinerary?.vueltaSchedules ?? []).map(parseSlot);
+    return [...base, emptySlot(), emptySlot(), emptySlot(), emptySlot()].slice(0, 4);
   });
 
   function dayDate(idx: number): string {
@@ -2085,8 +2109,8 @@ function FechaItinerarioEditor({
   }
 
   const saveVuelo = () => {
-    const idaSched = idaSchedules.filter(Boolean);
-    const vueltaSched = vueltaSchedules.filter(Boolean);
+    const idaSched = idaSlots.filter(s => s.sal || s.lle).map(s => `${s.sal} - ${s.lle}`);
+    const vueltaSched = vueltaSlots.filter(s => s.sal || s.lle).map(s => `${s.sal} - ${s.lle}`);
     if (idaSched.length === 0 && vueltaSched.length === 0) {
       onSaveFlightItinerary?.(undefined);
     } else {
@@ -2099,14 +2123,17 @@ function FechaItinerarioEditor({
     }
   };
 
-  const inputSt: React.CSSProperties = {
-    width: "100%", fontSize: 11, color: "#334155",
+  const routeSt: React.CSSProperties = {
+    width: "100%", fontSize: 10, fontWeight: 600, color: "#475569",
     border: "1px solid #e2e8f0", borderRadius: 6,
-    padding: "3px 6px", marginBottom: 3,
+    padding: "3px 6px", marginBottom: 5,
     boxSizing: "border-box", outline: "none",
   };
-  const routeSt: React.CSSProperties = {
-    ...inputSt, fontSize: 10, fontWeight: 600, color: "#475569", marginBottom: 5,
+  const selSt: React.CSSProperties = {
+    flex: 1, fontSize: 10, color: "#334155",
+    border: "1px solid #e2e8f0", borderRadius: 5,
+    padding: "2px 2px", background: "#fff",
+    outline: "none", cursor: "pointer", minWidth: 0,
   };
 
   return (
@@ -2178,10 +2205,10 @@ function FechaItinerarioEditor({
       ) : (
         /* Itinerario de vuelos */
         <div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
             {/* IDA */}
             <div>
-              <div style={{ fontSize:12, fontWeight:800, color: FI_CLR_PRIMARY, marginBottom:5, letterSpacing:"0.04em" }}>IDA</div>
+              <div style={{ fontSize:11, fontWeight:800, color: FI_CLR_PRIMARY, marginBottom:4, letterSpacing:"0.04em" }}>IDA</div>
               <input
                 type="text"
                 value={idaRuta}
@@ -2189,20 +2216,31 @@ function FechaItinerarioEditor({
                 placeholder="PAN → BOC"
                 style={routeSt}
               />
-              {idaSchedules.map((sc, i) => (
-                <input
-                  key={i}
-                  type="text"
-                  value={sc}
-                  onChange={(e) => setIdaSchedules(prev => prev.map((v, j) => j === i ? e.target.value : v))}
-                  placeholder={i === 0 ? "09:45 - 10:45" : ""}
-                  style={inputSt}
-                />
+              {idaSlots.map((slot, i) => (
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:3, marginBottom:3 }}>
+                  <select
+                    value={slot.sal}
+                    onChange={e => setIdaSlots(prev => prev.map((s, j) => j === i ? { ...s, sal: e.target.value } : s))}
+                    style={selSt}
+                  >
+                    <option value="">--:--</option>
+                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <span style={{ fontSize:9, color:"#94a3b8", flexShrink:0 }}>-</span>
+                  <select
+                    value={slot.lle}
+                    onChange={e => setIdaSlots(prev => prev.map((s, j) => j === i ? { ...s, lle: e.target.value } : s))}
+                    style={selSt}
+                  >
+                    <option value="">--:--</option>
+                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               ))}
             </div>
             {/* VUELTA */}
             <div>
-              <div style={{ fontSize:12, fontWeight:800, color:"#64748b", marginBottom:5, letterSpacing:"0.04em" }}>VUELTA</div>
+              <div style={{ fontSize:11, fontWeight:800, color:"#64748b", marginBottom:4, letterSpacing:"0.04em" }}>VUELTA</div>
               <input
                 type="text"
                 value={vueltaRuta}
@@ -2210,15 +2248,26 @@ function FechaItinerarioEditor({
                 placeholder="BOC → PAN"
                 style={routeSt}
               />
-              {vueltaSchedules.map((sc, i) => (
-                <input
-                  key={i}
-                  type="text"
-                  value={sc}
-                  onChange={(e) => setVueltaSchedules(prev => prev.map((v, j) => j === i ? e.target.value : v))}
-                  placeholder={i === 0 ? "13:00 - 14:00" : ""}
-                  style={inputSt}
-                />
+              {vueltaSlots.map((slot, i) => (
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:3, marginBottom:3 }}>
+                  <select
+                    value={slot.sal}
+                    onChange={e => setVueltaSlots(prev => prev.map((s, j) => j === i ? { ...s, sal: e.target.value } : s))}
+                    style={selSt}
+                  >
+                    <option value="">--:--</option>
+                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <span style={{ fontSize:9, color:"#94a3b8", flexShrink:0 }}>-</span>
+                  <select
+                    value={slot.lle}
+                    onChange={e => setVueltaSlots(prev => prev.map((s, j) => j === i ? { ...s, lle: e.target.value } : s))}
+                    style={selSt}
+                  >
+                    <option value="">--:--</option>
+                    {TIME_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               ))}
             </div>
           </div>

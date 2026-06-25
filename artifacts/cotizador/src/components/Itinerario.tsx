@@ -46,6 +46,8 @@ export interface ItinerarioDia {
   dia: number;
   fecha: string;
   actividad: string;
+  /** All activities for this day when multiple services share the same date. */
+  actividades?: string[];
   hotel: string;
   descripcion?: string;
   /** Tour-day only: schedule label "{days} · {time} · {duration}". */
@@ -61,16 +63,20 @@ export function buildItinerario(
   const noches = Math.max(0, cliente.noches || 0);
   const dias = noches + 1;
   const traslados = servicios.filter((s) => s.tipo === "traslado");
-  const tours = servicios.filter((s) => s.tipo === "tour");
   const hoteles = servicios.filter((s) => s.tipo === "hotel");
   const hotelDefault = hoteles[0]?.nombre || "—";
 
-  // Split tours into assigned (have fechaItinerario) and unassigned
-  const assignedTours = tours.filter((t) => !!t.fechaItinerario);
-  const unassignedTours = tours.filter((t) => !t.fechaItinerario);
-  const usedTourIds = new Set<string>();
+  // All non-hotel, non-traslado services that can appear in the itinerary
+  const assignableServices = servicios.filter(
+    (s) => s.tipo !== "hotel" && s.tipo !== "traslado" && !!s.fechaItinerario,
+  );
+  // Tours without a date assigned fill days sequentially
+  const unassignedTours = servicios.filter(
+    (s) => s.tipo === "tour" && !s.fechaItinerario,
+  );
+  const usedIds = new Set<string>();
 
-  // Match a service's fechaItinerario to a specific day
+  // Match a service's fechaItinerario to a specific day index / fecha string
   const matchesDia = (
     fi: string | undefined,
     dayIndex: number,
@@ -89,6 +95,7 @@ export function buildItinerario(
   for (let i = 0; i < dias; i++) {
     const fecha = cliente.fechaInicio ? addDays(cliente.fechaInicio, i) : "";
     let actividad = "";
+    let actividades: string[] | undefined;
     let hotel = hotelDefault;
     let descripcion = "";
     let horario: string | undefined;
@@ -110,16 +117,18 @@ export function buildItinerario(
       descripcion = tramo;
       hotel = "—";
     } else {
-      // Check for a tour assigned specifically to this day
-      const matchedTour = assignedTours.find(
-        (t) => !usedTourIds.has(t.id) && matchesDia(t.fechaItinerario, i, fecha),
+      // Collect ALL services assigned to this specific day
+      const dayServices = assignableServices.filter(
+        (s) => !usedIds.has(s.id) && matchesDia(s.fechaItinerario, i, fecha),
       );
-      if (matchedTour) {
-        usedTourIds.add(matchedTour.id);
-        actividad = matchedTour.nombre;
-        descripcion = matchedTour.nombre;
+      dayServices.forEach((s) => usedIds.add(s.id));
+
+      if (dayServices.length > 0) {
+        actividades = dayServices.map((s) => s.nombre);
+        actividad = actividades.join(" · ");
+        descripcion = actividad;
         esTour = true;
-        horario = matchedTour.horario?.trim() || undefined;
+        horario = dayServices[0].horario?.trim() || undefined;
       } else {
         // Fall back to unassigned tours filled sequentially
         const tour = unassignedTours[unassignedTourIdx++];
@@ -134,7 +143,7 @@ export function buildItinerario(
       }
     }
 
-    out.push({ dia: i + 1, fecha, actividad, hotel, descripcion, horario, esTour });
+    out.push({ dia: i + 1, fecha, actividad, actividades, hotel, descripcion, horario, esTour });
   }
   return out;
 }
@@ -258,12 +267,23 @@ export default function Itinerario({
                       {d.fecha ? formatFechaDMY(d.fecha) : "—"}
                     </td>
                     <td className="py-3 px-2">
-                      <ActividadCell
-                        dia={d.dia}
-                        value={value}
-                        editable={editable}
-                        onCommit={(next) => commit(d.dia, next)}
-                      />
+                      {d.actividades && d.actividades.length > 1 ? (
+                        <div className="space-y-1">
+                          {d.actividades.map((a, idx) => (
+                            <div key={idx} className="flex items-start gap-1.5">
+                              <span className="text-primary font-bold text-xs mt-0.5">·</span>
+                              <span className="text-slate-900 font-medium text-sm">{a}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <ActividadCell
+                          dia={d.dia}
+                          value={value}
+                          editable={editable}
+                          onCommit={(next) => commit(d.dia, next)}
+                        />
+                      )}
                       {incluirDescriptivos && d.esTour && d.horario && (
                         <div className="text-xs text-slate-500 mt-1.5">
                           Horario: {d.horario}

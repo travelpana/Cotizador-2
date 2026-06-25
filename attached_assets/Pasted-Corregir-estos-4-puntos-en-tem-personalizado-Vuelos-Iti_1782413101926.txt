@@ -1,0 +1,53 @@
+Corregir estos 4 puntos en Ítem personalizado / Vuelos / Itinerario del Cotizador RGE:
+
+1. VUELOS - TÍTULO
+- Eliminar por completo el input “Nombre del vuelo (opcional)”.
+- No debe aparecer ningún campo para escribir nombre.
+- En esa misma línea deben quedar solo los selectores de destinos:
+  [Origen ▼] → [Destino ▼]
+- Al seleccionar los destinos, eso debe convertirse automáticamente en el título del servicio.
+- Ejemplo en tarjeta y cotización:
+  Panamá → Bocas del Toro
+- En la cotización final debe verse como título principal del servicio, no como texto pequeño o descripción.
+
+2. ITINERARIO DE VUELOS EN COTIZACIÓN FINAL
+- El itinerario de vuelos guardado en el popup debe aparecer en:
+  - Tarjeta del servicio
+  - Vista previa
+  - Cotización final
+  - WhatsApp
+  - Email
+  - PDF
+- Debe aparecer debajo del vuelo, organizado en dos columnas:
+  IDA | VUELTA
+
+3. FORMATO DEL ITINERARIO DE VUELOS
+- En vez de mostrar “Panamá → Bocas del Toro”, debe mostrar códigos:
+  PAN → BOC
+  BOC → PAN
+- Las horas no deben escribirse en input libre.
+- Cambiar horas a desplegables manteniendo el mismo estilo visual del app.
+- Cada horario debe ser:
+  Hora salida ▼  -  Hora llegada ▼
+- Permitir hasta 4 horarios por IDA y 4 horarios por VUELTA.
+
+Ejemplo visual:
+
+IDA                 VUELTA
+PAN → BOC           BOC → PAN
+09:45 - 10:45       12:35 - 13:25
+13:34 - 14:34       14:00 - 15:00
+
+4. ITINERARIO SUGERIDO CON MISMA FECHA
+- Corregir la lógica del itinerario sugerido.
+- Si dos o más servicios tienen asignada la misma fecha exacta o el mismo día, todos deben aparecer en ese día.
+- No debe reemplazar, ocultar ni sobrescribir servicios.
+- Esto debe reflejarse tanto en la vista de itinerario sugerido como en la cotización final.
+
+Ejemplo:
+Día 2 - 26/6/2026
+- City tour & Canal
+- Compras Albrook
+- Vuelo Panamá → Bocas del Toro
+
+Mantener diseño premium, colores, bordes, badges y espaciados actuales. No romper Hotelería, Traslados, Tours, Catamarán, Otros, Grupo, Paquete ni exportables.
