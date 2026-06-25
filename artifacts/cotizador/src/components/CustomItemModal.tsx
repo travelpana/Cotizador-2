@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { compressImage } from "@/lib/image-utils";
 import { PriceInput } from "@/components/ui/price-input";
 import InlineRangePicker, { nightsBetween } from "./InlineRangePicker";
+import CompactDatePicker from "./CompactDatePicker";
 import {
   X,
   Check,
@@ -259,10 +260,11 @@ export default function CustomItemModal({
   const [images, setImages] = useState<string[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const [origen, setOrigen] = useState<string>(CIUDADES_VUELO[0]);
-  const [destino, setDestino] = useState<string>(CIUDADES_VUELO[1]);
-  const [tipoVuelo, setTipoVuelo] = useState<ServicioSeleccionado["tipoVuelo"] | "">("");
+  const [origen, setOrigen] = useState<string>("Panamá");
+  const [destino, setDestino] = useState<string>("Bocas del Toro");
+  const [tipoVuelo, setTipoVuelo] = useState<ServicioSeleccionado["tipoVuelo"] | "">("Ida y vuelta");
   const [fechaVuelo, setFechaVuelo] = useState("");
+  const [fechaVueltaVuelo, setFechaVueltaVuelo] = useState("");
 
   const [ubicacion, setUbicacion] = useState("");
   const [estrellas, setEstrellas] = useState("");
@@ -316,10 +318,11 @@ export default function CustomItemModal({
         setNotas(initial.notas ?? "");
         setNotesImportant(initial.notesImportant ?? false);
         setImages(initial.images ?? []);
-        setOrigen(initial.origen ?? CIUDADES_VUELO[0]);
-        setDestino(initial.destino ?? CIUDADES_VUELO[1]);
-        setTipoVuelo(initial.tipoVuelo ?? "");
+        setOrigen(initial.origen ?? "Panamá");
+        setDestino(initial.destino ?? "Bocas del Toro");
+        setTipoVuelo(initial.tipoVuelo ?? "Ida y vuelta");
         setFechaVuelo(initial.fecha ?? "");
+        setFechaVueltaVuelo(initial.fechaVuelta ?? "");
         setUbicacion(initial.ubicacion ?? "");
         setEstrellas(initial.estrellas ?? "");
         setTipoHabitacion(initial.tipoHabitacion ?? "");
@@ -339,10 +342,11 @@ export default function CustomItemModal({
         setNotas("");
         setNotesImportant(false);
         setImages([]);
-        setOrigen(CIUDADES_VUELO[0]);
-        setDestino(CIUDADES_VUELO[1]);
-        setTipoVuelo("");
+        setOrigen("Panamá");
+        setDestino("Bocas del Toro");
+        setTipoVuelo("Ida y vuelta");
         setFechaVuelo("");
+        setFechaVueltaVuelo("");
         setUbicacion("");
         setEstrellas("");
         setTipoHabitacion("");
@@ -380,10 +384,11 @@ export default function CustomItemModal({
   const isCatamaran = tipo === "catamaran";
   const isOtros = tipo === "otros";
 
-  const vueloNombre = useMemo(
-    () => `${origen} → ${destino}`,
-    [origen, destino],
-  );
+  const vueloNombre = useMemo(() => {
+    if (tipoVuelo === "Ida y vuelta") return `${origen} → ${destino} → ${origen}`;
+    if (tipoVuelo === "Retorno") return `${destino} → ${origen}`;
+    return `${origen} → ${destino}`;
+  }, [origen, destino, tipoVuelo]);
 
   if (!open) return null;
 
@@ -452,7 +457,8 @@ export default function CustomItemModal({
             origen, destino, unitOverride: value,
             tipoVuelo: tipoVuelo || undefined,
             tipoServicio: modalidad,
-            fecha: fechaVuelo || undefined,
+            fecha: (tipoVuelo === "Retorno" ? undefined : fechaVuelo || undefined),
+            fechaVuelta: (tipoVuelo === "Ida" ? undefined : fechaVueltaVuelo || undefined),
           }
         : {}),
       ...(isOtros
@@ -580,6 +586,15 @@ export default function CustomItemModal({
               {/* ── VUELO ── */}
               {isVuelo && (
                 <>
+                  {/* Preview title */}
+                  <div
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold"
+                    style={{ background: `${C}0d`, color: C, border: `1px solid ${C}20` }}
+                  >
+                    <Plane className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{vueloNombre}</span>
+                  </div>
+
                   {/* Inline origin → destination */}
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
@@ -594,8 +609,9 @@ export default function CustomItemModal({
                       <CustomSelect value={destino} onChange={setDestino} options={ciudadOptions} placeholder="Destino" />
                     </div>
                   </div>
-                  {/* Secondary fields */}
-                  <div className="grid grid-cols-3 gap-2">
+
+                  {/* Type + Modalidad */}
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className={lbl}>Tipo de vuelo</label>
                       <CustomSelect
@@ -609,16 +625,42 @@ export default function CustomItemModal({
                       <label className={lbl}>Modalidad</label>
                       <CustomSelect value={modalidad} onChange={(v) => setModalidad(v as "Regular" | "Privado")} options={MODALIDAD_OPTIONS} />
                     </div>
+                  </div>
+
+                  {/* Dates — conditional by tipoVuelo */}
+                  {(tipoVuelo === "Ida" || tipoVuelo === "Ida y vuelta" || tipoVuelo === "") && (
+                    <div className={tipoVuelo === "Ida y vuelta" ? "grid grid-cols-2 gap-2" : ""}>
+                      <div>
+                        <label className={lbl}>Fecha ida</label>
+                        <CompactDatePicker
+                          value={fechaVuelo}
+                          onChange={setFechaVuelo}
+                          placeholder="dd/mm/aaaa"
+                        />
+                      </div>
+                      {tipoVuelo === "Ida y vuelta" && (
+                        <div>
+                          <label className={lbl}>Fecha vuelta</label>
+                          <CompactDatePicker
+                            value={fechaVueltaVuelo}
+                            onChange={setFechaVueltaVuelo}
+                            placeholder="dd/mm/aaaa"
+                            minDate={fechaVuelo || undefined}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {tipoVuelo === "Retorno" && (
                     <div>
-                      <label className={lbl}>Fecha</label>
-                      <input
-                        type="date"
-                        value={fechaVuelo}
-                        onChange={(e) => setFechaVuelo(e.target.value)}
-                        className={inputCls}
+                      <label className={lbl}>Fecha vuelta</label>
+                      <CompactDatePicker
+                        value={fechaVueltaVuelo}
+                        onChange={setFechaVueltaVuelo}
+                        placeholder="dd/mm/aaaa"
                       />
                     </div>
-                  </div>
+                  )}
                 </>
               )}
 
