@@ -50,6 +50,11 @@ Professional travel quotation system for RGE Style Travel. Reads the price list 
 
 _Populate as you build_
 
+## Initial Setup (already done)
+
+- `pnpm --filter @workspace/db run push` — run once to create DB tables on a fresh environment (uses `DATABASE_URL` secret)
+- Seed users (admin, jonathan, johanna, …) are auto-created by the server on first start after the schema is pushed
+
 ## Gotchas
 
 - esbuild postinstall script must be approved; `pnpm-workspace.yaml` `onlyBuiltDependencies` includes it
