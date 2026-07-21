@@ -22,6 +22,8 @@ import {
   RotateCcw,
   ChevronRight,
   CalendarClock,
+  FileText,
+  History,
 } from "lucide-react";
 import type {
   CotizacionGuardada,
@@ -32,7 +34,7 @@ import type {
 import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
 import { exportarCotizacionesExcel } from "@/lib/exportExcel";
 import { loadAgenciasAsync, buildAgenciasMap, normAgencia, mergeAgenciasDuplicadas, type Agencia } from "@/lib/agencias";
-import OportunidadDetailPanel from "./OportunidadDetailPanel";
+import OportunidadDetailPanel, { type Tab as DetailTab } from "./OportunidadDetailPanel";
 import { useAuth } from "@/lib/auth";
 
 interface Props {
@@ -180,13 +182,33 @@ function MenuItem({ icon, label, onClick, danger = false }: {
   );
 }
 
+// ─── Icon Button with tooltip ─────────────────────────────────────────────────
+
+function IconBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <div className="relative group">
+      <button
+        type="button"
+        onClick={onClick}
+        className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+      >
+        {icon}
+      </button>
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 // ─── Opportunity Card ─────────────────────────────────────────────────────────
 
-function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onOpenDetail, onUpdateOpportunity, onAnular }: {
+function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onOpenDetail, onOpenDetailTab, onUpdateOpportunity, onAnular }: {
   opp: Opportunity; agencia?: Agencia;
   allQuotes: CotizacionGuardada[];
   onView: () => void; onEdit: () => void; onDuplicate?: () => void;
   onOpenDetail: () => void;
+  onOpenDetailTab: (tab: DetailTab) => void;
   onUpdateOpportunity: (patch: Partial<Opportunity>) => void;
   onAnular: () => void;
 }) {
@@ -277,15 +299,15 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
         {/* ── SECTION 3: Main info ─────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
-          {/* Line 1: Quote name */}
-          <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.01em" }}>
-            {(opp.quoteName || "SIN NOMBRE").toUpperCase()}
+          {/* Line 1: Destination (primary title) */}
+          <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.01em" }}>
+            {(opp.destination || opp.quoteName || "SIN DESTINO").toUpperCase()}
           </div>
-          {/* Line 2: Agency • Destination */}
-          {line2 && (
-            <div className="text-[11px] font-semibold text-slate-600 truncate mt-0.5 tracking-wide">{line2}</div>
+          {/* Line 2: Agency */}
+          {opp.agencyName && (
+            <div className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 tracking-wide">{opp.agencyName}</div>
           )}
-          {/* Line 3: Metadata chips */}
+          {/* Line 3: Pax + accommodation chips */}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
             {pax != null && pax > 0 && (
               <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
@@ -304,8 +326,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                 <span className="text-[10px] font-semibold text-slate-500">{uniqueAcoms.join("/")}</span>
               </>
             )}
-            <span className="text-slate-300 text-[10px]">•</span>
-            <span className="text-[10px] font-semibold text-slate-500">{opp.quotes.length} COTIZACIÓN{opp.quotes.length !== 1 ? "ES" : ""}</span>
             {opp.priorityManual && (
               <>
                 <span className="text-slate-300 text-[10px]">•</span>
@@ -318,19 +338,11 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                 <span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span>
               </>
             )}
-            {opp.updatedByName && (
-              <>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] text-slate-400">
-                  Mod: {opp.updatedByName}{opp.updatedAt ? ` · ${new Date(opp.updatedAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}` : ""}
-                </span>
-              </>
-            )}
           </div>
         </div>
 
-        {/* ── SECTION 4: Price ─────────────────────────────────────────── */}
-        <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-0.5">
+        {/* ── SECTION 4: Price + Estado ─────────────────────────────────── */}
+        <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-1">
           {opp.totalLatest != null && opp.totalLatest > 0 ? (
             <div className="font-bold tabular-nums leading-none" style={{ fontSize: 18, color: "#044b9e", fontWeight: 700, letterSpacing: "-0.02em" }}>
               {fmtMoney(opp.totalLatest)}
@@ -338,21 +350,20 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           ) : (
             <div className="text-[11px] text-slate-400">Sin valor</div>
           )}
-          {opp.latestQuoteCode && (
-            <div className="text-[10px] text-slate-400 font-mono mt-0.5">Última: {opp.latestQuoteCode}</div>
-          )}
-          <button
-            type="button"
-            onClick={onOpenDetail}
-            className="text-[10px] font-bold text-left mt-0.5 hover:underline underline-offset-2 transition-colors"
-            style={{ color: "#044b9e" }}
-          >
-            VER COTIZACIONES ({opp.quotes.length})
-          </button>
+          {(() => {
+            const st = ESTADO_OPP_STYLES[opp.status as keyof typeof ESTADO_OPP_STYLES] ?? ESTADO_OPP_STYLES.nueva;
+            const label = ESTADO_OPP_OPTIONS.find(o => o.value === opp.status)?.label ?? opp.status;
+            return (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 w-fit ${st.bg} ${st.text} ${st.ring}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                {label}
+              </span>
+            );
+          })()}
         </div>
 
-        {/* ── SECTION 5: Status ────────────────────────────────────────── */}
-        <div className="shrink-0 sm:w-44 flex flex-col justify-center gap-0.5">
+        {/* ── SECTION 5: Semáforo + fecha ──────────────────────────────── */}
+        <div className="shrink-0 sm:w-40 flex flex-col justify-center gap-0.5">
           {!isClosedStatus ? (
             <>
               <div className="flex items-center gap-1.5">
@@ -365,7 +376,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                   : `${sinActividad} DÍA${sinActividad !== 1 ? "S" : ""} SIN ACTUALIZACIÓN`}
               </div>
               <div className="text-[10px] text-slate-400 font-medium">
-                ACTUALIZADO: {lastUpdateFormatted}
+                {lastUpdateFormatted}
               </div>
               {opp.recordatorio && (
                 <div className="text-[10px] text-blue-400 flex items-center gap-1 mt-0.5">
@@ -374,42 +385,41 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               )}
             </>
           ) : (
-            <>
-              {opp.status === "confirmada" ? (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">Confirmada</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Perdida</span>
-                </div>
-              )}
-              <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                ACTUALIZADO: {lastUpdateFormatted}
-              </div>
-            </>
+            <div className="text-[10px] text-slate-400 font-medium">{lastUpdateFormatted}</div>
           )}
         </div>
 
-        {/* ── SECTION 6: Actions ───────────────────────────────────────── */}
-        <div className="shrink-0 flex items-center gap-2 self-start sm:self-center mt-1 sm:mt-0">
+        {/* ── SECTION 6: Acciones rápidas + ABRIR ──────────────────────── */}
+        <div className="shrink-0 flex flex-col items-end justify-center gap-1.5 self-start sm:self-center mt-1 sm:mt-0">
+          {/* Fila de iconos con tooltip */}
+          <div className="flex items-center gap-0">
+            <IconBtn icon={<FileText className="w-4 h-4" />} label="Cotizaciones" onClick={() => onOpenDetailTab("cotizaciones")} />
+            <IconBtn icon={<Bell className="w-4 h-4" />} label="Seguimiento" onClick={() => onOpenDetailTab("seguimiento")} />
+            <IconBtn icon={<History className="w-4 h-4" />} label="Historial" onClick={() => onOpenDetailTab("historial")} />
+            <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={onEdit} />
+            <div className="w-px h-4 bg-slate-200 mx-0.5" />
+            <div className="relative group">
+              <button
+                ref={menuBtnRef}
+                type="button"
+                onClick={openMenu}
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                Más opciones
+              </div>
+            </div>
+          </div>
+          {/* Botón ABRIR */}
           <button
             type="button"
             onClick={onOpenDetail}
-            className="h-9 px-4 rounded-xl text-white text-[12px] font-bold tracking-wide hover:opacity-90 active:scale-95 transition-all"
+            className="h-8 px-4 rounded-xl text-white text-[11px] font-bold tracking-wide hover:opacity-90 active:scale-95 transition-all w-full"
             style={{ background: "#044b9e" }}
           >
             ABRIR
-          </button>
-          <button
-            ref={menuBtnRef}
-            type="button"
-            onClick={openMenu}
-            className="h-9 w-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
-          >
-            <MoreHorizontal className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -577,6 +587,12 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   const [filterEstado, setFilterEstado] = useState<EstadoOportunidad | "todas">("todas");
   const [agencias, setAgencias] = useState<Agencia[]>([]);
   const [openOppId, setOpenOppId] = useState<string | null>(null);
+  const [openOppTab, setOpenOppTab] = useState<DetailTab>("resumen");
+
+  const openDetailAt = (id: string, tab: DetailTab = "resumen") => {
+    setOpenOppId(id);
+    setOpenOppTab(tab);
+  };
 
   useEffect(() => {
     loadAgenciasAsync().then((list) => {
@@ -777,7 +793,8 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
                     onView={() => { if (latestQuote) onView(latestQuote); }}
                     onEdit={() => { if (latestQuote) onEdit(latestQuote); }}
                     onDuplicate={onDuplicate && latestQuote ? () => onDuplicate!(latestQuote) : undefined}
-                    onOpenDetail={() => setOpenOppId(o.id)}
+                    onOpenDetail={() => openDetailAt(o.id, "resumen")}
+                    onOpenDetailTab={(tab) => openDetailAt(o.id, tab)}
                     onUpdateOpportunity={(patch) => handleUpdateOpp(o.id, patch)}
                     onAnular={() => onAnular(o)}
                   />
@@ -797,6 +814,7 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
           onSave={(patch) => handleUpdateOpp(openOpp.id, patch)}
           onView={(g) => { onView(g); setOpenOppId(null); }}
           onDuplicate={onDuplicate ? (g) => { onDuplicate!(g); setOpenOppId(null); } : undefined}
+          initialTab={openOppTab}
         />
       )}
     </div>

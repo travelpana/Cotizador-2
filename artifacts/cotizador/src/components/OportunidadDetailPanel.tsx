@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "resumen" | "cotizaciones" | "seguimiento" | "historial";
+export type Tab = "resumen" | "cotizaciones" | "seguimiento" | "historial";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -497,6 +497,7 @@ interface Props {
   onSave: (patch: Partial<Opportunity>) => void;
   onView: (g: CotizacionGuardada) => void;
   onDuplicate?: (g: CotizacionGuardada) => void;
+  initialTab?: Tab;
 }
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -506,8 +507,8 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "historial",    label: "Historial",     icon: <History className="w-3.5 h-3.5" />        },
 ];
 
-export default function OportunidadDetailPanel({ opp, allQuotes, onClose, onSave, onView, onDuplicate }: Props) {
-  const [tab, setTab] = useState<Tab>("resumen");
+export default function OportunidadDetailPanel({ opp, allQuotes, onClose, onSave, onView, onDuplicate, initialTab }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? "resumen");
 
   const latestQuote = opp.quotes.reduce<CotizacionGuardada | undefined>((found, qRef) => {
     if (found) return found;
