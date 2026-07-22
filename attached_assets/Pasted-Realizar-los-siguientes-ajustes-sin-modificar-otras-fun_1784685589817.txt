@@ -1,0 +1,97 @@
+Realizar los siguientes ajustes sin modificar otras funcionalidades existentes.
+
+1. ICONOS DE ACCIONES RÁPIDAS
+
+Corregir los iconos de:
+- Prioridad
+- Confirmar venta
+- Marcar pérdida
+
+Actualmente muestran un recuadro/borde de color alrededor del icono.
+
+Eso es incorrecto.
+
+Comportamiento esperado:
+- Mantener el mismo estilo visual que el resto de iconos.
+- Sin fondo de color.
+- Sin borde de color.
+- Sin estado visual de seleccionado.
+- Solo cambiar el color del símbolo:
+
+⭐ Prioridad → amarillo
+✔ Confirmar venta → verde
+✖ Marcar pérdida → rojo
+
+Todos los demás iconos deben permanecer grises.
+
+2. SEGUIMIENTO
+
+Corregir el botón Guardar dentro del módulo/modal de Seguimiento.
+
+Problema:
+- Actualmente permite completar la información pero no guarda correctamente el seguimiento.
+
+Validar:
+- Que el botón ejecute el guardado.
+- Que persista los datos en la base de datos.
+- Que se refleje en el historial.
+- Que aparezca mensaje de éxito al guardar.
+- Que al volver a abrir el seguimiento los datos permanezcan almacenados.
+
+3. ENCABEZADO DE LA OPORTUNIDAD
+
+Eliminar el icono de las dos personas que aparece antes del texto de pasajeros.
+
+Actualmente:
+👥 2 ADULTOS • DBL
+
+Modificar a un formato más comercial.
+
+Reglas:
+
+- Eliminar el icono de personas.
+- Reemplazar el término "ADULTOS" por "PERSONAS".
+- Eliminar códigos de ocupación como:
+  - DBL
+  - SGL
+  - TPL
+  - QDPL
+
+Mostrar:
+
+[TIPO DE COTIZACIÓN] • [X PERSONAS]
+
+Ejemplo:
+TARIFAS • 2 PERSONAS
+
+o
+
+PAQUETE • 4 PERSONAS
+
+4. NIÑOS
+
+Solo mostrar la categoría de niños cuando exista al menos un niño en la cotización.
+
+Ejemplos:
+
+Sin niños:
+TARIFAS • 2 PERSONAS
+
+Con niños:
+TARIFAS • 2 PERSONAS • 1 NIÑO
+
+Con varios:
+TARIFAS • 4 PERSONAS • 3 NIÑOS
+
+No mostrar:
+• 0 NIÑOS
+
+5. TOTAL DE PASAJEROS
+
+La cantidad de PERSONAS debe calcularse usando el total consolidado de pasajeros de toda la cotización y no por habitación individual.
+
+IMPORTANTE:
+- Mantener el diseño actual.
+- No modificar estilos generales.
+- No alterar otras funcionalidades.
+- Aplicar únicamente los cambios solicitados.

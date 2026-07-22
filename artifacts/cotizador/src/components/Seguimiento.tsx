@@ -48,6 +48,7 @@ interface Props {
   onDuplicate?: (g: CotizacionGuardada) => void;
   onUpdateCRM: (id: string, patch: Partial<CotizacionGuardada>) => void;
   onUpdateOpportunity: (id: string, patch: Partial<Opportunity>) => void;
+  onShowToast?: (msg: string, tone?: string) => void;
 }
 
 // ─── Configs ──────────────────────────────────────────────────────────────────
@@ -317,12 +318,13 @@ function IconBtn({ icon, label, onClick, active = false, danger = false, btnRef 
 
 // ─── Opportunity Card ─────────────────────────────────────────────────────────
 
-function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onUpdateOpportunity, onAnular }: {
+function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onUpdateOpportunity, onAnular, onShowToast }: {
   opp: Opportunity; agencia?: Agencia;
   allQuotes: CotizacionGuardada[];
   onView: () => void; onEdit: () => void; onDuplicate?: () => void;
   onUpdateOpportunity: (patch: Partial<Opportunity>) => void;
   onAnular: () => void;
+  onShowToast?: (msg: string, tone?: string) => void;
 }) {
   const { user } = useAuth();
 
@@ -369,12 +371,15 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       entries.push({ fecha: now(), tipo: "nota_agregada", byUser: user?.nombre });
     if (localRec !== (opp.recordatorio?.slice(0, 10) ?? ""))
       entries.push({ fecha: now(), tipo: localRec ? "recordatorio_creado" : "estado_cambiado", detalle: localRec || "Recordatorio eliminado", byUser: user?.nombre });
+    if (localProxima.trim() !== (opp.proximaAccion ?? "").trim())
+      entries.push({ fecha: now(), tipo: "estado_cambiado", detalle: `Próxima acción: ${localProxima.trim() || "—"}`, byUser: user?.nombre });
     onUpdateOpportunity({
       proximaAccion: localProxima.trim() || undefined,
       recordatorio: localRec || undefined,
       notaInterna: localNota.trim() || undefined,
       historial: [...entries, ...(opp.historial ?? [])].slice(0, 100),
     });
+    onShowToast?.("Seguimiento guardado", "success");
   };
 
   const urgency = getOppUrgency(opp);
@@ -448,11 +453,10 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               <>
                 <span className="text-[10px] font-semibold text-slate-500">{tipoLabel}</span>
                 <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
-                  <span>👥</span>{pax} ADULTO{pax !== 1 ? "S" : ""}
-                </span>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] font-semibold text-slate-500">{ninos ?? 0} NIÑO{(ninos ?? 0) !== 1 ? "S" : ""}</span>
+                <span className="text-[10px] font-semibold text-slate-500">{pax} PERSONA{pax !== 1 ? "S" : ""}</span>
+                {(ninos ?? 0) > 0 && (
+                  <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-semibold text-slate-500">{ninos} NIÑO{(ninos ?? 1) !== 1 ? "S" : ""}</span></>
+                )}
               </>
             )}
             {opp.priorityManual && (
@@ -934,7 +938,7 @@ function FinalizadasView({ opps, agenciasMap, onOpenDetail }: {
 type TabView = "activas" | "finalizadas" | "anuladas";
 type VerPor = "urgencia" | "agencia" | "estado";
 
-export default function Seguimiento({ items, opportunities, onView, onEdit, onDelete, onDuplicate, onUpdateCRM, onUpdateOpportunity }: Props) {
+export default function Seguimiento({ items, opportunities, onView, onEdit, onDelete, onDuplicate, onUpdateCRM, onUpdateOpportunity, onShowToast }: Props) {
   const [tab, setTab] = useState<TabView>("activas");
   const [query, setQuery] = useState("");
   const [verPor, setVerPor] = useState<VerPor>("urgencia");
@@ -1143,6 +1147,7 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
                     onDuplicate={onDuplicate && latestQuote ? () => onDuplicate!(latestQuote) : undefined}
                     onUpdateOpportunity={(patch) => handleUpdateOpp(o.id, patch)}
                     onAnular={() => onAnular(o)}
+                    onShowToast={onShowToast}
                   />
                 );
               })}

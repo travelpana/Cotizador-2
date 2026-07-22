@@ -1308,6 +1308,7 @@ export default function CotizadorPage() {
                 onDuplicate={seguimientoDuplicate}
                 onUpdateCRM={seguimientoUpdateCRM}
                 onUpdateOpportunity={seguimientoUpdateOpportunity}
+                onShowToast={showToast}
               />
             </div>
           ) : view === "agencias" ? (
