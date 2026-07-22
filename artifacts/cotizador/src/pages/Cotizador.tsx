@@ -1128,7 +1128,9 @@ export default function CotizadorPage() {
     const next = [copia, ...guardadas].slice(0, 50);
     saveGuardadas(next);
     setGuardadas(next);
-    showToast(`Cotización duplicada como ${copia.numeroCotizacion}`);
+    showToast("Cotización duplicada correctamente.", "success");
+    // Abrir la nueva cotización en el editor inmediatamente
+    seguimientoEdit(copia);
   };
   const seguimientoUpdateEstado = (id: string, estado: EstadoCotizacion) => {
     const next = guardadas.map((g) =>

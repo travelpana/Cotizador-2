@@ -61,6 +61,7 @@ export type OppActividadTipo =
   | "oportunidad_creada"
   | "cotizacion_agregada"
   | "cotizacion_modificada"
+  | "cotizacion_duplicada"
   | "pdf_generado"
   | "correo_generado"
   | "prioridad_activada"

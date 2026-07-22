@@ -81,6 +81,7 @@ const HISTORIAL_CONFIG: Record<OppActividadTipo, { label: string; icon: React.Re
   oportunidad_creada:    { label: "Oportunidad creada",       icon: <TrendingUp className="w-3.5 h-3.5" />,   color: "text-blue-500"    },
   cotizacion_agregada:   { label: "Cotización agregada",      icon: <FileText className="w-3.5 h-3.5" />,     color: "text-blue-400"    },
   cotizacion_modificada: { label: "Cotización modificada",    icon: <Edit2 className="w-3.5 h-3.5" />,        color: "text-violet-500"  },
+  cotizacion_duplicada:  { label: "Cotización duplicada",     icon: <FileText className="w-3.5 h-3.5" />,     color: "text-purple-500"  },
   pdf_generado:          { label: "PDF generado",             icon: <FileText className="w-3.5 h-3.5" />,     color: "text-slate-500"   },
   correo_generado:      { label: "Correo generado",          icon: <Mail className="w-3.5 h-3.5" />,         color: "text-slate-500"   },
   prioridad_activada:   { label: "Prioridad activada",       icon: <Star className="w-3.5 h-3.5" />,         color: "text-amber-500"   },

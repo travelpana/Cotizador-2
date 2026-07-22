@@ -1,0 +1,142 @@
+```text
+Realiza únicamente los siguientes ajustes. No cambies el diseño general ni la lógica existente fuera de estos puntos.
+
+1. CORREGIR DUPLICAR COTIZACIÓN
+
+Actualmente el botón "Duplicar" no funciona.
+
+Debe crear una nueva cotización copiando absolutamente toda la información de la original:
+
+- Counter
+- Agencia
+- Agente
+- Cliente
+- Destino
+- Pasajeros
+- Fechas
+- Todos los servicios
+- Hoteles
+- Tours
+- Traslados
+- Vuelos
+- Observaciones
+- Descriptivos
+- Itinerario
+- Seguimiento
+- Notas
+- Prioridad
+
+La copia debe generar:
+
+• nuevo ID
+• nuevo código
+• nueva fecha de creación
+• estado Nueva
+
+Nunca debe sobrescribir la cotización original.
+
+Al finalizar mostrar un toast:
+
+✅ Cotización duplicada correctamente.
+
+Y abrir inmediatamente la nueva cotización.
+
+----------------------------------------------------
+
+2. UBICACIÓN DEL HISTORIAL
+
+Actualmente el icono Historial quedó debajo de la tarjeta y hace que ésta aumente de altura.
+
+Eso no debe ocurrir.
+
+Mover nuevamente el icono Historial a la barra superior de acciones.
+
+Debe quedar exactamente así:
+
+👁 Vista previa
+✏ Editar
+📄 Duplicar
+
+|
+
+🔔 Seguimiento
+⭐ Prioridad
+✔ Confirmar venta
+⭕ Marcar perdida
+🚫 Anular
+🕘 Historial
+
+Todo en una sola línea.
+
+La altura de la tarjeta nunca debe aumentar únicamente por mostrar el icono.
+
+----------------------------------------------------
+
+3. ICONOS DEL HISTORIAL
+
+Los iconos del historial actualmente casi no se aprecian.
+
+Reemplazarlos por iconos sólidos y con color según la acción.
+
+Ejemplo:
+
+✔ Venta confirmada (verde)
+
+🚫 Anulada (rojo)
+
+↩ Restaurada (azul)
+
+⭐ Prioridad activada (amarillo)
+
+⭐ Prioridad eliminada (gris)
+
+✏ Cotización modificada (azul)
+
+📄 Cotización duplicada (violeta)
+
+📅 Recordatorio (naranja)
+
+💬 Nota interna (celeste)
+
+Todos deben tener el mismo tamaño (18–20 px) y buena visibilidad.
+
+----------------------------------------------------
+
+4. POPUPS
+
+Los popups de:
+
+• Confirmar venta
+
+• Marcar perdida
+
+• Anular
+
+NO deben ocupar toda la pantalla.
+
+En lugar de un modal centrado, deben abrir un pequeño Popover contextual junto al icono sobre el que se hizo clic, similar al menú de acciones.
+
+Debe aparecer al lado del icono correspondiente con una animación suave.
+
+Ejemplo:
+
+Título
+
+¿Deseas confirmar esta venta?
+
+Cancelar | Confirmar
+
+Lo mismo para:
+
+Anular
+
+Marcar perdida
+
+Debe cerrarse automáticamente al confirmar o cancelar.
+
+No usar modales fullscreen para estas acciones.
+
+----------------------------------------------------
+
+No modificar ninguna otra funcionalidad del sistema.
+```

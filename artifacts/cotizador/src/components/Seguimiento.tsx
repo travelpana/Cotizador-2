@@ -145,6 +145,7 @@ const HIST_LABELS: Partial<Record<OppActividadTipo, string>> = {
   oportunidad_creada:    "Oportunidad creada",
   cotizacion_agregada:   "Cotización agregada",
   cotizacion_modificada: "Cotización modificada",
+  cotizacion_duplicada:  "Cotización duplicada",
   pdf_generado:          "PDF generado",
   correo_generado:       "Correo generado",
   prioridad_activada:    "Prioridad activada",
@@ -197,7 +198,7 @@ function LogoOrInitials({ agencia, initials, color, size = 36, radius }: {
   );
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────────
+// ─── Confirm Modal (used only for Duplicar) ───────────────────────────────────
 
 function ConfirmModal({ title, message, confirmLabel, danger = false, onConfirm, onCancel }: {
   title: string; message: string; confirmLabel: string;
@@ -235,16 +236,68 @@ function ConfirmModal({ title, message, confirmLabel, danger = false, onConfirm,
   );
 }
 
+// ─── Confirm Popover (contextual, anchored to a button) ───────────────────────
+
+function ConfirmPopover({ title, message, confirmLabel, danger = false, onConfirm, onCancel, anchorEl }: {
+  title: string; message: string; confirmLabel: string;
+  danger?: boolean; onConfirm: () => void; onCancel: () => void;
+  anchorEl: HTMLElement | null;
+}) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const popW = 228;
+    let left = rect.right - popW;
+    if (left < 8) left = rect.left;
+    if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+    const top = rect.bottom + 6;
+    setPos({ top, left });
+  }, [anchorEl]);
+
+  if (!pos) return null;
+
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[999]" onClick={onCancel} />
+      <div
+        className="fixed z-[1000] bg-white rounded-xl shadow-xl border border-slate-100 w-[228px] p-3.5 popover-enter"
+        style={{ top: pos.top, left: pos.left }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-[13px] font-bold text-slate-900 mb-1">{title}</div>
+        <div className="text-[12px] text-slate-500 leading-relaxed mb-3">{message}</div>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onCancel}
+            className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition-colors">
+            Cancelar
+          </button>
+          <button type="button" onClick={() => { onConfirm(); }}
+            className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-colors ${
+              danger ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+            }`}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
+
 // ─── Icon Button with tooltip ─────────────────────────────────────────────────
 
-function IconBtn({ icon, label, onClick, active = false, danger = false }: {
+function IconBtn({ icon, label, onClick, active = false, danger = false, btnRef }: {
   icon: React.ReactNode; label: string;
   onClick: (e: React.MouseEvent) => void;
   active?: boolean; danger?: boolean;
+  btnRef?: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
     <div className="relative group">
       <button
+        ref={btnRef}
         type="button"
         onClick={onClick}
         className={`h-8 w-8 flex items-center justify-center rounded-lg transition-colors ${
@@ -275,8 +328,13 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
   // Accordion
   const [expandedPanel, setExpandedPanel] = useState<"seguimiento" | "historial" | null>(null);
-  // Modal confirm
-  const [confirmAction, setConfirmAction] = useState<"duplicar" | "confirmar" | "perdida" | "anular" | null>(null);
+  // Modal confirm (duplicar only)
+  const [confirmAction, setConfirmAction] = useState<"duplicar" | null>(null);
+  // Popover confirm (confirmar / perdida / anular)
+  const [popoverAction, setPopoverAction] = useState<"confirmar" | "perdida" | "anular" | null>(null);
+  const confirmarBtnRef = useRef<HTMLButtonElement>(null);
+  const perdidaBtnRef = useRef<HTMLButtonElement>(null);
+  const anularBtnRef = useRef<HTMLButtonElement>(null);
   // Historial detail expansion (by flat sorted index)
   const [expandedHistEntries, setExpandedHistEntries] = useState<Set<number>>(new Set());
   const toggleHistEntry = (idx: number) =>
@@ -454,7 +512,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               onClick={() => setConfirmAction("duplicar")} />
           )}
           <div className="w-px h-4 bg-slate-200 mx-0.5" />
-          {/* Grupo 2: seguimiento + acciones */}
+          {/* Grupo 2: seguimiento + acciones + historial */}
           <IconBtn
             icon={<Bell className="w-4 h-4" />} label="Seguimiento"
             onClick={() => togglePanel("seguimiento")}
@@ -471,33 +529,28 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           />
           <IconBtn
             icon={<CheckCircle2 className="w-4 h-4" />} label="Confirmar venta"
-            onClick={() => setConfirmAction("confirmar")}
+            btnRef={confirmarBtnRef}
+            onClick={() => setPopoverAction(popoverAction === "confirmar" ? null : "confirmar")}
           />
           <IconBtn
             icon={<XCircle className="w-4 h-4" />} label="Marcar perdida"
-            onClick={() => setConfirmAction("perdida")}
+            btnRef={perdidaBtnRef}
+            onClick={() => setPopoverAction(popoverAction === "perdida" ? null : "perdida")}
           />
-          <div className="w-px h-4 bg-slate-200 mx-0.5" />
-          {/* Grupo 3: anular */}
           <IconBtn icon={<Ban className="w-4 h-4" />} label="Anular"
-            onClick={() => setConfirmAction("anular")}
+            btnRef={anularBtnRef}
+            onClick={() => setPopoverAction(popoverAction === "anular" ? null : "anular")}
             danger
+          />
+          <IconBtn
+            icon={<History className="w-4 h-4" />} label="Historial"
+            onClick={() => togglePanel("historial")}
+            active={expandedPanel === "historial"}
           />
         </div>
       </div>
 
-      {/* ── Historial footer trigger ──────────────────────────────────── */}
-      {(opp.historial?.length ?? 0) > 0 && (
-        <div className="px-4 pb-2 flex justify-end">
-          <button type="button" onClick={() => togglePanel("historial")}
-            className={`flex items-center gap-1 text-[10px] font-semibold transition-colors ${expandedPanel === "historial" ? "text-blue-500" : "text-slate-400 hover:text-slate-600"}`}>
-            <History className="w-3 h-3" />
-            Historial · {opp.historial!.length} evento{opp.historial!.length !== 1 ? "s" : ""}
-          </button>
-        </div>
-      )}
-
-      {/* ── Modales de confirmación ───────────────────────────────────── */}
+      {/* ── Modal de confirmación (solo Duplicar) ────────────────────── */}
       {confirmAction === "duplicar" && (
         <ConfirmModal
           title="Duplicar cotización"
@@ -507,32 +560,37 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           onCancel={() => setConfirmAction(null)}
         />
       )}
-      {confirmAction === "confirmar" && (
-        <ConfirmModal
+
+      {/* ── Popovers contextuales ─────────────────────────────────────── */}
+      {popoverAction === "confirmar" && (
+        <ConfirmPopover
           title="Confirmar venta"
-          message="Esta acción marcará la cotización como vendida."
+          message="Esta acción marcará la oportunidad como vendida."
           confirmLabel="Confirmar"
-          onConfirm={() => { handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre }); setConfirmAction(null); }}
-          onCancel={() => setConfirmAction(null)}
+          anchorEl={confirmarBtnRef.current}
+          onConfirm={() => { handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre }); setPopoverAction(null); }}
+          onCancel={() => setPopoverAction(null)}
         />
       )}
-      {confirmAction === "perdida" && (
-        <ConfirmModal
+      {popoverAction === "perdida" && (
+        <ConfirmPopover
           title="Marcar como perdida"
-          message="¿Seguro que deseas marcar esta oportunidad como perdida?"
+          message="¿Deseas marcar esta oportunidad como perdida?"
           confirmLabel="Aceptar"
-          onConfirm={() => { handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre }); setConfirmAction(null); }}
-          onCancel={() => setConfirmAction(null)}
+          anchorEl={perdidaBtnRef.current}
+          onConfirm={() => { handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre }); setPopoverAction(null); }}
+          onCancel={() => setPopoverAction(null)}
         />
       )}
-      {confirmAction === "anular" && (
-        <ConfirmModal
+      {popoverAction === "anular" && (
+        <ConfirmPopover
           title="Anular cotización"
-          message="La cotización quedará anulada, pero podrá restaurarse posteriormente."
+          message="La cotización quedará anulada, pero podrá restaurarse."
           confirmLabel="Anular"
           danger
-          onConfirm={() => { onAnular(); setConfirmAction(null); }}
-          onCancel={() => setConfirmAction(null)}
+          anchorEl={anularBtnRef.current}
+          onConfirm={() => { onAnular(); setPopoverAction(null); }}
+          onCancel={() => setPopoverAction(null)}
         />
       )}
 
@@ -655,7 +713,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                       </div>
                       {/* Timeline entries */}
                       <div className="relative pl-7">
-                        <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
+                        <div className="absolute left-2.5 top-0 bottom-0 w-px bg-slate-200" />
                         <div className="space-y-3">
                           {group.entries.map(({ entry, timeLabel }) => {
                             flatIdx++;
@@ -665,41 +723,47 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                             const isExpanded = expandedHistEntries.has(currentIdx);
                             const iconColor = (() => {
                               switch(entry.tipo) {
-                                case "venta_confirmada": case "marcada_atendida": return "#10b981";
-                                case "marcada_perdida": return "#64748b";
-                                case "anulada": return "#ef4444";
-                                case "restaurada": return "#3b82f6";
-                                case "prioridad_activada": case "prioridad_quitada": return "#f59e0b";
-                                case "cotizacion_modificada": return "#6366f1";
-                                case "nota_agregada": return "#06b6d4";
-                                case "recordatorio_creado": case "recordatorio_pospuesto": return "#8b5cf6";
+                                case "venta_confirmada": case "marcada_atendida": return "#10b981"; // verde
+                                case "marcada_perdida": return "#64748b";                           // gris oscuro
+                                case "anulada": return "#ef4444";                                   // rojo
+                                case "restaurada": return "#3b82f6";                                // azul
+                                case "prioridad_activada": return "#f59e0b";                        // amarillo
+                                case "prioridad_quitada": return "#94a3b8";                         // gris
+                                case "cotizacion_modificada": return "#3b82f6";                     // azul
+                                case "cotizacion_duplicada": return "#8b5cf6";                      // violeta
+                                case "cotizacion_agregada": return "#8b5cf6";                       // violeta
+                                case "nota_agregada": return "#06b6d4";                             // celeste
+                                case "recordatorio_creado": case "recordatorio_pospuesto": return "#f97316"; // naranja
+                                case "pdf_generado": return "#6366f1";                              // índigo
+                                case "correo_generado": return "#06b6d4";                           // celeste
                                 default: return "#94a3b8";
                               }
                             })();
                             const icon = (() => {
                               switch(entry.tipo) {
-                                case "pdf_generado": return <Eye className="w-3 h-3" />;
-                                case "correo_generado": return <MessageSquare className="w-3 h-3" />;
-                                case "cotizacion_modificada": return <Pencil className="w-3 h-3" />;
-                                case "cotizacion_agregada": return <Copy className="w-3 h-3" />;
-                                case "prioridad_activada": case "prioridad_quitada": return <Star className="w-3 h-3" />;
-                                case "nota_agregada": return <MessageSquare className="w-3 h-3" />;
-                                case "recordatorio_creado": case "recordatorio_pospuesto": return <CalendarClock className="w-3 h-3" />;
-                                case "venta_confirmada": case "marcada_atendida": return <Check className="w-3 h-3" />;
-                                case "marcada_perdida": return <XCircle className="w-3 h-3" />;
-                                case "anulada": return <Ban className="w-3 h-3" />;
-                                case "restaurada": return <RotateCcw className="w-3 h-3" />;
-                                default: return <Clock className="w-3 h-3" />;
+                                case "pdf_generado": return <Eye className="w-3.5 h-3.5" />;
+                                case "correo_generado": return <MessageSquare className="w-3.5 h-3.5" />;
+                                case "cotizacion_modificada": return <Pencil className="w-3.5 h-3.5" />;
+                                case "cotizacion_agregada": case "cotizacion_duplicada": return <Copy className="w-3.5 h-3.5" />;
+                                case "prioridad_activada": return <Star className="w-3.5 h-3.5 fill-current" />;
+                                case "prioridad_quitada": return <Star className="w-3.5 h-3.5" />;
+                                case "nota_agregada": return <MessageSquare className="w-3.5 h-3.5" />;
+                                case "recordatorio_creado": case "recordatorio_pospuesto": return <CalendarClock className="w-3.5 h-3.5" />;
+                                case "venta_confirmada": case "marcada_atendida": return <Check className="w-3.5 h-3.5" />;
+                                case "marcada_perdida": return <XCircle className="w-3.5 h-3.5" />;
+                                case "anulada": return <Ban className="w-3.5 h-3.5" />;
+                                case "restaurada": return <RotateCcw className="w-3.5 h-3.5" />;
+                                default: return <Clock className="w-3.5 h-3.5" />;
                               }
                             })();
                             return (
                               <div key={currentIdx} className="flex items-start gap-2.5">
-                                {/* Icon dot */}
-                                <div className="absolute left-1.5 w-3 h-3 rounded-full border-2 border-white flex items-center justify-center shrink-0" style={{ background: iconColor, marginTop: 2 }}>
-                                </div>
-                                {/* Icon (overlay on dot) */}
-                                <div className="absolute left-1 w-4 h-4 flex items-center justify-center shrink-0 text-white" style={{ marginTop: 1 }}>
-                                  <span style={{ color: "white", transform: "scale(0.65)" }}>{icon}</span>
+                                {/* Icon — solid colored circle, clearly visible */}
+                                <div
+                                  className="absolute left-0 w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white"
+                                  style={{ background: iconColor, marginTop: 1 }}
+                                >
+                                  {icon}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-[12px] font-semibold" style={{ color: "#1F2937" }}>{label}</div>
