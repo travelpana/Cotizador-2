@@ -124,6 +124,11 @@ export const apiAuth = {
     export: () => apiAuth.get<unknown>("/backup/export"),
     import: (data: unknown) => apiAuth.post<{ ok: boolean; importedAt: string }>("/backup/import", data),
   },
+
+  // ── Users ────────────────────────────────────────────────────────────────────
+  users: {
+    list: () => apiAuth.get<{ id: number; nombre: string; username: string | null }[]>("/auth/users"),
+  },
 };
 
 // ─── API types (flattened to match DB row structure) ─────────────────────────

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db, usuariosTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "../lib/auth-middleware";
 
 export const JWT_SECRET = process.env.SESSION_SECRET ?? "rge-jwt-secret-dev-2025";
 const JWT_EXPIRES = "30d";
@@ -52,6 +53,19 @@ router.post("/auth/login", async (req, res) => {
   } catch (err) {
     console.error("[AUTH] Error interno:", err);
     return res.status(500).json({ error: "Error al iniciar sesión", motivo: "error interno" });
+  }
+});
+
+router.get("/auth/users", requireAuth, async (_req, res) => {
+  try {
+    const users = await db
+      .select({ id: usuariosTable.id, nombre: usuariosTable.nombre, username: usuariosTable.username })
+      .from(usuariosTable)
+      .where(eq(usuariosTable.activo, true));
+    return res.json(users);
+  } catch (err) {
+    console.error("[AUTH] Error listando usuarios:", err);
+    return res.status(500).json({ error: "Error al obtener usuarios" });
   }
 });
 

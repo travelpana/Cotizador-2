@@ -38,6 +38,7 @@ import { loadAgenciasAsync, buildAgenciasMap, normAgencia, mergeAgenciasDuplicad
 import OportunidadDetailPanel from "./OportunidadDetailPanel";
 import type { OppActividadTipo } from "./Guardadas";
 import { useAuth } from "@/lib/auth";
+import { apiAuth } from "@/lib/api-auth";
 
 interface Props {
   items: CotizacionGuardada[];
@@ -55,10 +56,11 @@ interface Props {
 
 const ESTADO_OPP_OPTIONS: { value: EstadoOportunidad; label: string }[] = [
   { value: "nueva",      label: "Nueva"      },
-  { value: "enviada",    label: "Enviada"    },
+  { value: "enviada",    label: "Cotizada"   },
   { value: "seguimiento",label: "Seguimiento"},
   { value: "confirmada", label: "Confirmada" },
   { value: "perdida",    label: "Perdida"    },
+  { value: "anulada",    label: "Anulada"    },
 ];
 
 const ESTADO_OPP_STYLES: Record<EstadoOportunidad, { bg: string; text: string; ring: string; dot: string }> = {
@@ -151,7 +153,7 @@ const HIST_LABELS: Partial<Record<OppActividadTipo, string>> = {
   correo_generado:       "Correo generado",
   prioridad_activada:    "Prioridad activada",
   prioridad_quitada:     "Prioridad quitada",
-  nota_agregada:         "Nota interna guardada",
+  nota_agregada:         "Observación interna guardada",
   recordatorio_creado:   "Recordatorio creado",
   recordatorio_pospuesto:"Recordatorio pospuesto",
   marcada_atendida:      "Marcada como atendida",
@@ -160,7 +162,20 @@ const HIST_LABELS: Partial<Record<OppActividadTipo, string>> = {
   marcada_perdida:       "Marcada como perdida",
   anulada:               "Anulada",
   restaurada:            "Restaurada",
+  accion_realizada:      "Acción realizada",
+  pospuesto:             "Pospuesto",
 };
+
+const ACCIONES_RAPIDAS = [
+  "WhatsApp enviado",
+  "Correo enviado",
+  "Llamada realizada",
+  "Cliente respondió",
+  "Cliente interesado",
+  "Esperando decisión",
+  "Esperando pago",
+  "Otro",
+] as const;
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
@@ -343,13 +358,19 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
     setExpandedHistEntries((prev) => { const s = new Set(prev); s.has(idx) ? s.delete(idx) : s.add(idx); return s; });
 
   // Seguimiento form state (synced when panel opens)
-  const [localProxima, setLocalProxima] = useState(opp.proximaAccion ?? "");
+  const [localAccion, setLocalAccion] = useState("");
+  const [localOtro, setLocalOtro] = useState("");
+  const [localPosponer, setLocalPosponer] = useState("");
+  const [localMotivo, setLocalMotivo] = useState("");
   const [localRec, setLocalRec] = useState(opp.recordatorio?.slice(0, 10) ?? "");
   const [localNota, setLocalNota] = useState(opp.notaInterna ?? "");
 
   const togglePanel = (panel: "seguimiento" | "historial") => {
     if (expandedPanel !== panel) {
-      setLocalProxima(opp.proximaAccion ?? "");
+      setLocalAccion("");
+      setLocalOtro("");
+      setLocalPosponer("");
+      setLocalMotivo("");
       setLocalRec(opp.recordatorio?.slice(0, 10) ?? "");
       setLocalNota(opp.notaInterna ?? "");
     }
@@ -367,19 +388,37 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
   const handleSeguimientoSave = () => {
     const entries: OppHistorialEntry[] = [];
-    if (localNota.trim() !== (opp.notaInterna ?? "").trim())
-      entries.push({ fecha: now(), tipo: "nota_agregada", byUser: user?.nombre });
-    if (localRec !== (opp.recordatorio?.slice(0, 10) ?? ""))
+
+    // Acción realizada
+    const accionFinal = localAccion === "Otro" ? localOtro.trim() : localAccion;
+    if (accionFinal) {
+      entries.push({ fecha: now(), tipo: "accion_realizada", detalle: accionFinal, byUser: user?.nombre });
+    }
+
+    // Posposición (overrides recordatorio)
+    if (localPosponer) {
+      entries.push({
+        fecha: now(), tipo: "pospuesto",
+        detalle: localMotivo.trim() ? `${localPosponer} · ${localMotivo.trim()}` : localPosponer,
+        byUser: user?.nombre,
+      });
+    } else if (localRec !== (opp.recordatorio?.slice(0, 10) ?? "")) {
+      // Recordatorio normal (solo si no hay posponer)
       entries.push({ fecha: now(), tipo: localRec ? "recordatorio_creado" : "estado_cambiado", detalle: localRec || "Recordatorio eliminado", byUser: user?.nombre });
-    if (localProxima.trim() !== (opp.proximaAccion ?? "").trim())
-      entries.push({ fecha: now(), tipo: "estado_cambiado", detalle: `Próxima acción: ${localProxima.trim() || "—"}`, byUser: user?.nombre });
+    }
+
+    // Observación interna
+    if (localNota.trim() !== (opp.notaInterna ?? "").trim()) {
+      entries.push({ fecha: now(), tipo: "nota_agregada", byUser: user?.nombre });
+    }
+
     onUpdateOpportunity({
-      proximaAccion: localProxima.trim() || undefined,
-      recordatorio: localRec || undefined,
+      recordatorio: localPosponer || localRec || undefined,
       notaInterna: localNota.trim() || undefined,
       historial: [...entries, ...(opp.historial ?? [])].slice(0, 100),
     });
     onShowToast?.("Seguimiento guardado", "success");
+    setExpandedPanel(null);
   };
 
   const urgency = getOppUrgency(opp);
@@ -620,82 +659,127 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       {/* ── Seguimiento accordion ─────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateRows: expandedPanel === "seguimiento" ? "1fr" : "0fr", transition: "grid-template-rows 220ms ease" }}>
         <div className="overflow-hidden">
-          <div className="border-t border-slate-100 px-4 pt-4 pb-3 bg-slate-50/60">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="border-t border-slate-100 px-4 pt-4 pb-3 bg-slate-50/60 space-y-4">
 
-              {/* Col 1: Próxima acción */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Próxima acción</label>
-                <input
-                  type="text"
-                  value={localProxima}
-                  onChange={(e) => setLocalProxima(e.target.value)}
-                  placeholder="Ej: Llamar al cliente…"
-                  className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
-                  style={{ color: "#1F2937" }}
-                />
-                <div className="flex gap-2">
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(localProxima || opp.proximaAccion || "")}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors"
-                  >
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    WhatsApp
-                  </a>
-                  <a
-                    href={`mailto:?body=${encodeURIComponent(localProxima || opp.proximaAccion || "")}`}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                  >
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                    Correo
-                  </a>
-                </div>
-              </div>
+            {/* Row 1: Acción realizada + Recordatorio / Posponer */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-              {/* Col 2: Recordatorio */}
+              {/* Col 1: Acción realizada */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Recordatorio</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {[{ label: "Hoy", days: 0 }, { label: "Mañana", days: 1 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
-                    const target = addDays(days);
-                    const isActive = localRec === target;
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Acción realizada</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {ACCIONES_RAPIDAS.map((accion) => {
+                    const isActive = localAccion === accion;
                     return (
-                      <button key={days} type="button"
-                        onClick={() => setLocalRec(isActive ? "" : target)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white ring-slate-200 hover:bg-slate-100"}`}
-                        style={{ color: isActive ? undefined : "#1F2937" }}>
-                        {label}
+                      <button key={accion} type="button"
+                        onClick={() => { setLocalAccion(isActive ? "" : accion); if (isActive) setLocalOtro(""); }}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ring-1 text-left ${
+                          isActive ? "bg-blue-50 text-blue-700 ring-blue-300" : "bg-white ring-slate-200 hover:bg-slate-50"
+                        }`}
+                        style={{ color: isActive ? undefined : "#374151" }}>
+                        {accion}
                       </button>
                     );
                   })}
                 </div>
-                <input
-                  type="date"
-                  value={localRec}
-                  onChange={(e) => setLocalRec(e.target.value)}
-                  className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
-                  style={{ color: "#1F2937" }}
-                />
+                {localAccion === "Otro" && (
+                  <input
+                    type="text"
+                    value={localOtro}
+                    onChange={(e) => setLocalOtro(e.target.value)}
+                    placeholder="Describe la acción…"
+                    className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
+                    style={{ color: "#1F2937" }}
+                    autoFocus
+                  />
+                )}
               </div>
 
-              {/* Col 3: Nota interna */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Nota interna</label>
-                <textarea
-                  value={localNota}
-                  onChange={(e) => setLocalNota(e.target.value)}
-                  placeholder="Ej: Cliente interesado en habitación superior…"
-                  rows={4}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 resize-none"
-                  style={{ color: "#1F2937" }}
-                />
-              </div>
+              {/* Col 2: Recordatorio + Posponer */}
+              <div className="flex flex-col gap-3">
 
+                {/* Recordatorio */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Recordatorio</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[{ label: "Hoy", days: 0 }, { label: "Mañana", days: 1 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
+                      const target = addDays(days);
+                      const isActive = localRec === target && !localPosponer;
+                      return (
+                        <button key={days} type="button"
+                          onClick={() => { setLocalRec(isActive ? "" : target); setLocalPosponer(""); setLocalMotivo(""); }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white ring-slate-200 hover:bg-slate-100"}`}
+                          style={{ color: isActive ? undefined : "#1F2937" }}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="date"
+                    value={localPosponer ? "" : localRec}
+                    onChange={(e) => { setLocalRec(e.target.value); setLocalPosponer(""); setLocalMotivo(""); }}
+                    className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
+                    style={{ color: "#1F2937" }}
+                  />
+                </div>
+
+                {/* Posponer */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1">
+                    <CalendarClock className="w-3 h-3" />Posponer
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[{ label: "1 día", days: 1 }, { label: "2 días", days: 2 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
+                      const target = addDays(days);
+                      const isActive = localPosponer === target;
+                      return (
+                        <button key={days} type="button"
+                          onClick={() => { setLocalPosponer(isActive ? "" : target); if (!isActive) { setLocalRec(""); } else { setLocalMotivo(""); } }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-amber-50 text-amber-700 ring-amber-300" : "bg-white ring-slate-200 hover:bg-slate-100"}`}
+                          style={{ color: isActive ? undefined : "#1F2937" }}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="date"
+                    value={localPosponer}
+                    onChange={(e) => { setLocalPosponer(e.target.value); if (e.target.value) setLocalRec(""); else setLocalMotivo(""); }}
+                    className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 w-full"
+                    style={{ color: "#1F2937" }}
+                  />
+                  {localPosponer && (
+                    <input
+                      type="text"
+                      value={localMotivo}
+                      onChange={(e) => setLocalMotivo(e.target.value)}
+                      placeholder="Motivo de la posposición…"
+                      className="h-8 px-3 rounded-xl border border-amber-200 text-sm bg-amber-50/40 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 w-full"
+                      style={{ color: "#1F2937" }}
+                    />
+                  )}
+                </div>
+
+              </div>
             </div>
 
-            {/* Guardar — alineado abajo a la derecha */}
-            <div className="flex justify-end mt-3">
+            {/* Row 2: Observación interna (compacta) */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Observación interna</label>
+              <textarea
+                value={localNota}
+                onChange={(e) => setLocalNota(e.target.value)}
+                placeholder="Notas internas sobre esta oportunidad…"
+                rows={2}
+                className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 resize-none w-full"
+                style={{ color: "#1F2937" }}
+              />
+            </div>
+
+            {/* Guardar */}
+            <div className="flex justify-end">
               <button type="button" onClick={handleSeguimientoSave}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-semibold transition-colors">
                 <Save className="w-3.5 h-3.5" />Guardar
@@ -951,14 +1035,15 @@ function FinalizadasView({ opps, agenciasMap, onOpenDetail }: {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 type TabView = "activas" | "finalizadas" | "anuladas";
-type VerPor = "urgencia" | "agencia" | "estado";
 
 export default function Seguimiento({ items, opportunities, onView, onEdit, onDelete, onDuplicate, onUpdateCRM, onUpdateOpportunity, onShowToast }: Props) {
   const [tab, setTab] = useState<TabView>("activas");
   const [query, setQuery] = useState("");
-  const [verPor, setVerPor] = useState<VerPor>("urgencia");
   const [filterEstado, setFilterEstado] = useState<EstadoOportunidad | "todas">("todas");
+  const [filterPrioridad, setFilterPrioridad] = useState<"todas" | "alta" | "media" | "baja" | "sin_prioridad">("todas");
+  const [filterCounter, setFilterCounter] = useState("todos");
   const [agencias, setAgencias] = useState<Agencia[]>([]);
+  const [users, setUsers] = useState<{ id: number; nombre: string; username: string | null }[]>([]);
   const [openOppId, setOpenOppId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -966,6 +1051,10 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
       setAgencias(list);
       mergeAgenciasDuplicadas().then(() => loadAgenciasAsync().then(setAgencias));
     });
+  }, []);
+
+  useEffect(() => {
+    apiAuth.users.list().then(setUsers).catch(() => {/* silent – counter filter just won't have options */});
   }, []);
 
   const agenciasMap = useMemo(() => buildAgenciasMap(agencias), [agencias]);
@@ -1013,6 +1102,20 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
     if (filterEstado !== "todas") {
       filtered = filtered.filter((o) => o.status === filterEstado);
     }
+    if (filterPrioridad !== "todas") {
+      filtered = filtered.filter((o) => {
+        if (filterPrioridad === "alta") return o.priorityManual || o.prioridad === "alta";
+        if (filterPrioridad === "media") return !o.priorityManual && o.prioridad === "media";
+        if (filterPrioridad === "baja") return !o.priorityManual && o.prioridad === "baja";
+        if (filterPrioridad === "sin_prioridad") return !o.priorityManual && !o.prioridad;
+        return true;
+      });
+    }
+    if (filterCounter !== "todos") {
+      filtered = filtered.filter((o) =>
+        (o.counterName ?? "").trim().toLowerCase() === filterCounter.trim().toLowerCase()
+      );
+    }
 
     return [...filtered].sort((a, b) => {
       const skA = oppSortKey(a);
@@ -1020,7 +1123,7 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
       if (skA !== skB) return skA - skB;
       return new Date(a.lastUpdateAt).getTime() - new Date(b.lastUpdateAt).getTime();
     });
-  }, [activeOpps, query, filterEstado, verPor]);
+  }, [activeOpps, query, filterEstado, filterPrioridad, filterCounter]);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
@@ -1104,17 +1207,8 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
 
           {/* ── Filter bar ───────────────────────────────────────────────────── */}
           <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-500 shrink-0">Ver por:</span>
-              {([ ["urgencia", "Urgencia"], ["agencia", "Agencia"], ["estado", "Estado"] ] as [VerPor, string][]).map(([v, label]) => (
-                <button key={v} type="button" onClick={() => setVerPor(v)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${verPor === v ? "text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`} style={verPor === v ? { background: "#004FBB" } : {}}>
-                  {label}
-                </button>
-              ))}
-            </div>
 
-            <div className="w-px h-5 bg-slate-200 hidden sm:block" />
-
+            {/* Estado */}
             <div className="relative">
               <select value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as EstadoOportunidad | "todas")} className={selectCls} style={{ minWidth: 130 }}>
                 <option value="todas">Estado: Todos</option>
@@ -1123,6 +1217,28 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
               <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
+            {/* Prioridad */}
+            <div className="relative">
+              <select value={filterPrioridad} onChange={(e) => setFilterPrioridad(e.target.value as typeof filterPrioridad)} className={selectCls} style={{ minWidth: 148 }}>
+                <option value="todas">Prioridad: Todas</option>
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+                <option value="sin_prioridad">Sin prioridad</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Counter */}
+            <div className="relative">
+              <select value={filterCounter} onChange={(e) => setFilterCounter(e.target.value)} className={selectCls} style={{ minWidth: 148 }}>
+                <option value="todos">Counter: Todos</option>
+                {users.map((u) => <option key={u.id} value={u.nombre}>{u.nombre}</option>)}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Buscador */}
             <div className="flex-1 min-w-[160px] relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar oportunidades…" className="w-full h-9 pl-9 pr-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400" />

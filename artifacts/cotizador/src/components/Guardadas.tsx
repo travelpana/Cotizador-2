@@ -74,7 +74,9 @@ export type OppActividadTipo =
   | "venta_confirmada"
   | "marcada_perdida"
   | "anulada"
-  | "restaurada";
+  | "restaurada"
+  | "accion_realizada"
+  | "pospuesto";
 
 export interface OppHistorialEntry {
   fecha: string;
@@ -420,6 +422,8 @@ export interface Opportunity {
   quoteName: string;
   destination: string;
   status: EstadoOportunidad;
+  /** Explicit priority level; "alta" aligns with priorityManual=true */
+  prioridad?: "alta" | "media" | "baja";
   priorityManual: boolean;
   lastUpdateAt: string;
   createdAt: string;

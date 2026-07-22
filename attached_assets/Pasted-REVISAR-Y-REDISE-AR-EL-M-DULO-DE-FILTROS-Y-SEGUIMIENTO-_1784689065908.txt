@@ -1,0 +1,183 @@
+REVISAR Y REDISEÑAR EL MÓDULO DE FILTROS Y SEGUIMIENTO PARA MEJORAR EL FLUJO DE TRABAJO DEL COUNTER.
+
+========================================
+1. FILTROS SUPERIORES
+========================================
+
+Actualmente existen:
+
+- Urgencia
+- Agencia
+- Estado
+
+Problemas detectados:
+
+- "Urgencia" y "Prioridad" representan prácticamente el mismo concepto.
+- "Agencia" no aporta valor operativo en el flujo diario.
+- Falta un filtro por Counter/Asesor.
+- La organización actual no ayuda a gestionar las oportunidades.
+
+Nuevo diseño:
+
+Filtrar por:
+
+[Estado]
+[Prioridad]
+[Counter]
+
+ESTADO:
+- Nueva
+- Seguimiento
+- Cotizada
+- Confirmada
+- Perdida
+- Anulada
+
+PRIORIDAD:
+- Alta
+- Media
+- Baja
+- Sin prioridad
+
+COUNTER:
+- Todos
+- Lista de usuarios registrados en el sistema
+
+El filtro Counter debe permitir visualizar únicamente las oportunidades asignadas a un usuario específico.
+
+Mantener el buscador actual.
+
+========================================
+2. PANEL DE SEGUIMIENTO (CAMPANITA)
+========================================
+
+Al hacer clic en la campanita se despliega el panel de seguimiento.
+
+Problemas actuales:
+
+- El panel permanece abierto después de guardar.
+- El campo "Próxima acción" aporta poco valor.
+- Falta una forma estructurada de registrar seguimientos.
+
+Rediseñar el módulo.
+
+========================================
+3. NUEVA ESTRUCTURA DEL SEGUIMIENTO
+========================================
+
+Reemplazar "Próxima acción" por:
+
+ACCIÓN REALIZADA
+
+Opciones rápidas:
+
+- WhatsApp enviado
+- Correo enviado
+- Llamada realizada
+- Cliente respondió
+- Cliente interesado
+- Esperando decisión
+- Esperando pago
+- Otro
+
+La acción seleccionada debe guardarse en el historial.
+
+========================================
+4. RECORDATORIOS
+========================================
+
+Mantener la sección de recordatorios.
+
+Opciones rápidas:
+
+- Hoy
+- Mañana
+- 3 días
+- 1 semana
+- Personalizado
+
+Debe permitir seleccionar fecha manual.
+
+========================================
+5. POSPONER
+========================================
+
+Agregar nueva sección:
+
+POSPONER
+
+Opciones:
+
+- 1 día
+- 2 días
+- 3 días
+- 1 semana
+- Personalizado
+
+Al seleccionar una opción debe solicitar:
+
+Motivo de la posposición
+
+Ejemplos:
+
+- Cliente de viaje
+- Esperando aprobación
+- Esperando presupuesto
+- Solicita seguimiento posterior
+
+La razón debe guardarse en el historial.
+
+========================================
+6. OBSERVACIONES INTERNAS
+========================================
+
+Renombrar:
+
+"Nota Interna"
+
+por
+
+"Observación Interna"
+
+Mantenerla opcional.
+
+Reducir el tamaño visual para que no ocupe tanto espacio.
+
+========================================
+7. GUARDADO
+========================================
+
+Al guardar seguimiento:
+
+1. Guardar información.
+2. Actualizar historial.
+3. Mostrar mensaje de éxito.
+4. Cerrar automáticamente el panel de seguimiento.
+5. Regresar la tarjeta a su estado normal.
+
+No dejar el panel expandido después de guardar.
+
+========================================
+8. HISTORIAL
+========================================
+
+Cada seguimiento debe registrar:
+
+- Usuario que realizó la acción.
+- Fecha y hora.
+- Acción realizada.
+- Recordatorio programado.
+- Posposición aplicada.
+- Motivo de posposición.
+- Observaciones internas.
+
+Mostrar la información de forma clara y cronológica.
+
+========================================
+IMPORTANTE
+========================================
+
+- Mantener el diseño general del CRM.
+- No modificar funcionalidades no relacionadas.
+- Reutilizar componentes existentes cuando sea posible.
+- Priorizar facilidad de uso para counters y seguimiento comercial.

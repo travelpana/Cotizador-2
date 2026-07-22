@@ -95,6 +95,8 @@ const HISTORIAL_CONFIG: Record<OppActividadTipo, { label: string; icon: React.Re
   marcada_perdida:      { label: "Marcada como perdida",     icon: <XCircle className="w-3.5 h-3.5" />,      color: "text-slate-400"   },
   anulada:              { label: "Anulada",                  icon: <Ban className="w-3.5 h-3.5" />,          color: "text-red-400"     },
   restaurada:           { label: "Restaurada",               icon: <RotateCcw className="w-3.5 h-3.5" />,    color: "text-blue-400"    },
+  accion_realizada:     { label: "Acción realizada",         icon: <Check className="w-3.5 h-3.5" />,        color: "text-blue-500"    },
+  pospuesto:            { label: "Pospuesto",                icon: <AlarmClock className="w-3.5 h-3.5" />,   color: "text-amber-500"   },
 };
 
 // ─── Seguimiento Tab ──────────────────────────────────────────────────────────
