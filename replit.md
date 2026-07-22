@@ -55,7 +55,9 @@ _Populate as you build_
 - `pnpm --filter @workspace/db run push` — run once to create DB tables on a fresh environment (uses `DATABASE_URL` secret)
 - Seed users (admin, jonathan, johanna, …) are auto-created by the server on first start after the schema is pushed
 - DB schema was pushed on 2026-07-22; seed users (admin, jonathan, johanna, melisa, gabriela, ruth, yeni, annie, maria, jose) confirmed created
-- `.replit` modules restored to include `python-3.11` and `postgresql-16` (stripped by GitHub import; required for Replit PostgreSQL provisioning)
+- `.replit` modules include `python-3.11` and `postgresql-16` — required for Replit PostgreSQL provisioning (do not remove)
+- `DATABASE_URL` secret is provisioned via Replit PostgreSQL (set automatically)
+- `SESSION_SECRET` secret must be set for JWT session signing
 
 ## Gotchas
 
