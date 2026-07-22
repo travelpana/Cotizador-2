@@ -139,6 +139,8 @@ export interface CotizacionGuardada {
   opportunityId?: string;
   /** Presentation mode: detailed shows all prices, package hides individual prices */
   presentationMode?: PresentationMode;
+  /** Quoting mode: individual (default) or grupo */
+  quotingMode?: QuotingMode;
   /** Hotel options for Paquete mode — each option has its own hotels, shared services remain common */
   opcionesPaquete?: Array<{ id: string; nombre: string }>;
 }

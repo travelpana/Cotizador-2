@@ -774,6 +774,7 @@ export default function CotizadorPage() {
               ultimoSeguimiento: now,
               historial: [...(g.historial ?? []), { fecha: now, tipo: "editada" as const, byUser: user?.nombre }],
               presentationMode,
+              quotingMode,
               opcionesPaquete: opcionesPaquete.length > 1 ? [...opcionesPaquete] : undefined,
             }
           : g,
@@ -851,6 +852,7 @@ export default function CotizadorPage() {
         ultimoSeguimiento: now,
         historial: [{ fecha: now, tipo: "creada", byUser: user?.nombre }],
         presentationMode,
+        quotingMode,
         opcionesPaquete: opcionesPaquete.length > 1 ? [...opcionesPaquete] : undefined,
       };
       const item = { ...base, estadoCRM: computeAutoEstado(base) };

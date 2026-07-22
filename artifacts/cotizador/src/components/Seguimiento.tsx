@@ -388,6 +388,11 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const pax = latestQ?.cliente?.pasajeros;
   const ninos = latestQ?.cliente?.ninos;
   const uniqueAcoms = Array.from(new Set(latestQ?.acomodaciones ?? []));
+  const tipoLabel = latestQ?.quotingMode === "grupo"
+    ? "GRUPOS"
+    : latestQ?.presentationMode === "package"
+      ? "PAQUETE"
+      : "TARIFAS";
 
   const lastUpdateFormatted = opp.lastUpdateAt
     ? new Date(opp.lastUpdateAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()
@@ -439,16 +444,16 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             <div className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 tracking-wide">{opp.agencyName}</div>
           )}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
-            {pax != null && pax > 0 && (
-              <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
-                <span>👥</span>{pax} ADULTO{pax !== 1 ? "S" : ""}
-              </span>
-            )}
-            {ninos != null && ninos > 0 && (
-              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-semibold text-slate-500">{ninos} NIÑO{ninos !== 1 ? "S" : ""}</span></>
-            )}
-            {uniqueAcoms.length > 0 && (
-              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-semibold text-slate-500">{uniqueAcoms.join("/")}</span></>
+            {pax != null && (
+              <>
+                <span className="text-[10px] font-semibold text-slate-500">{tipoLabel}</span>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
+                  <span>👥</span>{pax} ADULTO{pax !== 1 ? "S" : ""}
+                </span>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <span className="text-[10px] font-semibold text-slate-500">{ninos ?? 0} NIÑO{(ninos ?? 0) !== 1 ? "S" : ""}</span>
+              </>
             )}
             {opp.priorityManual && (
               <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD</span></>
