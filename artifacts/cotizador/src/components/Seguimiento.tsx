@@ -526,19 +526,18 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           <IconBtn
             icon={<Star className={`w-4 h-4 ${opp.priorityManual ? "fill-amber-400 text-amber-500" : ""}`} />}
             label={opp.priorityManual ? "Quitar prioridad" : "Marcar prioridad"}
-            active={opp.priorityManual}
             onClick={() => {
               const tipo: OppHistorialEntry["tipo"] = opp.priorityManual ? "prioridad_quitada" : "prioridad_activada";
               onUpdateOpportunity({ priorityManual: !opp.priorityManual, historial: addHistorial(tipo) });
             }}
           />
           <IconBtn
-            icon={<CheckCircle2 className="w-4 h-4" />} label="Confirmar venta"
+            icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} label="Confirmar venta"
             btnRef={confirmarBtnRef}
             onClick={() => setPopoverAction(popoverAction === "confirmar" ? null : "confirmar")}
           />
           <IconBtn
-            icon={<XCircle className="w-4 h-4" />} label="Marcar perdida"
+            icon={<XCircle className="w-4 h-4 text-red-500" />} label="Marcar perdida"
             btnRef={perdidaBtnRef}
             onClick={() => setPopoverAction(popoverAction === "perdida" ? null : "perdida")}
           />
