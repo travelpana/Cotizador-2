@@ -346,12 +346,13 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   // Accordion
   const [expandedPanel, setExpandedPanel] = useState<"seguimiento" | "historial" | null>(null);
   // Modal confirm (duplicar only)
-  const [confirmAction, setConfirmAction] = useState<"duplicar" | null>(null);
+
   // Popover confirm (confirmar / perdida / anular)
-  const [popoverAction, setPopoverAction] = useState<"confirmar" | "perdida" | "anular" | null>(null);
+  const [popoverAction, setPopoverAction] = useState<"confirmar" | "perdida" | "anular" | "duplicar" | null>(null);
   const confirmarBtnRef = useRef<HTMLButtonElement>(null);
   const perdidaBtnRef = useRef<HTMLButtonElement>(null);
   const anularBtnRef = useRef<HTMLButtonElement>(null);
+  const duplicarBtnRef = useRef<HTMLButtonElement>(null);
   // Historial detail expansion (by flat sorted index)
   const [expandedHistEntries, setExpandedHistEntries] = useState<Set<number>>(new Set());
   const toggleHistEntry = (idx: number) =>
@@ -490,7 +491,11 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
             {pax != null && (
               <>
-                <span className="text-[10px] font-semibold text-slate-500">{tipoLabel}</span>
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
+                  tipoLabel === "GRUPOS" ? "bg-teal-50 text-teal-700" :
+                  tipoLabel === "PAQUETE" ? "bg-violet-50 text-violet-700" :
+                  "bg-blue-50 text-blue-700"
+                }`}>{tipoLabel}</span>
                 <span className="text-slate-300 text-[10px]">•</span>
                 <span className="text-[10px] font-semibold text-slate-500">{pax} PERSONA{pax !== 1 ? "S" : ""}</span>
                 {(ninos ?? 0) > 0 && (
@@ -558,7 +563,8 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
             {onDuplicate && (
               <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar"
-                onClick={() => setConfirmAction("duplicar")} />
+                btnRef={duplicarBtnRef}
+                onClick={() => setPopoverAction(popoverAction === "duplicar" ? null : "duplicar")} />
             )}
           </div>
 
@@ -612,14 +618,15 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         </div>
       </div>
 
-      {/* ── Modal de confirmación (solo Duplicar) ────────────────────── */}
-      {confirmAction === "duplicar" && (
-        <ConfirmModal
+      {/* ── Popover de confirmación (Duplicar) ───────────────────────── */}
+      {popoverAction === "duplicar" && (
+        <ConfirmPopover
           title="Duplicar cotización"
           message="¿Deseas crear una copia exacta de esta cotización?"
           confirmLabel="Duplicar"
-          onConfirm={() => { onDuplicate!(); setConfirmAction(null); }}
-          onCancel={() => setConfirmAction(null)}
+          anchorEl={duplicarBtnRef.current}
+          onConfirm={() => { onDuplicate!(); setPopoverAction(null); }}
+          onCancel={() => setPopoverAction(null)}
         />
       )}
 
@@ -666,7 +673,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
               {/* Col 1: Acción realizada */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Acción realizada</label>
+                <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Acción realizada</label>
                 <div className="grid grid-cols-2 gap-1.5">
                   {ACCIONES_RAPIDAS.map((accion) => {
                     const isActive = localAccion === accion;
@@ -700,7 +707,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
                 {/* Recordatorio */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Recordatorio</label>
+                  <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Recordatorio</label>
                   <div className="flex flex-wrap gap-1.5">
                     {[{ label: "Hoy", days: 0 }, { label: "Mañana", days: 1 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
                       const target = addDays(days);
@@ -726,7 +733,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
                 {/* Posponer */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1">
+                  <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-1">
                     <CalendarClock className="w-3 h-3" />Posponer
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -763,19 +770,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                 </div>
 
               </div>
-            </div>
-
-            {/* Row 2: Observación interna (compacta) */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Observación interna</label>
-              <textarea
-                value={localNota}
-                onChange={(e) => setLocalNota(e.target.value)}
-                placeholder="Notas internas sobre esta oportunidad…"
-                rows={2}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 resize-none w-full"
-                style={{ color: "#1F2937" }}
-              />
             </div>
 
             {/* Guardar */}
@@ -1152,7 +1146,7 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
     }
   };
 
-  const inputCls = "h-9 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
+  const inputCls = "h-9 px-3 rounded-xl border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400";
   const selectCls = `${inputCls} pr-8 appearance-none`;
 
   return (

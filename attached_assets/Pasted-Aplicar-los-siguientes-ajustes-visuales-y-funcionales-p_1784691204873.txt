@@ -1,0 +1,124 @@
+Aplicar los siguientes ajustes visuales y funcionales para mejorar la legibilidad y consistencia del CRM.
+
+========================================
+1. TIPO DE COTIZACIÓN
+========================================
+
+Actualmente se muestra:
+
+TARIFAS
+GRUPOS
+PAQUETE
+
+Dar mayor protagonismo visual.
+
+Requerimientos:
+
+- utilizar la paleta principal del sistema manteniendo consistencia visual un color distintivo según el tipo:
+  - TARIFAS
+  - GRUPOS 
+  - PAQUETE
+
+- Mantener texto en mayúsculas.
+- Aplicar semibold.
+- Debe ser el primer dato que destaque después del nombre.
+
+========================================
+2. TÍTULOS DEL PANEL DE SEGUIMIENTO
+========================================
+
+Actualmente los títulos tienen muy poco contraste y casi no se distinguen.
+
+Mejorar visualmente:
+
+- ACCIÓN REALIZADA
+- RECORDATORIO
+- POSPONER
+
+Utilizar:
+
+- Color más oscuro o color principal del sistema.
+- Font-weight semibold.
+- Mejor contraste visual.
+- Mantener consistencia con el resto de la interfaz.
+
+Objetivo:
+Que puedan identificarse rápidamente sin esfuerzo.
+
+========================================
+3. FILTROS SUPERIORES
+========================================
+
+Corregir visualización de:
+
+- Estado
+- Prioridad
+- Counter
+
+Problema actual:
+
+La tipografía se visualiza con muy poco contraste y en algunos casos parece blanca o invisible.
+
+Requerimientos:
+
+- Texto completamente visible.
+- Contraste adecuado.
+- Placeholder visible.
+- Opciones del dropdown visibles tanto en modo normal como seleccionado.
+
+Validar:
+- Estado
+- Prioridad
+- Counter
+
+========================================
+4. ELIMINAR OBSERVACIÓN INTERNA
+========================================
+
+Eliminar completamente:
+
+OBSERVACIÓN INTERNA
+
+y su campo asociado.
+
+No mostrar el bloque vacío.
+
+Reorganizar el espacio para que el panel quede más compacto.
+
+========================================
+5. POPUP DUPLICAR
+========================================
+
+El modal "Duplicar Cotización" debe utilizar exactamente la misma estructura visual del modal "Anular".
+
+Reutilizar:
+
+- Tamaños
+- Espaciados
+- Botones
+- Jerarquía visual
+- Diseño general
+
+Cambiar únicamente:
+
+- Título
+- Texto descriptivo
+- Acción ejecutada
+
+Objetivo:
+Mantener consistencia entre ambos modales.
+
+========================================
+6. AJUSTE GENERAL DE LEGIBILIDAD
+========================================
+
+Revisar toda la pantalla para garantizar:
+
+- Contraste adecuado.
+- Textos secundarios legibles.
+- Jerarquía visual clara.
+- Consistencia entre títulos, subtítulos y etiquetas.
+
+No rediseñar la pantalla.
+No modificar funcionalidades existentes.
+Solo mejorar legibilidad, consistencia y experiencia de uso.
