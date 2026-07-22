@@ -1,0 +1,134 @@
+Realiza únicamente los siguientes cambios en el módulo Seguimiento. No modifiques la lógica existente, solo reorganiza la interfaz.
+
+1. Eliminar completamente el menú de los tres puntos.
+
+2. Reorganizar la barra de acciones de la tarjeta en este orden:
+
+👁 Vista previa
+✏️ Editar
+📄 Duplicar
+
+|
+
+🔔 Seguimiento
+⭐ Prioridad
+✅ Confirmar venta
+❌ Marcar perdida
+
+|
+
+🚫 Anular
+
+Separar cada grupo con un divisor vertical.
+
+3. Confirmaciones
+
+Antes de ejecutar:
+
+- Duplicar
+- Anular
+
+mostrar un cuadro de confirmación.
+
+Duplicar:
+"Tienes una cotización existente.
+¿Deseas crear una copia idéntica?"
+[Cancelar] [Duplicar]
+
+Anular:
+"Esta acción anulará la cotización.
+¿Deseas continuar?"
+[Cancelar] [Anular]
+
+4. Seguimiento
+
+Al pulsar el icono 🔔 la tarjeta debe expandirse.
+
+Eliminar los botones rápidos inferiores.
+
+Organizar el contenido en cuatro columnas responsivas.
+
+Columna 1
+-----------------
+PRÓXIMA ACCIÓN
+Campo de texto
+
+Debajo mostrar dos botones pequeños:
+
+WhatsApp
+Correo
+
+Estos botones deben utilizar el texto escrito en "Próxima acción".
+
+Columna 2
+-----------------
+RECORDATORIO
+
+Botones:
+
+Hoy
+Mañana
+3 días
+1 semana
+
+y debajo selector de fecha.
+
+Columna 3
+-----------------
+NOTA INTERNA
+
+Área de texto amplia.
+
+Columna 4
+-----------------
+ACCIONES
+
+Guardar
+
+Marcar atendida
+
+Confirmar venta
+
+Marcar perdida
+
+Todos alineados verticalmente.
+
+5. Historial
+
+El icono Historial debe expandir otra sección de la tarjeta.
+
+No abrir modales.
+
+Organizar el historial por fecha.
+
+Ejemplo:
+
+────────────────────
+21 JUL 2026
+
+09:10
+Jonathan creó la cotización
+
+09:42
+Jonathan agregó hotel Bristol
+
+10:15
+Melisa cambió la tarifa
+
+11:00
+Recordatorio programado para mañana
+
+────────────────────
+22 JUL 2026
+
+08:20
+Venta confirmada
+
+Cada día debe mostrarse como un bloque independiente con una línea de tiempo vertical e iconos.
+
+6. Mantener una animación suave de expansión (200 ms).
+
+No crear nuevas páginas ni nuevos modales.
+No modificar la base de datos.
+No cambiar la lógica del sistema.
+Solo reorganizar la experiencia para reducir clics y hacer el flujo más rápido.

@@ -249,39 +249,15 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   onAnular: () => void;
 }) {
   const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
-  const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Accordion
+  // Accordion + inline confirm
   const [expandedPanel, setExpandedPanel] = useState<"seguimiento" | "historial" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"duplicar" | "anular" | null>(null);
+
   // Seguimiento form state (synced when panel opens)
   const [localProxima, setLocalProxima] = useState(opp.proximaAccion ?? "");
   const [localRec, setLocalRec] = useState(opp.recordatorio?.slice(0, 10) ?? "");
   const [localNota, setLocalNota] = useState(opp.notaInterna ?? "");
-
-  const openMenu = () => {
-    const rect = menuBtnRef.current?.getBoundingClientRect();
-    if (rect) {
-      const MENU_HEIGHT = 200;
-      const openUp = rect.bottom + 6 + MENU_HEIGHT > window.innerHeight;
-      setMenuPos({ top: openUp ? rect.top - MENU_HEIGHT : rect.bottom + 6, right: window.innerWidth - rect.right });
-      setMenuOpen(true);
-    }
-  };
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuBtnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node)) return;
-      setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen]);
-
-  const close = () => setMenuOpen(false);
 
   const togglePanel = (panel: "seguimiento" | "historial") => {
     if (expandedPanel !== panel) {
@@ -289,6 +265,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       setLocalRec(opp.recordatorio?.slice(0, 10) ?? "");
       setLocalNota(opp.notaInterna ?? "");
     }
+    setConfirmAction(null);
     setExpandedPanel((prev) => (prev === panel ? null : panel));
   };
 
@@ -319,7 +296,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const sinActividad = daysSince(opp.lastUpdateAt);
   const initials = getInitials(opp.agencyName || opp.quoteName);
   const isClosedStatus = opp.status === "confirmada" || opp.status === "perdida";
-  const isClosed = opp.status === "confirmada" || opp.status === "perdida" || opp.status === "anulada";
   const borderColor = getCardBorderColor(opp);
 
   const latestQ = opp.quotes.length > 0 ? allQuotes.find((q) => q.id === opp.quotes[0].id) : undefined;
@@ -330,6 +306,24 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const lastUpdateFormatted = opp.lastUpdateAt
     ? new Date(opp.lastUpdateAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()
     : "—";
+
+  // Historial agrupado por fecha
+  const historialGroups = (() => {
+    const sorted = [...(opp.historial ?? [])].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+    );
+    const groups: { dateKey: string; dateLabel: string; entries: { entry: OppHistorialEntry; timeLabel: string }[] }[] = [];
+    for (const entry of sorted) {
+      const d = new Date(entry.fecha);
+      const dateKey = d.toISOString().slice(0, 10);
+      const dateLabel = d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+      const timeLabel = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+      const existing = groups.find((g) => g.dateKey === dateKey);
+      if (existing) existing.entries.push({ entry, timeLabel });
+      else groups.push({ dateKey, dateLabel, entries: [{ entry, timeLabel }] });
+    }
+    return groups;
+  })();
 
   return (
     <div
@@ -342,25 +336,22 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px 0 rgba(0,0,0,0.10), 0 2px 6px -1px rgba(0,0,0,0.07)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)"; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLDivElement).style.transform = ""; }}
     >
-      {/* ── Single horizontal row ─────────────────────────────────────── */}
+      {/* ── Main row ──────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 py-3 sm:py-0 sm:min-h-[110px]">
 
-        {/* ── SECTION 2: Logo ──────────────────────────────────────────── */}
+        {/* Logo */}
         <div className="shrink-0 self-start sm:self-center mt-1 sm:mt-0">
           <LogoOrInitials agencia={agencia} initials={initials} color="#004FBB" size={56} radius={14} />
         </div>
 
-        {/* ── SECTION 3: Main info ─────────────────────────────────────── */}
+        {/* Info */}
         <div className="flex-1 min-w-0">
-          {/* Line 1: Destination (primary title) */}
           <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.01em" }}>
             {(opp.destination || opp.quoteName || "SIN DESTINO").toUpperCase()}
           </div>
-          {/* Line 2: Agency */}
           {opp.agencyName && (
             <div className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 tracking-wide">{opp.agencyName}</div>
           )}
-          {/* Line 3: Pax + accommodation chips */}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
             {pax != null && pax > 0 && (
               <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
@@ -368,33 +359,21 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               </span>
             )}
             {ninos != null && ninos > 0 && (
-              <>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] font-semibold text-slate-500">{ninos} NIÑO{ninos !== 1 ? "S" : ""}</span>
-              </>
+              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-semibold text-slate-500">{ninos} NIÑO{ninos !== 1 ? "S" : ""}</span></>
             )}
             {uniqueAcoms.length > 0 && (
-              <>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] font-semibold text-slate-500">{uniqueAcoms.join("/")}</span>
-              </>
+              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-semibold text-slate-500">{uniqueAcoms.join("/")}</span></>
             )}
             {opp.priorityManual && (
-              <>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD</span>
-              </>
+              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD</span></>
             )}
             {opp.createdByName && (
-              <>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span>
-              </>
+              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span></>
             )}
           </div>
         </div>
 
-        {/* ── SECTION 4: Price + Estado ─────────────────────────────────── */}
+        {/* Price + Estado */}
         <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-1">
           {opp.totalLatest != null && opp.totalLatest > 0 ? (
             <div className="font-bold tabular-nums leading-none" style={{ fontSize: 18, color: "#044b9e", fontWeight: 700, letterSpacing: "-0.02em" }}>
@@ -408,14 +387,13 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             const label = ESTADO_OPP_OPTIONS.find(o => o.value === opp.status)?.label ?? opp.status;
             return (
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 w-fit ${st.bg} ${st.text} ${st.ring}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                {label}
+                <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />{label}
               </span>
             );
           })()}
         </div>
 
-        {/* ── SECTION 5: Semáforo + fecha ──────────────────────────────── */}
+        {/* Semáforo */}
         <div className="shrink-0 sm:w-40 flex flex-col justify-center gap-0.5">
           {!isClosedStatus ? (
             <>
@@ -424,13 +402,9 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                 <span className="text-[11px] font-bold text-slate-700 tracking-wide uppercase">{uMeta.label}</span>
               </div>
               <div className="text-[10px] font-semibold" style={{ color: urgency === "red" ? "#dc2626" : "#64748b" }}>
-                {sinActividad === 0
-                  ? "ACTUALIZADO HOY"
-                  : `${sinActividad} DÍA${sinActividad !== 1 ? "S" : ""} SIN ACTUALIZACIÓN`}
+                {sinActividad === 0 ? "ACTUALIZADO HOY" : `${sinActividad} DÍA${sinActividad !== 1 ? "S" : ""} SIN ACTUALIZACIÓN`}
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">
-                {lastUpdateFormatted}
-              </div>
+              <div className="text-[10px] text-slate-400 font-medium">{lastUpdateFormatted}</div>
               {opp.recordatorio && (
                 <div className="text-[10px] text-blue-400 flex items-center gap-1 mt-0.5">
                   <CalendarClock className="w-3 h-3 shrink-0" />REC. {formatShortDate(opp.recordatorio).toUpperCase()}
@@ -442,126 +416,194 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           )}
         </div>
 
-        {/* ── SECTION 6: Barra de iconos ───────────────────────────────── */}
+        {/* ── Barra de iconos ───────────────────────────────────────────── */}
         <div className="shrink-0 flex items-center gap-0 self-start sm:self-center mt-1 sm:mt-0">
-          <IconBtn icon={<Eye className="w-4 h-4" />} label="Ver cotización" onClick={() => onView()} />
+          {/* Grupo 1: acciones de cotización */}
+          <IconBtn icon={<Eye className="w-4 h-4" />} label="Vista previa" onClick={() => onView()} />
           <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
-          {onDuplicate && <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar" onClick={() => onDuplicate!()} />}
+          {onDuplicate && (
+            <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar"
+              onClick={() => setConfirmAction(confirmAction === "duplicar" ? null : "duplicar")}
+              active={confirmAction === "duplicar"}
+            />
+          )}
           <div className="w-px h-4 bg-slate-200 mx-0.5" />
+          {/* Grupo 2: seguimiento */}
           <IconBtn
-            icon={<Bell className="w-4 h-4" />}
-            label="Seguimiento"
+            icon={<Bell className="w-4 h-4" />} label="Seguimiento"
             onClick={() => togglePanel("seguimiento")}
             active={expandedPanel === "seguimiento"}
           />
           <IconBtn
-            icon={<History className="w-4 h-4" />}
-            label="Historial"
+            icon={<History className="w-4 h-4" />} label="Historial"
             onClick={() => togglePanel("historial")}
             active={expandedPanel === "historial"}
           />
+          <IconBtn
+            icon={<Star className={`w-4 h-4 ${opp.priorityManual ? "fill-amber-400 text-amber-500" : ""}`} />}
+            label={opp.priorityManual ? "Quitar prioridad" : "Marcar prioridad"}
+            active={opp.priorityManual}
+            onClick={() => {
+              const tipo: OppHistorialEntry["tipo"] = opp.priorityManual ? "prioridad_quitada" : "prioridad_activada";
+              onUpdateOpportunity({ priorityManual: !opp.priorityManual, historial: addHistorial(tipo) });
+            }}
+          />
+          <IconBtn
+            icon={<CheckCircle2 className="w-4 h-4" />} label="Confirmar venta"
+            onClick={() => handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre })}
+          />
+          <IconBtn
+            icon={<XCircle className="w-4 h-4" />} label="Marcar perdida"
+            onClick={() => handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre })}
+          />
           <div className="w-px h-4 bg-slate-200 mx-0.5" />
-          <IconBtn icon={<Ban className="w-4 h-4" />} label="Anular" onClick={() => onAnular()} danger />
-          <div className="relative group">
-            <button
-              ref={menuBtnRef}
-              type="button"
-              onClick={openMenu}
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
-              Más opciones
+          {/* Grupo 3: anular */}
+          <IconBtn icon={<Ban className="w-4 h-4" />} label="Anular"
+            onClick={() => setConfirmAction(confirmAction === "anular" ? null : "anular")}
+            active={confirmAction === "anular"}
+            danger
+          />
+        </div>
+      </div>
+
+      {/* ── Confirmación inline ───────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateRows: confirmAction ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
+        <div className="overflow-hidden">
+          {confirmAction === "duplicar" && (
+            <div className="border-t border-blue-100 bg-blue-50 px-5 py-3 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[12px] font-semibold text-slate-800">Tienes una cotización existente.</div>
+                <div className="text-[11px] text-slate-500">¿Deseas crear una copia idéntica?</div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button type="button" onClick={() => setConfirmAction(null)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => { onDuplicate!(); setConfirmAction(null); }}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                  Duplicar
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+          {confirmAction === "anular" && (
+            <div className="border-t border-red-100 bg-red-50 px-5 py-3 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[12px] font-semibold text-slate-800">Esta acción anulará la cotización.</div>
+                <div className="text-[11px] text-slate-500">¿Deseas continuar?</div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button type="button" onClick={() => setConfirmAction(null)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => { onAnular(); setConfirmAction(null); }}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors">
+                  Anular
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Seguimiento accordion ─────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateRows: expandedPanel === "seguimiento" ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
         <div className="overflow-hidden">
-          <div className="border-t border-slate-100 px-4 py-4 bg-slate-50/60 space-y-3">
-            {/* Próxima acción */}
-            <div>
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Próxima acción</label>
-              <input
-                type="text"
-                value={localProxima}
-                onChange={(e) => setLocalProxima(e.target.value)}
-                placeholder="Ej: Llamar al cliente, reenviar propuesta…"
-                className="w-full h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400"
-              />
-            </div>
-            {/* Recordatorio */}
-            <div>
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Recordatorio</label>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {[{ label: "Mañana", days: 1 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
-                  const target = addDays(days);
-                  const isActive = localRec === target;
-                  return (
-                    <button key={days} type="button"
-                      onClick={() => setLocalRec(isActive ? "" : target)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-100"}`}>
-                      {label}
-                    </button>
-                  );
-                })}
+          <div className="border-t border-slate-100 px-4 py-4 bg-slate-50/60">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+              {/* Col 1: Próxima acción */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Próxima acción</label>
+                <input
+                  type="text"
+                  value={localProxima}
+                  onChange={(e) => setLocalProxima(e.target.value)}
+                  placeholder="Ej: Llamar al cliente…"
+                  className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400 w-full"
+                />
+                <div className="flex gap-2 mt-1">
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(localProxima || opp.proximaAccion || "")}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    WhatsApp
+                  </a>
+                  <a
+                    href={`mailto:?body=${encodeURIComponent(localProxima || opp.proximaAccion || "")}`}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    Correo
+                  </a>
+                </div>
               </div>
-              <input
-                type="date"
-                value={localRec}
-                onChange={(e) => setLocalRec(e.target.value)}
-                className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            {/* Nota interna */}
-            <div>
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Nota interna</label>
-              <textarea
-                value={localNota}
-                onChange={(e) => setLocalNota(e.target.value)}
-                placeholder="Ej: Cliente interesado en habitación superior…"
-                rows={2}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400 resize-none"
-              />
-            </div>
-            {/* Guardar */}
-            <button type="button" onClick={handleSeguimientoSave}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-semibold transition-colors">
-              <Save className="w-3.5 h-3.5" />Guardar
-            </button>
-            {/* Acciones rápidas */}
-            {!isClosed && (
-              <div className="pt-2 border-t border-slate-200 flex flex-wrap gap-1.5">
+
+              {/* Col 2: Recordatorio */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Recordatorio</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[{ label: "Hoy", days: 0 }, { label: "Mañana", days: 1 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
+                    const target = addDays(days);
+                    const isActive = localRec === target;
+                    return (
+                      <button key={days} type="button"
+                        onClick={() => setLocalRec(isActive ? "" : target)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-100"}`}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
+                  type="date"
+                  value={localRec}
+                  onChange={(e) => setLocalRec(e.target.value)}
+                  className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
+                />
+              </div>
+
+              {/* Col 3: Nota interna */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Nota interna</label>
+                <textarea
+                  value={localNota}
+                  onChange={(e) => setLocalNota(e.target.value)}
+                  placeholder="Ej: Cliente interesado en habitación superior…"
+                  rows={4}
+                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400 resize-none"
+                />
+              </div>
+
+              {/* Col 4: Acciones */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Acciones</label>
+                <button type="button" onClick={handleSeguimientoSave}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-semibold transition-colors">
+                  <Save className="w-3.5 h-3.5" />Guardar
+                </button>
                 <button type="button"
                   onClick={() => handleQuickAction({}, { fecha: now(), tipo: "marcada_atendida", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 text-[12px] font-semibold transition-colors">
                   <Check className="w-3.5 h-3.5" />Marcar atendida
                 </button>
                 <button type="button"
                   onClick={() => handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-[12px] font-semibold transition-colors">
                   <CheckCircle2 className="w-3.5 h-3.5" />Confirmar venta
                 </button>
                 <button type="button"
-                  onClick={() => handleQuickAction({ recordatorio: addDays(1) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+1 día", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors">
-                  <AlarmClock className="w-3.5 h-3.5" />Posponer 1 día
-                </button>
-                <button type="button"
-                  onClick={() => handleQuickAction({ recordatorio: addDays(3) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+3 días", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors">
-                  <AlarmClock className="w-3.5 h-3.5" />Posponer 3 días
-                </button>
-                <button type="button"
                   onClick={() => handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-[12px] font-semibold transition-colors">
                   <XCircle className="w-3.5 h-3.5" />Marcar perdida
                 </button>
               </div>
-            )}
+
+            </div>
           </div>
         </div>
       </div>
@@ -569,53 +611,50 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       {/* ── Historial accordion ───────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateRows: expandedPanel === "historial" ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
         <div className="overflow-hidden">
-          <div className="border-t border-slate-100 px-4 py-3 bg-slate-50/60">
-            {(opp.historial ?? []).length === 0 ? (
+          <div className="border-t border-slate-100 px-4 py-4 bg-slate-50/60">
+            {historialGroups.length === 0 ? (
               <div className="text-xs text-slate-400 italic py-1">Sin eventos registrados.</div>
             ) : (
-              <div className="space-y-0.5 max-h-52 overflow-y-auto">
-                {(opp.historial ?? []).map((entry, i) => {
-                  const label = entry.tipo ? (HIST_LABELS[entry.tipo] ?? entry.tipo) : (entry.detalle ?? "Evento");
-                  return (
-                    <div key={i} className="flex items-baseline gap-2 py-0.5">
-                      <span className="text-slate-300 text-[10px] shrink-0 mt-0.5">•</span>
-                      <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-1">
-                        <span className="text-[11px] font-semibold text-slate-700">{label}</span>
-                        {entry.byUser && <span className="text-[10px] text-slate-400">· {entry.byUser}</span>}
-                        {entry.detalle && entry.tipo !== "estado_cambiado" && entry.tipo !== "recordatorio_creado" && (
-                          <span className="text-[10px] text-slate-400">· {entry.detalle}</span>
-                        )}
-                        <span className="text-[10px] text-slate-400">{formatShortDate(entry.fecha)}</span>
+              <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+                {historialGroups.map((group) => (
+                  <div key={group.dateKey}>
+                    {/* Day header */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <span className="text-[10px] font-bold text-slate-500 tracking-wider shrink-0">{group.dateLabel}</span>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    {/* Entries with timeline */}
+                    <div className="relative pl-4">
+                      <div className="absolute left-1.5 top-0 bottom-0 w-px bg-slate-200" />
+                      <div className="space-y-2">
+                        {group.entries.map(({ entry, timeLabel }, i) => {
+                          const label = entry.tipo ? (HIST_LABELS[entry.tipo] ?? entry.tipo) : (entry.detalle ?? "Evento");
+                          return (
+                            <div key={i} className="flex items-start gap-2">
+                              <div className="absolute left-0 w-3 h-3 rounded-full bg-slate-300 border-2 border-white shrink-0 mt-0.5" style={{ marginTop: "3px" }} />
+                              <div className="flex-1 min-w-0 ml-1">
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                  <span className="text-[10px] font-mono font-semibold text-slate-400 shrink-0">{timeLabel}</span>
+                                  <span className="text-[11px] font-semibold text-slate-700">{label}</span>
+                                  {entry.byUser && <span className="text-[10px] text-slate-400">{entry.byUser}</span>}
+                                </div>
+                                {entry.detalle && entry.tipo !== "estado_cambiado" && (
+                                  <div className="text-[10px] text-slate-400 mt-0.5">{entry.detalle}</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* ── Portal dropdown menu ──────────────────────────────────────── */}
-      {menuOpen && menuPos && createPortal(
-        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[190px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
-          {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate!(); close(); }} />}
-          <div className="h-px bg-slate-100 my-1" />
-          <MenuItem
-            icon={opp.priorityManual ? <Star className="w-3.5 h-3.5 text-amber-500" /> : <Star className="w-3.5 h-3.5" />}
-            label={opp.priorityManual ? "Quitar prioridad" : "Marcar prioridad"}
-            onClick={() => {
-              const tipo: OppHistorialEntry["tipo"] = opp.priorityManual ? "prioridad_quitada" : "prioridad_activada";
-              onUpdateOpportunity({ priorityManual: !opp.priorityManual, historial: addHistorial(tipo) });
-              close();
-            }}
-          />
-          <div className="h-px bg-slate-100 my-1" />
-          <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateOpportunity({ status: "confirmada", historial: addHistorial("venta_confirmada") }); close(); }} />
-          <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateOpportunity({ status: "perdida", historial: addHistorial("marcada_perdida") }); close(); }} />
-        </div>,
-        document.body
-      )}
     </div>
   );
 }
