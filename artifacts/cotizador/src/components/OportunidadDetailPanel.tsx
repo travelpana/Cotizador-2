@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Tab = "resumen" | "cotizaciones" | "seguimiento" | "historial";
+export type Tab = "seguimiento" | "historial";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -95,134 +95,6 @@ const HISTORIAL_CONFIG: Record<OppActividadTipo, { label: string; icon: React.Re
   anulada:              { label: "Anulada",                  icon: <Ban className="w-3.5 h-3.5" />,          color: "text-red-400"     },
   restaurada:           { label: "Restaurada",               icon: <RotateCcw className="w-3.5 h-3.5" />,    color: "text-blue-400"    },
 };
-
-// ─── Resumen Tab ──────────────────────────────────────────────────────────────
-
-function ResumenTab({ opp, latestQuote }: { opp: Opportunity; latestQuote?: CotizacionGuardada }) {
-  const urgency = getOppUrgency(opp);
-  const uMeta = URGENCY_META[urgency];
-  const estadoStyle = ESTADO_STYLES[opp.status] ?? ESTADO_STYLES.nueva;
-  const sinActividad = daysSince(opp.lastUpdateAt);
-  const isClosed = opp.status === "confirmada" || opp.status === "perdida" || opp.status === "anulada";
-
-  const row = (label: string, value: React.ReactNode) => (
-    <div className="flex items-start gap-3 py-2.5 border-b border-slate-50 last:border-0">
-      <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide w-36 shrink-0 mt-0.5">{label}</div>
-      <div className="text-sm text-slate-800 flex-1">{value ?? <span className="text-slate-400">—</span>}</div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-4">
-        {row("Cotización", <span className="font-semibold">{opp.quoteName || "—"}</span>)}
-        {row("Agencia", opp.agencyName || "—")}
-        {row("Agente", opp.agentName || "—")}
-        {row("Counter", opp.counterName || "—")}
-        {row("Destino", opp.destination || "—")}
-        {latestQuote && row("Pasajeros", `${latestQuote.cliente.pasajeros ?? "—"} pax${latestQuote.cliente.ninos ? ` + ${latestQuote.cliente.ninos} niños` : ""}`)}
-        {latestQuote && row("Acomodación", latestQuote.acomodaciones.join(" / "))}
-        {row("Total más reciente", opp.totalLatest ? <span className="font-bold text-[#004FBB]">{fmtMoney(opp.totalLatest)}</span> : <span className="text-slate-400">Sin valor</span>)}
-        {row("Código", <span className="font-mono text-slate-500">{opp.latestQuoteCode || "—"}</span>)}
-        {row("Estado", (
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ${estadoStyle.bg} ${estadoStyle.text} ${estadoStyle.ring}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${estadoStyle.dot}`} />
-            {ESTADO_LABELS[opp.status] ?? opp.status}
-          </span>
-        ))}
-        {row("Semáforo", isClosed ? <span className="text-slate-400 text-xs">Cerrada</span> : (
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: uMeta.bg, color: uMeta.color }}>
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: uMeta.dot }} />
-              {uMeta.label}
-            </span>
-            <span className="text-xs text-slate-400">{sinActividad === 0 ? "Actualizado hoy" : `${sinActividad} día${sinActividad !== 1 ? "s" : ""} sin actualización`}</span>
-          </div>
-        ))}
-        {row("Última actualización", formatDate(opp.lastUpdateAt))}
-        {row("Creada", formatDate(opp.createdAt))}
-        {opp.createdByName && row("Creada por", <span className="font-medium text-slate-700">{opp.createdByName}</span>)}
-        {opp.updatedByName && row(
-          "Última modificación",
-          <span className="font-medium text-slate-700">
-            {opp.updatedByName}{opp.updatedAt ? <span className="font-normal text-slate-400"> · {formatDateTime(opp.updatedAt)}</span> : null}
-          </span>
-        )}
-        {opp.recordatorio && row("Recordatorio", formatDate(opp.recordatorio))}
-        {opp.proximaAccion && row("Próxima acción", opp.proximaAccion)}
-        {opp.notaInterna && row("Nota interna", <span className="text-slate-600 italic">{opp.notaInterna}</span>)}
-      </div>
-    </div>
-  );
-}
-
-// ─── Cotizaciones Tab ─────────────────────────────────────────────────────────
-
-function CotizacionesTab({ opp, allQuotes, onView, onDuplicate }: {
-  opp: Opportunity;
-  allQuotes: CotizacionGuardada[];
-  onView: (g: CotizacionGuardada) => void;
-  onDuplicate?: (g: CotizacionGuardada) => void;
-}) {
-  if (opp.quotes.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
-        <FileText className="w-10 h-10 mx-auto text-slate-200 mb-3" />
-        <div className="text-sm text-slate-500 font-medium">Sin cotizaciones</div>
-        <div className="text-xs text-slate-400 mt-1">Guarda o exporta una cotización para que aparezca aquí.</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-2xl ring-1 ring-slate-100 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
-        <FileText className="w-4 h-4 text-slate-400" />
-        <span className="text-sm font-bold text-slate-800">{opp.quotes.length} cotización{opp.quotes.length !== 1 ? "es" : ""}</span>
-      </div>
-      <div className="divide-y divide-slate-50">
-        {opp.quotes.map((qRef, i) => {
-          const full = allQuotes.find((g) => g.id === qRef.id);
-          return (
-            <div key={qRef.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50/60 transition-colors">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-slate-800 font-mono">{qRef.numeroCotizacion}</span>
-                  {i === 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 ring-1 ring-blue-200">Última</span>}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="text-[11px] text-slate-400">{formatDate(qRef.fechaCreacion)}</span>
-                  {qRef.total != null && qRef.total > 0 && (
-                    <span className="text-[11px] font-bold text-slate-600">· {fmtMoney(qRef.total)}</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {full ? (
-                  <>
-                    <button type="button" onClick={() => onView(full)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white hover:opacity-90 transition-opacity"
-                      style={{ background: "#004FBB" }}>
-                      <ExternalLink className="w-3 h-3" />Abrir
-                    </button>
-                    {onDuplicate && (
-                      <button type="button" onClick={() => onDuplicate(full)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
-                        <Copy className="w-3 h-3" />Duplicar
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-[11px] text-slate-400 italic">No disponible</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ─── Seguimiento Tab ──────────────────────────────────────────────────────────
 
@@ -501,19 +373,12 @@ interface Props {
 }
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: "resumen",      label: "Resumen",      icon: <TrendingUp className="w-3.5 h-3.5" />     },
-  { id: "cotizaciones", label: "Cotizaciones",  icon: <FileText className="w-3.5 h-3.5" />       },
   { id: "seguimiento",  label: "Seguimiento",   icon: <Bell className="w-3.5 h-3.5" />           },
   { id: "historial",    label: "Historial",     icon: <History className="w-3.5 h-3.5" />        },
 ];
 
 export default function OportunidadDetailPanel({ opp, allQuotes, onClose, onSave, onView, onDuplicate, initialTab }: Props) {
-  const [tab, setTab] = useState<Tab>(initialTab ?? "resumen");
-
-  const latestQuote = opp.quotes.reduce<CotizacionGuardada | undefined>((found, qRef) => {
-    if (found) return found;
-    return allQuotes.find((g) => g.id === qRef.id);
-  }, undefined);
+  const [tab, setTab] = useState<Tab>(initialTab ?? "seguimiento");
 
   const addHistorial = (entry: OppHistorialEntry): OppHistorialEntry[] =>
     [entry, ...(opp.historial ?? [])].slice(0, 100);
@@ -590,8 +455,6 @@ export default function OportunidadDetailPanel({ opp, allQuotes, onClose, onSave
 
         {/* Content */}
         <div className="overflow-y-auto flex-1 p-4">
-          {tab === "resumen"      && <ResumenTab opp={opp} latestQuote={latestQuote} />}
-          {tab === "cotizaciones" && <CotizacionesTab opp={opp} allQuotes={allQuotes} onView={onView} onDuplicate={onDuplicate} />}
           {tab === "seguimiento"  && <SeguimientoTab opp={opp} onQuickAction={handleQuickAction} onSaveForm={handleSaveForm} />}
           {tab === "historial"    && <HistorialTab opp={opp} />}
         </div>

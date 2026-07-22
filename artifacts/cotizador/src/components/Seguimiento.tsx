@@ -22,8 +22,12 @@ import {
   RotateCcw,
   ChevronRight,
   CalendarClock,
-  FileText,
   History,
+  Eye,
+  Ban,
+  Save,
+  Check,
+  AlarmClock,
 } from "lucide-react";
 import type {
   CotizacionGuardada,
@@ -34,7 +38,8 @@ import type {
 import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
 import { exportarCotizacionesExcel } from "@/lib/exportExcel";
 import { loadAgenciasAsync, buildAgenciasMap, normAgencia, mergeAgenciasDuplicadas, type Agencia } from "@/lib/agencias";
-import OportunidadDetailPanel, { type Tab as DetailTab } from "./OportunidadDetailPanel";
+import OportunidadDetailPanel from "./OportunidadDetailPanel";
+import type { OppActividadTipo } from "./Guardadas";
 import { useAuth } from "@/lib/auth";
 
 interface Props {
@@ -133,6 +138,31 @@ function isRecordatorioActivo(o: Opportunity): boolean {
   return d <= new Date();
 }
 
+function addDays(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+const HIST_LABELS: Partial<Record<OppActividadTipo, string>> = {
+  oportunidad_creada:    "Oportunidad creada",
+  cotizacion_agregada:   "Cotización agregada",
+  cotizacion_modificada: "Cotización modificada",
+  pdf_generado:          "PDF generado",
+  correo_generado:       "Correo generado",
+  prioridad_activada:    "Prioridad activada",
+  prioridad_quitada:     "Prioridad quitada",
+  nota_agregada:         "Nota interna guardada",
+  recordatorio_creado:   "Recordatorio creado",
+  recordatorio_pospuesto:"Recordatorio pospuesto",
+  marcada_atendida:      "Marcada como atendida",
+  estado_cambiado:       "Estado cambiado",
+  venta_confirmada:      "Venta confirmada",
+  marcada_perdida:       "Marcada como perdida",
+  anulada:               "Anulada",
+  restaurada:            "Restaurada",
+};
+
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, color, icon, iconStyle }: {
@@ -184,13 +214,21 @@ function MenuItem({ icon, label, onClick, danger = false }: {
 
 // ─── Icon Button with tooltip ─────────────────────────────────────────────────
 
-function IconBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+function IconBtn({ icon, label, onClick, active = false, danger = false }: {
+  icon: React.ReactNode; label: string;
+  onClick: (e: React.MouseEvent) => void;
+  active?: boolean; danger?: boolean;
+}) {
   return (
     <div className="relative group">
       <button
         type="button"
         onClick={onClick}
-        className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+        className={`h-8 w-8 flex items-center justify-center rounded-lg transition-colors ${
+          danger ? "text-red-400 hover:bg-red-50 hover:text-red-600"
+          : active ? "bg-blue-50 text-blue-600"
+          : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+        }`}
       >
         {icon}
       </button>
@@ -203,12 +241,10 @@ function IconBtn({ icon, label, onClick }: { icon: React.ReactNode; label: strin
 
 // ─── Opportunity Card ─────────────────────────────────────────────────────────
 
-function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onOpenDetail, onOpenDetailTab, onUpdateOpportunity, onAnular }: {
+function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate, onUpdateOpportunity, onAnular }: {
   opp: Opportunity; agencia?: Agencia;
   allQuotes: CotizacionGuardada[];
   onView: () => void; onEdit: () => void; onDuplicate?: () => void;
-  onOpenDetail: () => void;
-  onOpenDetailTab: (tab: DetailTab) => void;
   onUpdateOpportunity: (patch: Partial<Opportunity>) => void;
   onAnular: () => void;
 }) {
@@ -218,10 +254,17 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Accordion
+  const [expandedPanel, setExpandedPanel] = useState<"seguimiento" | "historial" | null>(null);
+  // Seguimiento form state (synced when panel opens)
+  const [localProxima, setLocalProxima] = useState(opp.proximaAccion ?? "");
+  const [localRec, setLocalRec] = useState(opp.recordatorio?.slice(0, 10) ?? "");
+  const [localNota, setLocalNota] = useState(opp.notaInterna ?? "");
+
   const openMenu = () => {
     const rect = menuBtnRef.current?.getBoundingClientRect();
     if (rect) {
-      const MENU_HEIGHT = 260;
+      const MENU_HEIGHT = 200;
       const openUp = rect.bottom + 6 + MENU_HEIGHT > window.innerHeight;
       setMenuPos({ top: openUp ? rect.top - MENU_HEIGHT : rect.bottom + 6, right: window.innerWidth - rect.right });
       setMenuOpen(true);
@@ -240,40 +283,50 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
   const close = () => setMenuOpen(false);
 
+  const togglePanel = (panel: "seguimiento" | "historial") => {
+    if (expandedPanel !== panel) {
+      setLocalProxima(opp.proximaAccion ?? "");
+      setLocalRec(opp.recordatorio?.slice(0, 10) ?? "");
+      setLocalNota(opp.notaInterna ?? "");
+    }
+    setExpandedPanel((prev) => (prev === panel ? null : panel));
+  };
+
+  const now = () => new Date().toISOString();
+  const addHistorial = (tipo: OppHistorialEntry["tipo"], detalle?: string): OppHistorialEntry[] =>
+    [{ fecha: now(), tipo, detalle, byUser: user?.nombre }, ...(opp.historial ?? [])].slice(0, 100);
+
+  const handleQuickAction = (patch: Partial<Opportunity>, entry: OppHistorialEntry) => {
+    onUpdateOpportunity({ ...patch, historial: [entry, ...(opp.historial ?? [])].slice(0, 100) });
+  };
+
+  const handleSeguimientoSave = () => {
+    const entries: OppHistorialEntry[] = [];
+    if (localNota.trim() !== (opp.notaInterna ?? "").trim())
+      entries.push({ fecha: now(), tipo: "nota_agregada", byUser: user?.nombre });
+    if (localRec !== (opp.recordatorio?.slice(0, 10) ?? ""))
+      entries.push({ fecha: now(), tipo: localRec ? "recordatorio_creado" : "estado_cambiado", detalle: localRec || "Recordatorio eliminado", byUser: user?.nombre });
+    onUpdateOpportunity({
+      proximaAccion: localProxima.trim() || undefined,
+      recordatorio: localRec || undefined,
+      notaInterna: localNota.trim() || undefined,
+      historial: [...entries, ...(opp.historial ?? [])].slice(0, 100),
+    });
+  };
+
   const urgency = getOppUrgency(opp);
   const uMeta = URGENCY_META[urgency];
   const sinActividad = daysSince(opp.lastUpdateAt);
   const initials = getInitials(opp.agencyName || opp.quoteName);
   const isClosedStatus = opp.status === "confirmada" || opp.status === "perdida";
-
-  const addHistorial = (tipo: OppHistorialEntry["tipo"], detalle?: string): OppHistorialEntry[] =>
-    [{ fecha: new Date().toISOString(), tipo, detalle, byUser: user?.nombre }, ...(opp.historial ?? [])].slice(0, 100);
-
+  const isClosed = opp.status === "confirmada" || opp.status === "perdida" || opp.status === "anulada";
   const borderColor = getCardBorderColor(opp);
 
-  // Derive metadata from latest quote
-  const latestQ = opp.quotes.length > 0
-    ? allQuotes.find((q) => q.id === opp.quotes[0].id)
-    : undefined;
+  const latestQ = opp.quotes.length > 0 ? allQuotes.find((q) => q.id === opp.quotes[0].id) : undefined;
   const pax = latestQ?.cliente?.pasajeros;
   const ninos = latestQ?.cliente?.ninos;
-  const acoms = latestQ?.acomodaciones ?? [];
-  const uniqueAcoms = Array.from(new Set(acoms));
+  const uniqueAcoms = Array.from(new Set(latestQ?.acomodaciones ?? []));
 
-  // Build metadata chips text
-  const metaParts: string[] = [];
-  if (pax != null && pax > 0) metaParts.push(`${pax} ADULTO${pax !== 1 ? "S" : ""}`);
-  if (ninos != null && ninos > 0) metaParts.push(`${ninos} NIÑO${ninos !== 1 ? "S" : ""}`);
-  if (uniqueAcoms.length > 0) metaParts.push(uniqueAcoms.join("/"));
-  metaParts.push(`${opp.quotes.length} COTIZACIÓN${opp.quotes.length !== 1 ? "ES" : ""}`);
-
-  // Line 2: agency • destination
-  const line2Parts: string[] = [];
-  if (opp.agencyName) line2Parts.push(opp.agencyName.toUpperCase());
-  if (opp.destination) line2Parts.push(opp.destination.toUpperCase());
-  const line2 = line2Parts.join(" • ");
-
-  // Format last update date
   const lastUpdateFormatted = opp.lastUpdateAt
     ? new Date(opp.lastUpdateAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()
     : "—";
@@ -389,47 +442,164 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           )}
         </div>
 
-        {/* ── SECTION 6: Acciones rápidas + ABRIR ──────────────────────── */}
-        <div className="shrink-0 flex flex-col items-end justify-center gap-1.5 self-start sm:self-center mt-1 sm:mt-0">
-          {/* Fila de iconos con tooltip */}
-          <div className="flex items-center gap-0">
-            <IconBtn icon={<FileText className="w-4 h-4" />} label="Cotizaciones" onClick={() => onOpenDetailTab("cotizaciones")} />
-            <IconBtn icon={<Bell className="w-4 h-4" />} label="Seguimiento" onClick={() => onOpenDetailTab("seguimiento")} />
-            <IconBtn icon={<History className="w-4 h-4" />} label="Historial" onClick={() => onOpenDetailTab("historial")} />
-            <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={onEdit} />
-            <div className="w-px h-4 bg-slate-200 mx-0.5" />
-            <div className="relative group">
-              <button
-                ref={menuBtnRef}
-                type="button"
-                onClick={openMenu}
-                className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
-                Más opciones
-              </div>
+        {/* ── SECTION 6: Barra de iconos ───────────────────────────────── */}
+        <div className="shrink-0 flex items-center gap-0 self-start sm:self-center mt-1 sm:mt-0">
+          <IconBtn icon={<Eye className="w-4 h-4" />} label="Ver cotización" onClick={() => onView()} />
+          <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
+          {onDuplicate && <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar" onClick={() => onDuplicate!()} />}
+          <div className="w-px h-4 bg-slate-200 mx-0.5" />
+          <IconBtn
+            icon={<Bell className="w-4 h-4" />}
+            label="Seguimiento"
+            onClick={() => togglePanel("seguimiento")}
+            active={expandedPanel === "seguimiento"}
+          />
+          <IconBtn
+            icon={<History className="w-4 h-4" />}
+            label="Historial"
+            onClick={() => togglePanel("historial")}
+            active={expandedPanel === "historial"}
+          />
+          <div className="w-px h-4 bg-slate-200 mx-0.5" />
+          <IconBtn icon={<Ban className="w-4 h-4" />} label="Anular" onClick={() => onAnular()} danger />
+          <div className="relative group">
+            <button
+              ref={menuBtnRef}
+              type="button"
+              onClick={openMenu}
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+              Más opciones
             </div>
           </div>
-          {/* Botón ABRIR */}
-          <button
-            type="button"
-            onClick={onOpenDetail}
-            className="h-8 px-4 rounded-xl text-white text-[11px] font-bold tracking-wide hover:opacity-90 active:scale-95 transition-all w-full"
-            style={{ background: "#044b9e" }}
-          >
-            ABRIR
-          </button>
+        </div>
+      </div>
+
+      {/* ── Seguimiento accordion ─────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateRows: expandedPanel === "seguimiento" ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
+        <div className="overflow-hidden">
+          <div className="border-t border-slate-100 px-4 py-4 bg-slate-50/60 space-y-3">
+            {/* Próxima acción */}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Próxima acción</label>
+              <input
+                type="text"
+                value={localProxima}
+                onChange={(e) => setLocalProxima(e.target.value)}
+                placeholder="Ej: Llamar al cliente, reenviar propuesta…"
+                className="w-full h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400"
+              />
+            </div>
+            {/* Recordatorio */}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Recordatorio</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[{ label: "Mañana", days: 1 }, { label: "3 días", days: 3 }, { label: "1 semana", days: 7 }].map(({ label, days }) => {
+                  const target = addDays(days);
+                  const isActive = localRec === target;
+                  return (
+                    <button key={days} type="button"
+                      onClick={() => setLocalRec(isActive ? "" : target)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-100"}`}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <input
+                type="date"
+                value={localRec}
+                onChange={(e) => setLocalRec(e.target.value)}
+                className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+              />
+            </div>
+            {/* Nota interna */}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Nota interna</label>
+              <textarea
+                value={localNota}
+                onChange={(e) => setLocalNota(e.target.value)}
+                placeholder="Ej: Cliente interesado en habitación superior…"
+                rows={2}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400 resize-none"
+              />
+            </div>
+            {/* Guardar */}
+            <button type="button" onClick={handleSeguimientoSave}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-semibold transition-colors">
+              <Save className="w-3.5 h-3.5" />Guardar
+            </button>
+            {/* Acciones rápidas */}
+            {!isClosed && (
+              <div className="pt-2 border-t border-slate-200 flex flex-wrap gap-1.5">
+                <button type="button"
+                  onClick={() => handleQuickAction({}, { fecha: now(), tipo: "marcada_atendida", byUser: user?.nombre })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors">
+                  <Check className="w-3.5 h-3.5" />Marcar atendida
+                </button>
+                <button type="button"
+                  onClick={() => handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                  <CheckCircle2 className="w-3.5 h-3.5" />Confirmar venta
+                </button>
+                <button type="button"
+                  onClick={() => handleQuickAction({ recordatorio: addDays(1) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+1 día", byUser: user?.nombre })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors">
+                  <AlarmClock className="w-3.5 h-3.5" />Posponer 1 día
+                </button>
+                <button type="button"
+                  onClick={() => handleQuickAction({ recordatorio: addDays(3) }, { fecha: now(), tipo: "recordatorio_pospuesto", detalle: "+3 días", byUser: user?.nombre })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors">
+                  <AlarmClock className="w-3.5 h-3.5" />Posponer 3 días
+                </button>
+                <button type="button"
+                  onClick={() => handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                  <XCircle className="w-3.5 h-3.5" />Marcar perdida
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Historial accordion ───────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateRows: expandedPanel === "historial" ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
+        <div className="overflow-hidden">
+          <div className="border-t border-slate-100 px-4 py-3 bg-slate-50/60">
+            {(opp.historial ?? []).length === 0 ? (
+              <div className="text-xs text-slate-400 italic py-1">Sin eventos registrados.</div>
+            ) : (
+              <div className="space-y-0.5 max-h-52 overflow-y-auto">
+                {(opp.historial ?? []).map((entry, i) => {
+                  const label = entry.tipo ? (HIST_LABELS[entry.tipo] ?? entry.tipo) : (entry.detalle ?? "Evento");
+                  return (
+                    <div key={i} className="flex items-baseline gap-2 py-0.5">
+                      <span className="text-slate-300 text-[10px] shrink-0 mt-0.5">•</span>
+                      <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-1">
+                        <span className="text-[11px] font-semibold text-slate-700">{label}</span>
+                        {entry.byUser && <span className="text-[10px] text-slate-400">· {entry.byUser}</span>}
+                        {entry.detalle && entry.tipo !== "estado_cambiado" && entry.tipo !== "recordatorio_creado" && (
+                          <span className="text-[10px] text-slate-400">· {entry.detalle}</span>
+                        )}
+                        <span className="text-[10px] text-slate-400">{formatShortDate(entry.fecha)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* ── Portal dropdown menu ──────────────────────────────────────── */}
       {menuOpen && menuPos && createPortal(
-        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[210px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
-          <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Editar cotización" onClick={() => { onEdit(); close(); }} />
-          {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate(); close(); }} />}
-          <MenuItem icon={<ExternalLink className="w-3.5 h-3.5" />} label="Abrir detalle" onClick={() => { onOpenDetail(); close(); }} />
+        <div ref={menuRef} className="fixed bg-white rounded-xl shadow-xl py-1 min-w-[190px] z-[9999]" style={{ top: menuPos.top, right: menuPos.right, border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}>
+          {onDuplicate && <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicar" onClick={() => { onDuplicate!(); close(); }} />}
           <div className="h-px bg-slate-100 my-1" />
           <MenuItem
             icon={opp.priorityManual ? <Star className="w-3.5 h-3.5 text-amber-500" /> : <Star className="w-3.5 h-3.5" />}
@@ -443,8 +613,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           <div className="h-px bg-slate-100 my-1" />
           <MenuItem icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />} label="Confirmar venta" onClick={() => { onUpdateOpportunity({ status: "confirmada", historial: addHistorial("venta_confirmada") }); close(); }} />
           <MenuItem icon={<XCircle className="w-3.5 h-3.5 text-slate-400" />} label="Marcar como perdida" onClick={() => { onUpdateOpportunity({ status: "perdida", historial: addHistorial("marcada_perdida") }); close(); }} />
-          <div className="h-px bg-slate-100 my-1" />
-          <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label="Anular" onClick={() => { onAnular(); close(); }} danger />
         </div>,
         document.body
       )}
@@ -587,12 +755,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   const [filterEstado, setFilterEstado] = useState<EstadoOportunidad | "todas">("todas");
   const [agencias, setAgencias] = useState<Agencia[]>([]);
   const [openOppId, setOpenOppId] = useState<string | null>(null);
-  const [openOppTab, setOpenOppTab] = useState<DetailTab>("resumen");
-
-  const openDetailAt = (id: string, tab: DetailTab = "resumen") => {
-    setOpenOppId(id);
-    setOpenOppTab(tab);
-  };
 
   useEffect(() => {
     loadAgenciasAsync().then((list) => {
@@ -793,8 +955,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
                     onView={() => { if (latestQuote) onView(latestQuote); }}
                     onEdit={() => { if (latestQuote) onEdit(latestQuote); }}
                     onDuplicate={onDuplicate && latestQuote ? () => onDuplicate!(latestQuote) : undefined}
-                    onOpenDetail={() => openDetailAt(o.id, "resumen")}
-                    onOpenDetailTab={(tab) => openDetailAt(o.id, tab)}
                     onUpdateOpportunity={(patch) => handleUpdateOpp(o.id, patch)}
                     onAnular={() => onAnular(o)}
                   />
@@ -814,7 +974,6 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
           onSave={(patch) => handleUpdateOpp(openOpp.id, patch)}
           onView={(g) => { onView(g); setOpenOppId(null); }}
           onDuplicate={onDuplicate ? (g) => { onDuplicate!(g); setOpenOppId(null); } : undefined}
-          initialTab={openOppTab}
         />
       )}
     </div>
