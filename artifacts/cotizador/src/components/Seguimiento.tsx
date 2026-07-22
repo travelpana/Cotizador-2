@@ -17,17 +17,14 @@ import {
   X,
   Star,
   ExternalLink,
-  MoreHorizontal,
   XCircle,
   RotateCcw,
-  ChevronRight,
   CalendarClock,
   History,
   Eye,
   Ban,
   Save,
   Check,
-  AlarmClock,
 } from "lucide-react";
 import type {
   CotizacionGuardada,
@@ -200,15 +197,41 @@ function LogoOrInitials({ agencia, initials, color, size = 36, radius }: {
   );
 }
 
-// ─── Menu item ────────────────────────────────────────────────────────────────
+// ─── Confirm Modal ────────────────────────────────────────────────────────────
 
-function MenuItem({ icon, label, onClick, danger = false }: {
-  icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean;
+function ConfirmModal({ title, message, confirmLabel, danger = false, onConfirm, onCancel }: {
+  title: string; message: string; confirmLabel: string;
+  danger?: boolean; onConfirm: () => void; onCancel: () => void;
 }) {
-  return (
-    <button type="button" onClick={onClick} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-medium transition-colors ${danger ? "text-red-600 hover:bg-red-50" : "text-slate-700 hover:bg-slate-50"}`}>
-      {icon}{label}
-    </button>
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 modal-backdrop-enter"
+      style={{ background: "rgba(15,23,42,0.45)", backdropFilter: "blur(2px)" }}
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden modal-panel-enter"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 pt-6 pb-4">
+          <div className="text-[15px] font-bold text-slate-900 mb-1.5">{title}</div>
+          <div className="text-[13px] text-slate-500 leading-relaxed">{message}</div>
+        </div>
+        <div className="px-6 pb-5 flex justify-end gap-2.5">
+          <button type="button" onClick={onCancel}
+            className="px-4 py-2 rounded-xl text-[13px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition-colors">
+            Cancelar
+          </button>
+          <button type="button" onClick={() => { onConfirm(); }}
+            className={`px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-colors ${
+              danger ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+            }`}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -250,9 +273,14 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 }) {
   const { user } = useAuth();
 
-  // Accordion + inline confirm
+  // Accordion
   const [expandedPanel, setExpandedPanel] = useState<"seguimiento" | "historial" | null>(null);
-  const [confirmAction, setConfirmAction] = useState<"duplicar" | "anular" | null>(null);
+  // Modal confirm
+  const [confirmAction, setConfirmAction] = useState<"duplicar" | "confirmar" | "perdida" | "anular" | null>(null);
+  // Historial detail expansion (by flat sorted index)
+  const [expandedHistEntries, setExpandedHistEntries] = useState<Set<number>>(new Set());
+  const toggleHistEntry = (idx: number) =>
+    setExpandedHistEntries((prev) => { const s = new Set(prev); s.has(idx) ? s.delete(idx) : s.add(idx); return s; });
 
   // Seguimiento form state (synced when panel opens)
   const [localProxima, setLocalProxima] = useState(opp.proximaAccion ?? "");
@@ -418,26 +446,19 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
         {/* ── Barra de iconos ───────────────────────────────────────────── */}
         <div className="shrink-0 flex items-center gap-0 self-start sm:self-center mt-1 sm:mt-0">
-          {/* Grupo 1: acciones de cotización */}
+          {/* Grupo 1: cotización */}
           <IconBtn icon={<Eye className="w-4 h-4" />} label="Vista previa" onClick={() => onView()} />
           <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
           {onDuplicate && (
             <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar"
-              onClick={() => setConfirmAction(confirmAction === "duplicar" ? null : "duplicar")}
-              active={confirmAction === "duplicar"}
-            />
+              onClick={() => setConfirmAction("duplicar")} />
           )}
           <div className="w-px h-4 bg-slate-200 mx-0.5" />
-          {/* Grupo 2: seguimiento */}
+          {/* Grupo 2: seguimiento + acciones */}
           <IconBtn
             icon={<Bell className="w-4 h-4" />} label="Seguimiento"
             onClick={() => togglePanel("seguimiento")}
             active={expandedPanel === "seguimiento"}
-          />
-          <IconBtn
-            icon={<History className="w-4 h-4" />} label="Historial"
-            onClick={() => togglePanel("historial")}
-            active={expandedPanel === "historial"}
           />
           <IconBtn
             icon={<Star className={`w-4 h-4 ${opp.priorityManual ? "fill-amber-400 text-amber-500" : ""}`} />}
@@ -450,69 +471,76 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           />
           <IconBtn
             icon={<CheckCircle2 className="w-4 h-4" />} label="Confirmar venta"
-            onClick={() => handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre })}
+            onClick={() => setConfirmAction("confirmar")}
           />
           <IconBtn
             icon={<XCircle className="w-4 h-4" />} label="Marcar perdida"
-            onClick={() => handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre })}
+            onClick={() => setConfirmAction("perdida")}
           />
           <div className="w-px h-4 bg-slate-200 mx-0.5" />
           {/* Grupo 3: anular */}
           <IconBtn icon={<Ban className="w-4 h-4" />} label="Anular"
-            onClick={() => setConfirmAction(confirmAction === "anular" ? null : "anular")}
-            active={confirmAction === "anular"}
+            onClick={() => setConfirmAction("anular")}
             danger
           />
         </div>
       </div>
 
-      {/* ── Confirmación inline ───────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateRows: confirmAction ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
-        <div className="overflow-hidden">
-          {confirmAction === "duplicar" && (
-            <div className="border-t border-blue-100 bg-blue-50 px-5 py-3 flex items-center justify-between gap-4">
-              <div>
-                <div className="text-[12px] font-semibold text-slate-800">Tienes una cotización existente.</div>
-                <div className="text-[11px] text-slate-500">¿Deseas crear una copia idéntica?</div>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <button type="button" onClick={() => setConfirmAction(null)}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition-colors">
-                  Cancelar
-                </button>
-                <button type="button" onClick={() => { onDuplicate!(); setConfirmAction(null); }}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-                  Duplicar
-                </button>
-              </div>
-            </div>
-          )}
-          {confirmAction === "anular" && (
-            <div className="border-t border-red-100 bg-red-50 px-5 py-3 flex items-center justify-between gap-4">
-              <div>
-                <div className="text-[12px] font-semibold text-slate-800">Esta acción anulará la cotización.</div>
-                <div className="text-[11px] text-slate-500">¿Deseas continuar?</div>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <button type="button" onClick={() => setConfirmAction(null)}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition-colors">
-                  Cancelar
-                </button>
-                <button type="button" onClick={() => { onAnular(); setConfirmAction(null); }}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors">
-                  Anular
-                </button>
-              </div>
-            </div>
-          )}
+      {/* ── Historial footer trigger ──────────────────────────────────── */}
+      {(opp.historial?.length ?? 0) > 0 && (
+        <div className="px-4 pb-2 flex justify-end">
+          <button type="button" onClick={() => togglePanel("historial")}
+            className={`flex items-center gap-1 text-[10px] font-semibold transition-colors ${expandedPanel === "historial" ? "text-blue-500" : "text-slate-400 hover:text-slate-600"}`}>
+            <History className="w-3 h-3" />
+            Historial · {opp.historial!.length} evento{opp.historial!.length !== 1 ? "s" : ""}
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* ── Modales de confirmación ───────────────────────────────────── */}
+      {confirmAction === "duplicar" && (
+        <ConfirmModal
+          title="Duplicar cotización"
+          message="¿Deseas crear una copia exacta de esta cotización?"
+          confirmLabel="Duplicar"
+          onConfirm={() => { onDuplicate!(); setConfirmAction(null); }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+      {confirmAction === "confirmar" && (
+        <ConfirmModal
+          title="Confirmar venta"
+          message="Esta acción marcará la cotización como vendida."
+          confirmLabel="Confirmar"
+          onConfirm={() => { handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre }); setConfirmAction(null); }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+      {confirmAction === "perdida" && (
+        <ConfirmModal
+          title="Marcar como perdida"
+          message="¿Seguro que deseas marcar esta oportunidad como perdida?"
+          confirmLabel="Aceptar"
+          onConfirm={() => { handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre }); setConfirmAction(null); }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+      {confirmAction === "anular" && (
+        <ConfirmModal
+          title="Anular cotización"
+          message="La cotización quedará anulada, pero podrá restaurarse posteriormente."
+          confirmLabel="Anular"
+          danger
+          onConfirm={() => { onAnular(); setConfirmAction(null); }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
 
       {/* ── Seguimiento accordion ─────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateRows: expandedPanel === "seguimiento" ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
+      <div style={{ display: "grid", gridTemplateRows: expandedPanel === "seguimiento" ? "1fr" : "0fr", transition: "grid-template-rows 220ms ease" }}>
         <div className="overflow-hidden">
-          <div className="border-t border-slate-100 px-4 py-4 bg-slate-50/60">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="border-t border-slate-100 px-4 pt-4 pb-3 bg-slate-50/60">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
               {/* Col 1: Próxima acción */}
               <div className="flex flex-col gap-2">
@@ -522,9 +550,10 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                   value={localProxima}
                   onChange={(e) => setLocalProxima(e.target.value)}
                   placeholder="Ej: Llamar al cliente…"
-                  className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400 w-full"
+                  className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
+                  style={{ color: "#1F2937" }}
                 />
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-2">
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(localProxima || opp.proximaAccion || "")}`}
                     target="_blank" rel="noopener noreferrer"
@@ -553,7 +582,8 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                     return (
                       <button key={days} type="button"
                         onClick={() => setLocalRec(isActive ? "" : target)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-100"}`}>
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ring-1 ${isActive ? "bg-blue-50 text-blue-600 ring-blue-300" : "bg-white ring-slate-200 hover:bg-slate-100"}`}
+                        style={{ color: isActive ? undefined : "#1F2937" }}>
                         {label}
                       </button>
                     );
@@ -564,6 +594,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                   value={localRec}
                   onChange={(e) => setLocalRec(e.target.value)}
                   className="h-8 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 w-full"
+                  style={{ color: "#1F2937" }}
                 />
               </div>
 
@@ -575,83 +606,131 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                   onChange={(e) => setLocalNota(e.target.value)}
                   placeholder="Ej: Cliente interesado en habitación superior…"
                   rows={4}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 placeholder:text-slate-400 resize-none"
+                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 resize-none"
+                  style={{ color: "#1F2937" }}
                 />
               </div>
 
-              {/* Col 4: Acciones */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Acciones</label>
-                <button type="button" onClick={handleSeguimientoSave}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-semibold transition-colors">
-                  <Save className="w-3.5 h-3.5" />Guardar
-                </button>
-                <button type="button"
-                  onClick={() => handleQuickAction({}, { fecha: now(), tipo: "marcada_atendida", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 text-[12px] font-semibold transition-colors">
-                  <Check className="w-3.5 h-3.5" />Marcar atendida
-                </button>
-                <button type="button"
-                  onClick={() => handleQuickAction({ status: "confirmada" }, { fecha: now(), tipo: "venta_confirmada", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-[12px] font-semibold transition-colors">
-                  <CheckCircle2 className="w-3.5 h-3.5" />Confirmar venta
-                </button>
-                <button type="button"
-                  onClick={() => handleQuickAction({ status: "perdida" }, { fecha: now(), tipo: "marcada_perdida", byUser: user?.nombre })}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-[12px] font-semibold transition-colors">
-                  <XCircle className="w-3.5 h-3.5" />Marcar perdida
-                </button>
-              </div>
+            </div>
 
+            {/* Guardar — alineado abajo a la derecha */}
+            <div className="flex justify-end mt-3">
+              <button type="button" onClick={handleSeguimientoSave}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-semibold transition-colors">
+                <Save className="w-3.5 h-3.5" />Guardar
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Historial accordion ───────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateRows: expandedPanel === "historial" ? "1fr" : "0fr", transition: "grid-template-rows 200ms ease" }}>
+      <div style={{ display: "grid", gridTemplateRows: expandedPanel === "historial" ? "1fr" : "0fr", transition: "grid-template-rows 220ms ease" }}>
         <div className="overflow-hidden">
           <div className="border-t border-slate-100 px-4 py-4 bg-slate-50/60">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-[13px] font-bold text-slate-800">Historial</span>
+                {(opp.historial?.length ?? 0) > 0 && (
+                  <span className="ml-2 text-[11px] font-semibold text-slate-400">{opp.historial!.length} evento{opp.historial!.length !== 1 ? "s" : ""}</span>
+                )}
+              </div>
+            </div>
+
             {historialGroups.length === 0 ? (
               <div className="text-xs text-slate-400 italic py-1">Sin eventos registrados.</div>
-            ) : (
-              <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
-                {historialGroups.map((group) => (
-                  <div key={group.dateKey}>
-                    {/* Day header */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-px flex-1 bg-slate-200" />
-                      <span className="text-[10px] font-bold text-slate-500 tracking-wider shrink-0">{group.dateLabel}</span>
-                      <div className="h-px flex-1 bg-slate-200" />
-                    </div>
-                    {/* Entries with timeline */}
-                    <div className="relative pl-4">
-                      <div className="absolute left-1.5 top-0 bottom-0 w-px bg-slate-200" />
-                      <div className="space-y-2">
-                        {group.entries.map(({ entry, timeLabel }, i) => {
-                          const label = entry.tipo ? (HIST_LABELS[entry.tipo] ?? entry.tipo) : (entry.detalle ?? "Evento");
-                          return (
-                            <div key={i} className="flex items-start gap-2">
-                              <div className="absolute left-0 w-3 h-3 rounded-full bg-slate-300 border-2 border-white shrink-0 mt-0.5" style={{ marginTop: "3px" }} />
-                              <div className="flex-1 min-w-0 ml-1">
-                                <div className="flex items-baseline gap-1.5 flex-wrap">
-                                  <span className="text-[10px] font-mono font-semibold text-slate-400 shrink-0">{timeLabel}</span>
-                                  <span className="text-[11px] font-semibold text-slate-700">{label}</span>
-                                  {entry.byUser && <span className="text-[10px] text-slate-400">{entry.byUser}</span>}
+            ) : (() => {
+              // Flat sorted list for global index (for expand state)
+              let flatIdx = -1;
+              return (
+                <div className="max-h-80 overflow-y-auto pr-1 space-y-0">
+                  {historialGroups.map((group) => (
+                    <div key={group.dateKey} className="mb-3">
+                      {/* Day separator */}
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <div className="h-px flex-1 bg-slate-200" />
+                        <span className="text-[10px] font-bold text-slate-400 tracking-wider shrink-0 uppercase">{group.dateLabel}</span>
+                        <div className="h-px flex-1 bg-slate-200" />
+                      </div>
+                      {/* Timeline entries */}
+                      <div className="relative pl-7">
+                        <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
+                        <div className="space-y-3">
+                          {group.entries.map(({ entry, timeLabel }) => {
+                            flatIdx++;
+                            const currentIdx = flatIdx;
+                            const label = entry.tipo ? (HIST_LABELS[entry.tipo] ?? entry.tipo) : (entry.detalle ?? "Evento");
+                            const hasDetail = !!entry.detalle && entry.tipo !== "estado_cambiado";
+                            const isExpanded = expandedHistEntries.has(currentIdx);
+                            const iconColor = (() => {
+                              switch(entry.tipo) {
+                                case "venta_confirmada": case "marcada_atendida": return "#10b981";
+                                case "marcada_perdida": return "#64748b";
+                                case "anulada": return "#ef4444";
+                                case "restaurada": return "#3b82f6";
+                                case "prioridad_activada": case "prioridad_quitada": return "#f59e0b";
+                                case "cotizacion_modificada": return "#6366f1";
+                                case "nota_agregada": return "#06b6d4";
+                                case "recordatorio_creado": case "recordatorio_pospuesto": return "#8b5cf6";
+                                default: return "#94a3b8";
+                              }
+                            })();
+                            const icon = (() => {
+                              switch(entry.tipo) {
+                                case "pdf_generado": return <Eye className="w-3 h-3" />;
+                                case "correo_generado": return <MessageSquare className="w-3 h-3" />;
+                                case "cotizacion_modificada": return <Pencil className="w-3 h-3" />;
+                                case "cotizacion_agregada": return <Copy className="w-3 h-3" />;
+                                case "prioridad_activada": case "prioridad_quitada": return <Star className="w-3 h-3" />;
+                                case "nota_agregada": return <MessageSquare className="w-3 h-3" />;
+                                case "recordatorio_creado": case "recordatorio_pospuesto": return <CalendarClock className="w-3 h-3" />;
+                                case "venta_confirmada": case "marcada_atendida": return <Check className="w-3 h-3" />;
+                                case "marcada_perdida": return <XCircle className="w-3 h-3" />;
+                                case "anulada": return <Ban className="w-3 h-3" />;
+                                case "restaurada": return <RotateCcw className="w-3 h-3" />;
+                                default: return <Clock className="w-3 h-3" />;
+                              }
+                            })();
+                            return (
+                              <div key={currentIdx} className="flex items-start gap-2.5">
+                                {/* Icon dot */}
+                                <div className="absolute left-1.5 w-3 h-3 rounded-full border-2 border-white flex items-center justify-center shrink-0" style={{ background: iconColor, marginTop: 2 }}>
                                 </div>
-                                {entry.detalle && entry.tipo !== "estado_cambiado" && (
-                                  <div className="text-[10px] text-slate-400 mt-0.5">{entry.detalle}</div>
-                                )}
+                                {/* Icon (overlay on dot) */}
+                                <div className="absolute left-1 w-4 h-4 flex items-center justify-center shrink-0 text-white" style={{ marginTop: 1 }}>
+                                  <span style={{ color: "white", transform: "scale(0.65)" }}>{icon}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[12px] font-semibold" style={{ color: "#1F2937" }}>{label}</div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">
+                                    {timeLabel}{entry.byUser && <> · por <span className="font-medium text-slate-500">{entry.byUser}</span></>}
+                                  </div>
+                                  {hasDetail && (
+                                    <>
+                                      <button type="button"
+                                        onClick={() => toggleHistEntry(currentIdx)}
+                                        className="text-[10px] font-semibold text-blue-500 hover:text-blue-700 mt-0.5 transition-colors">
+                                        {isExpanded ? "Ocultar detalle" : "Ver detalle"}
+                                      </button>
+                                      {isExpanded && (
+                                        <div className="mt-1.5 px-2.5 py-1.5 bg-white rounded-lg ring-1 ring-slate-100 text-[11px] hist-detail-enter" style={{ color: "#1F2937" }}>
+                                          {entry.detalle}
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

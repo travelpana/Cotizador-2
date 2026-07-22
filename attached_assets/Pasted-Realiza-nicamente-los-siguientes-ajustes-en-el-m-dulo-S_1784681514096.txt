@@ -1,0 +1,285 @@
+Realiza únicamente los siguientes ajustes en el módulo Seguimiento. No modifiques la lógica existente ni la base de datos. Solo mejorar la interfaz.
+
+1. ELIMINAR MENÚ DE LOS TRES PUNTOS
+Eliminar completamente el menú contextual.
+
+La barra de acciones debe quedar:
+
+👁 Vista previa
+✏️ Editar
+📄 Duplicar
+
+|
+
+🔔 Seguimiento
+⭐ Prioridad
+✅ Confirmar venta
+⭕ Marcar perdida
+
+|
+
+🚫 Anular
+
+Mantener separación visual entre grupos.
+
+----------------------------------------------------
+
+2. POPUPS DE CONFIRMACIÓN
+
+Las siguientes acciones deben abrir un popup modal moderno antes de ejecutarse:
+
+• Duplicar
+• Confirmar venta
+• Marcar perdida
+• Anular
+
+Usar el mismo componente para todos.
+
+Duplicar
+Título:
+Duplicar cotización
+
+Mensaje:
+¿Deseas crear una copia exacta de esta cotización?
+
+Botones:
+Cancelar
+Duplicar
+
+-----------------------------------
+
+Confirmar venta
+
+Título:
+Confirmar venta
+
+Mensaje:
+Esta acción marcará la cotización como vendida.
+
+Botones:
+Cancelar
+Confirmar
+
+-----------------------------------
+
+Marcar perdida
+
+Título:
+Marcar como perdida
+
+Mensaje:
+¿Seguro que deseas marcar esta oportunidad como perdida?
+
+Botones:
+Cancelar
+Aceptar
+
+-----------------------------------
+
+Anular
+
+Título:
+Anular cotización
+
+Mensaje:
+La cotización quedará anulada, pero podrá restaurarse posteriormente.
+
+Botones:
+Cancelar
+Anular
+
+Todos los popups deben tener animación de aparición, fondo oscuro semitransparente y diseño consistente con el sistema.
+
+----------------------------------------------------
+
+3. SEGUIMIENTO
+
+Eliminar completamente la columna "Acciones".
+
+La distribución debe quedar en tres columnas:
+
+----------------------------------
+
+PRÓXIMA ACCIÓN
+
+Campo de texto
+
+Debajo:
+
+Botón WhatsApp
+
+Botón Correo
+
+----------------------------------
+
+RECORDATORIO
+
+Botones rápidos:
+
+Hoy
+
+Mañana
+
+3 días
+
+1 semana
+
+Debajo:
+
+Selector de fecha
+
+----------------------------------
+
+NOTA INTERNA
+
+Área de texto amplia
+
+----------------------------------
+
+El botón Guardar debe quedar alineado abajo a la derecha de toda la sección.
+
+----------------------------------------------------
+
+4. INPUTS
+
+Corregir todos los campos de texto.
+
+Actualmente el texto y placeholders aparecen blancos.
+
+Usar los colores del sistema:
+
+Texto:
+#1F2937
+
+Placeholder:
+#94A3B8
+
+Nunca utilizar texto blanco sobre fondo blanco.
+
+----------------------------------------------------
+
+5. HISTORIAL
+
+Rediseñar completamente el historial.
+
+No usar tablas.
+
+Mostrar una línea de tiempo moderna.
+
+Encabezado:
+
+Historial
+
+15 eventos
+
+Luego mostrar los eventos en orden descendente.
+
+Cada evento debe contener:
+
+Icono
+
+Título
+
+Fecha y hora
+
+Usuario
+
+Si tiene cambios:
+
+Mostrar enlace
+
+Ver detalle
+
+Ocultar detalle
+
+Al expandirse mostrar los cambios.
+
+Ejemplo:
+
+✔ Venta confirmada
+21 jul 2026 · 19:49
+por Jonathan
+
+----------------------------
+
+↩ Restaurada
+21 jul 2026 · 19:46
+
+----------------------------
+
+🚫 Anulada
+21 jul 2026 · 19:46
+por Jonathan
+
+----------------------------
+
+⭐ Prioridad activada
+21 jul 2026 · 19:45
+por Jonathan
+
+----------------------------
+
+⭐ Prioridad quitada
+21 jul 2026 · 19:45
+por Jonathan
+
+----------------------------
+
+✏ Cotización modificada
+2 cambios
+21 jul 2026 · 19:31
+por Jonathan
+
+Ver detalle
+
+• Tour agregado:
+Casco Antiguo Walking Tours (solo traslado 1 vía)
+
+• Total:
+USD 66 → USD 156
+
+Ocultar detalle
+
+----------------------------
+
+Los iconos deben cambiar según el tipo de evento:
+
+👁 Vista previa
+
+✏ Edición
+
+📄 Duplicación
+
+⭐ Prioridad
+
+🔔 Seguimiento
+
+✔ Venta
+
+🚫 Anulación
+
+↩ Restauración
+
+❌ Perdida
+
+💬 Nota
+
+📅 Recordatorio
+
+----------------------------------------------------
+
+6. ANIMACIONES
+
+La expansión de Seguimiento e Historial debe ser suave (200–250 ms).
+
+Los detalles del historial deben desplegarse con animación.
+
+----------------------------------------------------
+
+No modificar lógica de negocio.
+
+No modificar API.
+
+No modificar base de datos.
+
+Solo mejorar la experiencia visual y la organización de la interfaz.
