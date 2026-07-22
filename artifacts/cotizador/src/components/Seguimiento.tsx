@@ -512,49 +512,64 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         </div>
 
         {/* ── Barra de iconos ───────────────────────────────────────────── */}
-        <div className="shrink-0 flex items-center gap-0 self-start sm:self-center mt-1 sm:mt-0">
-          {/* Grupo 1: cotización */}
-          <IconBtn icon={<Eye className="w-4 h-4" />} label="Vista previa" onClick={() => onView()} />
-          <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
-          {onDuplicate && (
-            <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar"
-              onClick={() => setConfirmAction("duplicar")} />
-          )}
-          <div className="w-px h-4 bg-slate-200 mx-0.5" />
-          {/* Grupo 2: seguimiento + acciones + historial */}
-          <IconBtn
-            icon={<Bell className="w-4 h-4" />} label="Seguimiento"
-            onClick={() => togglePanel("seguimiento")}
-            active={expandedPanel === "seguimiento"}
-          />
-          <IconBtn
-            icon={<Star className={`w-4 h-4 ${opp.priorityManual ? "fill-amber-400 text-amber-500" : ""}`} />}
-            label={opp.priorityManual ? "Quitar prioridad" : "Marcar prioridad"}
-            onClick={() => {
-              const tipo: OppHistorialEntry["tipo"] = opp.priorityManual ? "prioridad_quitada" : "prioridad_activada";
-              onUpdateOpportunity({ priorityManual: !opp.priorityManual, historial: addHistorial(tipo) });
-            }}
-          />
-          <IconBtn
-            icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} label="Confirmar venta"
-            btnRef={confirmarBtnRef}
-            onClick={() => setPopoverAction(popoverAction === "confirmar" ? null : "confirmar")}
-          />
-          <IconBtn
-            icon={<XCircle className="w-4 h-4 text-red-500" />} label="Marcar perdida"
-            btnRef={perdidaBtnRef}
-            onClick={() => setPopoverAction(popoverAction === "perdida" ? null : "perdida")}
-          />
-          <IconBtn icon={<Ban className="w-4 h-4" />} label="Anular"
-            btnRef={anularBtnRef}
-            onClick={() => setPopoverAction(popoverAction === "anular" ? null : "anular")}
-            danger
-          />
-          <IconBtn
-            icon={<History className="w-4 h-4" />} label="Historial"
-            onClick={() => togglePanel("historial")}
-            active={expandedPanel === "historial"}
-          />
+        <div className="shrink-0 flex items-center self-start sm:self-center mt-1 sm:mt-0">
+          {/* Grupo 1: Cotización */}
+          <div className="flex items-center gap-3">
+            <IconBtn icon={<Eye className="w-4 h-4" />} label="Vista previa" onClick={() => onView()} />
+            <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
+            {onDuplicate && (
+              <IconBtn icon={<Copy className="w-4 h-4" />} label="Duplicar"
+                onClick={() => setConfirmAction("duplicar")} />
+            )}
+          </div>
+
+          {/* Separador */}
+          <div className="w-px h-5 bg-slate-300 mx-[22px]" />
+
+          {/* Grupo 2: CRM */}
+          <div className="flex items-center gap-3">
+            <IconBtn
+              icon={<Bell className="w-4 h-4" />} label="Seguimiento"
+              onClick={() => togglePanel("seguimiento")}
+              active={expandedPanel === "seguimiento"}
+            />
+            <IconBtn
+              icon={<Star className={`w-4 h-4 ${opp.priorityManual ? "fill-amber-400 text-amber-500" : ""}`} />}
+              label={opp.priorityManual ? "Quitar prioridad" : "Marcar prioridad"}
+              onClick={() => {
+                const tipo: OppHistorialEntry["tipo"] = opp.priorityManual ? "prioridad_quitada" : "prioridad_activada";
+                onUpdateOpportunity({ priorityManual: !opp.priorityManual, historial: addHistorial(tipo) });
+              }}
+            />
+            <IconBtn
+              icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} label="Confirmar venta"
+              btnRef={confirmarBtnRef}
+              onClick={() => setPopoverAction(popoverAction === "confirmar" ? null : "confirmar")}
+            />
+            <IconBtn
+              icon={<XCircle className="w-4 h-4 text-red-500" />} label="Marcar perdida"
+              btnRef={perdidaBtnRef}
+              onClick={() => setPopoverAction(popoverAction === "perdida" ? null : "perdida")}
+            />
+          </div>
+
+          {/* Separador */}
+          <div className="w-px h-5 bg-slate-300 mx-[22px]" />
+
+          {/* Grupo 3: Historial + Anular */}
+          <div className="flex items-center gap-3">
+            <IconBtn
+              icon={<History className="w-4 h-4" />} label="Historial"
+              onClick={() => togglePanel("historial")}
+              active={expandedPanel === "historial"}
+            />
+            <IconBtn
+              icon={<Trash2 className="w-4 h-4" />} label="Anular"
+              btnRef={anularBtnRef}
+              onClick={() => setPopoverAction(popoverAction === "anular" ? null : "anular")}
+              danger
+            />
+          </div>
         </div>
       </div>
 
