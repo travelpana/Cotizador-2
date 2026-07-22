@@ -35,7 +35,7 @@ Professional travel quotation system for RGE Style Travel. Reads the price list 
 - Frontend proxies `/api/*` to the backend at port 8080 via Vite dev server proxy
 - esbuild bundles the API server into a single ESM file for fast startup
 - Tour descriptivos auto-load from `.docx` files in `attached_assets/` at build time
-- No login/auth — the app is intended for internal agency use only
+- JWT authentication — users log in with username/password; tokens stored in localStorage; `SESSION_SECRET` env var required for signing
 
 ## Product
 
