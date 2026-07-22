@@ -375,7 +375,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
       setLocalRec(opp.recordatorio?.slice(0, 10) ?? "");
       setLocalNota(opp.notaInterna ?? "");
     }
-    setConfirmAction(null);
     setExpandedPanel((prev) => (prev === panel ? null : panel));
   };
 
