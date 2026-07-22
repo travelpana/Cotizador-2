@@ -373,26 +373,32 @@ export function guardarEnSeguimiento(
 export function duplicarCotizacion(
   orig: CotizacionGuardada,
 ): CotizacionGuardada {
+  // Only copy quote-data fields — never CRM/tracking state.
   const base: CotizacionGuardada = {
-    ...orig,
+    // ── Identity ──────────────────────────────────────────────────────────
     id: `${Date.now()}`,
     fechaCreacion: new Date().toISOString(),
     numeroCotizacion: generateNumeroCotizacion(),
-    estado: "pendiente",
-    estadoCRM: "nueva",
-    prioridad: orig.prioridad ?? "media",
-    ultimoSeguimiento: new Date().toISOString(),
-    proximaAccion: undefined,
-    fechaRecordatorio: undefined,
-    recordatorio: undefined,
-    notaInterna: undefined,
-    historial: [{ fecha: new Date().toISOString(), tipo: "duplicada", detalle: `Desde ${orig.numeroCotizacion}` }],
-    observacionesSeleccionadas: orig.observacionesSeleccionadas ? [...orig.observacionesSeleccionadas] : undefined,
-    observacionManual: orig.observacionManual,
+    // ── Quote data (the only thing that should be duplicated) ─────────────
     cliente: { ...orig.cliente },
     servicios: orig.servicios.map((s) => ({ ...s })),
     acomodaciones: [...orig.acomodaciones],
-    opportunityId: undefined,
+    modoCotizacion: orig.modoCotizacion,
+    presentationMode: orig.presentationMode,
+    quotingMode: orig.quotingMode,
+    opcionesPaquete: orig.opcionesPaquete ? orig.opcionesPaquete.map((o) => ({ ...o })) : undefined,
+    observacionesSeleccionadas: orig.observacionesSeleccionadas ? [...orig.observacionesSeleccionadas] : undefined,
+    observacionManual: orig.observacionManual,
+    // ── CRM state — always fresh ───────────────────────────────────────────
+    estado: "pendiente",
+    estadoCRM: "nueva",
+    ultimoSeguimiento: new Date().toISOString(),
+    historial: [{ fecha: new Date().toISOString(), tipo: "duplicada", detalle: `Desde ${orig.numeroCotizacion}` }],
+    // All other CRM/tracking fields omitted (undefined by default):
+    // prioridad, sentAt, proximaAccion, fechaRecordatorio, recordatorio,
+    // notaInterna, tipoProximaAccion, fechaProximaAccion, observacionSeguimiento,
+    // valorCotizacion, agenteSeguimiento, destinoSeguimiento, esFavorito,
+    // anulada, fechaAnulacion, motivoAnulacion, updatedBy*, opportunityId
   };
   return { ...base, estadoCRM: computeAutoEstado(base) };
 }
