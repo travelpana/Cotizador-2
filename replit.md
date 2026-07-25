@@ -19,11 +19,13 @@ PUPPETEER_SKIP_DOWNLOAD=true pnpm install && pnpm --filter @workspace/api-server
 
 ## Database setup
 
-The `DATABASE_URL` environment variable is already configured. To apply schema changes:
+The `DATABASE_URL` environment variable is already configured. On first run (or after schema changes), push the schema:
 
 ```
 cd lib/db && pnpm run push
 ```
+
+The schema has already been pushed to the connected PostgreSQL database. Seed users are created automatically on server startup.
 
 ## Default users
 
