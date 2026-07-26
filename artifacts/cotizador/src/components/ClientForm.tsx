@@ -283,7 +283,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             </Field>
 
             {/* Counter */}
-            <Field label="Counter" span={2}>
+            <Field label="Counter" span={2} inline>
               <CounterAutocomplete
                 value={cliente.counter ?? ""}
                 onChange={(v) => update({ counter: v })}
@@ -362,7 +362,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
           </div>
 
           {/* Vigencia */}
-          <Field label="Vigencia">
+          <Field label="Vigencia" inline>
             <PremiumSingleDatePicker
               value={cliente.vigencia}
               onChange={(iso) => update({ vigencia: iso })}
@@ -691,13 +691,31 @@ function Field({
   required,
   error,
   span,
+  inline,
 }: {
   label: string;
   children: React.ReactNode;
   required?: boolean;
   error?: boolean;
   span?: number;
+  inline?: boolean;
 }) {
+  if (inline) {
+    return (
+      <div style={span ? { gridColumn: `span ${span}` } : undefined} className="flex items-center gap-2">
+        <label className="text-[11px] font-semibold uppercase tracking-wide shrink-0 whitespace-nowrap" style={{ color: "#07152f" }}>
+          {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
+          {error && (
+            <span className="ml-2 text-[10px] font-medium text-red-500 normal-case tracking-normal">
+              requerido
+            </span>
+          )}
+        </label>
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    );
+  }
   return (
     <div style={span ? { gridColumn: `span ${span}` } : undefined}>
       <label className="block text-[11px] font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#07152f" }}>

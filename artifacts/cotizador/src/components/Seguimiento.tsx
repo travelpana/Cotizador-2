@@ -85,6 +85,13 @@ const URGENCY_META: Record<UrgencyLevel, { label: string; color: string; bg: str
   green:  { label: "Al día",              color: "#065f46", bg: "#d1fae5", dot: "#10b981" },
 };
 
+// ─── Outer border color by status ─────────────────────────────────────────────
+function getCardStatusBorderColor(status: EstadoOportunidad): string {
+  if (status === "anulada") return "#ef4444";
+  if (status === "confirmada" || status === "perdida") return "#22c55e";
+  return "#3b82f6"; // nueva, enviada, seguimiento
+}
+
 // ─── Border color by priority ──────────────────────────────────────────────────
 // Priority: 1-Urgente · 2-Vencida · 3-Requiere seguimiento · 4-Prioritaria · 5-Nueva · 6-Al día
 function getCardBorderColor(opp: Opportunity): string {
@@ -460,11 +467,16 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
     return groups;
   })();
 
+  const statusBorderColor = getCardStatusBorderColor(opp.status);
+
   return (
     <div
       className="bg-white rounded-2xl overflow-hidden transition-all duration-150 cursor-default"
       style={{
         borderLeft: `5px solid ${borderColor}`,
+        border: `1px solid ${statusBorderColor}`,
+        borderLeftWidth: 5,
+        borderLeftColor: borderColor,
         boxShadow: "0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)",
         minHeight: 110,
       }}
@@ -507,11 +519,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600">PRIORIDAD</span>
             )}
           </div>
-          {(opp.createdByName || opp.latestQuoteCode) && (
-            <div className="text-[10px] text-slate-400 mt-1">
-              {opp.createdByName}{opp.createdByName && opp.latestQuoteCode ? " • " : ""}{opp.latestQuoteCode ?? ""}
-            </div>
-          )}
         </div>
 
         {/* Price + Estado */}
@@ -614,6 +621,17 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               danger
             />
           </div>
+
+          {/* Creator + Quote Code — shown after delete icon */}
+          {(opp.createdByName || opp.latestQuoteCode) && (
+            <>
+              <div className="w-px h-5 bg-slate-300 mx-2" />
+              <div className="flex flex-col gap-0.5">
+                {opp.createdByName && <span className="text-[10px] text-slate-400 leading-tight">{opp.createdByName}</span>}
+                {opp.latestQuoteCode && <span className="text-[10px] font-semibold text-slate-400 leading-tight">{opp.latestQuoteCode}</span>}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -1154,15 +1172,21 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
       {/* ── Tab toggle + Excel ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm">
-          <button type="button" onClick={() => setTab("activas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "activas" ? "bg-primary text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}>
+          <button type="button" onClick={() => setTab("activas")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "activas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+            style={tab === "activas" ? { backgroundColor: "#004FBB" } : undefined}>
             Activas
             <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "activas" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}>{activeOpps.length}</span>
           </button>
-          <button type="button" onClick={() => setTab("finalizadas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "finalizadas" ? "bg-emerald-600 text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}>
+          <button type="button" onClick={() => setTab("finalizadas")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "finalizadas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+            style={tab === "finalizadas" ? { backgroundColor: "#004FBB" } : undefined}>
             Finalizadas
             {finalizadasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "finalizadas" ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}>{finalizadasOpps.length}</span>}
           </button>
-          <button type="button" onClick={() => setTab("anuladas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "anuladas" ? "bg-red-600 text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}>
+          <button type="button" onClick={() => setTab("anuladas")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "anuladas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+            style={tab === "anuladas" ? { backgroundColor: "#004FBB" } : undefined}>
             Anuladas
             {anuladasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "anuladas" ? "bg-white/20 text-white" : "bg-red-50 text-red-500"}`}>{anuladasOpps.length}</span>}
           </button>

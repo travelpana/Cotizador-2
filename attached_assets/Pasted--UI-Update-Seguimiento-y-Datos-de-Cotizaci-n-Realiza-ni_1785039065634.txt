@@ -1,0 +1,106 @@
+## UI Update – Seguimiento y Datos de Cotización
+
+Realiza únicamente los cambios descritos a continuación. No refactorices componentes, no modifiques la lógica, no cambies estilos globales, no actualices dependencias ni alteres otros módulos de la aplicación.
+
+---
+
+### 1. Botones de estado (Seguimiento)
+
+En los botones de filtro:
+
+- Activas
+- Finalizadas
+- Anuladas
+
+Modificar únicamente el estado activo.
+
+Requisitos:
+
+- El botón activo debe utilizar el azul oscuro principal de la aplicación.
+- El texto del botón debe permanecer blanco.
+- Eliminar el color celeste utilizado actualmente para el estado activo.
+- Mantener exactamente el mismo tamaño, bordes, espaciado y comportamiento de los botones.
+
+No realizar ningún otro cambio en esta sección.
+
+---
+
+### 2. Tarjetas de cotización
+
+Conservar completamente el diseño actual de la tarjeta.
+
+No modificar:
+
+- la media luna del lado izquierdo,
+- la distribución,
+- los iconos,
+- las sombras,
+- los espacios,
+- la tipografía.
+
+Agregar únicamente un borde exterior muy sutil.
+
+Características:
+
+- grosor aproximado de 1px
+- mismo border-radius de la tarjeta
+- sin modificar el diseño existente
+
+El color del borde dependerá del estado:
+
+- Nueva / Activa → azul
+- Finalizada → verde
+- Anulada → rojo
+
+Este borde solo debe servir como indicador visual del estado.
+
+---
+
+### 3. Información de la tarjeta
+
+Reubicar únicamente los siguientes elementos:
+
+- Nombre del creador.
+- Código de reserva.
+
+Ambos deben mostrarse después del ícono de Eliminar, respetando la estructura actual de la tarjeta.
+
+No modificar la posición ni la distribución de ningún otro elemento.
+
+---
+
+### 4. Datos de Cotización
+
+Reducir ligeramente la altura visual de esta tarjeta.
+
+Actualmente los campos "Counter" y "Vigencia" muestran la etiqueta en una línea y el valor debajo.
+
+Cambiar ambos para que el valor aparezca en la misma línea de la etiqueta.
+
+Ejemplo:
+
+Counter: Jonathan Concepción
+
+Vigencia: 30/08/2026
+
+Requisitos:
+
+- Mantener el mismo tamaño de fuente que tienen actualmente las etiquetas.
+- No aumentar ni disminuir la tipografía.
+- No modificar el ancho de los controles.
+- No cambiar el resto del contenido de la tarjeta.
+
+El objetivo es reducir un poco la altura total de la sección.
+
+---
+
+## Restricciones
+
+- No crear componentes nuevos.
+- No modificar la lógica existente.
+- No cambiar el diseño general de la aplicación.
+- No mover otros elementos que no fueron mencionados.
+- No modificar colores globales.
+- No alterar espaciados fuera de los cambios solicitados.
+- Limitar los cambios únicamente a los componentes afectados.
+- Mantener la interfaz consistente con el estilo premium actual de la aplicación.
