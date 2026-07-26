@@ -45,6 +45,7 @@ interface Props {
   allowPast?: boolean;
   disabled?: boolean;
   minDate?: string;
+  compactTrigger?: boolean;
 }
 
 export default function PremiumSingleDatePicker({
@@ -55,6 +56,7 @@ export default function PremiumSingleDatePicker({
   allowPast = true,
   disabled = false,
   minDate,
+  compactTrigger = false,
 }: Props) {
   const today = todayISO();
   const effectiveMin = minDate ?? (allowPast ? undefined : today);
@@ -152,21 +154,24 @@ export default function PremiumSingleDatePicker({
     : open
       ? "ring-2 ring-[#2563eb]/30 border-[#2563eb]"
       : "border-slate-200 hover:border-slate-300";
+  const triggerCls = compactTrigger
+    ? "border-0 bg-transparent hover:border-0 focus:ring-0 px-0"
+    : ringCls;
 
   return (
     <>
       <div
         ref={triggerRef}
-        className={`relative flex items-center h-10 rounded-xl border bg-white cursor-pointer transition-all ${ringCls} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
+        className={`relative flex items-center h-10 rounded-xl border cursor-pointer transition-all ${triggerCls} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
         onClick={() => !disabled && setOpen(v => !v)}
       >
-        <div className="flex items-center gap-2 pl-3 flex-1 min-w-0">
-          <CalendarDays className="w-4 h-4 text-slate-400 flex-shrink-0" />
-          <span className={`text-sm font-medium truncate ${value ? "text-slate-900" : "text-slate-400"}`}>
+        <div className={`flex items-center gap-2 flex-1 min-w-0 ${compactTrigger ? "" : "pl-3"}`}>
+          {!compactTrigger && <CalendarDays className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+          <span className={`text-sm font-medium truncate ${value ? (compactTrigger ? "text-blue-600" : "text-slate-900") : "text-slate-400"}`}>
             {value ? fmtDisplay(value) : placeholder}
           </span>
         </div>
-        {value ? (
+        {value && !compactTrigger ? (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onChange(""); }}
@@ -175,9 +180,9 @@ export default function PremiumSingleDatePicker({
           >
             <X className="w-3.5 h-3.5" />
           </button>
-        ) : (
+        ) : !compactTrigger ? (
           <div className="w-2 mr-2" />
-        )}
+        ) : null}
       </div>
 
       {open && pos && createPortal(

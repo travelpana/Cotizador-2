@@ -1,0 +1,100 @@
+## UI Update – Datos de la Cotización (Counter y Vigencia)
+
+Realiza únicamente los siguientes cambios visuales. No modificar la lógica existente, no cambiar el funcionamiento del selector de Counter ni del DatePicker de Vigencia.
+
+---
+
+### 1. Campo COUNTER
+
+Simplificar la presentación del campo.
+
+Actualmente el Counter se muestra dentro de un input con borde.
+
+Modificar únicamente la interfaz.
+
+Requisitos:
+
+- Eliminar el borde, fondo y apariencia de input.
+- Mostrar la información en una sola línea.
+- Mantener el formato:
+
+COUNTER: Jonathan
+
+- La palabra "COUNTER" debe conservar el estilo actual.
+- El nombre del counter debe mostrarse inmediatamente después de la etiqueta.
+- Ambos deben estar alineados horizontalmente.
+- Utilizar el mismo tamaño de fuente y el mismo peso tipográfico.
+- El nombre del counter debe mostrarse en color azul para indicar que es editable.
+
+Comportamiento:
+
+- Al hacer clic sobre el nombre del counter, debe mantenerse exactamente el flujo de edición existente.
+- Puede convertirse temporalmente en un input transparente o reutilizar el mecanismo actual.
+- No cambiar la lógica de edición.
+
+---
+
+### 2. Campo VIGENCIA
+
+Simplificar la presentación del campo.
+
+Actualmente la fecha aparece dentro de un control con borde y botón de limpieza.
+
+Modificar únicamente la interfaz.
+
+Requisitos:
+
+- Eliminar el borde del control.
+- Eliminar el fondo del input.
+- Eliminar el botón "X" para limpiar la fecha.
+- Mostrar la información en una sola línea.
+
+Formato:
+
+VIGENCIA: 25/09/2026
+
+- La etiqueta "VIGENCIA" debe conservar el estilo actual.
+- La fecha debe mostrarse inmediatamente después.
+- Ambos deben estar alineados horizontalmente.
+- Utilizar el mismo tamaño de fuente.
+- La fecha debe mostrarse en color azul para indicar que es interactiva.
+
+Comportamiento:
+
+- Al hacer clic sobre la fecha, debe abrir exactamente el mismo DatePicker que utiliza actualmente.
+- No reemplazar el DatePicker.
+- No modificar su funcionamiento interno.
+
+---
+
+### 3. Compactar la sección
+
+Reducir la altura visual de la tarjeta "Datos de la Cotización".
+
+Ajustar únicamente:
+
+- padding superior
+- padding inferior
+- separación entre filas
+- márgenes internos
+
+No modificar:
+
+- ancho de la tarjeta
+- distribución general
+- tipografía
+- colores del sistema
+
+El objetivo es que la sección ocupe menos espacio vertical manteniendo la misma funcionalidad.
+
+---
+
+## Restricciones
+
+- No modificar la lógica existente.
+- No reemplazar componentes.
+- No crear nuevos controles.
+- No cambiar el funcionamiento del selector de Counter.
+- No cambiar el funcionamiento del DatePicker.
+- No alterar otros campos de la sección.
+- Limitar los cambios únicamente a la presentación visual de COUNTER y VIGENCIA.

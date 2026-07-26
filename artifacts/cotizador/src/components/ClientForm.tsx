@@ -213,8 +213,8 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             Datos de la cotización
           </h3>
         </div>
-        <div className="p-5">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="px-5 py-3">
+          <div className="grid grid-cols-2 gap-3">
 
             {/* Nombre de cotización */}
             <Field label="Nombre de cotización" span={2}>
@@ -368,6 +368,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
               onChange={(iso) => update({ vigencia: iso })}
               placeholder="Válida hasta…"
               allowPast
+                compactTrigger
             />
           </Field>
 
@@ -404,6 +405,7 @@ interface AutocompleteInputProps {
   error?: boolean;
   "data-testid"?: string;
   transform?: (v: string) => string;
+  compactTrigger?: boolean;
 }
 
 function AutocompleteInput({
@@ -414,6 +416,7 @@ function AutocompleteInput({
   error,
   "data-testid": testId,
   transform,
+  compactTrigger = false,
 }: AutocompleteInputProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -498,6 +501,9 @@ function AutocompleteInput({
   const errBorder = error
     ? "border-red-400 ring-1 ring-red-200 bg-red-50/40"
     : "border-slate-200";
+  const triggerStyle = compactTrigger
+    ? "border-0 bg-transparent px-0 py-0 text-blue-600 focus:border-0 focus:ring-0"
+    : "";
 
   return (
     <div ref={containerRef} className="relative">
@@ -507,7 +513,7 @@ function AutocompleteInput({
         value={value}
         data-testid={testId}
         placeholder={placeholder}
-        className={`${inputCls} ${errBorder}`}
+        className={`${inputCls} ${errBorder} ${triggerStyle}`}
         onChange={(e) => {
           const v = transform ? transform(e.target.value) : e.target.value;
           onChange(v);
@@ -677,6 +683,7 @@ function CounterAutocomplete({
         onChange={onChange}
         suggestions={suggestions}
         placeholder="Buscar o escribir counter"
+        compactTrigger
         transform={(v) => v.toUpperCase()}
       />
     </div>

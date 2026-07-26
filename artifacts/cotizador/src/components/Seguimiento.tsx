@@ -498,7 +498,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         </div>
 
         {/* Info: title + badges */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-[1_1_28rem] min-w-0">
           <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.01em" }}>
             {(opp.destination || opp.quoteName || "SIN DESTINO").toUpperCase()}
           </div>
@@ -523,7 +523,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         </div>
 
         {/* Agency + Agent — center column */}
-        <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-0.5 min-w-0">
+        <div className="shrink-0 sm:w-32 flex flex-col justify-center gap-0.5 min-w-0">
           {opp.agencyName && (
             <div className="text-[12px] font-semibold text-slate-700 truncate leading-tight">{opp.agencyName}</div>
           )}
@@ -533,7 +533,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         </div>
 
         {/* Price + Estado */}
-        <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-1">
+        <div className="shrink-0 sm:w-32 flex flex-col justify-center gap-1">
           {opp.totalLatest != null && opp.totalLatest > 0 ? (
             <div className="font-bold tabular-nums leading-none" style={{ fontSize: 18, color: "#044b9e", fontWeight: 700, letterSpacing: "-0.02em" }}>
               {fmtMoney(opp.totalLatest)}
@@ -553,7 +553,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         </div>
 
         {/* Semáforo */}
-        <div className="shrink-0 sm:w-40 flex flex-col justify-center gap-0.5">
+        <div className="shrink-0 sm:w-32 flex flex-col justify-center gap-0.5">
           {!isClosedStatus ? (
             <>
               <div className="flex items-center gap-1.5">
@@ -575,7 +575,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         {/* ── Barra de iconos ───────────────────────────────────────────── */}
         <div className="shrink-0 flex items-center self-start sm:self-center mt-1 sm:mt-0">
           {/* Grupo 1: Cotización */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <IconBtn icon={<Eye className="w-4 h-4" />} label="Vista previa" onClick={() => onView()} />
             <IconBtn icon={<Pencil className="w-4 h-4" />} label="Editar" onClick={() => onEdit()} />
             {onDuplicate && (
@@ -586,10 +586,10 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           </div>
 
           {/* Separador */}
-          <div className="w-px h-5 bg-slate-300 mx-[22px]" />
+          <div className="w-px h-5 bg-slate-300 mx-3" />
 
           {/* Grupo 2: CRM */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <IconBtn
               icon={<Bell className="w-4 h-4" />} label="Seguimiento"
               onClick={() => togglePanel("seguimiento")}
@@ -616,10 +616,10 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           </div>
 
           {/* Separador */}
-          <div className="w-px h-5 bg-slate-300 mx-[22px]" />
+          <div className="w-px h-5 bg-slate-300 mx-3" />
 
           {/* Grupo 3: Historial + Anular */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <IconBtn
               icon={<History className="w-4 h-4" />} label="Historial"
               onClick={() => togglePanel("historial")}
