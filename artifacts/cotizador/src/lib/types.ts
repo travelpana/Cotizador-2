@@ -161,6 +161,7 @@ export interface Cliente {
   agente: string;
   counter: string;
   emailCliente?: string;
+  pais?: string;
   fechaInicio: string;
   fechaFin: string;
   vigencia: string;

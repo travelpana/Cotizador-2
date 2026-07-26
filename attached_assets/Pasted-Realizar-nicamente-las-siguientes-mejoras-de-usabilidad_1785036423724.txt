@@ -1,0 +1,89 @@
+Realizar únicamente las siguientes mejoras de usabilidad. El objetivo es reducir clics y eliminar ventanas modales innecesarias.
+
+==================================================
+1. CONFIGURACIÓN → AGENCIAS
+==================================================
+
+Eliminar el modal de edición de agencias.
+
+La edición debe realizarse directamente sobre la tarjeta (inline).
+
+Cada tarjeta debe permitir:
+
+• Logo
+  - Al hacer clic sobre el logo (o placeholder), abrir el selector de archivos para cambiar la imagen.
+  - Actualizar inmediatamente la vista.
+
+• Nombre de la agencia
+  - Editable directamente sobre la tarjeta.
+  - Al perder el foco o presionar Enter, guardar automáticamente.
+
+• País
+  - Mostrar un selector compacto.
+  - Al cambiar el país guardar automáticamente.
+
+Eliminar el botón del lápiz de editar.
+
+No abrir ningún modal.
+
+==================================================
+2. CONFIGURACIÓN → AGENTES
+==================================================
+
+Eliminar el modal para agregar agentes.
+
+Al presionar "Agregar agente", insertar inmediatamente una nueva fila editable debajo de la lista.
+
+La fila tendrá tres columnas:
+
+• Nombre
+• Correo electrónico
+• Teléfono
+
+Al presionar Enter en el último campo o perder el foco, guardar automáticamente.
+
+Cada fila existente también debe poder editarse directamente sin abrir ventanas.
+
+==================================================
+3. COTIZADOR
+==================================================
+
+En la sección "Datos de la cotización" reorganizar los campos.
+
+Nuevo orden:
+
+Fila 1
+--------------------------------
+Nombre de cotización
+
+Fila 2
+--------------------------------
+Agencia
+Agente
+
+Fila 3
+--------------------------------
+Correo electrónico
+País
+
+Fila 4
+--------------------------------
+Counter
+
+El país debe utilizar el mismo selector implementado en Configuración → Agencias.
+
+Si la agencia ya tiene un país asignado, sugerirlo automáticamente, permitiendo modificarlo si es necesario.
+
+==================================================
+4. GENERAL
+==================================================
+
+No crear nuevos modales.
+
+Priorizar edición en línea (inline editing).
+
+Mantener el mismo estilo visual del sistema.
+
+Guardar los cambios automáticamente cuando sea posible, sin pasos adicionales.
+
+No modificar ninguna otra funcionalidad.

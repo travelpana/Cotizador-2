@@ -9,6 +9,7 @@ import {
   loadCounterSuggestions,
   type Agencia,
 } from "@/lib/agencias";
+import { AMERICAS_COUNTRIES } from "@/lib/agencias";
 import {
   type Acomodacion,
   type Cliente,
@@ -233,7 +234,12 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
                 value={cliente.correo}
                 onChange={(v) => {
                   const patch: Partial<Cliente> = { correo: v };
-                  if (v !== cliente.correo) patch.agente = "";
+                  if (v !== cliente.correo) {
+                    patch.agente = "";
+                    // Auto-suggest country from selected agency
+                    const ag = getAgenciaByNombre(v);
+                    if (ag?.pais) patch.pais = ag.pais;
+                  }
                   update(patch);
                 }}
                 error={errors?.agencia}
@@ -248,13 +254,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
               />
             </Field>
 
-            {/* Counter | Correo electrónico */}
-            <Field label="Counter">
-              <CounterAutocomplete
-                value={cliente.counter ?? ""}
-                onChange={(v) => update({ counter: v })}
-              />
-            </Field>
+            {/* Correo electrónico | País */}
             <Field label="Correo electrónico">
               <div className="relative flex items-center">
                 <Mail className="absolute left-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
@@ -268,6 +268,26 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
                   spellCheck={false}
                 />
               </div>
+            </Field>
+            <Field label="País">
+              <select
+                value={cliente.pais ?? ""}
+                onChange={(e) => update({ pais: e.target.value || undefined })}
+                className={inputCls + " bg-white"}
+              >
+                <option value="">Seleccionar país...</option>
+                {AMERICAS_COUNTRIES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </Field>
+
+            {/* Counter */}
+            <Field label="Counter" span={2}>
+              <CounterAutocomplete
+                value={cliente.counter ?? ""}
+                onChange={(v) => update({ counter: v })}
+              />
             </Field>
 
           </div>
