@@ -1,0 +1,85 @@
+## UI/UX Update – Configuración > Agencias
+
+Realiza únicamente los cambios descritos a continuación. No refactorices componentes, no modifiques la lógica existente fuera de esta sección, no cambies estilos globales ni actualices dependencias.
+
+---
+
+## 1. Eliminar el modal "Nueva Agencia"
+
+Actualmente, al presionar el botón "Nueva Agencia", se abre un modal para crearla.
+
+Eliminar ese comportamiento.
+
+En su lugar, al hacer clic en "Nueva Agencia":
+
+- Crear inmediatamente una nueva tarjeta de agencia dentro del listado de agencias.
+- No abrir ningún modal.
+- La nueva tarjeta debe aparecer en la parte superior del listado.
+
+---
+
+## 2. Estado visual de una agencia nueva
+
+Mientras la nueva agencia no haya sido completada y guardada:
+
+- La tarjeta debe diferenciarse visualmente del resto.
+- Utilizar un fondo azul muy claro o un borde azul tenue para indicar que es una agencia nueva pendiente de completar.
+- Mantener el mismo diseño de las demás tarjetas.
+
+Una vez que la agencia sea válida y se guarde:
+
+- La tarjeta debe volver automáticamente al estilo normal (fondo blanco actual).
+- Debe desaparecer el indicador visual de "agencia nueva".
+
+No modificar el diseño de las demás tarjetas.
+
+---
+
+## 3. Campos obligatorios
+
+Una agencia nunca puede existir sin la siguiente información:
+
+- Nombre de la agencia
+- País
+
+Estos dos campos son obligatorios tanto para:
+
+- agencias nuevas
+- agencias ya existentes
+
+No permitir guardar una agencia si alguno de estos campos está vacío.
+
+Mostrar la validación correspondiente sin afectar el diseño actual.
+
+---
+
+## 4. Lista de agentes
+
+Actualmente cada tarjeta muestra todos los agentes de forma permanente.
+
+Modificar este comportamiento.
+
+La sección "Agentes" debe estar contraída por defecto.
+
+Al hacer clic sobre el encabezado "Agentes" (o en un indicador de expandir/contraer):
+
+- expandir la lista completa de agentes
+- volver a contraerse al hacer clic nuevamente
+
+El comportamiento debe ser independiente para cada agencia.
+
+No modificar la forma en que se agregan o eliminan agentes.
+
+Solo cambiar la visualización para ahorrar espacio vertical.
+
+---
+
+## Restricciones
+
+- No crear nuevas pantallas.
+- No abrir modales para crear agencias.
+- No modificar la lógica de los agentes.
+- No cambiar el diseño general de Configuración.
+- No modificar otros módulos de la aplicación.
+- Limitar los cambios únicamente a la sección Configuración > Agencias.
+- Mantener la apariencia premium y consistente con el resto del sistema.

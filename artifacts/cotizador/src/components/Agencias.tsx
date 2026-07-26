@@ -14,6 +14,7 @@ import {
   Star,
   Users,
   User,
+  ChevronDown,
 } from "lucide-react";
 import {
   saveAgencia,
@@ -498,6 +499,7 @@ function AgentesSection({
   onAgenteDelete: (id: string) => Promise<void>;
 }) {
   const [addingNew, setAddingNew] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const mine = agentes.filter((a) => a.agenciaId === agencia.id);
 
@@ -512,7 +514,10 @@ function AgentesSection({
 
   return (
     <div className="mt-3 border-t border-slate-100 pt-3">
-      <div className="flex items-center justify-between mb-2">
+      <div
+        className="flex items-center justify-between mb-2 cursor-pointer select-none"
+        onClick={() => setExpanded((v) => !v)}
+      >
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
           <Users className="w-3.5 h-3.5" />
           Agentes
@@ -522,38 +527,46 @@ function AgentesSection({
             </span>
           )}
         </div>
-        {!addingNew && (
-          <button
-            type="button"
-            onClick={() => setAddingNew(true)}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-semibold transition-colors"
-          >
-            <Plus className="w-3 h-3" />
-            Agregar agente
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {expanded && !addingNew && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setAddingNew(true); }}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-semibold transition-colors"
+            >
+              <Plus className="w-3 h-3" />
+              Agregar agente
+            </button>
+          )}
+          <ChevronDown
+            className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200"
+            style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+          />
+        </div>
       </div>
 
-      {mine.length === 0 && !addingNew ? (
-        <div className="text-[11px] text-slate-400 italic py-1">Sin agentes registrados</div>
-      ) : (
-        <div className="space-y-0.5">
-          {mine.map((ag) => (
-            <AgenteRow
-              key={ag.id}
-              ag={ag}
-              onSave={(updated) => onAgenteSave(updated)}
-              onDelete={handleDelete}
-            />
-          ))}
-          {addingNew && (
-            <NewAgenteRow
-              agenciaId={agencia.id}
-              onSave={handleSave}
-              onCancel={() => setAddingNew(false)}
-            />
-          )}
-        </div>
+      {expanded && (
+        mine.length === 0 && !addingNew ? (
+          <div className="text-[11px] text-slate-400 italic py-1">Sin agentes registrados</div>
+        ) : (
+          <div className="space-y-0.5">
+            {mine.map((ag) => (
+              <AgenteRow
+                key={ag.id}
+                ag={ag}
+                onSave={(updated) => onAgenteSave(updated)}
+                onDelete={handleDelete}
+              />
+            ))}
+            {addingNew && (
+              <NewAgenteRow
+                agenciaId={agencia.id}
+                onSave={handleSave}
+                onCancel={() => setAddingNew(false)}
+              />
+            )}
+          </div>
+        )
       )}
     </div>
   );
@@ -646,6 +659,8 @@ function AgenciaCard({
   onDelete,
   onAgenteSave,
   onAgenteDelete,
+  isNew = false,
+  onFirstSave,
 }: {
   agencia: Agencia;
   agentes: AgenteAgencia[];
@@ -653,15 +668,27 @@ function AgenciaCard({
   onDelete: (id: string) => void;
   onAgenteSave: (a: AgenteAgencia) => Promise<void>;
   onAgenteDelete: (id: string) => Promise<void>;
+  isNew?: boolean;
+  onFirstSave?: () => void;
 }) {
   const [nombre, setNombre] = useState(agencia.nombre);
   const [pais, setPais] = useState(agencia.pais ?? "");
+  const [paisError, setPaisError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const nombreRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setNombre(agencia.nombre); }, [agencia.nombre]);
   useEffect(() => { setPais(agencia.pais ?? ""); }, [agencia.pais]);
+  useEffect(() => { if (isNew) nombreRef.current?.focus(); }, [isNew]);
 
   const saveField = (patch: Partial<Agencia>) => {
+    if (isNew) {
+      const finalAgencia = { ...agencia, nombre: nombre.trim(), pais, ...patch };
+      if (!finalAgencia.nombre.trim() || !finalAgencia.pais?.trim()) return;
+      onSave(finalAgencia);
+      onFirstSave?.();
+      return;
+    }
     onSave({ ...agencia, ...patch });
   };
 
@@ -676,17 +703,29 @@ function AgenciaCard({
 
   const commitNombre = () => {
     const n = nombre.trim();
-    if (!n) { setNombre(agencia.nombre); return; }
-    if (n !== agencia.nombre) saveField({ nombre: n });
+    if (!n) {
+      if (!isNew) setNombre(agencia.nombre);
+      return;
+    }
+    if (!isNew && n === agencia.nombre) return;
+    saveField({ nombre: n });
   };
 
   const handlePaisChange = (v: string) => {
     setPais(v);
+    if (!v && !isNew) {
+      setPaisError(true);
+      return;
+    }
+    setPaisError(false);
     saveField({ pais: v || undefined });
   };
 
+  const nombreEmpty = isNew && !nombre.trim();
+  const paisEmpty = isNew && !pais.trim();
+
   return (
-    <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm p-4">
+    <div className={`rounded-2xl shadow-sm p-4 transition-colors ${isNew ? "bg-blue-50 ring-1 ring-blue-200" : "bg-white ring-1 ring-slate-100"}`}>
       <div className="flex items-start gap-3">
         {/* Clickable logo */}
         <div
@@ -713,6 +752,7 @@ function AgenciaCard({
           {/* Nombre inline */}
           <div className="flex items-center gap-2 flex-wrap">
             <input
+              ref={nombreRef}
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
@@ -721,8 +761,10 @@ function AgenciaCard({
                 if (e.key === "Enter") e.currentTarget.blur();
                 if (e.key === "Escape") { setNombre(agencia.nombre); e.currentTarget.blur(); }
               }}
-              placeholder="Nombre de agencia"
-              className="text-sm font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-primary focus:outline-none w-full py-0.5 transition-colors"
+              placeholder={isNew ? "Nombre de agencia *" : "Nombre de agencia"}
+              className={`text-sm font-bold text-slate-900 bg-transparent border-b py-0.5 transition-colors w-full focus:outline-none ${
+                nombreEmpty ? "border-blue-300 placeholder:text-blue-400" : "border-transparent hover:border-slate-200 focus:border-primary"
+              }`}
             />
             {agencia.predeterminada && (
               <span
@@ -739,10 +781,14 @@ function AgenciaCard({
           <select
             value={pais}
             onChange={(e) => handlePaisChange(e.target.value)}
-            className="text-[11px] text-slate-500 bg-transparent border border-transparent hover:border-slate-200 focus:border-primary focus:outline-none rounded-lg px-1 py-0.5 transition-colors cursor-pointer"
+            className={`text-[11px] bg-transparent border rounded-lg px-1 py-0.5 transition-colors cursor-pointer focus:outline-none ${
+              paisError ? "border-red-300 text-red-500 focus:border-red-400" :
+              paisEmpty ? "border-blue-300 text-blue-400 focus:border-blue-400" :
+              "border-transparent text-slate-500 hover:border-slate-200 focus:border-primary"
+            }`}
             style={{ maxWidth: "100%" }}
           >
-            <option value="">Sin país</option>
+            <option value="">{isNew ? "País *" : "Sin país"}</option>
             {AMERICAS_COUNTRIES.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
@@ -787,9 +833,15 @@ function AgenciaCard({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Agencias() {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [pendingNew, setPendingNew] = useState<Agencia | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  const createNewDraft = () => {
+    if (!pendingNew) {
+      setPendingNew({ id: genId(), nombre: "", pais: "", predeterminada: false });
+    }
+  };
 
   const { data: agencias = [] } = useQuery<Agencia[]>({
     queryKey: ["agencias"],
@@ -910,8 +962,9 @@ export default function Agencias() {
         </div>
         <button
           type="button"
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold transition-colors hover:opacity-90"
+          onClick={createNewDraft}
+          disabled={!!pendingNew}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold transition-colors hover:opacity-90 disabled:opacity-50"
           style={{ background: "#004FBB" }}
         >
           <Plus className="w-4 h-4" />
@@ -933,8 +986,23 @@ export default function Agencias() {
         </div>
       )}
 
+      {/* New agency draft card — always at top */}
+      {pendingNew && (
+        <AgenciaCard
+          key={pendingNew.id}
+          agencia={pendingNew}
+          agentes={[]}
+          onSave={handleInlineSave}
+          onDelete={() => setPendingNew(null)}
+          onAgenteSave={handleAgenteSave}
+          onAgenteDelete={handleAgenteDelete}
+          isNew
+          onFirstSave={() => setPendingNew(null)}
+        />
+      )}
+
       {/* List */}
-      {agencias.length === 0 ? (
+      {agencias.length === 0 && !pendingNew ? (
         <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
           <Building2 className="w-10 h-10 mx-auto text-slate-200 mb-3" />
           <div className="text-sm font-medium text-slate-600">No hay agencias aún</div>
@@ -943,7 +1011,7 @@ export default function Agencias() {
           </div>
           <button
             type="button"
-            onClick={() => setShowCreateModal(true)}
+            onClick={createNewDraft}
             className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold mx-auto transition-colors hover:opacity-90"
             style={{ background: "#004FBB" }}
           >
@@ -951,12 +1019,12 @@ export default function Agencias() {
             Agregar primera agencia
           </button>
         </div>
-      ) : filteredAgencias.length === 0 ? (
+      ) : filteredAgencias.length === 0 && !pendingNew ? (
         <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-10 text-center">
           <Search className="w-8 h-8 mx-auto text-slate-200 mb-2" />
           <div className="text-sm font-medium text-slate-500">Sin resultados para "{search}"</div>
         </div>
-      ) : (
+      ) : agencias.length > 0 ? (
         <div className="space-y-6">
           {groupedByPais.map(({ pais: grupoPais, agencias: grupoAgencias }) => (
             <div key={grupoPais || "__sin_pais__"}>
@@ -989,7 +1057,7 @@ export default function Agencias() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Delete confirm */}
       {deleteConfirm && (() => {
@@ -1002,14 +1070,6 @@ export default function Agencias() {
           />
         );
       })()}
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <AgenciaModal
-          onSave={handleSave}
-          onClose={() => setShowCreateModal(false)}
-        />
-      )}
     </div>
   );
 }
