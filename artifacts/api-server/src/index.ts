@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedUsers } from "./lib/seed";
+import { ensureDevelopmentSchema } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -16,12 +17,22 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
+async function startServer(): Promise<void> {
+  if (process.env.NODE_ENV !== "production") {
+    await ensureDevelopmentSchema();
+    logger.info("Development database schema is ready");
   }
 
+  await new Promise<void>((resolve, reject) => {
+    const server = app.listen(port, () => resolve());
+    server.once("error", reject);
+  });
+
   logger.info({ port }, "Server listening");
-  void seedUsers();
+  await seedUsers();
+}
+
+startServer().catch((err) => {
+  logger.error({ err }, "Unable to initialize API server");
+  process.exit(1);
 });

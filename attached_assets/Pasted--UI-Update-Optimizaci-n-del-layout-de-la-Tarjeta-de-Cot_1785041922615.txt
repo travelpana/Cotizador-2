@@ -1,0 +1,94 @@
+## UI Update – Optimización del layout de la Tarjeta de Cotización
+
+Realiza únicamente los siguientes ajustes en el layout horizontal de la tarjeta de cotización. No modificar la lógica, no cambiar componentes ni alterar el diseño general.
+
+---
+
+### Objetivo
+
+Mejorar el aprovechamiento del espacio horizontal para que el nombre de la cotización tenga mayor prioridad y no se trunque innecesariamente.
+
+No eliminar información existente.
+
+No cambiar la funcionalidad de ningún elemento.
+
+---
+
+### 1. Prioridad del nombre de la cotización
+
+El nombre de la cotización (ejemplo: "PANAMÁ + COLÓN") es el elemento más importante de la tarjeta.
+
+Modificar el layout para que:
+
+- El contenedor del título tenga mayor prioridad dentro del Flex.
+- Pueda utilizar más espacio horizontal antes de truncarse.
+- El texto solo se recorte cuando realmente no exista más espacio disponible.
+
+No reducir el tamaño de la fuente.
+
+No cambiar el estilo del título.
+
+---
+
+### 2. Optimizar la distribución horizontal
+
+Actualmente existe demasiado espacio vacío entre los bloques de información.
+
+Reducir ese espacio redistribuyendo los siguientes bloques para que queden agrupados de forma más compacta:
+
+- Agencia / Agente
+- Total
+- Estado
+
+Estos bloques deben aparecer inmediatamente después de las etiquetas (tags) del título, utilizando únicamente el espacio necesario.
+
+Reducir el gap horizontal entre ellos para aprovechar mejor el ancho disponible.
+
+No modificar el contenido de cada bloque.
+
+---
+
+### 3. Mantener las acciones alineadas a la derecha
+
+La sección de acciones debe permanecer al extremo derecho.
+
+Mantener la alineación actual de:
+
+- Ver
+- Editar
+- Duplicar
+- Más acciones
+- Usuario
+- Código de reserva
+
+No modificar su funcionamiento.
+
+No cambiar el orden.
+
+---
+
+### 4. Ajustar el Flex Layout
+
+Reorganizar únicamente la distribución utilizando Flexbox.
+
+Objetivos:
+
+- Mejor aprovechamiento del ancho disponible.
+- Menor separación entre bloques de información.
+- Mayor espacio para el nombre de la cotización.
+- Mantener una alineación limpia y consistente.
+
+Evitar espacios vacíos innecesarios entre columnas.
+
+---
+
+## Restricciones
+
+- No cambiar la lógica.
+- No modificar componentes.
+- No alterar colores.
+- No cambiar tipografías.
+- No modificar iconos.
+- No eliminar información.
+- No cambiar el comportamiento responsive.
+- Limitar los cambios únicamente al layout horizontal de la tarjeta.

@@ -25,7 +25,7 @@ The `DATABASE_URL` environment variable is already configured. On first run (or 
 cd lib/db && pnpm run push
 ```
 
-The schema has already been pushed to the connected PostgreSQL database. Seed users are created automatically on server startup.
+In development, the API automatically creates missing tables on startup without deleting or truncating existing data. The manual `push` command is still available for applying schema changes and constraints. Seed users are created automatically after the schema is ready.
 
 ## Default users
 
