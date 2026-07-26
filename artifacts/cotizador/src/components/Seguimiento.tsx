@@ -484,8 +484,10 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.01em" }}>
             {(opp.destination || opp.quoteName || "SIN DESTINO").toUpperCase()}
           </div>
-          {opp.agencyName && (
-            <div className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 tracking-wide">{opp.agencyName}</div>
+          {(opp.agencyName || opp.agentName) && (
+            <div className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 tracking-wide">
+              {opp.agencyName}{opp.agentName ? ` • ${opp.agentName}` : ""}
+            </div>
           )}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
             {pax != null && (
@@ -538,9 +540,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: uMeta.dot }} />
                 <span className="text-[11px] font-bold text-slate-700 tracking-wide uppercase">{uMeta.label}</span>
-              </div>
-              <div className="text-[10px] font-semibold" style={{ color: urgency === "red" ? "#dc2626" : "#64748b" }}>
-                {sinActividad === 0 ? "ACTUALIZADO HOY" : `${sinActividad} DÍA${sinActividad !== 1 ? "S" : ""} SIN ACTUALIZACIÓN`}
               </div>
               <div className="text-[10px] text-slate-400 font-medium">{lastUpdateFormatted}</div>
               {opp.recordatorio && (

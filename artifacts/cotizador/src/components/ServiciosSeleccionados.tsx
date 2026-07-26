@@ -1786,7 +1786,7 @@ function ServicioRow({
               className="flex items-center gap-3 flex-shrink-0 px-2 py-1 -mx-1 rounded-lg hover:bg-primary/5 hover:ring-1 hover:ring-primary/20 transition-colors"
               title="Editar precios"
             >
-              {acomodaciones.map((a) => (
+              {(["SGL", "DBL", "TPL", "QDL"] as Acomodacion[]).filter((a) => acomodaciones.includes(a)).map((a) => (
                 <div key={a} className="text-center" style={{ minWidth: 64 }}>
                   <div className="text-sm font-bold text-slate-900 tabular-nums">
                     {fmt(servicio.precios[a] ?? 0)}
@@ -2695,7 +2695,7 @@ function PricesEditor({
       </div>
       {/* Rows */}
       <div className="space-y-1.5">
-        {acomodaciones.map((a) => (
+        {(["SGL", "DBL", "TPL", "QDL"] as Acomodacion[]).filter((a) => acomodaciones.includes(a)).map((a) => (
           <div key={a} className="flex items-center gap-2">
             <span style={{ fontSize: 11, fontWeight: 700, color: "#041941", width: 28, flexShrink: 0 }}>{a}</span>
             <PriceInput
