@@ -1,0 +1,176 @@
+Quiero potenciar completamente el generador automático de itinerarios.
+
+Actualmente únicamente reconoce algunos traslados básicos (Aeropuerto → Hotel y Hotel → Aeropuerto).
+
+Necesito convertir el itinerario en un generador inteligente.
+
+NO modificar el diseño actual.
+
+Solo mejorar la lógica.
+
+--------------------------------------------------
+
+1. REGLAS DE ASIGNACIÓN
+
+Cada servicio debe poder indicar automáticamente en qué día del viaje aparecer.
+
+Los tipos de servicio deben comportarse así:
+
+AEROPUERTO → HOTEL
+Asignar automáticamente al Día 1.
+
+HOTEL → AEROPUERTO
+Asignar automáticamente al último día.
+
+HOTEL → HOTEL (Interhotel)
+Debe poder asignarse automáticamente al día indicado por el usuario.
+
+LOCAL EN ÁREA DE CIUDAD
+Debe poder asignarse automáticamente al día indicado por el usuario.
+
+TOURS
+Debe poder asignarse al día seleccionado.
+
+ACTIVIDADES
+Debe poder asignarse al día seleccionado.
+
+TRASLADOS PRIVADOS
+Debe poder asignarse al día seleccionado.
+
+Cualquier servicio que no sea llegada o salida debe permitir seleccionar el día del itinerario.
+
+--------------------------------------------------
+
+2. NUEVO CAMPO
+
+Cada servicio debe tener un campo opcional:
+
+Día del itinerario
+
+Ejemplo:
+
+Automático
+
+o
+
+Día 1
+
+Día 2
+
+Día 3
+
+Día 4
+
+...
+
+Si permanece en "Automático", utilizar las reglas existentes.
+
+Si el usuario selecciona un día específico, respetarlo siempre.
+
+--------------------------------------------------
+
+3. GENERACIÓN
+
+Al generar el itinerario:
+
+Recorrer TODOS los servicios de la cotización.
+
+No solamente los traslados aeropuerto.
+
+Agregar cada servicio al día correspondiente.
+
+Ejemplo:
+
+Día 1
+
+Llegada
+
+Traslado Aeropuerto → Hotel
+
+--------------------------------
+
+Día 2
+
+Tour Canal
+
+--------------------------------
+
+Día 3
+
+Traslado Hotel Ciudad → Hotel Playa
+
+--------------------------------
+
+Día 4
+
+Traslado Local Área Ciudad
+
+Cena Show
+
+--------------------------------
+
+Último día
+
+Hotel → Aeropuerto
+
+--------------------------------------------------
+
+4. MÚLTIPLES ACTIVIDADES
+
+Un mismo día puede contener varias actividades.
+
+Nunca reemplazar una actividad por otra.
+
+Mostrar todas respetando el orden.
+
+--------------------------------------------------
+
+5. ORDEN
+
+Dentro del mismo día ordenar:
+
+Llegadas
+
+Traslados
+
+Tours
+
+Actividades
+
+Salidas
+
+--------------------------------------------------
+
+6. EDICIÓN
+
+Si el usuario cambia el día de un servicio, el itinerario debe regenerarse automáticamente.
+
+No debe ser necesario eliminar ni volver a agregar el servicio.
+
+--------------------------------------------------
+
+7. ACTUALIZACIÓN
+
+Cada vez que:
+
+• se agrega un servicio
+
+• se elimina
+
+• se duplica
+
+• cambia el día
+
+• cambia la fecha del viaje
+
+el itinerario debe recalcularse automáticamente.
+
+--------------------------------------------------
+
+8. OBJETIVO
+
+El itinerario debe convertirse en una representación completa del viaje.
+
+No solamente mostrar aeropuerto y salida.
+
+Debe incluir automáticamente todos los servicios que forman parte de la cotización.
