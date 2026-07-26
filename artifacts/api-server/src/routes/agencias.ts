@@ -23,7 +23,7 @@ router.post("/agencias", async (req, res) => {
   try {
     const body = req.body as {
       id: string; nombre: string; logoUrl?: string; contacto?: string;
-      telefono?: string; correo?: string; predeterminada?: boolean;
+      telefono?: string; correo?: string; predeterminada?: boolean; pais?: string;
     };
     if (body.predeterminada) {
       await db.update(agenciasTable).set({ predeterminada: false });
@@ -38,6 +38,7 @@ router.post("/agencias", async (req, res) => {
         telefono: body.telefono ?? null,
         correo: body.correo ?? null,
         predeterminada: body.predeterminada ?? false,
+        pais: body.pais ?? null,
       })
       .onConflictDoUpdate({
         target: agenciasTable.id,
@@ -48,6 +49,7 @@ router.post("/agencias", async (req, res) => {
           telefono: body.telefono ?? null,
           correo: body.correo ?? null,
           predeterminada: body.predeterminada ?? false,
+          pais: body.pais ?? null,
           updatedAt: new Date(),
         },
       })

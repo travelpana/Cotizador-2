@@ -18,6 +18,7 @@ export const agenciasTable = pgTable("agencias", {
   telefono: text("telefono"),
   correo: text("correo"),
   predeterminada: boolean("predeterminada").notNull().default(false),
+  pais: text("pais"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

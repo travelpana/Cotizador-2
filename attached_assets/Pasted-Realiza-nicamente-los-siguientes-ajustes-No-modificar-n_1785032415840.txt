@@ -1,0 +1,138 @@
+Realiza únicamente los siguientes ajustes. No modificar ninguna otra funcionalidad.
+
+--------------------------------------------------
+1. ETIQUETA DE ESTADO
+
+La píldora de estado (Nueva, Confirmada, Perdida, etc.) ya no debe mostrar el punto de color al inicio.
+
+Actualmente:
+
+🔵 Nueva
+
+Debe quedar:
+
+Nueva
+
+Solo el texto dentro de la píldora.
+
+El color de fondo ya comunica el estado.
+
+--------------------------------------------------
+2. CHIPS DE INFORMACIÓN
+
+Convertir los siguientes textos en chips (píldoras) iguales al estilo de "TARIFAS".
+
+Actualmente aparecen como texto separado por puntos.
+
+Ejemplo actual:
+
+TARIFAS • 2 PERSONAS • 1 NIÑO • PRIORIDAD • Creada por Jonathan
+
+Debe quedar:
+
+[TARIFAS]
+
+[2 PERSONAS]
+
+[1 NIÑO]
+
+[PRIORIDAD]
+
+Todos con la misma forma.
+
+Mantener únicamente diferentes colores:
+
+Tarifas
+Azul (actual)
+
+Personas
+Gris muy claro
+
+Niños
+Gris muy claro
+
+Prioridad
+Amarillo suave
+
+No utilizar puntos separadores entre ellos.
+
+--------------------------------------------------
+3. CREADA POR
+
+"Creada por: Jonathan"
+
+Debe permanecer como texto normal.
+
+No convertirlo en chip.
+
+Debe aparecer al final de la línea con un tono gris discreto.
+
+--------------------------------------------------
+4. CONFIGURACIÓN > AGENCIAS
+
+Agregar un nuevo campo obligatorio:
+
+País
+
+Debe ser un selector.
+
+Ejemplo:
+
+Panamá
+
+Costa Rica
+
+Colombia
+
+México
+
+República Dominicana
+
+Estados Unidos
+
+etc.
+
+--------------------------------------------------
+5. LISTADO DE AGENCIAS
+
+Organizar automáticamente las agencias por país.
+
+Ejemplo:
+
+🇵🇦 Panamá
+
+Freeway
+
+Viajes Ancón
+
+Turismo XYZ
+
+--------------------------------
+
+🇨🇷 Costa Rica
+
+Best Travel
+
+CR Tours
+
+--------------------------------
+
+🇨🇴 Colombia
+
+Viajes Bogotá
+
+Travel Plus
+
+Cada país debe verse como una sección con su encabezado.
+
+Dentro de cada sección mantener búsqueda, edición y eliminación exactamente como funcionan actualmente.
+
+--------------------------------------------------
+6. ORDEN
+
+Los países deben mostrarse alfabéticamente.
+
+Las agencias dentro de cada país también.
+
+--------------------------------------------------
+No modificar ninguna otra pantalla ni lógica existente.

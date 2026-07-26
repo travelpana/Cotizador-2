@@ -489,7 +489,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               {opp.agencyName}{opp.agentName ? ` • ${opp.agentName}` : ""}
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
+          <div className="flex flex-wrap items-center gap-1 mt-1">
             {pax != null && (
               <>
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
@@ -497,18 +497,17 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
                   tipoLabel === "PAQUETE" ? "bg-violet-50 text-violet-700" :
                   "bg-blue-50 text-blue-700"
                 }`}>{tipoLabel}</span>
-                <span className="text-slate-300 text-[10px]">•</span>
-                <span className="text-[10px] font-semibold text-slate-500">{pax} PERSONA{pax !== 1 ? "S" : ""}</span>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">{pax} PERSONA{pax !== 1 ? "S" : ""}</span>
                 {(ninos ?? 0) > 0 && (
-                  <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-semibold text-slate-500">{ninos} NIÑO{(ninos ?? 1) !== 1 ? "S" : ""}</span></>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">{ninos} NIÑO{(ninos ?? 1) !== 1 ? "S" : ""}</span>
                 )}
               </>
             )}
             {opp.priorityManual && (
-              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />PRIORIDAD</span></>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600">PRIORIDAD</span>
             )}
             {opp.createdByName && (
-              <><span className="text-slate-300 text-[10px]">•</span><span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span></>
+              <span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span>
             )}
           </div>
         </div>
@@ -526,8 +525,8 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             const st = ESTADO_OPP_STYLES[opp.status as keyof typeof ESTADO_OPP_STYLES] ?? ESTADO_OPP_STYLES.nueva;
             const label = ESTADO_OPP_OPTIONS.find(o => o.value === opp.status)?.label ?? opp.status;
             return (
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 w-fit ${st.bg} ${st.text} ${st.ring}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />{label}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 w-fit ${st.bg} ${st.text} ${st.ring}`}>
+                {label}
               </span>
             );
           })()}

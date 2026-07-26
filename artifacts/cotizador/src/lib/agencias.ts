@@ -21,6 +21,7 @@ export interface Agencia {
   telefono?: string;
   correo?: string;
   predeterminada?: boolean;
+  pais?: string;
 }
 
 export interface AgenteAgencia {

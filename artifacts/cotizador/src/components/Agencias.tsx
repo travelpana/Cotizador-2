@@ -85,6 +85,7 @@ function AgenciaModal({
   const [telefono, setTelefono] = useState(initial?.telefono ?? "");
   const [correo, setCorreo] = useState(initial?.correo ?? "");
   const [predeterminada, setPredeterminada] = useState(initial?.predeterminada ?? false);
+  const [pais, setPais] = useState(initial?.pais ?? "");
   const [logoError, setLogoError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -109,6 +110,7 @@ function AgenciaModal({
       telefono: telefono.trim() || undefined,
       correo: correo.trim() || undefined,
       predeterminada,
+      pais: pais.trim() || undefined,
     });
   };
 
@@ -201,6 +203,38 @@ function AgenciaModal({
               placeholder="Ej: RGE Travel Agency"
               className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400"
             />
+          </div>
+
+          {/* País */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
+              País <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={pais}
+              onChange={(e) => setPais(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white"
+            >
+              <option value="">Seleccionar país...</option>
+              {[
+                "Colombia",
+                "Costa Rica",
+                "Ecuador",
+                "El Salvador",
+                "Estados Unidos",
+                "Guatemala",
+                "Honduras",
+                "México",
+                "Nicaragua",
+                "Panamá",
+                "Perú",
+                "República Dominicana",
+                "Venezuela",
+                "Otro",
+              ].map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
           </div>
 
           {/* Teléfono / Correo */}
@@ -707,14 +741,53 @@ export default function Agencias() {
     await deleteAgente(id);
   };
 
+  const COUNTRY_FLAG: Record<string, string> = {
+    "Colombia": "🇨🇴",
+    "Costa Rica": "🇨🇷",
+    "Ecuador": "🇪🇨",
+    "El Salvador": "🇸🇻",
+    "Estados Unidos": "🇺🇸",
+    "Guatemala": "🇬🇹",
+    "Honduras": "🇭🇳",
+    "México": "🇲🇽",
+    "Nicaragua": "🇳🇮",
+    "Panamá": "🇵🇦",
+    "Perú": "🇵🇪",
+    "República Dominicana": "🇩🇴",
+    "Venezuela": "🇻🇪",
+    "Otro": "🌐",
+  };
+
   const filteredAgencias = agencias.filter((a) => {
     if (!search.trim()) return true;
     const q = search.trim().toLowerCase();
     return (
       a.nombre.toLowerCase().includes(q) ||
-      (a.correo?.toLowerCase().includes(q) ?? false)
+      (a.correo?.toLowerCase().includes(q) ?? false) ||
+      (a.pais?.toLowerCase().includes(q) ?? false)
     );
   });
+
+  // Group by country, sorted alphabetically; agencies without country go last
+  const groupedByPais: Array<{ pais: string; agencias: typeof filteredAgencias }> = [];
+  const paisMap = new Map<string, typeof filteredAgencias>();
+  for (const a of filteredAgencias) {
+    const key = a.pais?.trim() || "";
+    const arr = paisMap.get(key) ?? [];
+    arr.push(a);
+    paisMap.set(key, arr);
+  }
+  const sortedPaises = Array.from(paisMap.keys()).sort((a, b) => {
+    if (!a) return 1;
+    if (!b) return -1;
+    return a.localeCompare(b, "es");
+  });
+  for (const pais of sortedPaises) {
+    const list = (paisMap.get(pais) ?? []).slice().sort((a, b) =>
+      a.nombre.localeCompare(b.nombre, "es"),
+    );
+    groupedByPais.push({ pais, agencias: list });
+  }
 
   return (
     <div className="space-y-4">
@@ -782,67 +855,86 @@ export default function Agencias() {
           <div className="text-sm font-medium text-slate-500">Sin resultados para "{search}"</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredAgencias.map((a) => (
-            <div
-              key={a.id}
-              className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm p-4"
-            >
-              <div className="flex items-start gap-3">
-                <LogoAvatar agencia={a} size={48} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="text-sm font-bold text-slate-900 truncate">{a.nombre}</div>
-                    {a.predeterminada && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
-                        style={{ backgroundColor: "#FEF3C7", color: "#E6AE33", border: "1px solid #E6AE33" }}
-                      >
-                        <Star className="w-2.5 h-2.5" />
-                        Predeterminada
-                      </span>
-                    )}
-                  </div>
-                  {a.telefono && (
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 truncate">
-                      <Phone className="w-3 h-3 shrink-0" />
-                      {a.telefono}
-                    </div>
-                  )}
-                  {a.correo && (
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 truncate">
-                      <Mail className="w-3 h-3 shrink-0" />
-                      {a.correo}
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setModal({ open: true, editing: a })}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
-                    title="Editar"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteConfirm(a.id)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+        <div className="space-y-6">
+          {groupedByPais.map(({ pais: grupoPais, agencias: grupoAgencias }) => (
+            <div key={grupoPais || "__sin_pais__"}>
+              {/* Section header */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base leading-none">
+                  {grupoPais ? (COUNTRY_FLAG[grupoPais] ?? "🌐") : "🌐"}
+                </span>
+                <span className="text-sm font-bold text-slate-700">
+                  {grupoPais || "Sin país"}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  ({grupoAgencias.length})
+                </span>
+                <div className="flex-1 h-px bg-slate-100 ml-1" />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {grupoAgencias.map((a) => (
+                  <div
+                    key={a.id}
+                    className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <LogoAvatar agencia={a} size={48} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="text-sm font-bold text-slate-900 truncate">{a.nombre}</div>
+                          {a.predeterminada && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
+                              style={{ backgroundColor: "#FEF3C7", color: "#E6AE33", border: "1px solid #E6AE33" }}
+                            >
+                              <Star className="w-2.5 h-2.5" />
+                              Predeterminada
+                            </span>
+                          )}
+                        </div>
+                        {a.telefono && (
+                          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 truncate">
+                            <Phone className="w-3 h-3 shrink-0" />
+                            {a.telefono}
+                          </div>
+                        )}
+                        {a.correo && (
+                          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 truncate">
+                            <Mail className="w-3 h-3 shrink-0" />
+                            {a.correo}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setModal({ open: true, editing: a })}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirm(a.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
 
-              {/* Agents sub-section */}
-              <AgentesSection
-                agencia={a}
-                agentes={agentes}
-                onAgenteSave={handleAgenteSave}
-                onAgenteDelete={handleAgenteDelete}
-              />
+                    {/* Agents sub-section */}
+                    <AgentesSection
+                      agencia={a}
+                      agentes={agentes}
+                      onAgenteSave={handleAgenteSave}
+                      onAgenteDelete={handleAgenteDelete}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
