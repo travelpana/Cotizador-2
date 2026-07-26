@@ -1,0 +1,140 @@
+## UI Update – Configuración > Agencias (Optimización del encabezado)
+
+Realiza únicamente los siguientes cambios. No modificar la lógica existente ni refactorizar componentes innecesariamente.
+
+---
+
+## Objetivo
+
+Reducir la altura del encabezado eliminando elementos duplicados y concentrando toda la información principal en una única barra superior.
+
+No modificar el funcionamiento de ninguna acción existente.
+
+---
+
+## 1. Barra superior (Header)
+
+Conservar la barra azul oscura actual.
+
+Mantener:
+
+- Título "AGENCIAS"
+- Icono de notificaciones
+- Estilo visual actual
+
+No cambiar colores ni altura de esta barra.
+
+---
+
+## 2. Contadores
+
+Actualmente existe una tarjeta blanca que muestra:
+
+- cantidad de agencias
+- cantidad de agentes
+
+Mover únicamente esos contadores al Header azul.
+
+Ubicación:
+
+A la derecha del título "AGENCIAS", utilizando texto secundario o badges discretos.
+
+Ejemplo:
+
+AGENCIAS
+1 agencia · 12 agentes
+
+o
+
+AGENCIAS   [1 Agencia]   [12 Agentes]
+
+Utilizar un estilo discreto, sin aumentar la altura del Header.
+
+---
+
+## 3. Botón "Nueva Agencia"
+
+Mover el botón "+ Nueva Agencia" al Header azul.
+
+Ubicación:
+
+Extremo derecho del Header, antes o después del icono de notificaciones, respetando la alineación existente.
+
+El botón debe destacar sobre el fondo azul.
+
+Puede utilizar:
+
+- fondo blanco con texto azul
+
+o
+
+- un azul más claro que el Header
+
+Mantener exactamente la misma funcionalidad actual.
+
+No modificar su comportamiento.
+
+---
+
+## 4. Eliminar la tarjeta redundante
+
+Una vez movidos los contadores y el botón al Header:
+
+Eliminar completamente la tarjeta blanca ubicada debajo del Header que actualmente contiene:
+
+- el título "Agencias"
+- el resumen de agencias/agentes
+- el botón "+ Nueva Agencia"
+
+Esta información ya estará integrada en el Header y no debe duplicarse.
+
+---
+
+## 5. Barra de búsqueda
+
+Mover la barra "Buscar agencia..." hacia arriba.
+
+Debe quedar inmediatamente debajo del Header azul.
+
+No modificar:
+
+- funcionamiento
+- tamaño
+- estilos
+- placeholder
+
+Solo ajustar su posición vertical.
+
+---
+
+## Objetivo visual
+
+La estructura final debe ser:
+
+Header azul
+- Título AGENCIAS
+- Contadores
+- Botón Nueva Agencia
+- Notificaciones
+
+↓
+
+Barra de búsqueda
+
+↓
+
+Listado de agencias
+
+El objetivo es eliminar la redundancia, reducir espacio vertical y hacer que la vista sea más limpia.
+
+---
+
+## Restricciones
+
+- No modificar la lógica.
+- No crear un Header nuevo.
+- No cambiar colores globales.
+- No modificar el funcionamiento del botón Nueva Agencia.
+- No cambiar el comportamiento de la búsqueda.
+- No alterar el diseño de las tarjetas de agencias.
+- Limitar los cambios únicamente al encabezado de la sección Agencias.

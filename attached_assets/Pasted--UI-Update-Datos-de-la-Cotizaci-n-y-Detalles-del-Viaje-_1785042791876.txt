@@ -1,0 +1,85 @@
+## UI Update – Datos de la Cotización y Detalles del Viaje
+
+Realiza únicamente los siguientes ajustes visuales. No modificar la lógica, no cambiar componentes ni alterar el layout general de estas dos tarjetas.
+
+---
+
+## 1. Presentación de COUNTER y VIGENCIA
+
+Actualmente los valores de COUNTER y VIGENCIA se muestran como texto plano.
+
+Modificar únicamente la presentación del valor.
+
+El texto de la etiqueta debe permanecer igual.
+
+Ejemplo:
+
+COUNTER: [ Jonathan ]
+
+VIGENCIA: [ 26/09/2026 ]
+
+Donde únicamente el valor esté contenido dentro de una pequeña cápsula (pill).
+
+Características de la cápsula:
+
+- ancho adaptado al contenido (fit-content / inline-flex)
+- borde de 1px gris muy claro (#e2e8f0 o equivalente)
+- fondo muy sutil (#f8fafc o equivalente)
+- bordes redondeados
+- padding reducido (aprox. py-1 px-3)
+- altura compacta
+
+El valor debe conservar el color azul para indicar que sigue siendo interactivo.
+
+No modificar el funcionamiento.
+
+Al hacer clic:
+
+- COUNTER debe seguir utilizando exactamente el flujo de edición actual.
+- VIGENCIA debe seguir abriendo exactamente el mismo DatePicker actual.
+
+No reemplazar estos componentes.
+
+---
+
+## 2. Ajustar el padding inferior
+
+En la tarjeta "Datos de la cotización" existe demasiado espacio entre la fila de COUNTER y el borde inferior.
+
+Reducir únicamente el padding inferior de esta tarjeta.
+
+Objetivo:
+
+La separación entre el último campo (COUNTER) y el borde inferior debe ser visualmente equivalente a la separación entre el título "Datos de la cotización" y el borde superior de la tarjeta.
+
+No modificar el padding lateral.
+
+No modificar el espaciado entre campos.
+
+---
+
+## 3. Alinear ambas tarjetas
+
+Una vez ajustado el padding inferior, verificar que las tarjetas:
+
+- Datos de la cotización
+- Detalles del viaje
+
+mantengan la misma altura visual y una apariencia simétrica.
+
+No aumentar la altura de ninguna tarjeta.
+
+La alineación debe lograrse ajustando únicamente los espacios internos (padding), sin agregar espacio adicional.
+
+---
+
+## Restricciones
+
+- No modificar la lógica existente.
+- No cambiar el funcionamiento del DatePicker.
+- No cambiar el funcionamiento del selector de Counter.
+- No reemplazar componentes.
+- No modificar tipografías.
+- No cambiar colores globales.
+- No alterar el layout general.
+- Limitar los cambios únicamente a la presentación de COUNTER, VIGENCIA y al padding interno de ambas tarjetas.

@@ -1312,10 +1312,7 @@ export default function CotizadorPage() {
               />
             </div>
           ) : view === "agencias" ? (
-            <div className="space-y-6">
-              <ModuleRibbon title="AGENCIAS" rightSlot={bellSlot} />
-              <Agencias />
-            </div>
+            <Agencias notificationSlot={bellSlot} />
           ) : view === "plantillas" ? (
             <div className="space-y-6">
               <ModuleRibbon title="PLANTILLAS" rightSlot={bellSlot} />

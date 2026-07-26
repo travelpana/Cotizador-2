@@ -213,7 +213,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             Datos de la cotización
           </h3>
         </div>
-        <div className="px-5 py-3">
+        <div className="px-5 pt-3 pb-2">
           <div className="grid grid-cols-2 gap-3">
 
             {/* Nombre de cotización */}
@@ -302,7 +302,7 @@ export default function ClientForm({ cliente, onChange, errors }: Props) {
             Detalles del viaje
           </h3>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="px-5 py-3 space-y-3">
 
           {/* Clickable date cards → open premium calendar */}
           <div className="flex items-stretch gap-3">
@@ -502,7 +502,7 @@ function AutocompleteInput({
     ? "border-red-400 ring-1 ring-red-200 bg-red-50/40"
     : "border-slate-200";
   const triggerStyle = compactTrigger
-    ? "border-0 bg-transparent px-0 py-0 text-blue-600 focus:border-0 focus:ring-0"
+    ? "w-fit max-w-full inline-flex h-8 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-blue-600 focus:border-slate-300 focus:ring-1 focus:ring-blue-100"
     : "";
 
   return (

@@ -155,7 +155,7 @@ export default function PremiumSingleDatePicker({
       ? "ring-2 ring-[#2563eb]/30 border-[#2563eb]"
       : "border-slate-200 hover:border-slate-300";
   const triggerCls = compactTrigger
-    ? "border-0 bg-transparent hover:border-0 focus:ring-0 px-0"
+    ? "w-fit max-w-full inline-flex h-8 rounded-full border border-slate-200 bg-slate-50 hover:border-slate-300 focus:ring-1 focus:ring-blue-100 px-3"
     : ringCls;
 
   return (
