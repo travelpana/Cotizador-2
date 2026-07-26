@@ -1,0 +1,116 @@
+## Ajustes UI – Tarjeta de Cotización (Seguimiento)
+
+Realiza únicamente los siguientes cambios. No modificar la lógica, no refactorizar componentes ni cambiar el diseño general de la aplicación.
+
+---
+
+### 1. Corregir los tooltips
+
+Actualmente, al pasar el cursor sobre los iconos de acciones, el tooltip aparece recortado y no se puede leer completo.
+
+Corregir este comportamiento.
+
+Requisitos:
+
+- El tooltip debe visualizarse completamente.
+- No debe ser recortado por el contenedor de la tarjeta.
+- Debe mostrarse por encima de todos los elementos (z-index adecuado).
+- Mantener el estilo actual del tooltip.
+
+---
+
+### 2. Reorganizar la información de la tarjeta
+
+Actualmente la tarjeta se percibe muy cargada visualmente.
+
+No eliminar información.
+
+Únicamente reorganizar los elementos para mejorar la lectura.
+
+#### Título de la cotización
+
+El nombre de la cotización (por ejemplo: "Panamá + Colón") debe seguir siendo el elemento principal de la tarjeta.
+
+Debajo del título deben permanecer:
+
+- Tarifas
+- Personas
+
+Estos datos deben mantenerse agrupados debajo del nombre de la cotización.
+
+---
+
+#### Agencia y Agente
+
+Mover la información de:
+
+- Agencia
+- Agente
+
+al espacio central que actualmente queda libre entre el título de la cotización y el precio.
+
+Mostrarla en dos líneas.
+
+Primera línea:
+
+Nombre de la agencia
+
+Segunda línea:
+
+Nombre del agente
+
+La agencia debe tener mayor protagonismo que el agente.
+
+El nombre del agente puede utilizar un tamaño ligeramente menor o un color de texto secundario para reducir el ruido visual.
+
+---
+
+#### Precio
+
+Mover el precio hacia el espacio derecho disponible de la tarjeta.
+
+Debe conservar su formato actual y seguir siendo fácil de identificar.
+
+No modificar la lógica ni el formato del importe.
+
+---
+
+### 3. Mantener el diseño existente
+
+Conservar:
+
+- media luna izquierda
+- borde de estado
+- iconos
+- botones
+- tipografía
+- colores
+- comportamiento
+
+Únicamente reorganizar la información para que exista una mejor jerarquía visual.
+
+---
+
+## Objetivo
+
+La lectura de la tarjeta debe seguir este orden:
+
+1. Nombre de la cotización
+2. Tarifas y Personas
+3. Agencia
+4. Agente
+5. Precio
+6. Acciones
+
+Sin eliminar ningún dato existente.
+
+---
+
+## Restricciones
+
+- No modificar la lógica.
+- No cambiar componentes.
+- No crear nuevos campos.
+- No alterar colores globales.
+- No modificar iconos.
+- Limitar los cambios únicamente a la distribución visual de la tarjeta y a la corrección de los tooltips.

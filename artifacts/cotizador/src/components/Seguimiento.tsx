@@ -331,7 +331,7 @@ function IconBtn({ icon, label, onClick, active = false, danger = false, btnRef 
       >
         {icon}
       </button>
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-slate-800 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
         {label}
       </div>
     </div>
@@ -469,7 +469,7 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
 
   return (
     <div
-      className="bg-white rounded-2xl overflow-hidden transition-all duration-150 cursor-default"
+      className="bg-white rounded-2xl transition-all duration-150 cursor-default"
       style={{
         borderTopWidth: 1,
         borderRightWidth: 1,
@@ -497,16 +497,11 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           <LogoOrInitials agencia={agencia} initials={initials} color="#004FBB" size={56} radius={14} />
         </div>
 
-        {/* Info */}
+        {/* Info: title + badges */}
         <div className="flex-1 min-w-0">
           <div className="font-bold text-slate-900 truncate leading-tight tracking-wide" style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.01em" }}>
             {(opp.destination || opp.quoteName || "SIN DESTINO").toUpperCase()}
           </div>
-          {(opp.agencyName || opp.agentName) && (
-            <div className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 tracking-wide">
-              {opp.agencyName}{opp.agentName ? ` • ${opp.agentName}` : ""}
-            </div>
-          )}
           <div className="flex flex-wrap items-center gap-1 mt-1">
             {pax != null && (
               <>
@@ -525,6 +520,16 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600">PRIORIDAD</span>
             )}
           </div>
+        </div>
+
+        {/* Agency + Agent — center column */}
+        <div className="shrink-0 sm:w-36 flex flex-col justify-center gap-0.5 min-w-0">
+          {opp.agencyName && (
+            <div className="text-[12px] font-semibold text-slate-700 truncate leading-tight">{opp.agencyName}</div>
+          )}
+          {opp.agentName && (
+            <div className="text-[11px] text-slate-400 truncate leading-tight">{opp.agentName}</div>
+          )}
         </div>
 
         {/* Price + Estado */}
