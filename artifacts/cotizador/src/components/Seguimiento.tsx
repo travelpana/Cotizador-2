@@ -506,10 +506,12 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
             {opp.priorityManual && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600">PRIORIDAD</span>
             )}
-            {opp.createdByName && (
-              <span className="text-[10px] text-slate-400">Creada por: {opp.createdByName}</span>
-            )}
           </div>
+          {(opp.createdByName || opp.latestQuoteCode) && (
+            <div className="text-[10px] text-slate-400 mt-1">
+              {opp.createdByName}{opp.createdByName && opp.latestQuoteCode ? " • " : ""}{opp.latestQuoteCode ?? ""}
+            </div>
+          )}
         </div>
 
         {/* Price + Estado */}
@@ -1149,35 +1151,27 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   return (
     <div className="space-y-5">
 
-      {/* ── Page header ────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="font-bold text-slate-900" style={{ fontSize: 22, letterSpacing: "-0.02em" }}>Seguimiento de oportunidades</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Administra y da seguimiento a tus oportunidades comerciales</p>
+      {/* ── Tab toggle + Excel ─────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm">
+          <button type="button" onClick={() => setTab("activas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "activas" ? "bg-primary text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}>
+            Activas
+            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "activas" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}>{activeOpps.length}</span>
+          </button>
+          <button type="button" onClick={() => setTab("finalizadas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "finalizadas" ? "bg-emerald-600 text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}>
+            Finalizadas
+            {finalizadasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "finalizadas" ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}>{finalizadasOpps.length}</span>}
+          </button>
+          <button type="button" onClick={() => setTab("anuladas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "anuladas" ? "bg-red-600 text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}>
+            Anuladas
+            {anuladasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "anuladas" ? "bg-white/20 text-white" : "bg-red-50 text-red-500"}`}>{anuladasOpps.length}</span>}
+          </button>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {items.length > 0 && (
-            <button type="button" onClick={() => exportarCotizacionesExcel(items)} className="flex items-center gap-2 h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors">
-              <FileDown className="w-4 h-4" /><span className="hidden sm:inline">Excel</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Tab toggle ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm w-fit">
-        <button type="button" onClick={() => setTab("activas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "activas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-          Activas
-          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "activas" ? "bg-white/20" : "bg-slate-100 text-slate-500"}`}>{activeOpps.length}</span>
-        </button>
-        <button type="button" onClick={() => setTab("finalizadas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "finalizadas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-          Finalizadas
-          {finalizadasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "finalizadas" ? "bg-white/20" : "bg-emerald-50 text-emerald-600"}`}>{finalizadasOpps.length}</span>}
-        </button>
-        <button type="button" onClick={() => setTab("anuladas")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "anuladas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-          Anuladas
-          {anuladasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "anuladas" ? "bg-white/20" : "bg-red-50 text-red-500"}`}>{anuladasOpps.length}</span>}
-        </button>
+        {items.length > 0 && (
+          <button type="button" onClick={() => exportarCotizacionesExcel(items)} className="flex items-center gap-2 h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shrink-0">
+            <FileDown className="w-4 h-4" /><span className="hidden sm:inline">Excel</span>
+          </button>
+        )}
       </div>
 
       {tab === "anuladas" ? (
