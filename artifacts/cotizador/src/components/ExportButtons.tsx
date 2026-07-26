@@ -125,7 +125,10 @@ export default function ExportButtons({
 
   const T = tr(idioma);
 
-  const acoms = result.acomodaciones;
+  const ACOM_ORDER: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL", "CHD"];
+  const acoms = [...result.acomodaciones].sort(
+    (a, b) => ACOM_ORDER.indexOf(a) - ACOM_ORDER.indexOf(b),
+  );
   const primary = acoms[0];
   const hoteles = result.servicios.filter((s) => s.tipo === "hotel");
   const adicionales = result.servicios.filter((s) => s.tipo !== "hotel");

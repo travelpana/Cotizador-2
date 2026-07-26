@@ -263,7 +263,10 @@ export function buildPropuestaData(input: PropuestaInput): PropuestaData {
   const otros = result.servicios.filter((s) => s.customTipo === "otros");
   const vuelos = result.servicios.filter((s) => s.tipo === "vuelo");
   const catamarans = result.servicios.filter((s) => s.tipo === "catamaran");
-  const acoms = result.acomodaciones;
+  const ACOM_ORDER: Acomodacion[] = ["SGL", "DBL", "TPL", "QDL", "CHD"];
+  const acoms = [...result.acomodaciones].sort(
+    (a, b) => ACOM_ORDER.indexOf(a) - ACOM_ORDER.indexOf(b),
+  );
   const primary = acoms[0];
   const isCalc = modo === "calculo";
 
