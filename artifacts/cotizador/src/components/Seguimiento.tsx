@@ -467,8 +467,6 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
     return groups;
   })();
 
-  const statusBorderColor = getCardStatusBorderColor(opp.status);
-
   return (
     <div
       className="bg-white rounded-2xl overflow-hidden transition-all duration-150 cursor-default"
@@ -481,18 +479,18 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
         borderRightStyle: "solid",
         borderBottomStyle: "solid",
         borderLeftStyle: "solid",
-        borderTopColor: statusBorderColor,
-        borderRightColor: statusBorderColor,
-        borderBottomColor: statusBorderColor,
+        borderTopColor: borderColor,
+        borderRightColor: borderColor,
+        borderBottomColor: borderColor,
         borderLeftColor: borderColor,
         boxShadow: "0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)",
-        minHeight: 110,
+        minHeight: 72,
       }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px 0 rgba(0,0,0,0.10), 0 2px 6px -1px rgba(0,0,0,0.07)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)"; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLDivElement).style.transform = ""; }}
     >
       {/* ── Main row ──────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 py-3 sm:py-0 sm:min-h-[110px]">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 py-2 sm:py-0 sm:min-h-[72px]">
 
         {/* Logo */}
         <div className="shrink-0 self-start sm:self-center mt-1 sm:mt-0">
