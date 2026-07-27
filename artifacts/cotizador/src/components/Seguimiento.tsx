@@ -7,7 +7,6 @@ import {
   ListChecks,
   ChevronDown,
   Copy,
-  FileDown,
   Bell,
   AlertTriangle,
   CheckCircle2,
@@ -33,7 +32,6 @@ import type {
   OppHistorialEntry,
 } from "./Guardadas";
 import { getOppUrgency, type UrgencyLevel } from "./Guardadas";
-import { exportarCotizacionesExcel } from "@/lib/exportExcel";
 import { loadAgenciasAsync, buildAgenciasMap, normAgencia, mergeAgenciasDuplicadas, type Agencia } from "@/lib/agencias";
 import OportunidadDetailPanel from "./OportunidadDetailPanel";
 import type { OppActividadTipo } from "./Guardadas";
@@ -1179,21 +1177,6 @@ export default function Seguimiento({ items, opportunities, tab, onView, onEdit,
 
   return (
     <div className="space-y-5">
-
-      {/* ── Export ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end gap-4">
-        {items.length > 0 && (
-          <button
-            type="button"
-            onClick={() => exportarCotizacionesExcel(items)}
-            aria-label="Exportar cotizaciones a Excel"
-            title="Exportar a Excel"
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shrink-0"
-          >
-            <FileDown className="w-4 h-4" />
-          </button>
-        )}
-      </div>
 
       {tab === "anuladas" ? (
         <AnuladasView opps={anuladasOpps} agenciasMap={agenciasMap} onRestaurar={onRestaurar} />

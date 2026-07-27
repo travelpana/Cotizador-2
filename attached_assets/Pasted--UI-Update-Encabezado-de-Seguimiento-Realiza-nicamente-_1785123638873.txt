@@ -1,0 +1,109 @@
+## UI Update – Encabezado de Seguimiento
+
+Realiza únicamente los siguientes cambios en el encabezado de la sección "Seguimiento". No modificar la lógica, no crear componentes nuevos ni alterar el diseño general de la aplicación.
+
+---
+
+## Objetivo
+
+Conseguir un encabezado más equilibrado visualmente, eliminando elementos flotantes y concentrando todas las acciones principales en una única barra superior.
+
+---
+
+## 1. Reorganizar el Header
+
+Mantener la barra azul actual.
+
+No cambiar:
+
+- color
+- altura
+- tipografía
+- título "SEGUIMIENTO"
+
+---
+
+## 2. Reubicar los filtros
+
+Mover los botones:
+
+- Activas
+- Finalizadas
+- Anuladas
+
+para que formen parte del Header azul.
+
+Ubicación:
+
+- alineados hacia el lado derecho del título "SEGUIMIENTO"
+- antes del botón de exportación
+- formando un único grupo horizontal
+
+Reducir ligeramente el padding horizontal y vertical de estos botones para que ocupen menos espacio y se integren mejor al encabezado.
+
+No modificar:
+
+- funcionamiento
+- contador
+- estado activo
+
+---
+
+## 3. Sustituir la campana
+
+Eliminar el icono de campana únicamente en esta pantalla.
+
+En su lugar colocar el botón de exportar a Excel.
+
+El botón debe ubicarse completamente al extremo derecho del Header.
+
+---
+
+## 4. Botón Exportar
+
+Mantener exactamente la misma funcionalidad.
+
+Modificar únicamente la apariencia.
+
+Requisitos:
+
+- mostrar únicamente el icono
+- eliminar completamente el texto "Excel"
+- utilizar un icono representativo de exportación/descarga de archivo
+- mantener el estilo visual consistente con el resto del Header
+
+No crear un botón grande.
+
+Debe verse como una acción secundaria del encabezado.
+
+---
+
+## 5. Eliminar el botón flotante
+
+Eliminar el botón de exportación que actualmente aparece flotando debajo del Header.
+
+La exportación solo debe existir una vez, integrada dentro de la barra azul.
+
+---
+
+## Resultado esperado
+
+La barra superior debe quedar organizada de la siguiente forma:
+
+[ SEGUIMIENTO ]                          [ Activas ] [ Finalizadas ] [ Anuladas ]         [ Exportar ]
+
+Todo debe permanecer en una sola línea, sin elementos flotantes debajo del encabezado.
+
+El objetivo es que el Header luzca limpio, balanceado y profesional, aprovechando mejor el espacio horizontal y eliminando la sensación de elementos aislados.
+
+---
+
+## Restricciones
+
+- No modificar la lógica.
+- No crear nuevos componentes.
+- No cambiar el comportamiento de los filtros.
+- No modificar la funcionalidad de exportar.
+- No alterar colores globales.
+- No cambiar el diseño de las tarjetas de seguimiento.
+- Limitar los cambios únicamente al Header de la sección Seguimiento.

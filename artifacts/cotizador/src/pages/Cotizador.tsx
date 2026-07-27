@@ -86,7 +86,8 @@ import type { Idioma } from "@/lib/i18n";
 import { validateCliente } from "@/lib/types";
 import { api, type CatalogInfo, type LangCode } from "@/lib/api";
 import { calcularLocal } from "@/lib/calc";
-import { Loader2 } from "lucide-react";
+import { exportarCotizacionesExcel } from "@/lib/exportExcel";
+import { Download, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 function addTwoMonths(date: Date): string {
@@ -1264,37 +1265,49 @@ export default function CotizadorPage() {
   );
 
   const seguimientoTabs = (
-    <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm ml-3 overflow-x-auto">
+    <div className="flex items-center gap-1 ml-2 overflow-x-auto">
       <button type="button" onClick={() => setSeguimientoTab("activas")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${seguimientoTab === "activas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${seguimientoTab === "activas" ? "text-white shadow-sm" : "bg-white/10 text-blue-50 hover:bg-white/20"}`}
         style={seguimientoTab === "activas" ? { backgroundColor: "#004FBB" } : undefined}>
         Activas
-        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "activas" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}>
+        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "activas" ? "bg-white/20 text-white" : "bg-white/15 text-blue-100"}`}>
           {opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida").length}
         </span>
       </button>
       <button type="button" onClick={() => setSeguimientoTab("finalizadas")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${seguimientoTab === "finalizadas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${seguimientoTab === "finalizadas" ? "text-white shadow-sm" : "bg-white/10 text-blue-50 hover:bg-white/20"}`}
         style={seguimientoTab === "finalizadas" ? { backgroundColor: "#004FBB" } : undefined}>
         Finalizadas
         {opportunities.filter((o) => o.status === "confirmada" || o.status === "perdida").length > 0 && (
-          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "finalizadas" ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "finalizadas" ? "bg-white/20 text-white" : "bg-white/15 text-blue-100"}`}>
             {opportunities.filter((o) => o.status === "confirmada" || o.status === "perdida").length}
           </span>
         )}
       </button>
       <button type="button" onClick={() => setSeguimientoTab("anuladas")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${seguimientoTab === "anuladas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${seguimientoTab === "anuladas" ? "text-white shadow-sm" : "bg-white/10 text-blue-50 hover:bg-white/20"}`}
         style={seguimientoTab === "anuladas" ? { backgroundColor: "#004FBB" } : undefined}>
         Anuladas
         {opportunities.filter((o) => o.status === "anulada").length > 0 && (
-          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "anuladas" ? "bg-white/20 text-white" : "bg-red-50 text-red-500"}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "anuladas" ? "bg-white/20 text-white" : "bg-white/15 text-blue-100"}`}>
             {opportunities.filter((o) => o.status === "anulada").length}
           </span>
         )}
       </button>
     </div>
   );
+
+  const seguimientoExport = guardadas.length > 0 ? (
+    <button
+      type="button"
+      onClick={() => exportarCotizacionesExcel(guardadas)}
+      aria-label="Exportar cotizaciones a Excel"
+      title="Exportar a Excel"
+      className="flex items-center justify-center w-8 h-8 rounded-lg text-white hover:bg-white/15 transition-colors"
+    >
+      <Download className="w-4 h-4" />
+    </button>
+  ) : null;
 
   return (
     <div className="flex min-h-screen bg-[#e8eef6]">
@@ -1332,7 +1345,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "seguimiento" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="SEGUIMIENTO" leftSlot={seguimientoTabs} rightSlot={bellSlot} />
+              <ModuleRibbon title="SEGUIMIENTO" leftSlot={seguimientoTabs} rightSlot={seguimientoExport} />
               <Seguimiento
                 items={guardadas}
                 opportunities={opportunities}
