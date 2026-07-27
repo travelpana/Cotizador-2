@@ -43,6 +43,7 @@ import { apiAuth } from "@/lib/api-auth";
 interface Props {
   items: CotizacionGuardada[];
   opportunities: Opportunity[];
+  tab: "activas" | "finalizadas" | "anuladas";
   onView: (g: CotizacionGuardada) => void;
   onEdit: (g: CotizacionGuardada) => void;
   onDelete: (id: string) => void;
@@ -448,6 +449,9 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   const lastUpdateFormatted = opp.lastUpdateAt
     ? new Date(opp.lastUpdateAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()
     : "—";
+  const latestAction = [...(opp.historial ?? [])]
+    .filter((entry) => entry.tipo === "accion_realizada" && entry.detalle?.trim())
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0]?.detalle?.trim();
 
   // Historial agrupado por fecha
   const historialGroups = (() => {
@@ -541,15 +545,14 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
           ) : (
             <div className="text-[11px] text-slate-400">Sin valor</div>
           )}
-          {(() => {
-            const st = ESTADO_OPP_STYLES[opp.status as keyof typeof ESTADO_OPP_STYLES] ?? ESTADO_OPP_STYLES.nueva;
-            const label = ESTADO_OPP_OPTIONS.find(o => o.value === opp.status)?.label ?? opp.status;
-            return (
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 w-fit ${st.bg} ${st.text} ${st.ring}`}>
-                {label}
-              </span>
-            );
-          })()}
+          {latestAction && (
+            <span
+              className="inline-flex items-center max-w-full truncate px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 w-fit bg-blue-50 text-blue-700 ring-blue-200"
+              title={latestAction}
+            >
+              {latestAction}
+            </span>
+          )}
         </div>
 
         {/* Semáforo */}
@@ -1056,10 +1059,7 @@ function FinalizadasView({ opps, agenciasMap, onOpenDetail }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-type TabView = "activas" | "finalizadas" | "anuladas";
-
-export default function Seguimiento({ items, opportunities, onView, onEdit, onDelete, onDuplicate, onUpdateCRM, onUpdateOpportunity, onShowToast }: Props) {
-  const [tab, setTab] = useState<TabView>("activas");
+export default function Seguimiento({ items, opportunities, tab, onView, onEdit, onDelete, onDuplicate, onUpdateCRM, onUpdateOpportunity, onShowToast }: Props) {
   const [query, setQuery] = useState("");
   const [filterEstado, setFilterEstado] = useState<EstadoOportunidad | "todas">("todas");
   const [filterPrioridad, setFilterPrioridad] = useState<"todas" | "alta" | "media" | "baja" | "sin_prioridad">("todas");
@@ -1180,31 +1180,17 @@ export default function Seguimiento({ items, opportunities, onView, onEdit, onDe
   return (
     <div className="space-y-5">
 
-      {/* ── Tab toggle + Excel ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm">
-          <button type="button" onClick={() => setTab("activas")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "activas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
-            style={tab === "activas" ? { backgroundColor: "#004FBB" } : undefined}>
-            Activas
-            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "activas" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}>{activeOpps.length}</span>
-          </button>
-          <button type="button" onClick={() => setTab("finalizadas")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "finalizadas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
-            style={tab === "finalizadas" ? { backgroundColor: "#004FBB" } : undefined}>
-            Finalizadas
-            {finalizadasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "finalizadas" ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}>{finalizadasOpps.length}</span>}
-          </button>
-          <button type="button" onClick={() => setTab("anuladas")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "anuladas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
-            style={tab === "anuladas" ? { backgroundColor: "#004FBB" } : undefined}>
-            Anuladas
-            {anuladasOpps.length > 0 && <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${tab === "anuladas" ? "bg-white/20 text-white" : "bg-red-50 text-red-500"}`}>{anuladasOpps.length}</span>}
-          </button>
-        </div>
+      {/* ── Export ──────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-end gap-4">
         {items.length > 0 && (
-          <button type="button" onClick={() => exportarCotizacionesExcel(items)} className="flex items-center gap-2 h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shrink-0">
-            <FileDown className="w-4 h-4" /><span className="hidden sm:inline">Excel</span>
+          <button
+            type="button"
+            onClick={() => exportarCotizacionesExcel(items)}
+            aria-label="Exportar cotizaciones a Excel"
+            title="Exportar a Excel"
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shrink-0"
+          >
+            <FileDown className="w-4 h-4" />
           </button>
         )}
       </div>

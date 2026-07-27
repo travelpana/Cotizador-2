@@ -1,0 +1,111 @@
+## UI Update – Seguimiento (Optimización del encabezado y de la tarjeta)
+
+Realiza únicamente los siguientes cambios. No modificar la lógica existente ni refactorizar componentes fuera de la sección Seguimiento.
+
+---
+
+## 1. Integrar los filtros al Header
+
+Actualmente los botones:
+
+- Activas
+- Finalizadas
+- Anuladas
+
+se muestran debajo del encabezado azul.
+
+Mover estos botones al Header azul de "SEGUIMIENTO".
+
+Ubicación:
+
+- alineados hacia el lado izquierdo o centrados dentro del Header, manteniendo una buena separación respecto al título.
+
+Mantener:
+
+- funcionamiento actual
+- contador de cada botón
+- estilos
+- comportamiento
+
+Únicamente cambiar su ubicación para reducir el espacio vertical.
+
+---
+
+## 2. Botón Exportar
+
+Actualmente el botón muestra:
+
+Excel
+
+Modificar únicamente su apariencia.
+
+Requisitos:
+
+- eliminar el texto "Excel"
+- mostrar únicamente el icono de exportación/descarga
+- mantener exactamente la misma funcionalidad
+
+Debe ocupar mucho menos espacio visual.
+
+---
+
+## 3. Eliminar la etiqueta "Nueva"
+
+Actualmente debajo del precio aparece una etiqueta indicando:
+
+Nueva
+
+Eliminar esa etiqueta.
+
+No reemplazarla por otro estado.
+
+El color de la tarjeta y de la media luna ya comunica visualmente que se trata de una cotización nueva.
+
+---
+
+## 4. Mostrar la última acción realizada
+
+En lugar de la etiqueta "Nueva", mostrar la última acción realizada sobre la cotización.
+
+Ejemplos:
+
+- Cliente respondió
+- WhatsApp enviado
+- Correo enviado
+- Llamada realizada
+- Cliente interesado
+- Esperando decisión
+- Esperando pago
+- Otro
+
+La acción debe mostrarse utilizando el mismo estilo visual de una etiqueta (badge/pill) similar al diseño actual.
+
+Debe actualizarse automáticamente cuando el usuario seleccione una acción diferente.
+
+Siempre debe reflejar la última acción registrada.
+
+---
+
+## 5. Mantener el resto del diseño
+
+No modificar:
+
+- media luna
+- borde
+- iconos
+- colores de estado
+- distribución general
+- funcionamiento de las acciones
+
+Únicamente aplicar los cambios descritos anteriormente.
+
+---
+
+## Restricciones
+
+- No cambiar la lógica de seguimiento.
+- No modificar la estructura de las tarjetas.
+- No crear nuevos componentes.
+- No alterar el funcionamiento del botón de exportación.
+- No modificar los colores globales.
+- Limitar los cambios únicamente al encabezado de Seguimiento y a la presentación de la última acción realizada.

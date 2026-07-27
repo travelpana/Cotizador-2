@@ -181,6 +181,7 @@ export default function CotizadorPage() {
   const [fileInfoPt, setFileInfoPt] = useState<CatalogInfo | null>(null);
 
   const [view, setView] = useState<View>("cotizador");
+  const [seguimientoTab, setSeguimientoTab] = useState<"activas" | "finalizadas" | "anuladas">("activas");
   const [cliente, setCliente] = useState<Cliente>(DEFAULT_CLIENTE);
   const [validationErrors, setValidationErrors] =
     useState<ClienteValidationErrors>({});
@@ -1262,6 +1263,39 @@ export default function CotizadorPage() {
     />
   );
 
+  const seguimientoTabs = (
+    <div className="flex items-center gap-1 bg-white rounded-xl ring-1 ring-slate-100 p-1 shadow-sm ml-3 overflow-x-auto">
+      <button type="button" onClick={() => setSeguimientoTab("activas")}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${seguimientoTab === "activas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+        style={seguimientoTab === "activas" ? { backgroundColor: "#004FBB" } : undefined}>
+        Activas
+        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "activas" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"}`}>
+          {opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida").length}
+        </span>
+      </button>
+      <button type="button" onClick={() => setSeguimientoTab("finalizadas")}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${seguimientoTab === "finalizadas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+        style={seguimientoTab === "finalizadas" ? { backgroundColor: "#004FBB" } : undefined}>
+        Finalizadas
+        {opportunities.filter((o) => o.status === "confirmada" || o.status === "perdida").length > 0 && (
+          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "finalizadas" ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}>
+            {opportunities.filter((o) => o.status === "confirmada" || o.status === "perdida").length}
+          </span>
+        )}
+      </button>
+      <button type="button" onClick={() => setSeguimientoTab("anuladas")}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${seguimientoTab === "anuladas" ? "text-white shadow-sm" : "bg-slate-50 text-slate-600 hover:text-slate-800"}`}
+        style={seguimientoTab === "anuladas" ? { backgroundColor: "#004FBB" } : undefined}>
+        Anuladas
+        {opportunities.filter((o) => o.status === "anulada").length > 0 && (
+          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "anuladas" ? "bg-white/20 text-white" : "bg-red-50 text-red-500"}`}>
+            {opportunities.filter((o) => o.status === "anulada").length}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-[#e8eef6]">
       <Sidebar
@@ -1298,10 +1332,11 @@ export default function CotizadorPage() {
             </div>
           ) : view === "seguimiento" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="SEGUIMIENTO" rightSlot={bellSlot} />
+              <ModuleRibbon title="SEGUIMIENTO" leftSlot={seguimientoTabs} rightSlot={bellSlot} />
               <Seguimiento
                 items={guardadas}
                 opportunities={opportunities}
+                tab={seguimientoTab}
                 onView={seguimientoView}
                 onEdit={seguimientoEdit}
                 onDelete={seguimientoDelete}
@@ -1590,9 +1625,11 @@ export default function CotizadorPage() {
 
 function ModuleRibbon({
   title,
+  leftSlot,
   rightSlot,
 }: {
   title: string;
+  leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
 }) {
   return (
@@ -1608,6 +1645,7 @@ function ModuleRibbon({
     >
       <div className="w-[3px] h-5 rounded-full flex-shrink-0" style={{ backgroundColor: "#eec774" }} />
       <span style={{ color: "#ffffff", fontSize: 20, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>{title}</span>
+      {leftSlot}
       {rightSlot && <div className="ml-auto">{rightSlot}</div>}
     </div>
   );
