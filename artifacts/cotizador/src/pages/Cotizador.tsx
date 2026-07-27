@@ -1311,8 +1311,8 @@ export default function CotizadorPage() {
 
   const seguimientoActions = (
     <div className="flex items-center gap-2">
-      {bellSlot}
       {seguimientoExport}
+      {bellSlot}
     </div>
   );
 
