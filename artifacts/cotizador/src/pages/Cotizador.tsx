@@ -1309,6 +1309,13 @@ export default function CotizadorPage() {
     </button>
   ) : null;
 
+  const seguimientoActions = (
+    <div className="flex items-center gap-2">
+      {bellSlot}
+      {seguimientoExport}
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-[#e8eef6]">
       <Sidebar
@@ -1345,7 +1352,7 @@ export default function CotizadorPage() {
             </div>
           ) : view === "seguimiento" ? (
             <div className="space-y-6">
-              <ModuleRibbon title="SEGUIMIENTO" leftSlot={seguimientoTabs} rightSlot={seguimientoExport} />
+              <ModuleRibbon title="SEGUIMIENTO" leftSlot={seguimientoTabs} rightSlot={seguimientoActions} />
               <Seguimiento
                 items={guardadas}
                 opportunities={opportunities}
