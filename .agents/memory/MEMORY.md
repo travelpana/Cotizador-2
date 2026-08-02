@@ -5,4 +5,5 @@
 - [Group mode totals](group-mode-totals.md) — `calcGrupoTotalFromResult` is the ONE group total; never reuse `result.totalesPorAcomodacion` (it bakes in total group pax → double-counts).
 - [CHD rate storage](chd-rate-storage.md) — hotels read `precios.CHD` (uppercase), non-hotel read `precios.chd` (lowercase); not interchangeable in calc.
 - [DB migration pattern](db-migration-pattern.md) — All localStorage → PostgreSQL; async load pattern with React Query cache + fallback; see topic for route/lib structure.
+- [Schema drift](schema-drift.md) — new Drizzle columns need matching ALTER in bootstrap.ts + backup DTOs, else every SELECT 500s (list looks empty); prod syncs only on Publish.
 - [Seguimiento header filters](seguimiento-header-filters.md) — Seguimiento tabs belong in the page header; cards show the newest recorded action badge.

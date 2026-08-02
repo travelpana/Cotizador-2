@@ -857,7 +857,7 @@ export default function Agencias({ notificationSlot }: { notificationSlot?: Reac
 
   const handleSave = async (a: Agencia) => {
     await saveAgencia(a);
-    setShowCreateModal(false);
+    setPendingNew(null);
   };
 
   const handleInlineSave = async (a: Agencia) => {

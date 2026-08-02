@@ -81,6 +81,7 @@ router.get("/backup/export", async (_req, res) => {
         telefono: r.telefono,
         correo: r.correo,
         predeterminada: r.predeterminada,
+        pais: r.pais,
       })),
       agentes: agentes.map((r) => ({
         id: r.id,
@@ -118,7 +119,7 @@ router.post("/backup/import", async (req: AuthRequest, res) => {
         tours?: Array<{ id: string; [key: string]: unknown }>;
         traslados?: Array<{ id: string; [key: string]: unknown }>;
       };
-      agencias?: Array<{ id: string; nombre: string; logoUrl?: string; contacto?: string; telefono?: string; correo?: string; predeterminada?: boolean }>;
+      agencias?: Array<{ id: string; nombre: string; logoUrl?: string; contacto?: string; telefono?: string; correo?: string; predeterminada?: boolean; pais?: string }>;
       agentes?: Array<{ id: string; agenciaId: string; nombre: string; correo?: string; telefono?: string }>;
       counters?: Array<{ id: string; nombre: string }>;
       seguimiento?: {
@@ -178,10 +179,10 @@ router.post("/backup/import", async (req: AuthRequest, res) => {
       for (const a of data.agencias) {
         await db
           .insert(agenciasTable)
-          .values({ id: a.id, nombre: a.nombre, logoUrl: a.logoUrl ?? null, contacto: a.contacto ?? null, telefono: a.telefono ?? null, correo: a.correo ?? null, predeterminada: a.predeterminada ?? false })
+          .values({ id: a.id, nombre: a.nombre, logoUrl: a.logoUrl ?? null, contacto: a.contacto ?? null, telefono: a.telefono ?? null, correo: a.correo ?? null, predeterminada: a.predeterminada ?? false, pais: a.pais ?? null })
           .onConflictDoUpdate({
             target: agenciasTable.id,
-            set: { nombre: a.nombre, logoUrl: a.logoUrl ?? null, predeterminada: a.predeterminada ?? false, updatedAt: new Date() },
+            set: { nombre: a.nombre, logoUrl: a.logoUrl ?? null, predeterminada: a.predeterminada ?? false, pais: a.pais ?? null, updatedAt: new Date() },
           });
       }
     }

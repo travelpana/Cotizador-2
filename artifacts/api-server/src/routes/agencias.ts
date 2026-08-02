@@ -206,7 +206,7 @@ router.delete("/counters/:id", async (req, res) => {
 router.post("/agencias/bulk-sync", async (req, res) => {
   try {
     const { agencias, agentes } = req.body as {
-      agencias: Array<{ id: string; nombre: string; logoUrl?: string; contacto?: string; telefono?: string; correo?: string; predeterminada?: boolean }>;
+      agencias: Array<{ id: string; nombre: string; logoUrl?: string; contacto?: string; telefono?: string; correo?: string; predeterminada?: boolean; pais?: string }>;
       agentes: Array<{ id: string; agenciaId: string; nombre: string; correo?: string; telefono?: string }>;
     };
     if (agencias?.length) {

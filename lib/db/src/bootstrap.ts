@@ -31,6 +31,7 @@ export async function ensureDevelopmentSchema(): Promise<void> {
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`,
+    `ALTER TABLE agencias ADD COLUMN IF NOT EXISTS pais TEXT`,
     `CREATE TABLE IF NOT EXISTS agentes (
       id TEXT PRIMARY KEY,
       agencia_id TEXT NOT NULL REFERENCES agencias(id) ON DELETE CASCADE,
