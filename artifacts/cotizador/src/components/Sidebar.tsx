@@ -10,12 +10,13 @@ import {
   Building2,
   LogOut,
   User,
+  LayoutDashboard,
 } from "lucide-react";
 import logoRge from "@assets/style-travel-blue-2_1780272470978.png";
 import { useState } from "react";
 import type { ActiveUser } from "@/lib/auth";
 
-export type View = "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
+export type View = "dashboard" | "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
 
 const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "agencias", "respaldos"];
 
@@ -74,6 +75,12 @@ export default function Sidebar({ view, onView, seguimientoFlash = false, user, 
         {/* Nav */}
         <nav className="flex-1 min-h-0 overflow-y-auto" style={{ padding: "10px 10px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <NavItem
+              active={view === "dashboard"}
+              onClick={() => onView("dashboard")}
+              icon={<LayoutDashboard className="w-4 h-4" />}
+              label="Dashboard"
+            />
             <NavItem
               active={view === "cotizador"}
               onClick={() => onView("cotizador")}

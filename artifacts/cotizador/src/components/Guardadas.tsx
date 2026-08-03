@@ -74,6 +74,7 @@ export type OppActividadTipo =
   | "venta_confirmada"
   | "marcada_perdida"
   | "anulada"
+  | "archivada"
   | "restaurada"
   | "accion_realizada"
   | "pospuesto";
@@ -411,7 +412,8 @@ export type EstadoOportunidad =
   | "seguimiento"
   | "confirmada"
   | "perdida"
-  | "anulada";
+  | "anulada"
+  | "archivada";
 
 export interface OpportunityQuote {
   id: string;
@@ -467,8 +469,32 @@ function _daysSince(iso?: string): number {
   return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// ─── Auto-archive check ───────────────────────────────────────────────────────
+
+export function shouldAutoArchive(o: Opportunity): boolean {
+  if (
+    o.status === "confirmada" ||
+    o.status === "anulada" ||
+    o.status === "archivada" ||
+    o.status === "perdida"
+  ) return false;
+  // Must have been inactive for 30+ days
+  const days = _daysSince(o.lastUpdateAt ?? o.createdAt);
+  if (days < 30) return false;
+  // Must not have a pending (future) reminder
+  if (o.recordatorio) {
+    const rec = new Date(o.recordatorio + "T23:59:59");
+    if (rec >= new Date()) return false; // future reminder → don't archive
+  }
+  // Must not be manually prioritised
+  if (o.priorityManual || o.prioridad === "alta") return false;
+  // Must not have a scheduled follow-up
+  if (o.proximaAccion?.trim()) return false;
+  return true;
+}
+
 export function getOppUrgency(o: Opportunity): UrgencyLevel {
-  if (o.status === "confirmada" || o.status === "perdida" || o.status === "anulada") return "green";
+  if (o.status === "confirmada" || o.status === "perdida" || o.status === "anulada" || o.status === "archivada") return "green";
   const days = _daysSince(o.lastUpdateAt);
   const rec = o.recordatorio ? new Date(o.recordatorio + "T23:59:59") : null;
   const recExpired = rec !== null && rec <= new Date();
@@ -557,7 +583,7 @@ export function upsertOpportunity(input: UpsertOpportunityInput): Opportunity[] 
     const isNewQuote = !existing.quotes.some((q) => q.id === input.quoteId);
     const dedupedQuotes = [quoteRef, ...existing.quotes.filter((q) => q.id !== input.quoteId)];
     const updatedStatus: EstadoOportunidad =
-      existing.status === "anulada" || existing.status === "confirmada" || existing.status === "perdida"
+      existing.status === "anulada" || existing.status === "confirmada" || existing.status === "perdida" || existing.status === "archivada"
         ? existing.status
         : input.quoteId === existing.quotes[0]?.id
           ? existing.status

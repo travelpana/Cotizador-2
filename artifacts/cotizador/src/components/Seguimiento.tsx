@@ -41,7 +41,7 @@ import { apiAuth } from "@/lib/api-auth";
 interface Props {
   items: CotizacionGuardada[];
   opportunities: Opportunity[];
-  tab: "activas" | "finalizadas" | "anuladas";
+  tab: "activas" | "finalizadas" | "anuladas" | "archivadas";
   onView: (g: CotizacionGuardada) => void;
   onEdit: (g: CotizacionGuardada) => void;
   onDelete: (id: string) => void;
@@ -932,6 +932,88 @@ function OpportunityCard({ opp, agencia, allQuotes, onView, onEdit, onDuplicate,
   );
 }
 
+// ─── Archivadas View ──────────────────────────────────────────────────────────
+
+function ArchivadasView({ opps, agenciasMap, onReactivar }: {
+  opps: Opportunity[];
+  agenciasMap: Map<string, Agencia>;
+  onReactivar: (o: Opportunity) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return opps;
+    return opps.filter((o) =>
+      [o.quoteName, o.agencyName, o.agentName, o.destination]
+        .join(" ").toLowerCase().includes(q)
+    );
+  }, [opps, query]);
+
+  if (opps.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-12 text-center">
+        <History className="w-10 h-10 mx-auto text-slate-200 mb-3" />
+        <div className="text-sm font-medium text-slate-600">No hay cotizaciones archivadas</div>
+        <div className="text-xs text-slate-400 mt-1">Las cotizaciones sin actividad por 30 días y sin recordatorios pendientes se archivarán automáticamente.</div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar archivadas…"
+            className="w-full h-9 pl-9 pr-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-slate-400"
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+          <History className="w-4 h-4 text-slate-400" />
+          <div className="text-sm font-bold text-slate-900">Archivadas</div>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{opps.length}</span>
+          <span className="text-xs text-slate-400 ml-1">· Sin actividad hace 30+ días · Puedes reactivarlas</span>
+        </div>
+        {filtered.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm text-slate-400">Sin resultados para "{query}"</div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {filtered.map((o) => {
+              const agencia = agenciasMap.get(normAgencia(o.agencyName || ""));
+              const initials = getInitials(o.agencyName || o.quoteName);
+              const daysSince = Math.floor((Date.now() - new Date(o.lastUpdateAt || o.createdAt).getTime()) / 86400000);
+              return (
+                <div key={o.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
+                  <LogoOrInitials agencia={agencia} initials={initials} color="#94a3b8" size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-600 truncate">{o.quoteName}</div>
+                    <div className="text-xs text-slate-400 truncate">{o.agencyName}{o.agentName ? ` · ${o.agentName}` : ""}</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Sin actividad hace {daysSince} día{daysSince !== 1 ? "s" : ""}</div>
+                  </div>
+                  <button
+                    type="button" onClick={() => onReactivar(o)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors hover:bg-blue-100"
+                    style={{ background: "#eff6ff", color: "#004FBB" }}>
+                    <RotateCcw className="w-3 h-3" />Reactivar
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Anuladas / Finalizadas Views ─────────────────────────────────────────────
 
 function AnuladasView({ opps, agenciasMap, onRestaurar }: {
@@ -1084,9 +1166,10 @@ export default function Seguimiento({ items, opportunities, tab, onView, onEdit,
     [openOppId, opportunities],
   );
 
-  const activeOpps = useMemo(() => opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida"), [opportunities]);
+  const activeOpps = useMemo(() => opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida" && o.status !== "archivada"), [opportunities]);
   const finalizadasOpps = useMemo(() => opportunities.filter((o) => o.status === "confirmada" || o.status === "perdida"), [opportunities]);
   const anuladasOpps = useMemo(() => opportunities.filter((o) => o.status === "anulada"), [opportunities]);
+  const archivadasOpps = useMemo(() => opportunities.filter((o) => o.status === "archivada"), [opportunities]);
 
   // ─── Metrics ──────────────────────────────────────────────────────────────
 
@@ -1157,6 +1240,12 @@ export default function Seguimiento({ items, opportunities, tab, onView, onEdit,
     onUpdateOpportunity(o.id, { status: "nueva", historial: [entry, ...(o.historial ?? [])].slice(0, 100) });
   };
 
+  const onReactivar = (o: Opportunity) => {
+    const entry: OppHistorialEntry = { fecha: new Date().toISOString(), tipo: "restaurada", detalle: "Reactivada desde Archivadas" };
+    onUpdateOpportunity(o.id, { status: "nueva", historial: [entry, ...(o.historial ?? [])].slice(0, 100) });
+    onShowToast?.("Oportunidad reactivada", "success");
+  };
+
   const getLatestQuote = (o: Opportunity): CotizacionGuardada | undefined => {
     for (const qRef of o.quotes) {
       const found = items.find((g) => g.id === qRef.id);
@@ -1182,6 +1271,8 @@ export default function Seguimiento({ items, opportunities, tab, onView, onEdit,
         <AnuladasView opps={anuladasOpps} agenciasMap={agenciasMap} onRestaurar={onRestaurar} />
       ) : tab === "finalizadas" ? (
         <FinalizadasView opps={finalizadasOpps} agenciasMap={agenciasMap} onOpenDetail={(o) => setOpenOppId(o.id)} />
+      ) : tab === "archivadas" ? (
+        <ArchivadasView opps={archivadasOpps} agenciasMap={agenciasMap} onReactivar={onReactivar} />
       ) : (
         <>
           {/* ── Metrics bar ──────────────────────────────────────────────────── */}

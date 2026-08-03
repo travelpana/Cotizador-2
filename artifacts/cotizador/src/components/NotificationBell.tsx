@@ -132,7 +132,7 @@ function buildAlerts(
   const ACTIVE_STATUSES = ["nueva", "enviada", "seguimiento"];
 
   for (const o of opportunities) {
-    if (o.status === "confirmada" || o.status === "perdida" || o.status === "anulada") continue;
+    if (o.status === "confirmada" || o.status === "perdida" || o.status === "anulada" || o.status === "archivada") continue;
     if (!ACTIVE_STATUSES.includes(o.status ?? "nueva")) continue;
 
     // Recordatorios vencidos/hoy → highest priority; skip activity check

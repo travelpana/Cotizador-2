@@ -13,6 +13,7 @@ import ExportButtons from "@/components/ExportButtons";
 import VistaPreviaModal from "@/components/VistaPreviaModal";
 import Itinerario from "@/components/Itinerario";
 import Seguimiento from "@/components/Seguimiento";
+import Dashboard from "@/components/Dashboard";
 import NotificationBell from "@/components/NotificationBell";
 import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
@@ -35,6 +36,7 @@ import {
   saveOpportunities,
   upsertOpportunity,
   updateOpportunity,
+  shouldAutoArchive,
   type CotizacionGuardada,
   type EstadoCotizacion,
   type EstadoCRM,
@@ -182,7 +184,7 @@ export default function CotizadorPage() {
   const [fileInfoPt, setFileInfoPt] = useState<CatalogInfo | null>(null);
 
   const [view, setView] = useState<View>("cotizador");
-  const [seguimientoTab, setSeguimientoTab] = useState<"activas" | "finalizadas" | "anuladas">("activas");
+  const [seguimientoTab, setSeguimientoTab] = useState<"activas" | "finalizadas" | "anuladas" | "archivadas">("activas");
   const [cliente, setCliente] = useState<Cliente>(DEFAULT_CLIENTE);
   const [validationErrors, setValidationErrors] =
     useState<ClienteValidationErrors>({});
@@ -247,7 +249,30 @@ export default function CotizadorPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   useEffect(() => {
     loadGuardadasAsync().then(setGuardadas);
-    loadOpportunitiesAsync().then(setOpportunities);
+    loadOpportunitiesAsync().then((opps) => {
+      // Auto-archive opportunities that meet all criteria
+      const toArchive = opps.filter(shouldAutoArchive);
+      if (toArchive.length > 0) {
+        const now = new Date().toISOString();
+        const updated = opps.map((o) =>
+          shouldAutoArchive(o)
+            ? {
+                ...o,
+                status: "archivada" as const,
+                lastUpdateAt: now,
+                historial: [
+                  { fecha: now, tipo: "archivada" as const, detalle: "Archivada automáticamente por inactividad" },
+                  ...(o.historial ?? []),
+                ].slice(0, 100),
+              }
+            : o
+        );
+        saveOpportunities(updated);
+        setOpportunities(updated);
+      } else {
+        setOpportunities(opps);
+      }
+    });
     mergeAgenciasDuplicadas();
   }, []);
 
@@ -1271,7 +1296,7 @@ export default function CotizadorPage() {
         style={seguimientoTab === "activas" ? { backgroundColor: "#004FBB" } : undefined}>
         Activas
         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "activas" ? "bg-white/20 text-white" : "bg-white/15 text-blue-100"}`}>
-          {opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida").length}
+          {opportunities.filter((o) => o.status !== "anulada" && o.status !== "confirmada" && o.status !== "perdida" && o.status !== "archivada").length}
         </span>
       </button>
       <button type="button" onClick={() => setSeguimientoTab("finalizadas")}
@@ -1291,6 +1316,16 @@ export default function CotizadorPage() {
         {opportunities.filter((o) => o.status === "anulada").length > 0 && (
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "anuladas" ? "bg-white/20 text-white" : "bg-white/15 text-blue-100"}`}>
             {opportunities.filter((o) => o.status === "anulada").length}
+          </span>
+        )}
+      </button>
+      <button type="button" onClick={() => setSeguimientoTab("archivadas")}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${seguimientoTab === "archivadas" ? "text-white shadow-sm" : "bg-white/10 text-blue-50 hover:bg-white/20"}`}
+        style={seguimientoTab === "archivadas" ? { backgroundColor: "#004FBB" } : undefined}>
+        Archivadas
+        {opportunities.filter((o) => o.status === "archivada").length > 0 && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${seguimientoTab === "archivadas" ? "bg-white/20 text-white" : "bg-white/15 text-blue-100"}`}>
+            {opportunities.filter((o) => o.status === "archivada").length}
           </span>
         )}
       </button>
@@ -1349,6 +1384,11 @@ export default function CotizadorPage() {
               >
                 Reintentar
               </button>
+            </div>
+          ) : view === "dashboard" ? (
+            <div className="space-y-6">
+              <ModuleRibbon title="DASHBOARD" rightSlot={bellSlot} />
+              <Dashboard items={guardadas} opportunities={opportunities} />
             </div>
           ) : view === "seguimiento" ? (
             <div className="space-y-6">

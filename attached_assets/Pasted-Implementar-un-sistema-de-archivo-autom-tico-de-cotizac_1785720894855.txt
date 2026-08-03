@@ -1,0 +1,122 @@
+Implementar un sistema de archivo automático de cotizaciones y preparar la aplicación para un futuro Dashboard.
+
+==================================================
+1. NUEVO ESTADO: ARCHIVADAS
+==================================================
+
+Agregar una nueva sección llamada "Archivadas".
+
+Una cotización debe archivarse automáticamente cuando:
+
+- No tenga actividad durante 30 días.
+- No tenga recordatorios pendientes.
+- No esté marcada como Prioritaria.
+- No esté marcada como Urgente.
+- No tenga seguimientos programados.
+- No esté confirmada ni anulada.
+
+Las cotizaciones archivadas:
+
+- Desaparecen del listado de Activas.
+- No aparecen en el centro de notificaciones.
+- No cuentan en los indicadores de Seguimiento.
+- Siguen siendo buscables.
+- Conservan todo su historial.
+- Pueden restaurarse con un clic.
+
+==================================================
+2. BOTÓN "REACTIVAR"
+==================================================
+
+Dentro de una cotización archivada agregar:
+
+• Reactivar cotización
+
+Al reactivarla:
+
+- vuelve a Activas.
+- conserva historial.
+- conserva observaciones.
+- conserva seguimiento.
+- vuelve a generar recordatorios.
+
+==================================================
+3. LIMPIEZA DEL CENTRO DE NOTIFICACIONES
+==================================================
+
+Mostrar únicamente:
+
+- Seguimientos de hoy.
+- Seguimientos de mañana.
+- Prioridades.
+- Urgentes.
+- Ventas recientes.
+
+No mostrar:
+
+- Cotizaciones archivadas.
+- Recordatorios antiguos.
+- Eventos ya resueltos.
+- Notificaciones duplicadas.
+
+==================================================
+4. PREPARAR EL DASHBOARD
+==================================================
+
+Crear la estructura para un nuevo módulo llamado Dashboard.
+
+Por ahora únicamente dejar preparada la lógica y los indicadores.
+
+Indicadores:
+
+- Ventas del día.
+- Ventas del mes.
+- Cotizaciones creadas.
+- Cotizaciones activas.
+- Cotizaciones archivadas.
+- Cotizaciones confirmadas.
+- Cotizaciones anuladas.
+- Conversión (%).
+- Próximas acciones.
+- Agencias con más ventas.
+- Agentes con más ventas.
+- Destinos más vendidos.
+
+No construir todavía los gráficos.
+
+Solo dejar disponible la estructura para alimentar el Dashboard posteriormente.
+
+==================================================
+5. MENÚ LATERAL
+==================================================
+
+Agregar:
+
+Dashboard
+
+como primer módulo.
+
+Orden:
+
+Dashboard
+Cotizador
+Seguimiento
+
+Configuración
+Plantillas
+Descriptivos
+Tarifas
+Agencias
+Respaldos
+
+==================================================
+6. IMPORTANTE
+==================================================
+
+No eliminar ninguna cotización.
+
+El archivado es únicamente un cambio de estado.
+
+Todas las cotizaciones deben poder recuperarse sin perder información.
+
+Mantener compatibilidad con las cotizaciones existentes y no modificar la lógica actual de ventas, anulaciones o seguimiento.
