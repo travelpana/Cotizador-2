@@ -7,6 +7,7 @@ export const usuariosTable = pgTable("usuarios", {
   correo: text("correo"),
   contrasenaHash: text("contrasena_hash").notNull(),
   rol: text("rol").notNull().default("agente"),
+  area: text("area"),
   activo: boolean("activo").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

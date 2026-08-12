@@ -17,10 +17,12 @@ export async function ensureDevelopmentSchema(): Promise<void> {
       correo TEXT,
       contrasena_hash TEXT NOT NULL,
       rol TEXT NOT NULL DEFAULT 'agente',
+      area TEXT,
       activo BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`,
     `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol TEXT NOT NULL DEFAULT 'agente'`,
+    `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS area TEXT`,
     `CREATE TABLE IF NOT EXISTS agencias (
       id TEXT PRIMARY KEY,
       nombre TEXT NOT NULL,

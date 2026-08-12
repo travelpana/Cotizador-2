@@ -90,6 +90,13 @@ async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction)
   }
 }
 
+const AREAS_VALIDAS = ["reservas", "ventas", "operaciones", "administracion"];
+function normalizeArea(area: unknown): string | null {
+  if (area === undefined || area === null || area === "") return null;
+  const a = String(area).trim().toLowerCase();
+  return AREAS_VALIDAS.includes(a) ? a : null;
+}
+
 router.get("/auth/users/all", requireAuth, requireAdmin, async (_req, res) => {
   try {
     const users = await db
@@ -98,6 +105,7 @@ router.get("/auth/users/all", requireAuth, requireAdmin, async (_req, res) => {
         nombre: usuariosTable.nombre,
         username: usuariosTable.username,
         rol: usuariosTable.rol,
+        area: usuariosTable.area,
         activo: usuariosTable.activo,
       })
       .from(usuariosTable)
@@ -111,7 +119,7 @@ router.get("/auth/users/all", requireAuth, requireAdmin, async (_req, res) => {
 
 router.post("/auth/users", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { nombre, username, contrasena, rol, activo } = req.body ?? {};
+    const { nombre, username, contrasena, rol, area, activo } = req.body ?? {};
     if (!nombre?.trim() || !username?.trim() || !contrasena) {
       return res.status(400).json({ error: "Nombre, usuario y contraseña son requeridos" });
     }
@@ -132,6 +140,7 @@ router.post("/auth/users", requireAuth, requireAdmin, async (req, res) => {
         username: normalized,
         contrasenaHash,
         rol: rol === "administrador" ? "administrador" : "agente",
+        area: normalizeArea(area),
         activo: activo !== false,
       })
       .returning({
@@ -139,6 +148,7 @@ router.post("/auth/users", requireAuth, requireAdmin, async (req, res) => {
         nombre: usuariosTable.nombre,
         username: usuariosTable.username,
         rol: usuariosTable.rol,
+        area: usuariosTable.area,
         activo: usuariosTable.activo,
       });
     return res.json(row);
@@ -152,7 +162,7 @@ router.put("/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ error: "ID inválido" });
-    const { nombre, username, contrasena, rol, activo } = req.body ?? {};
+    const { nombre, username, contrasena, rol, area, activo } = req.body ?? {};
 
     const set: Record<string, unknown> = {};
     if (nombre !== undefined) {
@@ -177,6 +187,9 @@ router.put("/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
     }
     if (rol !== undefined) {
       set.rol = rol === "administrador" ? "administrador" : "agente";
+    }
+    if (area !== undefined) {
+      set.area = normalizeArea(area);
     }
     if (activo !== undefined) {
       set.activo = activo !== false;
@@ -219,6 +232,7 @@ router.put("/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
         nombre: usuariosTable.nombre,
         username: usuariosTable.username,
         rol: usuariosTable.rol,
+        area: usuariosTable.area,
         activo: usuariosTable.activo,
       });
     if (!row) return res.status(404).json({ error: "Usuario no encontrado" });

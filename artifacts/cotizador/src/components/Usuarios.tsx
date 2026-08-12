@@ -9,8 +9,20 @@ interface FormState {
   username: string;
   contrasena: string;
   rol: string;
+  area: string;
   activo: boolean;
 }
+
+const AREAS: { value: string; label: string }[] = [
+  { value: "", label: "Sin área" },
+  { value: "reservas", label: "Reservas" },
+  { value: "ventas", label: "Ventas" },
+  { value: "operaciones", label: "Operaciones" },
+  { value: "administracion", label: "Administración" },
+];
+
+const areaLabel = (a: string | null | undefined) =>
+  AREAS.find((x) => x.value === (a ?? ""))?.label ?? "—";
 
 const EMPTY_FORM: FormState = {
   id: null,
@@ -18,6 +30,7 @@ const EMPTY_FORM: FormState = {
   username: "",
   contrasena: "",
   rol: "agente",
+  area: "",
   activo: true,
 };
 
@@ -49,6 +62,7 @@ export default function Usuarios() {
       username: u.username ?? "",
       contrasena: "",
       rol: u.rol === "administrador" ? "administrador" : "agente",
+      area: u.area ?? "",
       activo: u.activo,
     });
   };
@@ -73,6 +87,7 @@ export default function Usuarios() {
           username: form.username.trim(),
           contrasena: form.contrasena,
           rol: form.rol,
+          area: form.area || null,
           activo: form.activo,
         });
       } else {
@@ -81,6 +96,7 @@ export default function Usuarios() {
           username: form.username.trim(),
           ...(form.contrasena ? { contrasena: form.contrasena } : {}),
           rol: form.rol,
+          area: form.area || null,
           activo: form.activo,
         });
       }
@@ -132,6 +148,7 @@ export default function Usuarios() {
                 <th className="py-2 pr-3 font-semibold">Nombre</th>
                 <th className="py-2 pr-3 font-semibold">Usuario</th>
                 <th className="py-2 pr-3 font-semibold">Rol</th>
+                <th className="py-2 pr-3 font-semibold">Área</th>
                 <th className="py-2 pr-3 font-semibold">Estado</th>
                 <th className="py-2 w-[60px] text-right font-semibold">Editar</th>
               </tr>
@@ -155,6 +172,7 @@ export default function Usuarios() {
                       {u.rol === "administrador" ? "Administrador" : "Agente"}
                     </span>
                   </td>
+                  <td className="py-2.5 pr-3 text-slate-600">{u.area ? areaLabel(u.area) : "—"}</td>
                   <td className="py-2.5 pr-3">
                     <span
                       className="inline-flex items-center gap-1.5 text-[12px] font-medium"
@@ -181,7 +199,7 @@ export default function Usuarios() {
               ))}
               {usuarios.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-slate-500">
+                  <td colSpan={6} className="py-6 text-center text-slate-500">
                     No hay usuarios registrados.
                   </td>
                 </tr>
@@ -285,6 +303,22 @@ export default function Usuarios() {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label className="block text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500 mb-1">
+                  Área
+                </label>
+                <select
+                  className={inputStyle}
+                  value={form.area}
+                  onChange={(e) => setForm({ ...form, area: e.target.value })}
+                >
+                  {AREAS.map((a) => (
+                    <option key={a.value} value={a.value}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
