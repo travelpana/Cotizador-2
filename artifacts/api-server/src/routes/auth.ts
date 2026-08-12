@@ -255,17 +255,19 @@ router.get("/auth/me", async (req, res) => {
       correo: string;
     };
     let rol: string | undefined;
+    let nombre = payload.nombre;
     try {
       const [row] = await db
-        .select({ rol: usuariosTable.rol })
+        .select({ rol: usuariosTable.rol, nombre: usuariosTable.nombre })
         .from(usuariosTable)
         .where(eq(usuariosTable.id, payload.id))
         .limit(1);
       rol = row?.rol;
+      if (row?.nombre) nombre = row.nombre;
     } catch (err) {
-      console.error("[AUTH] Error consultando rol en /auth/me:", err);
+      console.error("[AUTH] Error consultando datos en /auth/me:", err);
     }
-    return res.json({ id: payload.id, nombre: payload.nombre, correo: payload.correo, rol });
+    return res.json({ id: payload.id, nombre, correo: payload.correo, rol });
   } catch {
     return res.status(401).json({ error: "Token inválido o expirado" });
   }

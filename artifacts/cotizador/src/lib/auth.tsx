@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => (res.ok ? res.json() : null))
       .then((me: ActiveUser | null) => {
-        if (me && me.rol && me.rol !== user.rol) {
-          const updated = { ...user, rol: me.rol };
+        if (me && ((me.rol && me.rol !== user.rol) || (me.nombre && me.nombre !== user.nombre))) {
+          const updated = { ...user, rol: me.rol ?? user.rol, nombre: me.nombre ?? user.nombre };
           localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(updated));
           setUser(updated);
         }
