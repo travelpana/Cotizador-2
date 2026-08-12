@@ -12,6 +12,7 @@ export interface ActiveUser {
   id: number;
   nombre: string;
   correo: string;
+  rol?: string;
 }
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────

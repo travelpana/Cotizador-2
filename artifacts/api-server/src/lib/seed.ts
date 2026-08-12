@@ -110,6 +110,13 @@ export async function seedUsers(): Promise<void> {
         .limit(1);
 
       if (existing) {
+        // Ensure the admin seed user always has the administrator role
+        if (username === "admin") {
+          await db
+            .update(usuariosTable)
+            .set({ rol: "administrador" })
+            .where(eq(usuariosTable.id, existing.id));
+        }
         // If the user exists but has no username yet, patch it
         if (!existing.username) {
           await db
@@ -129,6 +136,7 @@ export async function seedUsers(): Promise<void> {
         username,
         correo: u.correo?.trim().toLowerCase(),
         contrasenaHash,
+        rol: username === "admin" ? "administrador" : "agente",
         activo: u.activo,
       });
       logger.info({ username }, "Usuario inicial creado");

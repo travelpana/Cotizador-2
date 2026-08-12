@@ -128,8 +128,21 @@ export const apiAuth = {
   // ── Users ────────────────────────────────────────────────────────────────────
   users: {
     list: () => apiAuth.get<{ id: number; nombre: string; username: string | null }[]>("/auth/users"),
+    listAll: () => apiAuth.get<UsuarioApi[]>("/auth/users/all"),
+    create: (u: { nombre: string; username: string; contrasena: string; rol: string; activo: boolean }) =>
+      apiAuth.post<UsuarioApi>("/auth/users", u),
+    update: (id: number, u: Partial<{ nombre: string; username: string; contrasena: string; rol: string; activo: boolean }>) =>
+      apiAuth.put<UsuarioApi>(`/auth/users/${id}`, u),
   },
 };
+
+export interface UsuarioApi {
+  id: number;
+  nombre: string;
+  username: string | null;
+  rol: string;
+  activo: boolean;
+}
 
 // ─── API types (flattened to match DB row structure) ─────────────────────────
 

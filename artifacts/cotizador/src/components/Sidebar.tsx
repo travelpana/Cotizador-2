@@ -10,15 +10,16 @@ import {
   Building2,
   LogOut,
   User,
+  Users,
   LayoutDashboard,
 } from "lucide-react";
 import logoRge from "@assets/style-travel-blue-2_1780272470978.png";
 import { useState } from "react";
 import type { ActiveUser } from "@/lib/auth";
 
-export type View = "dashboard" | "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos";
+export type View = "dashboard" | "cotizador" | "seguimiento" | "agencias" | "plantillas" | "descriptivos" | "tarifas" | "respaldos" | "usuarios";
 
-const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "agencias", "respaldos"];
+const CONFIG_VIEWS: View[] = ["plantillas", "descriptivos", "tarifas", "agencias", "respaldos", "usuarios"];
 
 interface Props {
   view: View;
@@ -179,6 +180,15 @@ export default function Sidebar({ view, onView, seguimientoFlash = false, user, 
                   label="Respaldos"
                   sub
                 />
+                {user?.rol === "administrador" && (
+                  <NavItem
+                    active={view === "usuarios"}
+                    onClick={() => onView("usuarios")}
+                    icon={<Users className="w-4 h-4" />}
+                    label="Usuarios"
+                    sub
+                  />
+                )}
               </div>
             )}
           </div>

@@ -19,6 +19,7 @@ import Plantillas from "@/components/Plantillas";
 import Descriptivos from "@/components/Descriptivos";
 import Tarifas from "@/components/Tarifas";
 import Respaldos from "@/components/Respaldos";
+import Usuarios from "@/components/Usuarios";
 import Agencias from "@/components/Agencias";
 import ToastStack, { type ToastItem, type ToastTone } from "@/components/ToastStack";
 import { loadObservaciones, loadObservacionesAsync, resolveObservaciones } from "@/lib/observaciones";
@@ -1453,6 +1454,11 @@ export default function CotizadorPage() {
                 onReloadPt={handleTarifarioReloadPt}
                 onUploadPt={handleUploadPt}
               />
+            </div>
+          ) : view === "usuarios" ? (
+            <div className="space-y-6">
+              <ModuleRibbon title="USUARIOS" rightSlot={bellSlot} />
+              <Usuarios />
             </div>
           ) : view === "respaldos" ? (
             <div className="space-y-6">
