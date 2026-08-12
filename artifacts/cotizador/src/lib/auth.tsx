@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react";
 
@@ -58,6 +59,24 @@ const AuthContext = createContext<AuthCtx>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ActiveUser | null>(() => getStoredUser());
+
+  // Refrescar el rol desde el servidor para sesiones guardadas antes de que
+  // existiera el campo `rol` (evita tener que volver a iniciar sesión).
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token || !user) return;
+    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me: ActiveUser | null) => {
+        if (me && me.rol && me.rol !== user.rol) {
+          const updated = { ...user, rol: me.rol };
+          localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(updated));
+          setUser(updated);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const login = useCallback((u: ActiveUser, token: string) => {
     setAuthToken(token);

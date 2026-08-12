@@ -229,7 +229,7 @@ router.put("/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-router.get("/auth/me", (req, res) => {
+router.get("/auth/me", async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "No autenticado" });
@@ -240,7 +240,18 @@ router.get("/auth/me", (req, res) => {
       nombre: string;
       correo: string;
     };
-    return res.json({ id: payload.id, nombre: payload.nombre, correo: payload.correo });
+    let rol: string | undefined;
+    try {
+      const [row] = await db
+        .select({ rol: usuariosTable.rol })
+        .from(usuariosTable)
+        .where(eq(usuariosTable.id, payload.id))
+        .limit(1);
+      rol = row?.rol;
+    } catch (err) {
+      console.error("[AUTH] Error consultando rol en /auth/me:", err);
+    }
+    return res.json({ id: payload.id, nombre: payload.nombre, correo: payload.correo, rol });
   } catch {
     return res.status(401).json({ error: "Token inválido o expirado" });
   }
